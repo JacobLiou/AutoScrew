@@ -17,9 +17,27 @@ public partial class App : System.Windows.Application
 {
     private IHost? _host;
 
+    /// <summary>显式 <c>MimsMySql</c>，或已配置 MIMS 连接（明文 / DPAPI）时使用 MySQL 认证。</summary>
+    private static bool UseMimsMySqlAuthentication(IConfiguration configuration)
+    {
+        var mode = configuration["Authentication:Mode"] ?? "Development";
+        if (string.Equals(mode, "MimsMySql", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var mims = configuration.GetSection("Authentication:Mims");
+        if (!string.IsNullOrWhiteSpace(mims["ConnectionString"]))
+            return true;
+        if (!string.IsNullOrWhiteSpace(mims["ConnectionStringDpapiBase64"]))
+            return true;
+
+        return false;
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // 登录窗是唯一可见窗体时，若保持默认 OnLastWindowClose，关闭登录后会在 Show 主窗体前触发 Shutdown。
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         var builder = Host.CreateApplicationBuilder(e.Args);
 
@@ -31,11 +49,10 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<AppAuthenticationService>();
         builder.Services.AddSingleton<IUserAuthenticationService>(sp =>
         {
-            var mode = sp.GetRequiredService<IConfiguration>()["Authentication:Mode"] ?? "Development";
-            if (string.Equals(mode, "MimsMySql", StringComparison.OrdinalIgnoreCase))
-                return sp.GetRequiredService<MimsMySqlAuthenticationService>();
-
-            return sp.GetRequiredService<AppAuthenticationService>();
+            var cfg = sp.GetRequiredService<IConfiguration>();
+            return UseMimsMySqlAuthentication(cfg)
+                ? sp.GetRequiredService<MimsMySqlAuthenticationService>()
+                : sp.GetRequiredService<AppAuthenticationService>();
         });
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<LoginWindow>();
@@ -55,13 +72,17 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        _host.Services.GetRequiredService<MainWindow>().Show();
+        var main = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow = main;
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
+        main.Show();
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    /// <summary>同步关闭 host；避免 async OnExit + ConfigureAwait(false) 在线程池上调用 <c>base.OnExit</c> 触发跨线程异常。</summary>
+    protected override void OnExit(ExitEventArgs e)
     {
         if (_host is not null)
-            await _host.StopAsync().ConfigureAwait(false);
+            _host.StopAsync().GetAwaiter().GetResult();
 
         Log.CloseAndFlush();
         base.OnExit(e);

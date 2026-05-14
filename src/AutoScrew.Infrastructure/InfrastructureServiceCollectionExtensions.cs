@@ -21,6 +21,7 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddAutoScrewInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MimsAuthenticationOptions>(configuration.GetSection(MimsAuthenticationOptions.SectionName));
+        services.AddSingleton<IPostConfigureOptions<MimsAuthenticationOptions>, MimsAuthenticationOptionsPostConfigure>();
         services.AddSingleton<MimsMySqlAuthenticationService>();
 
         services.AddSingleton<SessionCurrentUser>();

@@ -26,7 +26,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="AutoScrew" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8"/>
-        <TextBlock Grid.Row="1" Text="请使用公司账号登录（开发账号见 appsettings.Development.json）" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,16"/>
+        <TextBlock Grid.Row="1" Text="请使用 MIMS 公司账号登录。若未配置 MIMS 数据库连接，可使用开发账号（见 appsettings.Development.json）。" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,16"/>
 
         <TextBlock Grid.Row="2" Text="用户名" Margin="0,0,0,4"/>
         <hc:TextBox Grid.Row="3"

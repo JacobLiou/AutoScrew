@@ -17,7 +17,7 @@ public sealed class MimsMySqlAuthenticationService(
                r.id AS RoleId, r.type AS RoleType, r.name AS RoleName
         FROM mims_person p
         INNER JOIN mims_role r ON r.id = p.role_id
-        WHERE p.login_name = @loginName AND p.password = @passwordHash
+        WHERE LOWER(TRIM(p.login_name)) = LOWER(@loginName) AND p.password = @passwordHash
         LIMIT 1
         """;
 
@@ -28,7 +28,7 @@ public sealed class MimsMySqlAuthenticationService(
 
         var opt = options.Value;
         if (string.IsNullOrWhiteSpace(opt.ConnectionString))
-            return LoginResult.Failed("未配置 MySQL 连接串（Authentication:Mims:ConnectionString）。请使用 User Secrets 或环境变量。");
+            return LoginResult.Failed("未配置 MIMS 数据库连接（Authentication:Mims:ConnectionString 或 ConnectionStringDpapiBase64）。");
 
         var hash = MimsPasswordHasher.Hash(password);
 
