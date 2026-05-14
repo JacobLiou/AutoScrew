@@ -6,6 +6,7 @@ using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Infrastructure;
 using AutoScrew.Infrastructure.Authentication;
+using AutoScrew.TemplateBoard.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -57,6 +58,8 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddSingleton<MainViewModel>();
+        builder.Services.AddSingleton<MainWindowViewModel>();
+        builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
 
         _host = builder.Build();
