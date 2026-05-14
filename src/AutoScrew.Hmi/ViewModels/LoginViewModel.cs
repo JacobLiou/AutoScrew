@@ -40,7 +40,13 @@ public partial class LoginViewModel : ObservableObject
             return;
         }
 
-        _currentUser.SetRole(result.Role, result.UserId, result.DisplayName);
+        _currentUser.SetRole(
+            result.Role,
+            result.UserId,
+            result.DisplayName,
+            result.MimsPersonId,
+            result.MimsRoleId,
+            result.MimsRoleType);
         CloseRequested?.Invoke(this, true);
     }
 

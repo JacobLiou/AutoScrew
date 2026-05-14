@@ -251,3 +251,6 @@ ModelManifest.xml
 appsettings.json
 appsettings.Development.json
 /.temp-build
+
+# Local MIMS credentials (do not commit)
+src/temp/connstring.txt

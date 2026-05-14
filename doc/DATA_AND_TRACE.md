@@ -24,3 +24,9 @@
 ## HTTPS
 
 - 生产环境 MES 基址使用 HTTPS（TLS 1.2+），见 `MesHttpClient` 与现场证书策略。
+
+## MIMS MySQL 登录（只读）
+
+- `Authentication:Mode` = `MimsMySql` 时使用 [`MimsMySqlAuthenticationService`](src/AutoScrew.Infrastructure/Authentication/MimsMySqlAuthenticationService.cs)：仅 `SELECT` `mims_person` + `mims_role`；口令算法见 [`MimsPasswordHasher`](src/AutoScrew.Infrastructure/Authentication/MimsPasswordHasher.cs)。
+- 连接串键：`Authentication:Mims:ConnectionString`（**仅 User Secrets / 环境变量**，勿提交 `src/temp/connstring.txt`）。
+- 角色映射：`Authentication:Mims:RoleMap`（`mims_role.type` 数值 → `Operator` / `Technician` / `Administrator`）；`UnmappedRoleBehavior`：`Operator` 或 `Deny`。

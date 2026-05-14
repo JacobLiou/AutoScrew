@@ -14,10 +14,25 @@ public sealed class SessionCurrentUser : ICurrentUser
 
     public bool CanUnlockNg => Role >= UserRole.Technician;
 
-    public void SetRole(UserRole role, string userId, string displayName)
+    public int? MimsPersonId { get; private set; }
+
+    public int? MimsRoleId { get; private set; }
+
+    public int? MimsRoleType { get; private set; }
+
+    public void SetRole(
+        UserRole role,
+        string userId,
+        string displayName,
+        int? mimsPersonId = null,
+        int? mimsRoleId = null,
+        int? mimsRoleType = null)
     {
         Role = role;
         UserId = userId;
         DisplayName = displayName;
+        MimsPersonId = mimsPersonId;
+        MimsRoleId = mimsRoleId;
+        MimsRoleType = mimsRoleType;
     }
 }

@@ -5,6 +5,8 @@ using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Infrastructure;
+using AutoScrew.Infrastructure.Authentication;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -25,8 +27,16 @@ public partial class App : System.Windows.Application
 
         builder.Services.Configure<AutoScrewAppOptions>(builder.Configuration.GetSection(AutoScrewAppOptions.SectionName));
         builder.Services.AddAutoScrewApplication();
-        builder.Services.AddAutoScrewInfrastructure();
-        builder.Services.AddSingleton<IUserAuthenticationService, AppAuthenticationService>();
+        builder.Services.AddAutoScrewInfrastructure(builder.Configuration);
+        builder.Services.AddSingleton<AppAuthenticationService>();
+        builder.Services.AddSingleton<IUserAuthenticationService>(sp =>
+        {
+            var mode = sp.GetRequiredService<IConfiguration>()["Authentication:Mode"] ?? "Development";
+            if (string.Equals(mode, "MimsMySql", StringComparison.OrdinalIgnoreCase))
+                return sp.GetRequiredService<MimsMySqlAuthenticationService>();
+
+            return sp.GetRequiredService<AppAuthenticationService>();
+        });
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddSingleton<MainViewModel>();

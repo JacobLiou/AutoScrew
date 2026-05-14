@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Infrastructure.Authentication;
 using AutoScrew.Infrastructure.Background;
 using AutoScrew.Infrastructure.Files;
 using AutoScrew.Infrastructure.Hardware;
@@ -7,6 +8,7 @@ using AutoScrew.Infrastructure.Mes;
 using AutoScrew.Infrastructure.Persistence;
 using AutoScrew.Infrastructure.Templates;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -16,8 +18,11 @@ namespace AutoScrew.Infrastructure;
 
 public static class InfrastructureServiceCollectionExtensions
 {
-    public static IServiceCollection AddAutoScrewInfrastructure(this IServiceCollection services)
+    public static IServiceCollection AddAutoScrewInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<MimsAuthenticationOptions>(configuration.GetSection(MimsAuthenticationOptions.SectionName));
+        services.AddSingleton<MimsMySqlAuthenticationService>();
+
         services.AddSingleton<SessionCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<SessionCurrentUser>());
         services.AddSingleton<ITemplateLayoutLoader, TemplateLayoutJsonLoader>();

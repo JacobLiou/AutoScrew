@@ -20,15 +20,30 @@ public sealed class LoginResult
 
     public UserRole Role { get; private init; }
 
+    public int? MimsPersonId { get; private init; }
+
+    public int? MimsRoleId { get; private init; }
+
+    public int? MimsRoleType { get; private init; }
+
     public static LoginResult Failed(string message) =>
         new() { Success = false, ErrorMessage = message };
 
-    public static LoginResult Ok(string userId, string displayName, UserRole role) =>
+    public static LoginResult Ok(
+        string userId,
+        string displayName,
+        UserRole role,
+        int? mimsPersonId = null,
+        int? mimsRoleId = null,
+        int? mimsRoleType = null) =>
         new()
         {
             Success = true,
             UserId = userId,
             DisplayName = displayName,
-            Role = role
+            Role = role,
+            MimsPersonId = mimsPersonId,
+            MimsRoleId = mimsRoleId,
+            MimsRoleType = mimsRoleType
         };
 }
