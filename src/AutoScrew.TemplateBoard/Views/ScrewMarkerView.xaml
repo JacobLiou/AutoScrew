@@ -1,0 +1,83 @@
+<UserControl x:Class="AutoScrew.TemplateBoard.Views.ScrewMarkerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="60" d:DesignWidth="40">
+    <Border x:Name="Chrome"
+            CornerRadius="2"
+            Background="Transparent"
+            MouseLeftButtonDown="OnMouseLeftButtonDown">
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="螺钉类型（圆圈大小）" IsEnabled="False" FontWeight="SemiBold" />
+                <Separator />
+                <MenuItem Header="M1.0 / 极小 (18px)" Tag="1" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="M1.4 / 很小 (22px)" Tag="2" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="M2（默认）(26px)" Tag="3" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="M2.5 (30px)" Tag="4" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="M3 (34px)" Tag="5" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="M4 / 较大 (40px)" Tag="6" Click="OnScrewTypeMenuClick" />
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Effect" Value="{x:Null}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="16"
+                                                  ShadowDepth="3"
+                                                  Direction="270"
+                                                  Opacity="0.42"
+                                                  Color="#FF1E3A8A" />
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <StackPanel Width="{Binding CircleDiameter}">
+            <Ellipse x:Name="Circle"
+                     Width="{Binding CircleDiameter}"
+                     Height="{Binding CircleDiameter}"
+                     HorizontalAlignment="Center"
+                     StrokeThickness="2"
+                     Fill="#FFFDE68A"
+                     Stroke="#FFC9A227">
+                <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                        <Setter Property="Opacity" Value="1" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="Stroke" Value="#FF2563EB" />
+                                <Setter Property="StrokeThickness" Value="3" />
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard Name="BlinkStoryboard">
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1" To="0.35"
+                                                             Duration="0:0:0.5"
+                                                             AutoReverse="True" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="BlinkStoryboard" />
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Ellipse.Style>
+            </Ellipse>
+            <TextBlock HorizontalAlignment="Center"
+                       Margin="0,2,0,0"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="#FF1F2937"
+                       Text="{Binding Index}" />
+        </StackPanel>
+    </Border>
+</UserControl>

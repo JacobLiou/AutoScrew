@@ -62,9 +62,11 @@ AutoScrew.sln
 ├── src/AutoScrew.Application         # 用例服务：扫码会话、任务生命周期、编排
 ├── src/AutoScrew.Domain              # 领域模型、状态机、判定规则、值对象
 ├── src/AutoScrew.Infrastructure      # MES、EF/SQLite、文件导出、设备适配实现
+├── src/AutoScrew.TemplateBoard       # 独立工具：螺钉位画板 JSON 模板编辑（见项目 README）
 └── src/AutoScrew.Contracts（可选）   # DTO、MES 契约、Api 常量，供 Hmi 与测试共用
 ```
 
+- **TemplateBoard**：与主程序无项目引用关系；输出的螺钉位模板 JSON 由 `AutoScrew.Hmi` 在运行时加载（契约见 [src/AutoScrew.TemplateBoard/README.md](../src/AutoScrew.TemplateBoard/README.md)）。
 - **Hmi**：不直接引用设备 SDK；通过 Application 接口或 DI 注入的抽象端口调用。
 - **Application**：事务脚本式用例 + 接口端口（`IMesClient`、`ILockSessionRepository` 等），保持可测。
 - **Domain**：无 UI、无 HTTP；纯规则与状态。

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AutoScrew.Hmi": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

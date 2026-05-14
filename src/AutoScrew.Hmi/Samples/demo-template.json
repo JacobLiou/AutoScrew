@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "boardWidth": 640,
+  "boardHeight": 480,
+  "circleDiameter": 26,
+  "markers": [
+    { "index": 1, "centerX": 160, "centerY": 120, "screwTypeId": 3 },
+    { "index": 2, "centerX": 480, "centerY": 120, "screwTypeId": 3 },
+    { "index": 3, "centerX": 320, "centerY": 300, "screwTypeId": 3 }
+  ]
+}

@@ -1,0 +1,47 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoScrew.Infrastructure.Persistence;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public DbSet<LockRecordEntity> LockRecords => Set<LockRecordEntity>();
+
+    public DbSet<ScrewDetailEntity> ScrewDetails => Set<ScrewDetailEntity>();
+
+    public DbSet<ErrorLogEntity> ErrorLogs => Set<ErrorLogEntity>();
+
+    public DbSet<OutboxUploadEntity> OutboxUploads => Set<OutboxUploadEntity>();
+
+    public DbSet<SessionCheckpointEntity> SessionCheckpoints => Set<SessionCheckpointEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LockRecordEntity>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.SerialNumber);
+            e.HasIndex(x => x.StartedAt);
+        });
+
+        modelBuilder.Entity<ScrewDetailEntity>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.LockRecordId);
+        });
+
+        modelBuilder.Entity<ErrorLogEntity>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.LockRecordId);
+        });
+
+        modelBuilder.Entity<OutboxUploadEntity>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.SentAt);
+            e.HasIndex(x => x.IdempotencyKey);
+        });
+
+        modelBuilder.Entity<SessionCheckpointEntity>(e => { e.HasKey(x => x.Id); });
+    }
+}
