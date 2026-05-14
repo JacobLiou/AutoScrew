@@ -3,37 +3,43 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:domain="clr-namespace:AutoScrew.Domain.Models;assembly=AutoScrew.Domain">
     <Application.Resources>
-        <SolidColorBrush x:Key="BrushPending" Color="#FFD54F"/>
-        <SolidColorBrush x:Key="BrushInProgress" Color="#FFC107"/>
-        <SolidColorBrush x:Key="BrushOk" Color="#43A047"/>
-        <SolidColorBrush x:Key="BrushNg" Color="#E53935"/>
-        <Style x:Key="ScrewMarkerStyle" TargetType="Ellipse">
-            <Setter Property="Stroke" Value="#333333"/>
-            <Setter Property="StrokeThickness" Value="2"/>
-            <Setter Property="Width" Value="{Binding DiameterPx}"/>
-            <Setter Property="Height" Value="{Binding DiameterPx}"/>
-            <Setter Property="Fill" Value="{StaticResource BrushPending}"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
-                    <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
-                    <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
-                    <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard RepeatBehavior="Forever">
-                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                 From="1" To="0.35" Duration="0:0:0.5" AutoReverse="True"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <SolidColorBrush x:Key="BrushPending" Color="#FFD54F"/>
+            <SolidColorBrush x:Key="BrushInProgress" Color="#FFC107"/>
+            <SolidColorBrush x:Key="BrushOk" Color="#43A047"/>
+            <SolidColorBrush x:Key="BrushNg" Color="#E53935"/>
+            <Style x:Key="ScrewMarkerStyle" TargetType="Ellipse">
+                <Setter Property="Stroke" Value="#333333"/>
+                <Setter Property="StrokeThickness" Value="2"/>
+                <Setter Property="Width" Value="{Binding DiameterPx}"/>
+                <Setter Property="Height" Value="{Binding DiameterPx}"/>
+                <Setter Property="Fill" Value="{StaticResource BrushPending}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
+                        <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
+                        <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
+                        <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}">
+                        <DataTrigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="1" To="0.35" Duration="0:0:0.5" AutoReverse="True"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </DataTrigger.EnterActions>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
