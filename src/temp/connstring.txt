@@ -1,0 +1,1 @@
+Server=zh-mims-srv.oplink.com.cn;Port=3306;Database=mims_backup;Uid=wanxin;Pwd=wanxin;pooling=false;charset=utf8;Connection Timeout=30;Default Command Timeout=120;
