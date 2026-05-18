@@ -71,3 +71,11 @@
 - 遇到具体操作疑问时，参考 Help 动图
 
 如需更详细的寄存器表或代码接口说明，可进一步补充。
+
+---
+
+## 与 AutoScrew 驱动实现
+
+协议梳理与寄存器说明见 **[driverAnaC.md](driverAnaC.md)**（含 Demo 对照、#750/#751、GetResultStatus 流程）。
+
+上位机 Modbus 实现位于 **`src/UDL.Delta.IemdSd`**（`IIemdSdClient`）；产线接线为 **`IemdSdLockStationHardware`**（`AutoScrew.Infrastructure`）。HMI 配置示例：`src/AutoScrew.Hmi/appsettings.json.example`（`IemdSd:Enabled` 与 `AutoScrew:UseSimulatedHardware`）。

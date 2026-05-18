@@ -31,7 +31,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
 
-        services.AddSingleton<ILockStationHardware, SimulatedLockStationHardware>();
+        var appOpts = configuration.GetSection(AutoScrewAppOptions.SectionName).Get<AutoScrewAppOptions>() ?? new AutoScrewAppOptions();
+        var iemdOpts = configuration.GetSection(IemdSdOptions.SectionName).Get<IemdSdOptions>() ?? new IemdSdOptions();
+        if (iemdOpts.Enabled && !appOpts.UseSimulatedHardware)
+            services.AddIemdSdDriver(configuration);
+        else
+            services.AddSingleton<ILockStationHardware, SimulatedLockStationHardware>();
 
         services.AddDbContextFactory<AppDbContext>((sp, builder) =>
         {

@@ -1,0 +1,39 @@
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning"
+      }
+    },
+    "WriteTo": [
+      { "Name": "File", "Args": { "path": "logs/autoscrew-.log", "rollingInterval": "Day" } }
+    ]
+  },
+  "AutoScrew": {
+    "UseMockMes": true,
+    "UseSimulatedHardware": true,
+    "MesBaseUrl": "https://localhost/",
+    "DataDirectory": "",
+    "TemplateDirectory": "Samples",
+    "StationId": "STATION-01"
+  },
+  "IemdSd": {
+    "Enabled": false,
+    "Host": "192.168.1.11",
+    "Port": 502,
+    "ToolIndex": 0,
+    "TriggerMode": "AutoDi",
+    "AutoLockOnInit": false,
+    "SendUnlockAfterCycle": true,
+    "UseLegacyFinishRegister": false,
+    "CommandTimeoutMs": 3000,
+    "ParameterIdByPosition": {
+      "1": 1,
+      "2": 2
+    }
+  },
+  "Authentication": {
+    "Mode": "Development"
+  }
+}

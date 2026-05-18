@@ -15,9 +15,11 @@
 | 类型 | 路径 | 用途 |
 |------|------|------|
 | 交互示意图 | [Help/ScrewHelp.html](Help/ScrewHelp.html)、[Help/ScrewHelp/*.gif](Help/ScrewHelp/) | 拧紧/读结果/读曲线/换参/升级 **时序示意** |
-| Demo：轻量结果 | [../src/ScrewDriverC# Winform(GetResultStatus)](../src/ScrewDriverC#%20Winform(GetResultStatus)/) | Modbus only，`GetResultStatus`，窗体 `Example_GetResultStatus_V0.0.0.0` |
-| Demo：全量 Modbus | [../src/ScrewDriverC# Winform(ModbusTCP)](../src/ScrewDriverC#%20Winform(ModbusTCP)/) | `#750` + `#751` 分块读曲线，`Example_ModbusTCP_V0.0.0.3` |
-| Demo：Modbus + FTP | [../src/ScrewDriverC# Winform(ModbusTCP+FTP)](../src/ScrewDriverC#%20Winform(ModbusTCP+FTP)/) | `#517` 自动导出 Bin + FTP 下载解析 |
+| Demo：轻量结果 | [../SupplierDemo/ScrewDriverC# Winform(GetResultStatus)](../SupplierDemo/ScrewDriverC%23%20Winform(GetResultStatus)/) | Modbus only，`GetResultStatus`，窗体 `Example_GetResultStatus_V0.0.0.0` |
+| Demo：全量 Modbus | [../SupplierDemo/ScrewDriverC# Winform(ModbusTCP)](../SupplierDemo/ScrewDriverC%23%20Winform(ModbusTCP)/) | `#750` + `#751` 分块读曲线，`Example_ModbusTCP_V0.0.0.3` |
+| Demo：Modbus + FTP | [../SupplierDemo/ScrewDriverC# Winform(ModbusTCP+FTP)](../SupplierDemo/ScrewDriverC%23%20Winform(ModbusTCP+FTP)/) | `#517` 自动导出 Bin + FTP 下载解析 |
+| **上位机驱动实现** | [../src/UDL.Delta.IemdSd](../src/UDL.Delta.IemdSd/) | .NET 8 类库：Modbus 邮箱、`#302`/`#750`/`#751`、GetResultStatus 拧紧周期 |
+| **产线适配** | [../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs) | 实现 `ILockStationHardware`，供钉仍仿真 |
 | Bin 字表 | 同目录 `BinFile Explain.xlsx`、`Bin檔解譯.xlsx` | Word 偏移与字段名（与 Demo `ParseFileBin` 交叉校验） |
 | 厂商幻灯片 | 各 Demo 下 `電鎖通訊應用*.pptx` | 联调图示（未全文抽取） |
 | 控制器手册 | [../src/IEMD-SD系列10.1寸控制器(1).pdf](../src/IEMD-SD系列10.1寸控制器(1).pdf) | 台达 **SD3 系列**操作手册（528 页）；硬件/HMI/附录 Modbus·TCP |
@@ -369,23 +371,32 @@ ParamConvertNmThenConvertUserUnitCoef =
 
 ## 8. 对 AutoScrew 的实现建议
 
-### 8.1 分层
+### 8.0 已实现（仓库内）
 
-在 `AutoScrew.Infrastructure` 增加端口，例如：
+| 组件 | 路径 | 说明 |
+|------|------|------|
+| 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Connect / Initialize / `#302` / 拧紧周期 / `#750` / `#751` |
+| 硬件适配 | `AutoScrew.Infrastructure` → `IemdSdLockStationHardware` | 实现 `ILockStationHardware`；`LastOutcome` 供会话层合并设备 NG |
+| 配置 | `src/AutoScrew.Hmi/appsettings.json.example` → 复制为 `appsettings.json` | `IemdSd:Enabled=true` 且 `AutoScrew:UseSimulatedHardware=false` 时接真机 |
+| 判定 | `OperatorSessionController` | **曲线规则 NG 或设备 Status NG 则螺钉 NG** |
+| 单元测试 | `tests/UDL.Delta.IemdSd.Tests` | 邮箱请求、`ReportReader`、扭矩单位换算 |
 
-```csharp
-// 示意 — 非最终实现
-interface IScrewDriverClient
-{
-    Task ConnectAsync(string host, int port = 502, CancellationToken ct = default);
-    Task<TighteningResult> WaitCycleAsync(TighteningTrigger trigger, CancellationToken ct = default);
-    Task<CurveSnapshot?> ReadCurveAsync(long reportId, CancellationToken ct = default);
-}
-```
+**联机步骤（FAT）**：
 
-- **α**：移植 **GetResultStatus** 状态机 + 配置 IP / `AutoDi`；提供 **Mock**（固定 OK/NG）。  
-- **β**：按追溯需要选 **#751** 或 **FTP Bin**；曲线落盘遵循 `torque_curve_{positionIndex}_{timestamp}.csv`。  
-- **工艺切换**：扫码后调用 **#302**（验证手动设定模式）。  
+1. 控制器与 PC 同网段；`appsettings.json` 中设置 `IemdSd:Host`、`Port`（默认 502）。
+2. `IemdSd:Enabled=true`，`AutoScrew:UseSimulatedHardware=false`，`TriggerMode` 与现场一致（`AutoDi` / `Manual`）。
+3. 启动 HMI，扫码加载工艺；MES 或 `ParameterIdByPosition` 提供 `#302` 用的 ParamID。
+4. 单颗拧紧：确认 `0x1F5D` 完成、曲线 CSV 落盘、MES 出站含 `FinalTorqueNm` / `FinalAngleDeg`。
+
+**二期**：FTP Bin（`#517`）、`#100`/`#150` 全参数读写 → 可扩展 `UDL.Delta.IemdSd` 或独立 `UDL.Delta.IemdSd.Ftp`。
+
+### 8.1 分层（历史示意）
+
+驱动端口已落地为 `UDL.Delta.IemdSd.IIemdSdClient`；Application 仍通过 `ILockStationHardware` 抽象，不直接引用 Modbus。
+
+- **α（当前）**：GetResultStatus + `#750`/`#751` + `#302`。  
+- **β**：按需增加 FTP Bin 或更完整参数模板。  
+- **工艺切换**：`ScrewRecipeDto.ControllerParameterId` 或 `IemdSd:ParameterIdByPosition`。  
 
 ### 8.2 禁止与改进项
 
@@ -419,9 +430,10 @@ interface IScrewDriverClient
 
 | 内容 | 文件 |
 |------|------|
-| 轻量状态机 | `src/ScrewDriverC# Winform(GetResultStatus)/Delta C#/Form1.cs` |
-| 750/751 状态机 | `src/ScrewDriverC# Winform(ModbusTCP)/Delta C#/Form1.cs` |
-| FTP + ParseFileBin | `src/ScrewDriverC# Winform(ModbusTCP+FTP)/Delta C#/Form1.cs` |
+| 轻量状态机 | `SupplierDemo/ScrewDriverC# Winform(GetResultStatus)/Delta C#/Form1.cs` |
+| 750/751 状态机 | `SupplierDemo/ScrewDriverC# Winform(ModbusTCP)/Delta C#/Form1.cs` |
+| FTP + ParseFileBin | `SupplierDemo/ScrewDriverC# Winform(ModbusTCP+FTP)/Delta C#/Form1.cs` |
+| UDL 驱动 | `src/UDL.Delta.IemdSd/IemdSdClient.cs` |
 | Help 索引 | `doc/Help/ScrewHelp.html` |
 | Bin 字表 | `src/ScrewDriverC# Winform(ModbusTCP+FTP)/BinFile Explain.xlsx` |
 | 手册 PDF | `src/IEMD-SD系列10.1寸控制器(1).pdf` |

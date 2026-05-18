@@ -31,6 +31,8 @@ public sealed class OperatorSessionController
     private ImmutableArray<ScrewPosition> _positions = ImmutableArray<ScrewPosition>.Empty;
     private ImmutableArray<StationScrewState> _states = ImmutableArray<StationScrewState>.Empty;
     private ImmutableArray<SegmentedTorqueProgram> _programs = ImmutableArray<SegmentedTorqueProgram>.Empty;
+    private ImmutableArray<ScrewRecipeDto> _recipeScrews = ImmutableArray<ScrewRecipeDto>.Empty;
+    private readonly List<ScrewCycleRecord> _screwRecords = new();
     private int _currentIndex;
     private string? _resolvedImagePath;
     private double _boardWidth;
@@ -145,6 +147,8 @@ public sealed class OperatorSessionController
             _states = states.ToImmutableArray();
 
             _programs = BuildPrograms(recipe, _positions.Length);
+            _recipeScrews = recipe.Screws.ToImmutableArray();
+            _screwRecords.Clear();
 
             if (!TryApply(JobSessionTrigger.RecipeLoaded))
             {
@@ -230,58 +234,75 @@ public sealed class OperatorSessionController
 
         await _hardware.PickScrewAsync(cancellationToken).ConfigureAwait(false);
 
+        var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == idx + 1)
+                  ?? _recipeScrews.ElementAtOrDefault(idx);
+        var paramId = dto?.ControllerParameterId ?? idx + 1;
+        var tighteningContext = new TighteningContext(idx + 1, paramId);
+
         var samples = new List<TorqueAngleSample>();
-        await foreach (var sample in _hardware.RunTighteningAsync(cancellationToken).ConfigureAwait(false))
+        await foreach (var sample in _hardware.RunTighteningAsync(tighteningContext, cancellationToken).ConfigureAwait(false))
             samples.Add(sample);
 
         LastTighteningSamples = samples;
 
         var program = _programs[idx];
         var eval = LockCurveEvaluator.Evaluate(samples.ToArray(), program);
+        var device = _hardware.LastOutcome;
+        var deviceOk = device?.DeviceOk ?? true;
+        var combinedOk = eval.IsOk && deviceOk;
+
         var curvePath = await _curveArchive
             .SaveCurveCsvAsync(_serialNumber!, idx + 1, samples, cancellationToken)
             .ConfigureAwait(false);
 
-        if (eval.IsOk)
+        var finalTorque = device?.FinalTorqueNm ?? (samples.Count > 0 ? samples[^1].TorqueNm : (double?)null);
+        var finalAngle = device?.FinalAngleDeg ?? (samples.Count > 0 ? samples[^1].AngleDeg : (double?)null);
+        string? errorCode = null;
+        if (!combinedOk)
+            errorCode = !deviceOk
+                ? device?.DeviceErrorCode?.ToString() ?? "DEVICE_NG"
+                : eval.ErrorCode;
+
+        _screwRecords.Add(new ScrewCycleRecord(idx + 1, combinedOk, errorCode, finalTorque, finalAngle, curvePath));
+
+        if (combinedOk)
         {
             SetState(idx, StationScrewState.Ok);
             _currentIndex = NextPendingIndex(idx + 1);
             if (_currentIndex < 0)
             {
                 if (TryApply(JobSessionTrigger.AllScrewsComplete))
-                    await CompleteSessionAsync(samples, curvePath, eval, cancellationToken).ConfigureAwait(false);
+                    await CompleteSessionAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         else
         {
             SetState(idx, StationScrewState.Ng);
             TryApply(JobSessionTrigger.ScrewNg);
-            _lastErrorMessage = eval.Message ?? eval.ErrorCode;
-            await LogErrorAsync(idx, eval, cancellationToken).ConfigureAwait(false);
+            _lastErrorMessage = !deviceOk
+                ? $"Device NG (code {device?.DeviceErrorCode})"
+                : eval.Message ?? eval.ErrorCode;
+            await LogErrorAsync(idx, eval, device, cancellationToken).ConfigureAwait(false);
         }
 
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task CompleteSessionAsync(
-        List<TorqueAngleSample> lastSamples,
-        string lastCurvePath,
-        LockEvaluationResult lastEval,
-        CancellationToken cancellationToken)
+    private async Task CompleteSessionAsync(CancellationToken cancellationToken)
     {
         var screws = new List<ScrewResultDto>(_positions.Length);
         for (var i = 0; i < _positions.Length; i++)
         {
             var st = _states[i];
-            var isLast = i == _positions.Length - 1;
+            var record = _screwRecords.FirstOrDefault(r => r.PositionIndex == i + 1);
             screws.Add(new ScrewResultDto
             {
                 PositionIndex = i + 1,
                 Result = st == StationScrewState.Ok ? "OK" : st == StationScrewState.Ng ? "NG" : "SKIPPED",
-                ErrorCode = st == StationScrewState.Ng ? "NG" : null,
-                FinalTorqueNm = isLast && lastSamples.Count > 0 ? lastSamples[^1].TorqueNm : null,
-                FinalAngleDeg = isLast && lastSamples.Count > 0 ? lastSamples[^1].AngleDeg : null,
-                CurveRelativePath = isLast ? lastCurvePath : null
+                ErrorCode = record?.ErrorCode ?? (st == StationScrewState.Ng ? "NG" : null),
+                FinalTorqueNm = record?.FinalTorqueNm,
+                FinalAngleDeg = record?.FinalAngleDeg,
+                CurveRelativePath = record?.CurveRelativePath
             });
         }
 
@@ -310,11 +331,28 @@ public sealed class OperatorSessionController
         await _checkpointStore.ClearCheckpointAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private Task LogErrorAsync(int index, LockEvaluationResult eval, CancellationToken cancellationToken)
+    private Task LogErrorAsync(
+        int index,
+        LockEvaluationResult eval,
+        LockHardwareOutcome? device,
+        CancellationToken cancellationToken)
     {
-        _logger.LogWarning("Screw {Index} NG: {Code} {Msg}", index + 1, eval.ErrorCode, eval.Message);
+        _logger.LogWarning(
+            "Screw {Index} NG: rule={RuleCode} deviceOk={DeviceOk} deviceCode={DeviceCode}",
+            index + 1,
+            eval.ErrorCode,
+            device?.DeviceOk ?? true,
+            device?.DeviceErrorCode);
         return Task.CompletedTask;
     }
+
+    private sealed record ScrewCycleRecord(
+        int PositionIndex,
+        bool Ok,
+        string? ErrorCode,
+        double? FinalTorqueNm,
+        double? FinalAngleDeg,
+        string? CurveRelativePath);
 
     public void UnlockNgContinue()
     {
@@ -344,6 +382,8 @@ public sealed class OperatorSessionController
         _positions = ImmutableArray<ScrewPosition>.Empty;
         _states = ImmutableArray<StationScrewState>.Empty;
         _programs = ImmutableArray<SegmentedTorqueProgram>.Empty;
+        _recipeScrews = ImmutableArray<ScrewRecipeDto>.Empty;
+        _screwRecords.Clear();
         _currentIndex = 0;
         _resolvedImagePath = null;
         _boardWidth = 0;

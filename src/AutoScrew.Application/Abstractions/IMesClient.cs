@@ -17,7 +17,14 @@ public sealed record RecipeBundle(
     string? ProductImageUrl,
     IReadOnlyList<ScrewRecipeDto> Screws);
 
-public sealed record ScrewRecipeDto(int PositionIndex, string? PartNo, double TargetTorqueNm, double TorqueLowerNm, double TorqueUpperNm, double AngleLimitDeg);
+public sealed record ScrewRecipeDto(
+    int PositionIndex,
+    string? PartNo,
+    double TargetTorqueNm,
+    double TorqueLowerNm,
+    double TorqueUpperNm,
+    double AngleLimitDeg,
+    int? ControllerParameterId = null);
 
 public sealed record MesUploadResult(bool Accepted, string? Message, string? IdempotencyKey);
 
