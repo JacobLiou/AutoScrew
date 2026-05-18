@@ -83,6 +83,7 @@ flowchart LR
 | [doc/RISK_REGISTER.md](doc/RISK_REGISTER.md) | 风险台账 |
 | [doc/VERIFICATION_FAT_SAT.md](doc/VERIFICATION_FAT_SAT.md) | FAT/SAT 验证检查表 |
 | [doc/DATA_AND_TRACE.md](doc/DATA_AND_TRACE.md) | 数据模型与追溯契约 |
+| [doc/driverAnaC.md](doc/driverAnaC.md) | 智能电批 Modbus/FTP 通信与厂商 Demo 梳理 |
 | [doc/智能锁附系统开发 (V1).xls](<doc/智能锁附系统开发 (V1).xls>) | 原始需求与验收表（含图） |
 | `src/` | 应用软件代码（待建） |
 

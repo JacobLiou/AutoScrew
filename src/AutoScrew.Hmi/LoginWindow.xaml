@@ -204,13 +204,8 @@
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="0 20 0 0">
-                            <hc:ToggleBlock IsChecked="{Binding RememberMe, Mode=TwoWay}"
-                                            CheckedContent=""
-                                            UnCheckedContent=""
-                                            IndeterminateContent=""
-                                            Margin="0,0,8,0"
-                                            VerticalAlignment="Center" />
                             <CheckBox Content="记住密码"
+                                      IsChecked="{Binding RememberMe, Mode=TwoWay}"
                                       VerticalAlignment="Center"
                                       Foreground="#CCFFFFFF"
                                       FontSize="13" />

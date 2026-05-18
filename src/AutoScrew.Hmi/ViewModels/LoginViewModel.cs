@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Infrastructure;
@@ -8,19 +9,42 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public partial class LoginViewModel : ObservableObject
 {
+    private const string ForgotPasswordMailTo = "wanxin.wang@molex.com";
+
     private readonly IUserAuthenticationService _authentication;
     private readonly SessionCurrentUser _currentUser;
+
+    /// <summary>从本机凭据存储读出的口令，由 <see cref="LoginWindow"/> 在窗口就绪后写入密码框并清空。</summary>
+    private string? _deferredRememberedPassword;
 
     public LoginViewModel(IUserAuthenticationService authentication, SessionCurrentUser currentUser)
     {
         _authentication = authentication;
         _currentUser = currentUser;
-        var remembered = LoginUiPreferences.TryGetRememberedUserName();
-        if (!string.IsNullOrEmpty(remembered))
+
+        if (LoginRememberedCredentialStore.TryLoad(out var u, out var p) && !string.IsNullOrWhiteSpace(p))
         {
-            UserName = remembered;
+            UserName = u;
             RememberMe = true;
+            _deferredRememberedPassword = p;
         }
+        else
+        {
+            var legacyUser = LoginUiPreferences.TryGetRememberedUserName();
+            if (!string.IsNullOrEmpty(legacyUser))
+            {
+                UserName = legacyUser;
+                RememberMe = true;
+            }
+        }
+    }
+
+    /// <summary>由 <see cref="LoginWindow"/> 在首次布局完成后调用一次，取出待填充的记住密码。</summary>
+    internal string? ConsumeDeferredRememberedPassword()
+    {
+        var p = _deferredRememberedPassword;
+        _deferredRememberedPassword = null;
+        return p;
     }
 
     /// <summary>由 <see cref="LoginWindow"/> 赋值，用于读取密码框内容（不在 VM 中持有控件引用）。</summary>
@@ -53,9 +77,15 @@ public partial class LoginViewModel : ObservableObject
         }
 
         if (RememberMe)
-            LoginUiPreferences.SetRememberedUserName(UserName);
-        else
+        {
+            LoginRememberedCredentialStore.Save(UserName, password);
             LoginUiPreferences.ClearRememberedUserName();
+        }
+        else
+        {
+            LoginRememberedCredentialStore.Clear();
+            LoginUiPreferences.ClearRememberedUserName();
+        }
 
         _currentUser.SetRole(
             result.Role,
@@ -77,10 +107,25 @@ public partial class LoginViewModel : ObservableObject
             "新账号由 MIMS 管理员在系统中创建；本机无法自助注册。请联系信息化或产线管理员。"));
 
     [RelayCommand]
-    private void OpenForgotPassword() =>
-        NoticeRequested?.Invoke(this, new LoginNotice(
-            "忘记密码",
-            "请通过公司 MIMS / IT 流程重置密码，或联系管理员处理。"));
+    private void OpenForgotPassword()
+    {
+        var subject = Uri.EscapeDataString("AutoScrew 忘记密码");
+        var uri = $"mailto:{ForgotPasswordMailTo}?subject={subject}";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = uri,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            NoticeRequested?.Invoke(this, new LoginNotice(
+                "忘记密码",
+                $"无法打开默认邮件程序（通常为 Outlook）：{ex.Message}\n请手动发邮件至：{ForgotPasswordMailTo}"));
+        }
+    }
 
     [RelayCommand]
     private void OpenOtherHelp() =>
