@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrewDriver</title>
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+        #chapterList {
+            background-color: #f0f0f0;
+            width: 300px;
+			height: 1000px;
+            padding: 10px;
+            border-right: 1px solid #ccc;
+        }
+        #gifDisplay {
+            background-color: #f9f9f9;
+            flex-grow: 1;
+			height: 1000px;
+            padding: 10px;
+            text-align: center;
+        }
+        .C1 {
+            cursor: pointer;
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid transparent;
+			font-weight: bold;
+			text-decoration: underline;
+        }
+        .C1:hover {
+            border: 1px solid #007BFF;
+        }
+        .C2 {
+            cursor: pointer;
+            margin-left: 15px;
+            padding: 5px;
+            border: 1px solid transparent;
+			font-weight: bold;
+        }
+        .C2:hover {
+            border: 1px solid #28A745;
+        }
+        .C3 {
+            cursor: pointer;
+            margin-left: 30px;
+            padding: 5px;
+            border: 1px solid transparent;
+        }
+        .C3:hover {
+            border: 1px solid #FF0045;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chapterList">
+    <!--
+	<div class="C1">Parameter</div>
+	<div class="C1">Sequence</div>
+	<div class="C1">Source</div>
+	-->
+    <div class="C1">Quick Start</div>
+        <div class="C3" onclick="showGif('ScrewHelp/QuickStart.gif')">Tightening Start</div>
+    <!--
+	<div class="C1">Alarm</div>
+	-->
+    <div class="C1">Communication</div>
+		<div class="C2">Get Result</div>
+			<div class="C3" onclick="showGif('ScrewHelp/StartTighteningAndGetResultStatus_Automation.gif')">Automation</div>
+			<div class="C3" onclick="showGif('ScrewHelp/StartTighteningAndGetResultStatus_Manual.gif')">Manual station</div>
+		<div class="C2">Get Report Info</div>
+			<div class="C3" onclick="showGif('ScrewHelp/ReadReport750.gif')">Modbus TCP #750</div>
+			<div class="C3" onclick="showGif('ScrewHelp/ReadCurve751.gif')">Modbus TCP #751</div>
+			<div class="C3" onclick="showGif('ScrewHelp/ReadCurve751ByFTP.gif')">FTP</div>
+		<div class="C2">Switch Param ID</div>
+			<div class="C3" onclick="showGif('ScrewHelp/StartTighteningAndSwitchParamID.gif')">Modbus TCP #302</div>
+    <div class="C1">Update firmware</div>
+        <div class="C3" onclick="showGif('ScrewHelp/Update_FW_10.1.gif')">Update 10.1</div>
+        <div class="C3" onclick="showGif('ScrewHelp/Update_FW_4.3.gif')">Update  4.3</div>
+        <!--<div class="C2" onclick="showGif('ScrewHelp/UpdateHMI/Update_BIOS_10.1I.gif')">Update HMI BIOS</div>-->
+</div>
+
+<div id="gifDisplay">
+    <img id="gifImage" src="" alt="Unable to display" style="display:none; max-width: 100%;">
+</div>
+
+<script>
+    function showGif(gifName) {
+        const gifImage = document.getElementById('gifImage');
+        gifImage.src = gifName;
+        gifImage.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
