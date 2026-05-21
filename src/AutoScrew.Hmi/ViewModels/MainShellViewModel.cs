@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Hmi.Services;
 using AutoScrew.TemplateBoard.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -20,15 +21,18 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private readonly MainViewModel _operation;
     private readonly MainWindowViewModel _templateBoard;
     private readonly ICurrentUser _currentUser;
+    private readonly IAppSessionCoordinator _sessionCoordinator;
 
     public MainShellViewModel(
         MainViewModel operation,
         MainWindowViewModel templateBoard,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IAppSessionCoordinator sessionCoordinator)
     {
         _operation = operation;
         _templateBoard = templateBoard;
         _currentUser = currentUser;
+        _sessionCoordinator = sessionCoordinator;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
 
@@ -116,6 +120,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
+
+    [RelayCommand]
+    private void Logout() => _sessionCoordinator.RequestLogout();
 
     private void RefreshUserBanner()
     {

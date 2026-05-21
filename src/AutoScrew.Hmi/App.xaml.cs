@@ -61,6 +61,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<MainWindowViewModel>();
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
+        builder.Services.AddSingleton<IAppSessionCoordinator, AppSessionCoordinator>();
 
         _host = builder.Build();
 

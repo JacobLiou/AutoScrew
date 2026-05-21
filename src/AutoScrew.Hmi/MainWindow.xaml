@@ -26,9 +26,6 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="hc:BorderElement.CornerRadius" Value="8"/>
         </Style>
-        <!-- 侧栏图标：作业台 / 模板 -->
-        <PathGeometry x:Key="GeoSidebarOperation" Figures="M10,20 L10,14 L14,14 L14,20 L19,20 L19,12 L22,12 L12,3 L2,12 L5,12 L5,20 Z"/>
-        <PathGeometry x:Key="GeoSidebarTemplate" Figures="M3,17 L3,21 L7,21 L18,10 L14,6 Z M20.71,7 L21,6.6 L21,6.1 L20.6,5.7 L18.4,3.5 L18,3.1 L17.5,3.1 L15.3,5.3 L19,9 Z"/>
 
         <DataTemplate DataType="{x:Type vm:MainViewModel}">
             <views:OperationPageView />
@@ -62,17 +59,24 @@
                            FontSize="11"
                            Margin="16,8"/>
 
-                <hc:SideMenu Margin="0,8,0,0" ExpandMode="Freedom">
-                    <hc:SideMenuItem Header="Operation"
-                                     Icon="{StaticResource GeoSidebarOperation}"
-                                     Command="{Binding NavigateOperationCommand}"
-                                     IsSelected="{Binding IsOperationNavSelected, Mode=OneWay}"/>
-                    <hc:SideMenuItem Header="Template"
-                                     Icon="{StaticResource GeoSidebarTemplate}"
-                                     Command="{Binding NavigateTemplateCommand}"
-                                     Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                     IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}"/>
-                </hc:SideMenu>
+                <StackPanel Margin="0,8,0,0">
+                    <TextBlock Text="导航"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="#FF94A3B8"
+                               Margin="20,0,16,8"/>
+                    <hc:SideMenu ExpandMode="Freedom">
+                        <hc:SideMenuItem Header="作业台"
+                                         Icon="{StaticResource GeoNavOperation}"
+                                         Command="{Binding NavigateOperationCommand}"
+                                         IsSelected="{Binding IsOperationNavSelected, Mode=OneWay}"/>
+                        <hc:SideMenuItem Header="螺钉模板"
+                                         Icon="{StaticResource GeoNavTemplate}"
+                                         Command="{Binding NavigateTemplateCommand}"
+                                         Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}"/>
+                    </hc:SideMenu>
+                </StackPanel>
             </DockPanel>
         </Border>
 
@@ -116,24 +120,27 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel VerticalAlignment="Center">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding UserGreeting}"
                                            FontWeight="SemiBold"
-                                           Foreground="#FF111827" />
+                                           Foreground="#FF111827"/>
+                                <TextBlock Text="{Binding UserRoleDisplay}"
+                                           Margin="8,0,0,0"
+                                           FontSize="12"
+                                           Foreground="#FF64748B"
+                                           VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock Text="已登录" FontSize="11" Foreground="#FF64748B"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding UserRoleDisplay}"
-                                   Margin="8,0,0,0"
-                                   FontSize="12"
-                                   Foreground="#FF64748B"
-                                   VerticalAlignment="Center" />
-                        <Button Content="关于"
-                                Margin="16,0,0,0"
-                                Padding="12,6"
+                        <Button Style="{StaticResource HeaderIconCircleButton}"
+                                ToolTip="关于"
                                 Command="{Binding ShowAboutCommand}"
-                                Style="{StaticResource ButtonDefault}"/>
+                                hc:IconElement.Geometry="{StaticResource GeoAbout}"/>
+                        <Button Style="{StaticResource HeaderIconCircleButton}"
+                                ToolTip="登出"
+                                Command="{Binding LogoutCommand}"
+                                hc:IconElement.Geometry="{StaticResource GeoLogout}"/>
                     </StackPanel>
                 </Grid>
             </Border>
