@@ -7,13 +7,14 @@ using System.Text.Json;
 namespace AutoScrew.Hmi.Services;
 
 /// <summary>
-/// 在本机当前用户目录下保存「记住密码」（DPAPI 加密口令）。
+/// 在本机当前用户目录下保存「记住密码」（DPAPI 加密口令），最长保留 7 天。
 /// 主存为 <c>%LocalAppData%\AutoScrew\remembered_login.json</c>；部分宿主下
 /// <see cref="IsolatedStorageFile"/> 写入不可靠，故仅作兼容读取并在成功读出后迁移到主存。
 /// </summary>
 internal static class LoginRememberedCredentialStore
 {
     private const string FileName = "remembered_login.json";
+    private static readonly TimeSpan MaxRememberDuration = TimeSpan.FromDays(7);
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("AutoScrew.LoginRemembered.v1");
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -26,6 +27,9 @@ internal static class LoginRememberedCredentialStore
         plainPassword = null;
         if (TryDeserializeFromPath(PrimaryFilePath, out userName, out plainPassword))
             return true;
+
+        if (File.Exists(PrimaryFilePath))
+            Clear();
 
         if (!TryDeserializeFromIsolatedStorage(out userName, out plainPassword) || string.IsNullOrWhiteSpace(plainPassword))
             return false;
@@ -85,6 +89,7 @@ internal static class LoginRememberedCredentialStore
         {
             UserName = userName.Trim(),
             PasswordProtectedBase64 = Convert.ToBase64String(cipher),
+            SavedAtUtc = DateTime.UtcNow,
         };
         return JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = false });
     }
@@ -98,7 +103,8 @@ internal static class LoginRememberedCredentialStore
             if (!File.Exists(path))
                 return false;
             var json = File.ReadAllText(path, Utf8NoBom);
-            return TryDeserializeJson(json, out userName, out plainPassword);
+            var fileSavedAtUtc = File.GetLastWriteTimeUtc(path);
+            return TryDeserializeJson(json, fileSavedAtUtc, out userName, out plainPassword);
         }
         catch
         {
@@ -119,7 +125,7 @@ internal static class LoginRememberedCredentialStore
             using var stream = store.OpenFile(FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var reader = new StreamReader(stream, Encoding.UTF8);
             var json = reader.ReadToEnd();
-            return TryDeserializeJson(json, out userName, out plainPassword);
+            return TryDeserializeJson(json, fallbackSavedAtUtc: null, out userName, out plainPassword);
         }
         catch
         {
@@ -127,7 +133,11 @@ internal static class LoginRememberedCredentialStore
         }
     }
 
-    private static bool TryDeserializeJson(string json, out string userName, out string? plainPassword)
+    private static bool TryDeserializeJson(
+        string json,
+        DateTime? fallbackSavedAtUtc,
+        out string userName,
+        out string? plainPassword)
     {
         userName = "";
         plainPassword = null;
@@ -135,6 +145,9 @@ internal static class LoginRememberedCredentialStore
         {
             var dto = JsonSerializer.Deserialize<RememberDto>(json);
             if (dto is null || string.IsNullOrWhiteSpace(dto.UserName) || string.IsNullOrWhiteSpace(dto.PasswordProtectedBase64))
+                return false;
+
+            if (!IsWithinRememberWindow(dto.SavedAtUtc ?? fallbackSavedAtUtc))
                 return false;
 
             userName = dto.UserName.Trim();
@@ -147,6 +160,14 @@ internal static class LoginRememberedCredentialStore
         {
             return false;
         }
+    }
+
+    private static bool IsWithinRememberWindow(DateTime? savedAtUtc)
+    {
+        if (savedAtUtc is null)
+            return false;
+
+        return DateTime.UtcNow - savedAtUtc.Value.ToUniversalTime() <= MaxRememberDuration;
     }
 
     private static void TryWriteIsolatedStorage(string json)
@@ -167,6 +188,9 @@ internal static class LoginRememberedCredentialStore
     private sealed class RememberDto
     {
         public string UserName { get; set; } = "";
+
         public string PasswordProtectedBase64 { get; set; } = "";
+
+        public DateTime? SavedAtUtc { get; set; }
     }
 }
