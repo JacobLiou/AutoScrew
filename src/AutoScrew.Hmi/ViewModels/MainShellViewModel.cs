@@ -1,11 +1,17 @@
-using System.ComponentModel;
-using System.Reflection;
-using System.Windows;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
 using AutoScrew.TemplateBoard.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace AutoScrew.Hmi.ViewModels;
 
@@ -22,17 +28,20 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private readonly MainWindowViewModel _templateBoard;
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
+    private readonly ILogger<MainShellViewModel> _logger;
 
     public MainShellViewModel(
         MainViewModel operation,
         MainWindowViewModel templateBoard,
         ICurrentUser currentUser,
-        IAppSessionCoordinator sessionCoordinator)
+        IAppSessionCoordinator sessionCoordinator,
+        ILogger<MainShellViewModel> logger)
     {
         _operation = operation;
         _templateBoard = templateBoard;
         _currentUser = currentUser;
         _sessionCoordinator = sessionCoordinator;
+        _logger = logger;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
 
@@ -109,6 +118,90 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private void NavigateTemplate() => SelectedSection = MainAppSection.Template;
 
     private bool CanNavigateTemplate() => CanUseTemplateBoard;
+
+    [RelayCommand]
+    private void OpenNotepad()
+    {
+        Process.Start(@"notepad.exe");
+    }
+
+    [RelayCommand]
+    private void OpenCalc()
+    {
+        Process.Start("calc.exe");
+    }
+
+    [RelayCommand]
+    private async Task PrintScreenAsync()
+    {
+        var fileDialog = new SaveFileDialog
+        {
+            CheckPathExists = true,
+            FileName = $"scr{DateTime.Now:yyyy-MM-dd-HH-mm-ss-ffff}",
+            AddExtension = true,
+            DefaultExt = "jpg",
+            Filter = "jpg files(*.jpg)|*.jpg",
+            RestoreDirectory = true
+        };
+        if (fileDialog.ShowDialog() != true)
+            return;
+
+        // 等待保存对话框关闭后再截图，避免对话框残留在画面中
+        await Task.Delay(300);
+
+        var window = System.Windows.Application.Current.MainWindow;
+        if (window is null || window.ActualWidth <= 0 || window.ActualHeight <= 0)
+            return;
+
+        try
+        {
+            var dpi = VisualTreeHelper.GetDpi(window);
+            var width = (int)(window.ActualWidth * dpi.DpiScaleX);
+            var height = (int)(window.ActualHeight * dpi.DpiScaleY);
+            if (width <= 0 || height <= 0)
+                return;
+
+            var bitmap = new RenderTargetBitmap(
+                width, height, dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+            bitmap.Render(window);
+
+            var encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            await using var stream = File.Create(fileDialog.FileName);
+            encoder.Save(stream);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "程序截屏失败");
+            MessageBox.Show("截屏保存失败，请查看日志。", "程序截屏", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    [RelayCommand]
+    private void ExplorerLogs()
+    {
+        try
+        {
+            Process.Start(@"explorer.exe", $"{AppContext.BaseDirectory}Logs");
+        }
+        catch
+        {
+            // don't care
+        }
+    }
+
+    [RelayCommand]
+    private void OpenAppPath()
+    {
+        try
+        {
+            Process.Start("explorer.exe", "\"" + AppDomain.CurrentDomain.BaseDirectory + "\"");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OpenAppPath failed");
+        }
+    }
 
     [RelayCommand]
     private void ShowAbout()

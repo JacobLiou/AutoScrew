@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AutoScrew.Common\AutoScrew.Common.csproj" />
     <ProjectReference Include="..\AutoScrew.Domain\AutoScrew.Domain.csproj" />
   </ItemGroup>
 

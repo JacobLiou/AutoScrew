@@ -1,34 +1,47 @@
-using EasyModbus;
 using Microsoft.Extensions.Logging;
+using NModbus;
+using System.Net.Sockets;
 using UDL.Delta.IemdSd.Exceptions;
 
 namespace UDL.Delta.IemdSd.Modbus;
 
 internal sealed class ModbusTransport : IDisposable
 {
-    private readonly ModbusClient _client;
+    private readonly string _host;
+    private readonly int _port;
     private readonly ILogger _logger;
     private readonly int _readWindowSize;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private TcpClient? _tcpClient;
+    private IModbusMaster? _master;
+    private const byte SlaveId = 1;
 
     public ModbusTransport(IemdSdClientOptions options, ILogger logger)
     {
         _logger = logger;
+        _host = options.Host;
+        _port = options.Port;
         _readWindowSize = options.ReadWindowSize;
-        _client = new ModbusClient(options.Host, options.Port);
     }
 
-    public bool IsConnected => _client.Connected;
+    public bool IsConnected => _tcpClient?.Connected == true;
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_client.Connected)
+            if (_tcpClient?.Connected == true)
                 return;
-            await Task.Run(() => _client.Connect(), cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("IEMD-SD Modbus connected to {Host}:{Port}", _client.IPAddress, _client.Port);
+
+            _master?.Dispose();
+            _tcpClient?.Dispose();
+
+            _tcpClient = new TcpClient();
+            await _tcpClient.ConnectAsync(_host, _port, cancellationToken).ConfigureAwait(false);
+            var factory = new ModbusFactory();
+            _master = factory.CreateMaster(_tcpClient);
+            _logger.LogInformation("IEMD-SD Modbus connected to {Host}:{Port}", _host, _port);
         }
         catch (Exception ex)
         {
@@ -45,8 +58,10 @@ internal sealed class ModbusTransport : IDisposable
         _gate.Wait();
         try
         {
-            if (_client.Connected)
-                _client.Disconnect();
+            _master?.Dispose();
+            _master = null;
+            _tcpClient?.Dispose();
+            _tcpClient = null;
         }
         finally
         {
@@ -65,7 +80,7 @@ internal sealed class ModbusTransport : IDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await Task.Run(() => ReadHoldingCore(address, count), cancellationToken).ConfigureAwait(false);
+            return await ReadHoldingCoreAsync(address, count, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -78,7 +93,12 @@ internal sealed class ModbusTransport : IDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await Task.Run(() => _client.WriteSingleRegister(address, value), cancellationToken).ConfigureAwait(false);
+            EnsureMaster();
+            await _master!.WriteSingleRegisterAsync(SlaveId, (ushort)address, (ushort)value).ConfigureAwait(false);
+        }
+        catch (IemdSdCommunicationException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -95,7 +115,11 @@ internal sealed class ModbusTransport : IDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await Task.Run(() => WriteMultipleCore(address, values), cancellationToken).ConfigureAwait(false);
+            await WriteMultipleCoreAsync(address, values, cancellationToken).ConfigureAwait(false);
+        }
+        catch (IemdSdCommunicationException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -107,28 +131,39 @@ internal sealed class ModbusTransport : IDisposable
         }
     }
 
-    private int[] ReadHoldingCore(int address, int count)
+    private async Task<int[]> ReadHoldingCoreAsync(int address, int count, CancellationToken cancellationToken)
     {
+        EnsureMaster();
         var result = new int[count];
         for (var offset = 0; offset < count; offset += _readWindowSize)
         {
-            var chunk = Math.Min(_readWindowSize, count - offset);
-            var data = _client.ReadHoldingRegisters(address + offset, chunk);
-            Array.Copy(data, 0, result, offset, chunk);
+            cancellationToken.ThrowIfCancellationRequested();
+            var chunk = (ushort)Math.Min(_readWindowSize, count - offset);
+            var data = await _master!.ReadHoldingRegistersAsync(SlaveId, (ushort)(address + offset), chunk).ConfigureAwait(false);
+            for (var i = 0; i < chunk; i++)
+                result[offset + i] = data[i];
         }
-
         return result;
     }
 
-    private void WriteMultipleCore(int address, int[] values)
+    private async Task WriteMultipleCoreAsync(int address, int[] values, CancellationToken cancellationToken)
     {
+        EnsureMaster();
         for (var offset = 0; offset < values.Length; offset += _readWindowSize)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var chunk = Math.Min(_readWindowSize, values.Length - offset);
-            var slice = new int[chunk];
-            Array.Copy(values, offset, slice, 0, chunk);
-            _client.WriteMultipleRegisters(address + offset, slice);
+            var slice = new ushort[chunk];
+            for (var i = 0; i < chunk; i++)
+                slice[i] = (ushort)values[offset + i];
+            await _master!.WriteMultipleRegistersAsync(SlaveId, (ushort)(address + offset), slice).ConfigureAwait(false);
         }
+    }
+
+    private void EnsureMaster()
+    {
+        if (_master is null || _tcpClient?.Connected != true)
+            throw new IemdSdCommunicationException("Modbus not connected.");
     }
 
     public void Dispose()
@@ -136,7 +171,10 @@ internal sealed class ModbusTransport : IDisposable
         _gate.Wait();
         try
         {
-            Disconnect();
+            _master?.Dispose();
+            _master = null;
+            _tcpClient?.Dispose();
+            _tcpClient = null;
         }
         finally
         {

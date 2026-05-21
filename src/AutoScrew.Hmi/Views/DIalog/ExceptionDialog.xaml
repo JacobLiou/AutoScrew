@@ -1,0 +1,47 @@
+﻿<hc:Window x:Class="AutoScrew.Hmi.Dialog.ExceptionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        mc:Ignorable="d" WindowStartupLocation="CenterOwner"
+        Height="500" Width="800" Title="LEO Monitor Running Error">
+    <Window.Resources>
+        <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+            <Setter Property="ToolTip" Value=""></Setter>
+        </Style>
+        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+            <Setter Property="HorizontalContentAlignment" Value="Left"></Setter>
+            <Setter Property="Padding" Value="13,0,0,0"></Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="MainGrid" Margin="5">
+
+            <DataGrid ItemsSource="{Binding Details}"
+                      CanUserAddRows="False"  CanUserSortColumns="False" AutoGenerateColumns="False"
+                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding Key}"
+                                        Header="Key" IsReadOnly="True">
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Binding="{Binding Value}"
+                                        Header="Value" Width="*">
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox">
+                            <Setter Property="IsReadOnly" Value="True" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+                            </Style>
+                        </DataGridTextColumn.EditingElementStyle>
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+    </Border>
+</hc:Window>

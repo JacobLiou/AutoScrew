@@ -1,0 +1,34 @@
+﻿<hc:Window x:Class="AutoScrew.Hmi.Dialog.AboutTips"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:hc="https://handyorg.github.io/handycontrol"
+               xmlns:local="clr-namespace:AutoScrew.Hmi.Dialog"
+               mc:Ignorable="d"
+               Title="关于"
+               Height="350"
+               Width="500"
+               WindowStartupLocation="CenterScreen"
+               Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <Image Height="350"
+               Width="500"
+               Name="backImage"
+               Stretch="Fill"
+               Source="/LeoMonitorApp;component/Assets/sofar-logo.jpg" />
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+            <TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Center">
+                <Run Text="研发测试协议自动化使用工具"
+                     Foreground="GreenYellow"></Run>
+            </TextBlock>
+        </StackPanel>
+    </Grid>
+</hc:Window>

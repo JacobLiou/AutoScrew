@@ -20,7 +20,7 @@
         <SolidColorBrush x:Key="LoginFieldBg"
                          Color="#33FFFFFF" />
         <SolidColorBrush x:Key="LoginOverlayBrush"
-                         Color="#C10D1B2A" />
+                         Color="#410D1B2A" />
         <SolidColorBrush x:Key="LoginLinkBrush"
                          Color="#B3E3F2FF" />
         <FontFamily x:Key="Mdl2">Segoe MDL2 Assets</FontFamily>

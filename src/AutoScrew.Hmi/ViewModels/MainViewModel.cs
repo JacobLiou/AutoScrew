@@ -1,10 +1,9 @@
-using System.Collections.ObjectModel;
-using System.Windows;
 using AutoScrew.Application.Services;
 using AutoScrew.Domain.Models;
 using AutoScrew.Domain.Session;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 
 namespace AutoScrew.Hmi.ViewModels;
 

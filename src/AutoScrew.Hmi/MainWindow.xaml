@@ -10,23 +10,32 @@
         xmlns:tbvm="clr-namespace:AutoScrew.TemplateBoard.ViewModels;assembly=AutoScrew.TemplateBoard"
         xmlns:tbviews="clr-namespace:AutoScrew.TemplateBoard.Views;assembly=AutoScrew.TemplateBoard"
         mc:Ignorable="d"
-        Title="AutoScrew 作业台"
-        Height="780" Width="1280"
-        MinHeight="640" MinWidth="960"
+        Title="AutoScrew 智能锁附系统"
+        Height="780"
+        Width="1280"
+        MinHeight="640"
+        MinWidth="960"
         Background="#FFF0F2F5"
         d:DataContext="{d:DesignInstance vm:MainShellViewModel, IsDesignTimeCreatable=False}"
         Name="RootWindow">
     <Window.Resources>
-        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <conv:BooleanToGridLengthConverter x:Key="SidebarWidthConverter" ExpandedWidth="232"/>
-        <Style x:Key="SidebarBreadcrumbButton" TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="6,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="hc:BorderElement.CornerRadius" Value="8"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <conv:BooleanToGridLengthConverter x:Key="SidebarWidthConverter"
+                                           ExpandedWidth="232" />
+        <Style x:Key="SidebarBreadcrumbButton"
+               TargetType="Button"
+               BasedOn="{StaticResource ButtonCustom}">
+            <Setter Property="Background"
+                    Value="Transparent" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Padding"
+                    Value="6,8" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+            <Setter Property="hc:BorderElement.CornerRadius"
+                    Value="8" />
         </Style>
-
         <DataTemplate DataType="{x:Type vm:MainViewModel}">
             <views:OperationPageView />
         </DataTemplate>
@@ -34,52 +43,65 @@
             <tbviews:TemplateBoardView />
         </DataTemplate>
     </Window.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="{Binding IsSidebarVisible, Converter={StaticResource SidebarWidthConverter}}" MinWidth="0"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="auto"
+                              MinWidth="253" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-
         <!-- 侧栏 -->
         <Border Grid.Column="0"
                 Background="#FFF7F8FA"
                 BorderBrush="#FFE5E7EB"
-                BorderThickness="0,0,1,0">
+                BorderThickness="0,0,1,0"
+                Margin="0,0,0,0">
             <DockPanel>
-                <Border DockPanel.Dock="Top" Padding="20,20,16,12" BorderBrush="#FFE5E7EB" BorderThickness="0,0,0,1">
-                    <StackPanel>
-                        <TextBlock Text="AutoScrew" FontSize="20" FontWeight="SemiBold" Foreground="#FF111827"/>
-                        <TextBlock Text="智能锁附" FontSize="12" Foreground="#FF64748B" Margin="0,4,0,0"/>
+                <Border DockPanel.Dock="Top"
+                        Padding="20,12,20,12"
+                        BorderBrush="#FFE5E7EB"
+                        BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Stretch="Fill"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Source="pack://application:,,,/Assets/logo_new.png"
+                               Height="28"
+                               Width="100" />
+                        <TextBlock Text="智能锁附"
+                                   FontSize="20"
+                                   Margin="5"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Foreground="#FF111827" />
                     </StackPanel>
                 </Border>
                 <TextBlock DockPanel.Dock="Bottom"
-                           Text="v1"
+                           Text="v1.0.0"
                            Foreground="#FF94A3B8"
                            FontSize="11"
-                           Margin="16,8"/>
-
+                           Margin="16,8" />
                 <StackPanel Margin="0,8,0,0">
                     <TextBlock Text="导航"
                                FontSize="11"
+                               HorizontalAlignment="Center"
                                FontWeight="SemiBold"
                                Foreground="#FF94A3B8"
-                               Margin="20,0,16,8"/>
+                               Margin="20,0,16,8" />
                     <hc:SideMenu ExpandMode="Freedom">
                         <hc:SideMenuItem Header="作业台"
                                          Icon="{StaticResource GeoNavOperation}"
                                          Command="{Binding NavigateOperationCommand}"
-                                         IsSelected="{Binding IsOperationNavSelected, Mode=OneWay}"/>
+                                         IsSelected="{Binding IsOperationNavSelected, Mode=OneWay}" />
                         <hc:SideMenuItem Header="螺钉模板"
                                          Icon="{StaticResource GeoNavTemplate}"
                                          Command="{Binding NavigateTemplateCommand}"
                                          Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}"/>
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
                     </hc:SideMenu>
                 </StackPanel>
             </DockPanel>
         </Border>
-
         <!-- 主内容 -->
         <DockPanel Grid.Column="1">
             <Border DockPanel.Dock="Top"
@@ -89,8 +111,8 @@
                     Padding="16,12">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0"
                             HorizontalAlignment="Stretch"
@@ -104,50 +126,112 @@
                                        FontFamily="Segoe MDL2 Assets"
                                        FontSize="14"
                                        Foreground="#FF64748B"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center" />
                             <TextBlock Text="{Binding Breadcrumb}"
                                        Margin="10,0,0,0"
                                        Foreground="#FF64748B"
                                        FontSize="12"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="36" Height="36" CornerRadius="18" Background="#FF22C55E" Margin="0,0,10,0">
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button Margin="3"
+                                Content="记事本"
+                                hc:BorderElement.CornerRadius="0"
+                                ToolTip="记事本"
+                                Background="{DynamicResource SecondaryTextBrush}"
+                                Foreground="{DynamicResource TextIconBrush}"
+                                Command="{Binding OpenNotepadCommand}"></Button>
+                        <Button Margin="3"
+                                Content="计算器"
+                                hc:BorderElement.CornerRadius="0"
+                                ToolTip="计算器"
+                                Background="{DynamicResource SecondaryTextBrush}"
+                                Foreground="{DynamicResource TextIconBrush}"
+                                Command="{Binding OpenCalcCommand}"></Button>
+                        <Border Width="36"
+                                Height="36"
+                                CornerRadius="18"
+                                Background="#FF22C55E"
+                                Margin="20,0,10,0">
                             <TextBlock Text="{Binding UserInitial}"
                                        Foreground="White"
                                        FontWeight="SemiBold"
                                        HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center" />
                         </Border>
-                        <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
+                        <StackPanel VerticalAlignment="Center"
+                                    Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding UserGreeting}"
                                            FontWeight="SemiBold"
-                                           Foreground="#FF111827"/>
+                                           Foreground="#FF111827" />
                                 <TextBlock Text="{Binding UserRoleDisplay}"
                                            Margin="8,0,0,0"
                                            FontSize="12"
                                            Foreground="#FF64748B"
-                                           VerticalAlignment="Center"/>
+                                           VerticalAlignment="Center" />
                             </StackPanel>
-                            <TextBlock Text="已登录" FontSize="11" Foreground="#FF64748B"/>
+                            <TextBlock Text="已登录"
+                                       FontSize="11"
+                                       Foreground="#FF64748B" />
                         </StackPanel>
                         <Button Style="{StaticResource HeaderIconCircleButton}"
                                 ToolTip="关于"
                                 Command="{Binding ShowAboutCommand}"
-                                hc:IconElement.Geometry="{StaticResource GeoAbout}"/>
+                                hc:IconElement.Geometry="{StaticResource GeoAbout}" />
                         <Button Style="{StaticResource HeaderIconCircleButton}"
                                 ToolTip="登出"
                                 Command="{Binding LogoutCommand}"
-                                hc:IconElement.Geometry="{StaticResource GeoLogout}"/>
+                                hc:IconElement.Geometry="{StaticResource GeoLogout}" />
+                        <Menu>
+                            <MenuItem Header="...">
+                                <MenuItem Header="程序截屏"
+                                          Command="{Binding PrintScreenCommand}">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource AddGeometry}"
+                                              Fill="{DynamicResource SecondaryTextBrush}"
+                                              Stretch="Uniform"
+                                              Height="20"
+                                              Width="20" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="打开程序日志"
+                                          Command="{Binding ExplorerLogsCommand}">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource AskGeometry}"
+                                              Fill="{DynamicResource SecondaryTextBrush}"
+                                              Stretch="Uniform"
+                                              Height="20"
+                                              Width="20" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="打开程序路径"
+                                          Command="{Binding OpenAppPathCommand}">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource EyeOpenGeometry}"
+                                              Fill="{DynamicResource SecondaryTextBrush}"
+                                              Stretch="Uniform"
+                                              Height="20"
+                                              Width="20" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
+                        </Menu>
                     </StackPanel>
                 </Grid>
             </Border>
-
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-                <hc:Card MaxWidth="1400" Effect="{StaticResource EffectShadow2}" BorderThickness="0" Margin="0,0,0,16">
-                    <ContentControl Content="{Binding CurrentPage}" Margin="0"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Padding="20">
+                <hc:Card MaxWidth="1400"
+                         Effect="{StaticResource EffectShadow2}"
+                         BorderThickness="0"
+                         Margin="0,0,0,16">
+                    <ContentControl Content="{Binding CurrentPage}"
+                                    Margin="0" />
                 </hc:Card>
             </ScrollViewer>
         </DockPanel>
