@@ -2,11 +2,11 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
-using AutoScrew.TemplateBoard.Models;
-using AutoScrew.TemplateBoard.ViewModels;
+using System.Windows.Media;
+using AutoScrew.Hmi.Models;
+using AutoScrew.Hmi.ViewModels;
 
-namespace AutoScrew.TemplateBoard.Views;
+namespace AutoScrew.Hmi.Views;
 
 public partial class ScrewMarkerView
 {
@@ -39,14 +39,10 @@ public partial class ScrewMarkerView
     private void AttachVm()
     {
         if (DataContext is not ScrewMarkerViewModel vm)
-        {
             return;
-        }
 
         if (ReferenceEquals(_vm, vm))
-        {
             return;
-        }
 
         DetachVm();
         _vm = vm;
@@ -65,9 +61,7 @@ public partial class ScrewMarkerView
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(ScrewMarkerViewModel.IsSelected) || _vm is null)
-        {
             return;
-        }
 
         if (!_vm.IsSelected)
         {
@@ -80,39 +74,44 @@ public partial class ScrewMarkerView
     {
         e.Handled = true;
         if (DataContext is not ScrewMarkerViewModel vm)
-        {
             return;
-        }
 
-        if (Window.GetWindow(this)?.DataContext is MainWindowViewModel main)
-        {
-            main.SelectMarkerCommand.Execute(vm);
-        }
+        if (FindTemplateBoardViewModel(this) is { } board)
+            board.SelectMarkerCommand.Execute(vm);
     }
 
     private void OnScrewTypeMenuClick(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem { Tag: string s } || !int.TryParse(s, out var id))
-        {
             return;
-        }
 
         if (DataContext is not ScrewMarkerViewModel vm)
-        {
             return;
-        }
 
         var preset = ScrewTypeCatalog.TryGetById(id);
         if (preset is null)
-        {
             return;
-        }
 
         vm.ApplyScrewType(preset);
 
-        if (Window.GetWindow(this)?.DataContext is MainWindowViewModel main)
+        FindTemplateBoardViewModel(this)?.NotifyDeleteCommandCanExecute();
+    }
+
+    private static TemplateBoardViewModel? FindTemplateBoardViewModel(DependencyObject from)
+    {
+        var view = FindAncestor<TemplateBoardView>(from);
+        return view?.DataContext as TemplateBoardViewModel;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? child) where T : DependencyObject
+    {
+        while (child is not null)
         {
-            main.NotifyDeleteCommandCanExecute();
+            if (child is T match)
+                return match;
+            child = VisualTreeHelper.GetParent(child);
         }
+
+        return null;
     }
 }

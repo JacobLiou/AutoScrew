@@ -1,8 +1,8 @@
 using System.IO;
 using System.Text.Json;
-using AutoScrew.TemplateBoard.Models;
+using AutoScrew.Hmi.Models;
 
-namespace AutoScrew.TemplateBoard.Services;
+namespace AutoScrew.Hmi.Services;
 
 public static class TemplateJsonSerializer
 {

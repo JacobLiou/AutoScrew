@@ -7,8 +7,6 @@
         xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
         xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
         xmlns:views="clr-namespace:AutoScrew.Hmi.Views"
-        xmlns:tbvm="clr-namespace:AutoScrew.TemplateBoard.ViewModels;assembly=AutoScrew.TemplateBoard"
-        xmlns:tbviews="clr-namespace:AutoScrew.TemplateBoard.Views;assembly=AutoScrew.TemplateBoard"
         mc:Ignorable="d"
         Title="AutoScrew 智能锁附系统"
         Height="780"
@@ -39,22 +37,69 @@
         <DataTemplate DataType="{x:Type vm:MainViewModel}">
             <views:OperationPageView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type tbvm:MainWindowViewModel}">
-            <tbviews:TemplateBoardView />
+        <DataTemplate DataType="{x:Type vm:TemplateBoardViewModel}">
+            <views:TemplateBoardView />
         </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="auto"
-                              MinWidth="253" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <!-- 侧栏 -->
-        <Border Grid.Column="0"
+        <!-- 侧栏：宽度随 IsSidebarVisible 动画折叠/展开（面包屑 ToggleSidebarCommand） -->
+        <Border x:Name="SidebarHost"
+                Grid.Column="0"
+                Width="253"
+                ClipToBounds="True"
+                HorizontalAlignment="Left"
                 Background="#FFF7F8FA"
                 BorderBrush="#FFE5E7EB"
-                BorderThickness="0,0,1,0"
-                Margin="0,0,0,0">
+                BorderThickness="0,0,1,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSidebarVisible}"
+                                     Value="False">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard HandoffBehavior="SnapshotAndReplace">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Width"
+                                                         To="0"
+                                                         Duration="0:0:0.28">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         To="0"
+                                                         Duration="0:0:0.2" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsSidebarVisible}"
+                                     Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard HandoffBehavior="SnapshotAndReplace">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Width"
+                                                         To="253"
+                                                         Duration="0:0:0.28">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         To="1"
+                                                         BeginTime="0:0:0.06"
+                                                         Duration="0:0:0.18" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <DockPanel>
                 <Border DockPanel.Dock="Top"
                         Padding="20,12,20,12"

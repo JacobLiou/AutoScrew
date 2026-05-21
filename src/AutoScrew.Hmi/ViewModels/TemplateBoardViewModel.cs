@@ -3,15 +3,15 @@ using System.IO;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using AutoScrew.TemplateBoard.Models;
-using AutoScrew.TemplateBoard.Services;
+using AutoScrew.Hmi.Models;
+using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 
-namespace AutoScrew.TemplateBoard.ViewModels;
+namespace AutoScrew.Hmi.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject
+public partial class TemplateBoardViewModel : ObservableObject
 {
     /// <summary>新建标注时使用的螺钉类型（默认 M2）。</summary>
     public static ScrewTypePreset DefaultScrewType => ScrewTypeCatalog.Default;

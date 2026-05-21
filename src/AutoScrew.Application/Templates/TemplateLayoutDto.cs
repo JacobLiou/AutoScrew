@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace AutoScrew.Application.Templates;
 
 /// <summary>
-/// JSON root compatible with AutoScrew.TemplateBoard (schemaVersion 1).
+/// JSON root compatible with HMI 螺钉模板画板 (schemaVersion 1).
 /// </summary>
 public sealed class TemplateLayoutDto
 {

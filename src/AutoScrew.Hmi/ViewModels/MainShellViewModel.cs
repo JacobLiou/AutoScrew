@@ -1,6 +1,5 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
-using AutoScrew.TemplateBoard.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -25,14 +24,14 @@ public enum MainAppSection
 public partial class MainShellViewModel : ObservableObject, IDisposable
 {
     private readonly MainViewModel _operation;
-    private readonly MainWindowViewModel _templateBoard;
+    private readonly TemplateBoardViewModel _templateBoard;
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
     private readonly ILogger<MainShellViewModel> _logger;
 
     public MainShellViewModel(
         MainViewModel operation,
-        MainWindowViewModel templateBoard,
+        TemplateBoardViewModel templateBoard,
         ICurrentUser currentUser,
         IAppSessionCoordinator sessionCoordinator,
         ILogger<MainShellViewModel> logger)

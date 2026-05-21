@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using AutoScrew.TemplateBoard.ViewModels;
+using AutoScrew.Hmi.ViewModels;
 
-namespace AutoScrew.TemplateBoard.Views;
+namespace AutoScrew.Hmi.Views;
 
 public partial class TemplateBoardView : UserControl
 {
@@ -15,7 +15,7 @@ public partial class TemplateBoardView : UserControl
 
     private void BoardCanvas_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel vm)
+        if (DataContext is not TemplateBoardViewModel vm)
             return;
 
         if (IsFromMarker(e.OriginalSource))

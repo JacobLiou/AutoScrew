@@ -19,7 +19,6 @@
     <ProjectReference Include="..\AutoScrew.Common\AutoScrew.Common.csproj" />
     <ProjectReference Include="..\AutoScrew.Domain\AutoScrew.Domain.csproj" />
     <ProjectReference Include="..\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
-    <ProjectReference Include="..\AutoScrew.TemplateBoard\AutoScrew.TemplateBoard.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
-using AutoScrew.TemplateBoard.Models;
+using AutoScrew.Hmi.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AutoScrew.TemplateBoard.ViewModels;
+namespace AutoScrew.Hmi.ViewModels;
 
 public partial class ScrewMarkerViewModel : ObservableObject
 {

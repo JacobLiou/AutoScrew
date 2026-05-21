@@ -1,7 +1,7 @@
-namespace AutoScrew.TemplateBoard.Models;
+namespace AutoScrew.Hmi.Models;
 
 /// <summary>
-/// Root JSON document for screw layout templates (see README).
+/// Root JSON document for screw layout templates.
 /// </summary>
 public sealed class TemplateDocument
 {

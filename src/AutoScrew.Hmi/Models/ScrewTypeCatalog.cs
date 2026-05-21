@@ -1,4 +1,4 @@
-namespace AutoScrew.TemplateBoard.Models;
+namespace AutoScrew.Hmi.Models;
 
 /// <summary>
 /// 六种常用螺钉示意类型（仅用于画板视觉直径，非工程公差定义）。
