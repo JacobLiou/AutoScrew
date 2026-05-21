@@ -18,9 +18,14 @@ public sealed class MimsAuthenticationOptions
 
     public int CommandTimeoutSeconds { get; set; } = 15;
 
-    /// <summary>mims_role.type（RoleKind 数值）→ AutoScrew UserRole 名称。</summary>
+    /// <summary>
+    /// 已废弃：登录授权改由 <see cref="MimsRoleMapper"/> 按 <c>mims_role.name</c> 是否含「操作员」映射。
+    /// 保留属性以免破坏既有 appsettings / User Secrets JSON。
+    /// </summary>
+    [Obsolete("登录不再使用 RoleMap；见 MimsRoleMapper。")]
     public Dictionary<string, string> RoleMap { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>未在 <see cref="RoleMap"/> 中配置的 role.type：Operator | Deny。</summary>
+    /// <summary>已废弃，见 <see cref="RoleMap"/>。</summary>
+    [Obsolete("登录不再使用 UnmappedRoleBehavior；见 MimsRoleMapper。")]
     public string UnmappedRoleBehavior { get; set; } = "Operator";
 }

@@ -63,40 +63,19 @@ public sealed class MimsMySqlAuthenticationService(
             : reader.GetString(reader.GetOrdinal("DisplayName"));
         var roleId = reader.GetInt32(reader.GetOrdinal("RoleId"));
         var roleType = reader.GetInt32(reader.GetOrdinal("RoleType"));
-        _ = reader.IsDBNull(reader.GetOrdinal("RoleName")) ? null : reader.GetString(reader.GetOrdinal("RoleName"));
+        var roleName = reader.IsDBNull(reader.GetOrdinal("RoleName"))
+            ? null
+            : reader.GetString(reader.GetOrdinal("RoleName"));
 
-        if (!TryMapRole(roleType, opt, out var userRole, out var failMessage))
-            return LoginResult.Failed(failMessage ?? "角色映射失败。");
+        var userRole = MimsRoleMapper.ToAutoScrewRole(roleName);
 
-        logger.LogInformation("MIMS user {Login} signed in (personId={PersonId}, roleType={RoleType}).", loginName, personId, roleType);
+        logger.LogInformation(
+            "MIMS user {Login} signed in (personId={PersonId}, roleId={RoleId}, roleName={RoleName}, autoScrewRole={AutoScrewRole}).",
+            loginName,
+            personId,
+            roleId,
+            roleName,
+            userRole);
         return LoginResult.Ok(loginName, displayName, userRole, personId, roleId, roleType);
-    }
-
-    private static bool TryMapRole(int roleType, MimsAuthenticationOptions opt, out UserRole userRole, out string? failMessage)
-    {
-        failMessage = null;
-        userRole = UserRole.Operator;
-        var key = roleType.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-        if (opt.RoleMap.TryGetValue(key, out var roleName) && !string.IsNullOrWhiteSpace(roleName))
-        {
-            if (Enum.TryParse<UserRole>(roleName.Trim(), true, out var mapped))
-            {
-                userRole = mapped;
-                return true;
-            }
-
-            failMessage = "角色配置无效（Authentication:Mims:RoleMap）。";
-            return false;
-        }
-
-        if (string.Equals(opt.UnmappedRoleBehavior, "Deny", StringComparison.OrdinalIgnoreCase))
-        {
-            failMessage = "当前角色无权登录本系统。";
-            return false;
-        }
-
-        userRole = UserRole.Operator;
-        return true;
     }
 }

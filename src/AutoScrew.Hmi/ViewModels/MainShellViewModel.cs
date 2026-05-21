@@ -138,10 +138,5 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     }
 
     private static string FormatRoleDisplay(UserRole role) =>
-        role switch
-        {
-            UserRole.Technician => "· 技术员",
-            UserRole.Administrator => "· 管理员",
-            _ => "· 操作员"
-        };
+        role == UserRole.Operator ? "· 操作员" : "· 技术员";
 }
