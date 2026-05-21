@@ -1,10 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Windows;
-using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Services;
 using AutoScrew.Domain.Models;
 using AutoScrew.Domain.Session;
-using AutoScrew.Infrastructure;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,13 +11,10 @@ namespace AutoScrew.Hmi.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly OperatorSessionController _session;
-    private readonly SessionCurrentUser _currentUser;
 
-    public MainViewModel(OperatorSessionController session, SessionCurrentUser currentUser)
+    public MainViewModel(OperatorSessionController session)
     {
         _session = session;
-        _currentUser = currentUser;
-        RoleDisplay = RoleLabel(_currentUser.Role);
     }
 
     public OperatorSessionController Session => _session;
@@ -34,9 +29,6 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusMessage = "Ready.";
-
-    [ObservableProperty]
-    private string _roleDisplay = "";
 
     [ObservableProperty]
     private string? _productImagePath;
@@ -122,22 +114,6 @@ public partial class MainViewModel : ObservableObject
         CurveChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    [RelayCommand]
-    private void UseOperatorRole() => ApplyRole(UserRole.Operator, "operator", "Operator");
-
-    [RelayCommand]
-    private void UseTechnicianRole() => ApplyRole(UserRole.Technician, "tech", "Technician");
-
-    [RelayCommand]
-    private void UseAdminRole() => ApplyRole(UserRole.Administrator, "admin", "Administrator");
-
-    private void ApplyRole(UserRole role, string id, string name)
-    {
-        _currentUser.SetRole(role, id, name);
-        RoleDisplay = RoleLabel(role);
-        StatusMessage = $"Role: {RoleDisplay}";
-    }
-
     public void RefreshFromSession()
     {
         PhaseDisplay = _session.Phase.ToString();
@@ -156,14 +132,6 @@ public partial class MainViewModel : ObservableObject
             Markers.Add(new ScrewMarkerVm(p.Index, p.CenterX, p.CenterY, diameter, st));
         }
     }
-
-    private static string RoleLabel(UserRole role) =>
-        role switch
-        {
-            UserRole.Technician => "Technician",
-            UserRole.Administrator => "Administrator",
-            _ => "Operator"
-        };
 }
 
 public sealed partial class ScrewMarkerVm : ObservableObject

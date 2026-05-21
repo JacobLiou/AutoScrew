@@ -117,9 +117,18 @@
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding UserGreeting}" FontWeight="SemiBold" Foreground="#FF111827"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding UserGreeting}"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FF111827" />
+                            </StackPanel>
                             <TextBlock Text="已登录" FontSize="11" Foreground="#FF64748B"/>
                         </StackPanel>
+                        <TextBlock Text="{Binding UserRoleDisplay}"
+                                   Margin="8,0,0,0"
+                                   FontSize="12"
+                                   Foreground="#FF64748B"
+                                   VerticalAlignment="Center" />
                         <Button Content="关于"
                                 Margin="16,0,0,0"
                                 Padding="12,6"
