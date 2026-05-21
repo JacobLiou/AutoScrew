@@ -62,6 +62,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private string _userGreeting = "";
 
     [ObservableProperty]
+    private string _userRoleDisplay = "";
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SidebarChromeIcon))]
     [NotifyPropertyChangedFor(nameof(SidebarToggleHint))]
     private bool _isSidebarVisible = true;
@@ -117,6 +120,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private void RefreshUserBanner()
     {
         UserGreeting = FormatGreeting(_currentUser);
+        UserRoleDisplay = FormatRoleDisplay(_currentUser.Role);
         var g = UserGreeting.Trim();
         UserInitial = string.IsNullOrWhiteSpace(g) ? "?" : g[..1].ToUpperInvariant();
     }
@@ -132,4 +136,12 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         var name = string.IsNullOrWhiteSpace(u.DisplayName) ? u.UserId : u.DisplayName;
         return string.IsNullOrWhiteSpace(name) ? "User" : name;
     }
+
+    private static string FormatRoleDisplay(UserRole role) =>
+        role switch
+        {
+            UserRole.Technician => "· 技术员",
+            UserRole.Administrator => "· 管理员",
+            _ => "· 操作员"
+        };
 }

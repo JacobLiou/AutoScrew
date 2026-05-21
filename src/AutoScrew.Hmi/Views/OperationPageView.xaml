@@ -21,12 +21,6 @@
             <Button Content="当前螺钉：取钉+拧紧" Margin="0,0,8,0" Padding="12,6" Command="{Binding RunCurrentScrewCommand}"/>
             <Button Content="技术员解锁 NG" Margin="0,0,8,0" Padding="12,6" Command="{Binding UnlockNgCommand}"/>
             <Button Content="复位会话" Margin="0,0,8,0" Padding="12,6" Command="{Binding ResetSessionCommand}"/>
-            <Separator Margin="8,0"/>
-            <TextBlock Text="角色:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <Button Content="操作员" Margin="0,0,4,0" Padding="8,4" Command="{Binding UseOperatorRoleCommand}"/>
-            <Button Content="技术员" Margin="0,0,4,0" Padding="8,4" Command="{Binding UseTechnicianRoleCommand}"/>
-            <Button Content="管理员" Margin="0,0,8,0" Padding="8,4" Command="{Binding UseAdminRoleCommand}"/>
-            <TextBlock Text="{Binding RoleDisplay}" VerticalAlignment="Center" FontWeight="SemiBold"/>
         </StackPanel>
         <StatusBar DockPanel.Dock="Bottom" Background="#FAFAFA">
             <StatusBarItem>
