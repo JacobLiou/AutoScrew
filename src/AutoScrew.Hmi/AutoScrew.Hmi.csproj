@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>autoscrew.ico</ApplicationIcon>
     <RootNamespace>AutoScrew.Hmi</RootNamespace>
+	<EnableConfigurationBindingGenerator>false</EnableConfigurationBindingGenerator>
   </PropertyGroup>
 
   <ItemGroup>

@@ -143,6 +143,26 @@
                                          Command="{Binding NavigateTemplateCommand}"
                                          Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
                                          IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
+                        <hc:SideMenuItem Header="螺钉模板"
+                                         Icon="{StaticResource GeoNavTemplate}"
+                                         Command="{Binding NavigateTemplateCommand}"
+                                         Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
+                        <hc:SideMenuItem Header="螺钉模板"
+                                         Icon="{StaticResource GeoNavTemplate}"
+                                         Command="{Binding NavigateTemplateCommand}"
+                                         Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
+                        <hc:SideMenuItem Header="螺钉模板"
+                                         Icon="{StaticResource GeoNavTemplate}"
+                                         Command="{Binding NavigateTemplateCommand}"
+                                         Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
+                        <hc:SideMenuItem Header="螺钉模板"
+                                         Icon="{StaticResource GeoNavTemplate}"
+                                         Command="{Binding NavigateTemplateCommand}"
+                                         Visibility="{Binding CanUseTemplateBoard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         IsSelected="{Binding IsTemplateNavSelected, Mode=OneWay}" />
                     </hc:SideMenu>
                 </StackPanel>
             </DockPanel>
@@ -196,33 +216,7 @@
                                 Background="{DynamicResource SecondaryTextBrush}"
                                 Foreground="{DynamicResource TextIconBrush}"
                                 Command="{Binding OpenCalcCommand}"></Button>
-                        <Border Width="36"
-                                Height="36"
-                                CornerRadius="18"
-                                Background="#FF22C55E"
-                                Margin="20,0,10,0">
-                            <TextBlock Text="{Binding UserInitial}"
-                                       Foreground="White"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel VerticalAlignment="Center"
-                                    Margin="0,0,8,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding UserGreeting}"
-                                           FontWeight="SemiBold"
-                                           Foreground="#FF111827" />
-                                <TextBlock Text="{Binding UserRoleDisplay}"
-                                           Margin="8,0,0,0"
-                                           FontSize="12"
-                                           Foreground="#FF64748B"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
-                            <TextBlock Text="已登录"
-                                       FontSize="11"
-                                       Foreground="#FF64748B" />
-                        </StackPanel>
+                        
                         <Button Style="{StaticResource HeaderIconCircleButton}"
                                 ToolTip="关于"
                                 Command="{Binding ShowAboutCommand}"
@@ -231,7 +225,7 @@
                                 ToolTip="登出"
                                 Command="{Binding LogoutCommand}"
                                 hc:IconElement.Geometry="{StaticResource GeoLogout}" />
-                        <Menu>
+                        <Menu HorizontalAlignment="Center" VerticalAlignment="Center">
                             <MenuItem Header="...">
                                 <MenuItem Header="程序截屏"
                                           Command="{Binding PrintScreenCommand}">
@@ -266,6 +260,33 @@
                                 </MenuItem>
                             </MenuItem>
                         </Menu>
+                        <Border Width="36"
+                                Height="36"
+                                CornerRadius="18"
+                                Background="#FF22C55E"
+                                Margin="20,0,10,0">
+                            <TextBlock Text="{Binding UserInitial}"
+                                       Foreground="White"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center"
+                                    Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding UserGreeting}"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FF111827" />
+                                <TextBlock Text="{Binding UserRoleDisplay}"
+                                           Margin="8,0,0,0"
+                                           FontSize="12"
+                                           Foreground="#FF64748B"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="已登录"
+                                       FontSize="11"
+                                       Foreground="#FF64748B" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
