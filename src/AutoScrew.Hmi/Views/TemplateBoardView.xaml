@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              xmlns:views="clr-namespace:AutoScrew.Hmi.Views"
              mc:Ignorable="d"
@@ -15,53 +16,51 @@
                     Command="{Binding SelectAllMarkersCommand}" />
     </UserControl.InputBindings>
     <DockPanel>
-        <ToolBarTray DockPanel.Dock="Top">
-            <ToolBar Band="0" BandIndex="0">
-                <TextBlock VerticalAlignment="Center" Text="宽" Margin="0,0,4,0" />
-                <TextBox Width="72" Text="{Binding BoardWidthInput, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock VerticalAlignment="Center" Text="高" Margin="8,0,4,0" />
-                <TextBox Width="72" Text="{Binding BoardHeightInput, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Content="应用尺寸" Command="{Binding ApplyBoardSizeCommand}" Margin="8,0,0,0" />
-                <Separator />
-                <Button Content="加载产品底图" Command="{Binding LoadProductImageCommand}" />
-                <Button Content="画板=底图像素" Command="{Binding MatchBoardToImageSizeCommand}" ToolTip="将画板宽高设为底图像素尺寸，使标注与图片 1:1 对齐" />
-                <Button Content="清除底图" Command="{Binding ClearProductImageCommand}" />
-                <TextBlock VerticalAlignment="Center" Margin="8,0,4,0" FontSize="11" Text="底图透明度" />
-                <Slider Width="120"
-                        VerticalAlignment="Center"
-                        Minimum="0.2"
-                        Maximum="1"
-                        SmallChange="0.05"
-                        LargeChange="0.1"
-                        Value="{Binding BoardImageOpacity, Mode=TwoWay}"
-                        IsEnabled="{Binding HasBoardImage}" />
-                <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" Width="40" FontSize="11"
-                           Text="{Binding BoardImageOpacity, StringFormat={}{0:P0}}" />
-                <Separator />
-                <Button Content="保存 JSON" Command="{Binding SaveTemplateCommand}" />
-                <Button Content="打开 JSON" Command="{Binding OpenTemplateCommand}" />
-                <Button Content="全选" Command="{Binding SelectAllMarkersCommand}" />
-                <Button Content="删除选中" Command="{Binding DeleteSelectedCommand}" />
-                <Button Content="取消选中" Command="{Binding ClearSelectionCommand}" />
-                <Separator />
-                <TextBlock VerticalAlignment="Center" FontSize="11" Foreground="#FF475569"
-                           Text="底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选" />
-            </ToolBar>
-        </ToolBarTray>
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <TextBlock VerticalAlignment="Center" Text="宽" Margin="0,0,4,8" />
+            <ui:TextBox Width="72" Margin="0,0,8,8" Text="{Binding BoardWidthInput, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock VerticalAlignment="Center" Text="高" Margin="0,0,4,8" />
+            <ui:TextBox Width="72" Margin="0,0,8,8" Text="{Binding BoardHeightInput, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:Button Content="应用尺寸" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ApplyBoardSizeCommand}" />
+            <ui:Button Content="加载产品底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding LoadProductImageCommand}" />
+            <ui:Button Content="画板=底图像素" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding MatchBoardToImageSizeCommand}" ToolTip="将画板宽高设为底图像素尺寸，使标注与图片 1:1 对齐" />
+            <ui:Button Content="清除底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearProductImageCommand}" />
+            <TextBlock VerticalAlignment="Center" Margin="0,0,4,8" FontSize="11" Text="底图透明度" />
+            <Slider Width="120"
+                    VerticalAlignment="Center"
+                    Margin="0,0,8,8"
+                    Minimum="0.2"
+                    Maximum="1"
+                    SmallChange="0.05"
+                    LargeChange="0.1"
+                    Value="{Binding BoardImageOpacity, Mode=TwoWay}"
+                    IsEnabled="{Binding HasBoardImage}" />
+            <TextBlock VerticalAlignment="Center" Margin="0,0,8,8" Width="40" FontSize="11"
+                       Text="{Binding BoardImageOpacity, StringFormat={}{0:P0}}" />
+            <ui:Button Content="保存 JSON" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SaveTemplateCommand}" />
+            <ui:Button Content="打开 JSON" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding OpenTemplateCommand}" />
+            <ui:Button Content="全选" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SelectAllMarkersCommand}" />
+            <ui:Button Content="删除选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding DeleteSelectedCommand}" />
+            <ui:Button Content="取消选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearSelectionCommand}" />
+            <TextBlock VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource ShellMutedForegroundBrush}" Margin="0,0,0,8"
+                       Text="底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选" />
+        </WrapPanel>
 
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}" />
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Foreground="DarkRed" Text="{Binding OutOfBoundsWarning}" />
-            </StatusBarItem>
-        </StatusBar>
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource ShellCardBrush}"
+                BorderBrush="{DynamicResource ShellBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusMessage}" Margin="0,0,16,0" />
+                <TextBlock Foreground="{DynamicResource BrushNg}" Text="{Binding OutOfBoundsWarning}" />
+            </StackPanel>
+        </Border>
 
         <ScrollViewer HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
-                      Padding="8">
-            <Border BorderBrush="#FFCBD5E1" BorderThickness="1" Background="#FFF8FAFC">
+                      Padding="4">
+            <ui:Card Style="{StaticResource ShellCardStyle}">
                 <Canvas x:Name="BoardCanvas"
                         Width="{Binding BoardWidth}"
                         Height="{Binding BoardHeight}"
@@ -95,7 +94,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Canvas>
-            </Border>
+            </ui:Card>
         </ScrollViewer>
     </DockPanel>
 </UserControl>

@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <SolidColorBrush x:Key="ShellSurfaceBrush" Color="#FFF0F2F5" />
+    <SolidColorBrush x:Key="ShellCardBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="ShellBorderBrush" Color="#FFE5E7EB" />
+    <SolidColorBrush x:Key="ShellMutedForegroundBrush" Color="#FF64748B" />
+    <SolidColorBrush x:Key="ShellForegroundBrush" Color="#FF111827" />
+    <SolidColorBrush x:Key="ShellAccentBrush" Color="#FF2563EB" />
+    <SolidColorBrush x:Key="ShellUserBadgeBrush" Color="#FF22C55E" />
+
+    <Style x:Key="HeaderIconButtonStyle" TargetType="ui:Button">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Margin" Value="4,0,0,0" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Appearance" Value="Secondary" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style x:Key="ShellPrimaryButtonStyle" TargetType="ui:Button">
+        <Setter Property="Appearance" Value="Primary" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="ShellSecondaryButtonStyle" TargetType="ui:Button">
+        <Setter Property="Appearance" Value="Secondary" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+
+    <Style x:Key="ShellCardStyle" TargetType="ui:Card">
+        <Setter Property="Margin" Value="0,0,0,16" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+</ResourceDictionary>

@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
+using AutoScrew.Hmi.Views.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,8 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace AutoScrew.Hmi.ViewModels;
 
@@ -20,31 +24,29 @@ public enum MainAppSection
     Template
 }
 
-/// <summary>主窗壳：侧栏导航 + 当前子页（Operation / TemplateBoard）。Template 仅技术员及以上可见。</summary>
+/// <summary>主窗壳：NavigationView 导航 + 顶栏工具。</summary>
 public partial class MainShellViewModel : ObservableObject, IDisposable
 {
-    private readonly MainViewModel _operation;
-    private readonly TemplateBoardViewModel _templateBoard;
+    private readonly INavigationService _navigationService;
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
     private readonly ILogger<MainShellViewModel> _logger;
-
     public MainShellViewModel(
-        MainViewModel operation,
-        TemplateBoardViewModel templateBoard,
+        INavigationService navigationService,
         ICurrentUser currentUser,
         IAppSessionCoordinator sessionCoordinator,
         ILogger<MainShellViewModel> logger)
     {
-        _operation = operation;
-        _templateBoard = templateBoard;
+        _navigationService = navigationService;
         _currentUser = currentUser;
         _sessionCoordinator = sessionCoordinator;
         _logger = logger;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
 
+        RebuildMenuItems();
         RefreshUserBanner();
+        UpdateSidebarSymbol();
     }
 
     public void Dispose()
@@ -53,19 +55,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             notify.PropertyChanged -= OnCurrentUserPropertyChanged;
     }
 
-    private void OnCurrentUserPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is null
-            or nameof(ICurrentUser.Role)
-            or nameof(ICurrentUser.DisplayName)
-            or nameof(ICurrentUser.UserId))
-        {
-            RefreshUserBanner();
-            OnPropertyChanged(nameof(CanUseTemplateBoard));
-            NavigateTemplateCommand.NotifyCanExecuteChanged();
-            EnsureRoleAllowedSection();
-        }
-    }
+    [ObservableProperty]
+    private ObservableCollection<object> _menuItems = [];
+
+    [ObservableProperty]
+    private ObservableCollection<object> _footerMenuItems = [];
 
     [ObservableProperty]
     private string _userInitial = "?";
@@ -77,58 +71,64 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private string _userRoleDisplay = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SidebarChromeIcon))]
     [NotifyPropertyChangedFor(nameof(SidebarToggleHint))]
+    [NotifyPropertyChangedFor(nameof(SidebarSymbol))]
     private bool _isSidebarVisible = true;
 
-    /// <summary>与面包屑并列：展开时显示「收起」向标，折叠时显示汉堡。</summary>
-    public string SidebarChromeIcon => IsSidebarVisible ? "\uE76B" : "\uE700";
+    public SymbolRegular SidebarSymbol =>
+        IsSidebarVisible ? SymbolRegular.PanelLeftContract24 : SymbolRegular.PanelLeft24;
 
     public string SidebarToggleHint => IsSidebarVisible ? "点击折叠侧栏" : "点击展开侧栏";
 
-    [RelayCommand]
-    private void ToggleSidebar() => IsSidebarVisible = !IsSidebarVisible;
-
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsOperationNavSelected))]
-    [NotifyPropertyChangedFor(nameof(IsTemplateNavSelected))]
-    [NotifyPropertyChangedFor(nameof(CurrentPage))]
     [NotifyPropertyChangedFor(nameof(Breadcrumb))]
     private MainAppSection _selectedSection = MainAppSection.Operation;
 
-    /// <summary>技术员、管理员可进入模板画板；操作员不可见侧栏项且无法导航。</summary>
     public bool CanUseTemplateBoard => _currentUser.Role >= UserRole.Technician;
-
-    public object CurrentPage => SelectedSection == MainAppSection.Operation ? _operation : _templateBoard;
-
-    public bool IsOperationNavSelected => SelectedSection == MainAppSection.Operation;
-
-    public bool IsTemplateNavSelected => SelectedSection == MainAppSection.Template;
 
     public string Breadcrumb =>
         SelectedSection == MainAppSection.Operation
             ? "AutoScrew / Operation / 作业台"
             : "AutoScrew / Template / 螺钉位模板";
 
+    public void OnNavigationViewNavigated(NavigationView navigationView)
+    {
+        var pageType = navigationView.SelectedItem is NavigationViewItem item
+            ? item.TargetPageType
+            : null;
+        if (pageType == typeof(TemplateNavPage))
+            SelectedSection = MainAppSection.Template;
+        else if (pageType == typeof(OperationNavPage))
+            SelectedSection = MainAppSection.Operation;
+    }
+
+    partial void OnIsSidebarVisibleChanged(bool value) => OnPropertyChanged(nameof(SidebarSymbol));
+
     [RelayCommand]
-    private void NavigateOperation() => SelectedSection = MainAppSection.Operation;
+    private void ToggleSidebar() => IsSidebarVisible = !IsSidebarVisible;
+
+    [RelayCommand]
+    private void NavigateOperation() => NavigateToSection(MainAppSection.Operation);
 
     [RelayCommand(CanExecute = nameof(CanNavigateTemplate))]
-    private void NavigateTemplate() => SelectedSection = MainAppSection.Template;
+    private void NavigateTemplate() => NavigateToSection(MainAppSection.Template);
 
     private bool CanNavigateTemplate() => CanUseTemplateBoard;
 
-    [RelayCommand]
-    private void OpenNotepad()
+    private void NavigateToSection(MainAppSection section)
     {
-        Process.Start(@"notepad.exe");
+        var pageType = section == MainAppSection.Operation
+            ? typeof(OperationNavPage)
+            : typeof(TemplateNavPage);
+        _navigationService.Navigate(pageType);
+        SelectedSection = section;
     }
 
     [RelayCommand]
-    private void OpenCalc()
-    {
-        Process.Start("calc.exe");
-    }
+    private void OpenNotepad() => Process.Start("notepad.exe");
+
+    [RelayCommand]
+    private void OpenCalc() => Process.Start("calc.exe");
 
     [RelayCommand]
     private async Task PrintScreenAsync()
@@ -145,7 +145,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         if (fileDialog.ShowDialog() != true)
             return;
 
-        // 等待保存对话框关闭后再截图，避免对话框残留在画面中
         await Task.Delay(300);
 
         var window = System.Windows.Application.Current.MainWindow;
@@ -172,7 +171,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "程序截屏失败");
-            MessageBox.Show("截屏保存失败，请查看日志。", "程序截屏", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show("截屏保存失败，请查看日志。", "程序截屏", System.Windows.MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -181,11 +180,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         try
         {
-            Process.Start(@"explorer.exe", $"{AppContext.BaseDirectory}Logs");
+            Process.Start("explorer.exe", $"{AppContext.BaseDirectory}Logs");
         }
         catch
         {
-            // don't care
+            // ignored
         }
     }
 
@@ -206,15 +205,30 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private void ShowAbout()
     {
         var v = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "?";
-        MessageBox.Show(
+        System.Windows.MessageBox.Show(
             $"AutoScrew 作业台\n版本: {v}\n目标: .NET 8 Windows x64\n\n详细设计见 doc/Design.md。",
             "关于",
-            MessageBoxButton.OK,
+            System.Windows.MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
 
     [RelayCommand]
     private void Logout() => _sessionCoordinator.RequestLogout();
+
+    private void OnCurrentUserPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is null
+            or nameof(ICurrentUser.Role)
+            or nameof(ICurrentUser.DisplayName)
+            or nameof(ICurrentUser.UserId))
+        {
+            RefreshUserBanner();
+            OnPropertyChanged(nameof(CanUseTemplateBoard));
+            NavigateTemplateCommand.NotifyCanExecuteChanged();
+            RebuildMenuItems();
+            EnsureRoleAllowedSection();
+        }
+    }
 
     private void RefreshUserBanner()
     {
@@ -227,8 +241,38 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private void EnsureRoleAllowedSection()
     {
         if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
-            SelectedSection = MainAppSection.Operation;
+            NavigateToSection(MainAppSection.Operation);
     }
+
+    private void RebuildMenuItems()
+    {
+        var items = new ObservableCollection<object>
+        {
+            new NavigationViewItem
+            {
+                Content = "作业台",
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
+                TargetPageType = typeof(OperationNavPage),
+                TargetPageTag = "operation"
+            }
+        };
+
+        if (CanUseTemplateBoard)
+        {
+            items.Add(new NavigationViewItem
+            {
+                Content = "螺钉模板",
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DesignIdeas24 },
+                TargetPageType = typeof(TemplateNavPage),
+                TargetPageTag = "template"
+            });
+        }
+
+        MenuItems = items;
+        FooterMenuItems = [];
+    }
+
+    private void UpdateSidebarSymbol() => OnPropertyChanged(nameof(SidebarSymbol));
 
     private static string FormatGreeting(ICurrentUser u)
     {

@@ -1,32 +1,20 @@
-﻿using System.Windows;
-using System.Windows.Media.Animation;
+﻿using System.Reflection;
+using System.Windows;
 
-namespace AutoScrew.Hmi.Dialog
+namespace AutoScrew.Hmi.Dialog;
+
+public partial class AboutTips
 {
-    /// <summary>
-    /// AboutTips.xaml 的交互逻辑
-    /// </summary>
-    public partial class AboutTips
+    public AboutTips()
     {
-        public AboutTips()
-        {
-            InitializeComponent();
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            var animation = new DoubleAnimation();
-            animation.From = 0;
-            animation.To = backImage.Width;
-            animation.Duration = TimeSpan.FromSeconds(2);
-
-            Storyboard storyboard = new Storyboard();
-            storyboard.Children.Add(animation);
-
-            Storyboard.SetTarget(animation, backImage);
-            Storyboard.SetTargetProperty(animation, new PropertyPath("Width"));
-
-            storyboard.Begin();
-        }
+        InitializeComponent();
     }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        var v = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "?";
+        txtVersion.Text = $"版本 {v}";
+    }
+
+    private void btn_OK_Click(object sender, RoutedEventArgs e) => Close();
 }

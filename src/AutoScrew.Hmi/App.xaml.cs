@@ -4,12 +4,15 @@ using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
+using AutoScrew.Hmi.Views.Pages;
 using AutoScrew.Infrastructure;
 using AutoScrew.Infrastructure.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Wpf.Ui;
+using Wpf.Ui.DependencyInjection;
 
 namespace AutoScrew.Hmi;
 
@@ -56,8 +59,12 @@ public partial class App : System.Windows.Application
         });
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<LoginWindow>();
+        builder.Services.AddNavigationViewPageProvider();
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<TemplateBoardViewModel>();
+        builder.Services.AddSingleton<OperationNavPage>();
+        builder.Services.AddSingleton<TemplateNavPage>();
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<IAppSessionCoordinator, AppSessionCoordinator>();

@@ -4,7 +4,9 @@ using AutoScrew.Hmi.ViewModels;
 
 namespace AutoScrew.Hmi;
 
-public partial class LoginWindow : Window
+using Wpf.Ui.Controls;
+
+public partial class LoginWindow : FluentWindow
 {
     public LoginWindow(LoginViewModel viewModel)
     {
@@ -23,7 +25,7 @@ public partial class LoginWindow : Window
         var pwd = vm.ConsumeDeferredRememberedPassword();
         if (string.IsNullOrEmpty(pwd))
             return;
-        // HandyControl PasswordBox 可能在 Loaded 时尚未稳定；延后一帧再写入。
+        // PasswordBox 在 Loaded 时尚未稳定；延后一帧再写入。
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => { PasswordField.Password = pwd; });
     }
 
@@ -41,7 +43,7 @@ public partial class LoginWindow : Window
 
     private void OnNoticeRequested(object? sender, LoginNotice e)
     {
-        MessageBox.Show(this, e.Body, e.Title, MessageBoxButton.OK, MessageBoxImage.Information);
+        System.Windows.MessageBox.Show(this, e.Body, e.Title, System.Windows.MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void OnCloseRequested(object? sender, bool success)

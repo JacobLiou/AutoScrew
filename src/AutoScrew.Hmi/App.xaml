@@ -1,13 +1,16 @@
 ﻿<Application x:Class="AutoScrew.Hmi.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:domain="clr-namespace:AutoScrew.Domain.Models;assembly=AutoScrew.Domain">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
-                <ResourceDictionary Source="/Themes/ShellResources.xaml"/>
+                <ui:ThemesDictionary Theme="Light" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="/Themes/Strings.zh-CN.xaml" />
+                <ResourceDictionary Source="/Themes/WpfUiShellResources.xaml" />
+                <ResourceDictionary Source="/Themes/ShellResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <SolidColorBrush x:Key="BrushPending" Color="#FFD54F"/>
             <SolidColorBrush x:Key="BrushInProgress" Color="#FFC107"/>

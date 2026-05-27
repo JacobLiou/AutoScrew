@@ -3,16 +3,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              Width="400"
-             Height=" 250"
-             Background="{DynamicResource RegionBrush}">
-    <hc:SimplePanel>
-        <TextBlock Name="textBlock" Style="{StaticResource TextBlockLargeBold}" Text="Please Wait..." TextWrapping="Wrap" />
-        <!-- BtnClose.Command = ControlCommands.Close; -->
-        <Button Width="24" Height="24" Style="{StaticResource ButtonIcon}" Foreground="{DynamicResource PrimaryBrush}"
-                hc:IconElement.Geometry="{StaticResource ErrorGeometry}" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
-                Command="hc:ControlCommands.Close" />
-    </hc:SimplePanel>
+             Height="250"
+             Background="{DynamicResource ShellCardBrush}">
+    <Grid Margin="16">
+        <TextBlock Name="textBlock"
+                   Text="请稍候…"
+                   TextWrapping="Wrap"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center" />
+        <ui:Button Width="28"
+                   Height="28"
+                   Padding="0"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Top"
+                   Appearance="Transparent"
+                   Click="BtnClose_OnClick">
+            <ui:SymbolIcon Symbol="Dismiss24" />
+        </ui:Button>
+    </Grid>
 </UserControl>

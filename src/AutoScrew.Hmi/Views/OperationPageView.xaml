@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
@@ -14,33 +15,35 @@
         <conv:PathToImageConverter x:Key="PathToImageConverter"/>
     </UserControl.Resources>
     <DockPanel Margin="0">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
-            <Button Content="扫码 / 输入 SN" Margin="0,0,8,0" Padding="12,6" Command="{Binding OpenScanCommand}"/>
-            <TextBox Width="220" Margin="0,0,8,0" VerticalAlignment="Center" Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}" ToolTip="Serial number"/>
-            <Button Content="提交 SN" Margin="0,0,8,0" Padding="12,6" Command="{Binding SubmitSnCommand}"/>
-            <Button Content="当前螺钉：取钉+拧紧" Margin="0,0,8,0" Padding="12,6" Command="{Binding RunCurrentScrewCommand}"/>
-            <Button Content="技术员解锁 NG" Margin="0,0,8,0" Padding="12,6" Command="{Binding UnlockNgCommand}"/>
-            <Button Content="复位会话" Margin="0,0,8,0" Padding="12,6" Command="{Binding ResetSessionCommand}"/>
-        </StackPanel>
-        <StatusBar DockPanel.Dock="Bottom" Background="#FAFAFA">
-            <StatusBarItem>
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <ui:Button Content="扫码 / 输入 SN" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding OpenScanCommand}"/>
+            <ui:TextBox Width="220" Margin="0,0,8,8" VerticalAlignment="Center" PlaceholderText="序列号 SN" Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"/>
+            <ui:Button Content="提交 SN" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SubmitSnCommand}"/>
+            <ui:Button Content="当前螺钉：取钉+拧紧" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding RunCurrentScrewCommand}"/>
+            <ui:Button Content="技术员解锁 NG" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding UnlockNgCommand}"/>
+            <ui:Button Content="复位会话" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ResetSessionCommand}"/>
+        </WrapPanel>
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource ShellCardBrush}"
+                BorderBrush="{DynamicResource ShellBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding PhaseDisplay}" FontWeight="SemiBold" Margin="0,0,16,0"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"/>
-            </StatusBarItem>
-        </StatusBar>
+                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+            </StackPanel>
+        </Border>
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="4" Margin="0,0,12,0" Background="White">
+            <ui:Card Grid.Column="0" Style="{StaticResource ShellCardStyle}" Margin="0,0,12,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900" MaxHeight="560">
                         <Grid Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
                             <Rectangle Fill="#F0F0F0"/>
-                            <Image Stretch="Fill" Opacity="1"
+                            <Image Stretch="Fill"
                                    Source="{Binding ProductImagePath, Converter={StaticResource PathToImageConverter}}"/>
                             <ItemsControl ItemsSource="{Binding Markers}" IsHitTestVisible="False">
                                 <ItemsControl.ItemsPanel>
@@ -67,8 +70,8 @@
                         </Grid>
                     </Viewbox>
                 </ScrollViewer>
-            </Border>
-            <Border Grid.Column="1" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="8" Background="White">
+            </ui:Card>
+            <ui:Card Grid.Column="1" Style="{StaticResource ShellCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -77,7 +80,7 @@
                     <TextBlock Grid.Row="0" Text="扭矩–角度（最近一步）" FontWeight="SemiBold" Margin="0,0,0,8"/>
                     <sp:WpfPlot x:Name="CurvePlot" Grid.Row="1" MinHeight="220"/>
                 </Grid>
-            </Border>
+            </ui:Card>
         </Grid>
     </DockPanel>
 </UserControl>
