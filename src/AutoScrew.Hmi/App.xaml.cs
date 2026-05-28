@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
@@ -61,10 +61,18 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddNavigationViewPageProvider();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
+        builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<TemplateBoardViewModel>();
+        builder.Services.AddSingleton<SettingsViewModel>();
+        builder.Services.AddSingleton<MesViewModel>();
+        builder.Services.AddSingleton<LogsViewModel>();
         builder.Services.AddSingleton<OperationNavPage>();
         builder.Services.AddSingleton<TemplateNavPage>();
+        builder.Services.AddSingleton<SettingsPage>();
+        builder.Services.AddSingleton<MesPage>();
+        builder.Services.AddSingleton<LogsPage>();
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<IAppSessionCoordinator, AppSessionCoordinator>();

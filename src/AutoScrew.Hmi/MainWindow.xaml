@@ -1,10 +1,9 @@
-﻿<ui:FluentWindow x:Class="AutoScrew.Hmi.MainWindow"
+<ui:FluentWindow x:Class="AutoScrew.Hmi.MainWindow"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
                  mc:Ignorable="d"
                  Title="AutoScrew 智能锁附系统"
@@ -12,41 +11,85 @@
                  Width="1280"
                  MinHeight="640"
                  MinWidth="960"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Default"
                  WindowStartupLocation="CenterScreen"
                  Background="{DynamicResource ShellSurfaceBrush}"
+                 SizeChanged="MainWindow_OnSizeChanged"
                  d:DataContext="{d:DesignInstance vm:MainShellViewModel, IsDesignTimeCreatable=False}">
-    <ui:FluentWindow.Resources>
-        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </ui:FluentWindow.Resources>
+    <ui:FluentWindow.InputBindings>
+        <KeyBinding Key="F"
+                    Modifiers="Control"
+                    Command="{Binding ElementName=AutoSuggestBox, Path=FocusCommand}" />
+    </ui:FluentWindow.InputBindings>
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <ui:TitleBar Grid.Row="0"
-                     Title="AutoScrew 智能锁附系统" />
-        <Border Grid.Row="1"
-                Background="{DynamicResource ShellCardBrush}"
-                BorderBrush="{DynamicResource ShellBorderBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="12,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
+        <ui:NavigationView x:Name="NavigationView"
+                           Padding="42,0,42,0"
+                           BreadcrumbBar="{Binding ElementName=BreadcrumbBar}"
+                           FrameMargin="0"
+                           IsBackButtonVisible="Collapsed"
+                           IsPaneToggleVisible="True"
+                           IsPaneOpen="{Binding IsSidebarVisible, Mode=TwoWay}"
+                           MenuItemsSource="{Binding MenuItems}"
+                           FooterMenuItemsSource="{Binding FooterMenuItems}"
+                           OpenPaneLength="310"
+                           PaneDisplayMode="Left"
+                           Navigated="RootNavigationView_OnNavigated"
+                           PaneOpened="NavigationView_OnPaneOpened"
+                           PaneClosed="NavigationView_OnPaneClosed"
+                           TitleBar="{Binding ElementName=TitleBar}"
+                           Transition="FadeInWithSlide">
+            <ui:NavigationView.Header>
+                <StackPanel Margin="42,24,42,16">
+                    <ui:BreadcrumbBar x:Name="BreadcrumbBar" />
                     <TextBlock Text="{Binding Breadcrumb}"
-                               Margin="12,0,0,0"
-                               VerticalAlignment="Center"
+                               Margin="0,8,0,0"
                                Foreground="{DynamicResource ShellMutedForegroundBrush}"
                                FontSize="12" />
                 </StackPanel>
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
+            </ui:NavigationView.Header>
+            <ui:NavigationView.AutoSuggestBox>
+                <ui:AutoSuggestBox x:Name="AutoSuggestBox"
+                                   PlaceholderText="搜索 (Ctrl+F)">
+                    <ui:AutoSuggestBox.Icon>
+                        <ui:IconSourceElement>
+                            <ui:SymbolIconSource Symbol="Search24" />
+                        </ui:IconSourceElement>
+                    </ui:AutoSuggestBox.Icon>
+                </ui:AutoSuggestBox>
+            </ui:NavigationView.AutoSuggestBox>
+            <ui:NavigationView.ContentOverlay>
+                <Grid>
+                    <ui:SnackbarPresenter x:Name="SnackbarPresenter" />
+                </Grid>
+            </ui:NavigationView.ContentOverlay>
+            <ui:NavigationView.PaneHeader>
+                <StackPanel Margin="12,16,12,8">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Image Source="pack://application:,,,/Assets/logo_new.png"
+                               Height="28"
+                               Width="100"
+                               Stretch="Fill" />
+                        <TextBlock Text="智能锁附"
+                                   FontSize="18"
+                                   Margin="8,0,0,0"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Bottom"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource ShellForegroundBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </ui:NavigationView.PaneHeader>
+        </ui:NavigationView>
+
+        <ContentPresenter x:Name="RootContentDialog" />
+        <ui:TitleBar x:Name="TitleBar"
+                     Title="AutoScrew 智能锁附系统"
+                     CloseWindowByDoubleClickOnIcon="True">
+            <ui:TitleBar.TrailingContent>
+                <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <ui:Button Content="记事本"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
@@ -77,9 +120,9 @@
                                       Command="{Binding OpenAppPathCommand}" />
                         </MenuItem>
                     </Menu>
-                    <Border Width="36"
-                            Height="36"
-                            CornerRadius="18"
+                    <Border Width="32"
+                            Height="32"
+                            CornerRadius="16"
                             Background="{DynamicResource ShellUserBadgeBrush}"
                             Margin="16,0,10,0">
                         <TextBlock Text="{Binding UserInitial}"
@@ -89,50 +132,24 @@
                                    VerticalAlignment="Center" />
                     </Border>
                     <StackPanel VerticalAlignment="Center"
-                                Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
+                                Margin="0,0,8,0"
+                                Orientation="Horizontal">
+                        <StackPanel Orientation="Vertical">
                             <TextBlock Text="{Binding UserGreeting}"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource ShellForegroundBrush}" />
-                            <TextBlock Text="{Binding UserRoleDisplay}"
-                                       Margin="8,0,0,0"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource ShellMutedForegroundBrush}"
-                                       VerticalAlignment="Center" />
+                            <TextBlock Text="已登录"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource ShellMutedForegroundBrush}" />
                         </StackPanel>
-                        <TextBlock Text="已登录"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource ShellMutedForegroundBrush}" />
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
-        </Border>
-        <ui:NavigationView x:Name="RootNavigationView"
-                   Grid.Row="2"
-                           PaneDisplayMode="Left"
-                   IsBackButtonVisible="Collapsed"
-                           IsPaneOpen="{Binding IsSidebarVisible, Mode=TwoWay}"
-                           MenuItemsSource="{Binding MenuItems}"
-                           FooterMenuItemsSource="{Binding FooterMenuItems}"
-                           Navigated="RootNavigationView_OnNavigated">
-            <ui:NavigationView.PaneHeader>
-                <StackPanel Margin="12,16,12,8">
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center">
-                        <Image Source="pack://application:,,,/Assets/logo_new.png"
-                               Height="28"
-                               Width="100"
-                               Stretch="Fill" />
-                        <TextBlock Text="智能锁附"
-                                   FontSize="18"
+                        <TextBlock Text="{Binding UserRoleDisplay}"
                                    Margin="8,0,0,0"
-                                   FontWeight="SemiBold"
-                                   VerticalAlignment="Bottom"
-                                   HorizontalAlignment="Center"
-                                   Foreground="{DynamicResource ShellForegroundBrush}" />
+                                   FontSize="12"
+                                   Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
-            </ui:NavigationView.PaneHeader>
-        </ui:NavigationView>
+            </ui:TitleBar.TrailingContent>
+        </ui:TitleBar>
     </Grid>
 </ui:FluentWindow>

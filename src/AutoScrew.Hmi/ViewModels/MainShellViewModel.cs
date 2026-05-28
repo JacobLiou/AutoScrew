@@ -21,7 +21,10 @@ namespace AutoScrew.Hmi.ViewModels;
 public enum MainAppSection
 {
     Operation,
-    Template
+    Template,
+    Mes,
+    Logs,
+    Settings
 }
 
 /// <summary>主窗壳：NavigationView 导航 + 顶栏工具。</summary>
@@ -87,9 +90,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     public bool CanUseTemplateBoard => _currentUser.Role >= UserRole.Technician;
 
     public string Breadcrumb =>
-        SelectedSection == MainAppSection.Operation
-            ? "AutoScrew / Operation / 作业台"
-            : "AutoScrew / Template / 螺钉位模板";
+        SelectedSection switch
+        {
+            MainAppSection.Operation => "AutoScrew / Operation / 作业台",
+            MainAppSection.Template => "AutoScrew / Template / 螺钉位模板",
+            MainAppSection.Mes => "AutoScrew / MES / 对接",
+            MainAppSection.Logs => "AutoScrew / Logs / 日志",
+            MainAppSection.Settings => "AutoScrew / Settings / 设置",
+            _ => "AutoScrew"
+        };
 
     public void OnNavigationViewNavigated(NavigationView navigationView)
     {
@@ -100,6 +109,12 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Template;
         else if (pageType == typeof(OperationNavPage))
             SelectedSection = MainAppSection.Operation;
+        else if (pageType == typeof(MesPage))
+            SelectedSection = MainAppSection.Mes;
+        else if (pageType == typeof(LogsPage))
+            SelectedSection = MainAppSection.Logs;
+        else if (pageType == typeof(SettingsPage))
+            SelectedSection = MainAppSection.Settings;
     }
 
     partial void OnIsSidebarVisibleChanged(bool value) => OnPropertyChanged(nameof(SidebarSymbol));
@@ -117,9 +132,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void NavigateToSection(MainAppSection section)
     {
-        var pageType = section == MainAppSection.Operation
-            ? typeof(OperationNavPage)
-            : typeof(TemplateNavPage);
+        var pageType = section switch
+        {
+            MainAppSection.Operation => typeof(OperationNavPage),
+            MainAppSection.Template => typeof(TemplateNavPage),
+            MainAppSection.Mes => typeof(MesPage),
+            MainAppSection.Logs => typeof(LogsPage),
+            MainAppSection.Settings => typeof(SettingsPage),
+            _ => typeof(OperationNavPage)
+        };
         _navigationService.Navigate(pageType);
         SelectedSection = section;
     }
@@ -248,6 +269,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         var items = new ObservableCollection<object>
         {
+            new NavigationViewItemHeader { Text = "生产" },
             new NavigationViewItem
             {
                 Content = "作业台",
@@ -268,8 +290,34 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
+        items.Add(new NavigationViewItemSeparator());
+        items.Add(new NavigationViewItemHeader { Text = "系统" });
+        items.Add(new NavigationViewItem
+        {
+            Content = "MES",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
+            TargetPageType = typeof(MesPage),
+            TargetPageTag = "mes"
+        });
+        items.Add(new NavigationViewItem
+        {
+            Content = "日志",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
+            TargetPageType = typeof(LogsPage),
+            TargetPageTag = "logs"
+        });
+
         MenuItems = items;
-        FooterMenuItems = [];
+        FooterMenuItems =
+        [
+            new NavigationViewItem
+            {
+                Content = "设置",
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
+                TargetPageType = typeof(SettingsPage),
+                TargetPageTag = "settings"
+            }
+        ];
     }
 
     private void UpdateSidebarSymbol() => OnPropertyChanged(nameof(SidebarSymbol));

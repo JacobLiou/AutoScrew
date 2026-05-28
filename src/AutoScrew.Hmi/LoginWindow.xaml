@@ -106,6 +106,51 @@
     <Border CornerRadius="0"
             Background="#FF0A1620">
         <Grid>
+            <!-- Close button (top-right) -->
+            <Button Command="{Binding CancelCommand}"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Right"
+                    Width="32"
+                    Height="32"
+                    Margin="0,8,8,0"
+                    Panel.ZIndex="10"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    ToolTip="关闭">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse x:Name="Bg"
+                                     Fill="Transparent" />
+                            <Viewbox Width="14"
+                                     Height="14">
+                                <Canvas Width="10"
+                                        Height="10">
+                                    <Line X1="0" Y1="0" X2="10" Y2="10"
+                                          Stroke="#CCFFFFFF"
+                                          StrokeThickness="1.6"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round" />
+                                    <Line X1="10" Y1="0" X2="0" Y2="10"
+                                          Stroke="#CCFFFFFF"
+                                          StrokeThickness="1.6"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round" />
+                                </Canvas>
+                            </Viewbox>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Fill" Value="#44FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Fill" Value="#66FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
             <Grid>
                 <Image Stretch="UniformToFill"
                        Source="pack://application:,,,/Assets/login-bg.png" />

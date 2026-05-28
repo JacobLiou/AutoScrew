@@ -16,12 +16,9 @@
 
 ### 1.1 权威来源（需求侧）
 
-1. [readme.md](../readme.md)
-2. [doc/PRD.md](./PRD.md)
-3. [doc/Design.md](./Design.md)
-4. [doc/DATA_AND_TRACE.md](./DATA_AND_TRACE.md)
+以王工的Excel文档位基础
 
-### 1.2 实现来源（代码侧）
+### 1.2 GUI实现来源（代码侧）
 
 1. 启动/登录流程
 
@@ -55,9 +52,7 @@
 - [src/AutoScrew.Hmi/appsettings.json](../src/AutoScrew.Hmi/appsettings.json)
 - [src/AutoScrew.Hmi/Samples/demo-template.json](../src/AutoScrew.Hmi/Samples/demo-template.json)
 
-### 1.3 文档缺口说明
 
-当前仓库未发现 doc/SPEC.md 与 doc/VERIFICATION_FAT_SAT.md 实体文件。若后续补入，建议将其作为验收阈值与测试条目优先来源，并回刷本文件中的阈值与覆盖范围。
 
 ---
 
@@ -95,11 +90,7 @@
 4. 已实现模板编辑页（技术员可见）：底图加载、画板尺寸、双击加点、多选删除、JSON读写。
 5. 已实现曲线展示（最近一步扭矩-角度）与模拟硬件、Mock MES通路。
 
-## 3.3 Gap摘要（测试策略标识）
 
-1. 目标中部分复杂工艺与完整MES契约仍为规划态，DVT应区分为“待实现项”，不按缺陷判定。
-2. 生产模式依赖MIMS/MES真实环境，当前可先以Development + Mock通道完成GUI与流程验证。
-3. 视觉防错等二期能力不纳入当前GUI通过判据。
 
 ---
 
@@ -349,14 +340,3 @@ DVT建议：以上每条迁移至少覆盖1个正向用例，非法迁移至少�
 2. 当前仓库缺少SPEC/FAT-SAT实体文档，验收阈值需在后续版本补齐后回刷。
 3. 生产环境依赖外部系统（MIMS/MES/网络证书），建议先完成Mock稳定性验证再切换联调。
 
----
-
-## 12. 结论（给测试组）
-
-本文件可作为当前AutoScrew GUI的测试依据主文档：
-
-1. 已给出目标需求、当前实现与差距三者对应关系。
-2. 已给出按角色拆分的基础操作方法和可观察预期。
-3. 已给出可直接拆分测试方案的矩阵与分层建议。
-
-测试组可基于第4章矩阵 + 第7章SOP直接生成测试用例集，并在第10章模板中落地执行记录。
