@@ -1,13 +1,10 @@
 using System.Security.Cryptography;
-using System.Text;
-
-// 必须与 src/AutoScrew.Infrastructure/Authentication/MimsConnectionStringDpapi.cs 中 Entropy 一致。
-var entropy = Encoding.UTF8.GetBytes("AutoScrew.MimsConnection.v1");
+using AutoScrew.Infrastructure.Authentication;
 
 if (args.Length < 1)
 {
-    Console.Error.WriteLine("用法: dotnet run --project tools/EncryptMimsConnectionString -- <明文连接串文件路径> [LocalMachine|CurrentUser]");
-    Console.Error.WriteLine("输出一行 Base64，粘贴到 appsettings 的 Authentication:Mims:ConnectionStringDpapiBase64。");
+    Console.Error.WriteLine("用法: dotnet run --project tools/EncryptMimsConnectionString -- <明文连接串文件路径> [LegacyDpapiScope]");
+    Console.Error.WriteLine("输出一行密文，粘贴到 appsettings 的 Authentication:Mims:ConnectionStringDpapiBase64。默认生成可跨机器部署的新格式。第二参数仅为兼容旧命令行，不影响新格式。");
     return 1;
 }
 
@@ -29,6 +26,5 @@ if (plain.Length == 0)
     return 3;
 }
 
-var cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(plain), entropy, scope);
-Console.WriteLine(Convert.ToBase64String(cipher));
+Console.WriteLine(MimsConnectionStringDpapi.ProtectToBase64(plain, scope));
 return 0;

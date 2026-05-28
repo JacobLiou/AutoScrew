@@ -84,27 +84,35 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     public string SidebarToggleHint => IsSidebarVisible ? "点击折叠侧栏" : "点击展开侧栏";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Breadcrumb))]
     private MainAppSection _selectedSection = MainAppSection.Operation;
 
     public bool CanUseTemplateBoard => _currentUser.Role >= UserRole.Technician;
 
-    public string Breadcrumb =>
-        SelectedSection switch
-        {
-            MainAppSection.Operation => "AutoScrew / Operation / 作业台",
-            MainAppSection.Template => "AutoScrew / Template / 螺钉位模板",
-            MainAppSection.Mes => "AutoScrew / MES / 对接",
-            MainAppSection.Logs => "AutoScrew / Logs / 日志",
-            MainAppSection.Settings => "AutoScrew / Settings / 设置",
-            _ => "AutoScrew"
-        };
+    [ObservableProperty]
+    private string _breadcrumb = "生产 / 作业台";
 
-    public void OnNavigationViewNavigated(NavigationView navigationView)
+    public void OnNavigationViewSelectionChanged(NavigationView navigationView)
     {
-        var pageType = navigationView.SelectedItem is NavigationViewItem item
-            ? item.TargetPageType
-            : null;
+        var selected = navigationView.SelectedItem;
+        if (selected is INavigationViewItem selectedItem)
+        {
+            var leaf = FormatNavigationItemTitle(selectedItem);
+            if (selectedItem.NavigationViewItemParent is INavigationViewItem parent)
+            {
+                var group = FormatNavigationItemTitle(parent);
+                Breadcrumb = string.IsNullOrWhiteSpace(group) ? leaf : $"{group} / {leaf}";
+            }
+            else
+            {
+                Breadcrumb = leaf;
+            }
+        }
+        else
+        {
+            Breadcrumb = string.Empty;
+        }
+
+        var pageType = selected is INavigationViewItem i ? i.TargetPageType : null;
         if (pageType == typeof(TemplateNavPage))
             SelectedSection = MainAppSection.Template;
         else if (pageType == typeof(OperationNavPage))
@@ -115,6 +123,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Logs;
         else if (pageType == typeof(SettingsPage))
             SelectedSection = MainAppSection.Settings;
+    }
+
+    private static string FormatNavigationItemTitle(INavigationViewItem item)
+    {
+        if (item is NavigationViewItem nvi)
+            return nvi.Content?.ToString() ?? string.Empty;
+
+        return item.ToString() ?? string.Empty;
     }
 
     partial void OnIsSidebarVisibleChanged(bool value) => OnPropertyChanged(nameof(SidebarSymbol));
@@ -223,17 +239,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void ShowAbout()
-    {
-        var v = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "?";
-        System.Windows.MessageBox.Show(
-            $"AutoScrew 作业台\n版本: {v}\n目标: .NET 8 Windows x64\n\n详细设计见 doc/Design.md。",
-            "关于",
-            System.Windows.MessageBoxButton.OK,
-            MessageBoxImage.Information);
-    }
-
-    [RelayCommand]
     private void Logout() => _sessionCoordinator.RequestLogout();
 
     private void OnCurrentUserPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -267,21 +272,26 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void RebuildMenuItems()
     {
-        var items = new ObservableCollection<object>
+        var operationItem = new NavigationViewItem
         {
-            new NavigationViewItemHeader { Text = "生产" },
-            new NavigationViewItem
-            {
-                Content = "作业台",
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
-                TargetPageType = typeof(OperationNavPage),
-                TargetPageTag = "operation"
-            }
+            Content = "作业台",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
+            TargetPageType = typeof(OperationNavPage),
+            TargetPageTag = "operation"
         };
+
+        var productionGroup = new NavigationViewItem
+        {
+            Content = "生产",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.BuildingFactory24 },
+            IsExpanded = true
+        };
+
+        productionGroup.MenuItems.Add(operationItem);
 
         if (CanUseTemplateBoard)
         {
-            items.Add(new NavigationViewItem
+            productionGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = "螺钉模板",
                 Icon = new SymbolIcon { Symbol = SymbolRegular.DesignIdeas24 },
@@ -290,22 +300,33 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
-        items.Add(new NavigationViewItemSeparator());
-        items.Add(new NavigationViewItemHeader { Text = "系统" });
-        items.Add(new NavigationViewItem
+        var systemGroup = new NavigationViewItem
+        {
+            Content = "系统",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.Airplane24 },
+            IsExpanded = true
+        };
+
+        systemGroup.MenuItems.Add(new NavigationViewItem
         {
             Content = "MES",
             Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
             TargetPageType = typeof(MesPage),
             TargetPageTag = "mes"
         });
-        items.Add(new NavigationViewItem
+        systemGroup.MenuItems.Add(new NavigationViewItem
         {
             Content = "日志",
             Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
             TargetPageType = typeof(LogsPage),
             TargetPageTag = "logs"
         });
+
+        var items = new ObservableCollection<object>
+        {
+            productionGroup,
+            systemGroup
+        };
 
         MenuItems = items;
         FooterMenuItems =

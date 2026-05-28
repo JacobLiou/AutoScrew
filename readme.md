@@ -73,6 +73,7 @@ flowchart LR
 | [doc/RISK_REGISTER.md](doc/RISK_REGISTER.md) | 风险登记（供料、节拍、噪声、吸头寿命、MES 窗口等） |
 | [doc/VERIFICATION_FAT_SAT.md](doc/VERIFICATION_FAT_SAT.md) | FAT/SAT 检查表草案（与 SPEC 验收条可追溯） |
 | [doc/DATA_AND_TRACE.md](doc/DATA_AND_TRACE.md) | 曲线采样、存盘字段、SN–位号绑定与 MES 最小集占位 |
+| [doc/CONNECTION_STRING_ENCRYPTION.md](doc/CONNECTION_STRING_ENCRYPTION.md) | **部署必读**：MIMS 连接串加密与跨机配置方法 |
 
 ## 仓库结构
 

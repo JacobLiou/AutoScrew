@@ -11,9 +11,6 @@
              d:Background="White"
              mc:Ignorable="d">
     <StackPanel Margin="0,0,0,24">
-        <ui:TextBlock Margin="0,0,0,12"
-                      FontTypography="Title"
-                      Text="MES" />
         <ui:CardControl Margin="0,0,0,12"
                         Icon="{ui:SymbolIcon CloudSync24}">
             <ui:CardControl.Header>

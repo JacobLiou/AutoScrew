@@ -7,6 +7,6 @@
     <RootNamespace>AutoScrew.Tools</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <ProjectReference Include="..\..\src\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

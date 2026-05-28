@@ -8,12 +8,12 @@ public sealed class MimsAuthenticationOptions
     public string ConnectionString { get; set; } = "";
 
     /// <summary>
-    /// 经 Windows DPAPI 加密的连接串（Base64）。在目标机上用仓库内 <c>tools/EncryptMimsConnectionString</c> 从明文生成；
-    /// 与 <see cref="DpapiScope"/> 一致；密文可放入 appsettings（仍绑定本机/用户，优于对称密钥硬编码）。
+    /// 经应用内置对称算法加密的连接串（Base64）；新版密文可跨机器部署，旧版 DPAPI 密文也可继续读取。
+    /// 在任意机器上用仓库内 <c>tools/EncryptMimsConnectionString</c> 从明文生成后粘贴到此处。
     /// </summary>
     public string ConnectionStringDpapiBase64 { get; set; } = "";
 
-    /// <summary>DPAPI 作用域：<c>LocalMachine</c>（默认，适合工控机多账户）或 <c>CurrentUser</c>。</summary>
+    /// <summary>仅用于兼容旧版 DPAPI 密文：<c>LocalMachine</c>（默认）或 <c>CurrentUser</c>。</summary>
     public string DpapiScope { get; set; } = "LocalMachine";
 
     public int CommandTimeoutSeconds { get; set; } = 15;

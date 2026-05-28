@@ -44,10 +44,10 @@ public partial class MainWindow : FluentWindow
         _navigationService.Navigate(typeof(OperationNavPage));
     }
 
-    private void RootNavigationView_OnNavigated(NavigationView sender, RoutedEventArgs e)
+    private void RootNavigationView_OnSelectionChanged(NavigationView sender, RoutedEventArgs e)
     {
         if (DataContext is MainShellViewModel shell)
-            shell.OnNavigationViewNavigated(sender);
+            shell.OnNavigationViewSelectionChanged(sender);
     }
 
     private void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)

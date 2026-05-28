@@ -14,6 +14,7 @@
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Default"
+                 WindowState="Maximized"
                  WindowStartupLocation="CenterScreen"
                  Background="{DynamicResource ShellSurfaceBrush}"
                  SizeChanged="MainWindow_OnSizeChanged"
@@ -35,7 +36,7 @@
                            FooterMenuItemsSource="{Binding FooterMenuItems}"
                            OpenPaneLength="310"
                            PaneDisplayMode="Left"
-                           Navigated="RootNavigationView_OnNavigated"
+                           SelectionChanged="RootNavigationView_OnSelectionChanged"
                            PaneOpened="NavigationView_OnPaneOpened"
                            PaneClosed="NavigationView_OnPaneClosed"
                            TitleBar="{Binding ElementName=TitleBar}"
@@ -99,11 +100,6 @@
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                ToolTip="计算器"
                                Command="{Binding OpenCalcCommand}" />
-                    <ui:Button Style="{StaticResource HeaderIconButtonStyle}"
-                               ToolTip="关于"
-                               Command="{Binding ShowAboutCommand}">
-                        <ui:SymbolIcon Symbol="Info24" />
-                    </ui:Button>
                     <ui:Button Style="{StaticResource HeaderIconButtonStyle}"
                                ToolTip="登出"
                                Command="{Binding LogoutCommand}">

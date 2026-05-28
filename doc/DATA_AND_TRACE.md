@@ -27,6 +27,8 @@
 
 ## MIMS MySQL 登录（只读）
 
-- `Authentication:Mode` = `MimsMySql` 时使用 [`MimsMySqlAuthenticationService`](src/AutoScrew.Infrastructure/Authentication/MimsMySqlAuthenticationService.cs)：仅 `SELECT` `mims_person` + `mims_role`；口令算法见 [`MimsPasswordHasher`](src/AutoScrew.Infrastructure/Authentication/MimsPasswordHasher.cs)。
-- 连接串键：`Authentication:Mims:ConnectionString`（**仅 User Secrets / 环境变量**，勿提交 `src/temp/connstring.txt`）。
+- `Authentication:Mode` = `MimsMySql` 时使用 [`MimsMySqlAuthenticationService`](../src/AutoScrew.Infrastructure/Authentication/MimsMySqlAuthenticationService.cs)：仅 `SELECT` `mims_person` + `mims_role`；口令算法见 [`MimsPasswordHasher`](../src/AutoScrew.Infrastructure/Authentication/MimsPasswordHasher.cs)。
+- **连接串配置**：见 [CONNECTION_STRING_ENCRYPTION.md](CONNECTION_STRING_ENCRYPTION.md)（部署必读）。
+  - `Authentication:Mims:ConnectionString`：明文连接串（User Secrets / 环境变量；开发仅用）。
+  - `Authentication:Mims:ConnectionStringDpapiBase64`：加密连接串（推荐生产环境使用）。
 - 角色映射（二元）：[`MimsRoleMapper`](../src/AutoScrew.Infrastructure/Authentication/MimsRoleMapper.cs) 读取 `mims_role.name`——名称**含「操作员」**（如 `操作员`、`七分厂操作员`、`单步权限操作员`）→ `Operator`（仅作业）；**其余**（技术员、工程师、Super Admin、生产管理员等）→ `Technician`（模板配置、解锁 NG）。现场 `mims_role.type` 常为 0，**不可**用于授权。`Authentication:Mims:RoleMap` / `UnmappedRoleBehavior` 已废弃，仅保留配置键兼容。
