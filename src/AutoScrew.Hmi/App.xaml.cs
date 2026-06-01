@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.DependencyInjection;
 
 namespace AutoScrew.Hmi;
@@ -41,6 +42,8 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         // 登录窗是唯一可见窗体时，若保持默认 OnLastWindowClose，关闭登录后会在 Show 主窗体前触发 Shutdown。
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        ApplicationThemeManager.Apply(ApplicationTheme.Light);
 
         var builder = Host.CreateApplicationBuilder(e.Args);
 

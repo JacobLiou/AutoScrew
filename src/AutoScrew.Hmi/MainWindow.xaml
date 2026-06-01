@@ -19,17 +19,13 @@
                  Background="{DynamicResource ShellSurfaceBrush}"
                  SizeChanged="MainWindow_OnSizeChanged"
                  d:DataContext="{d:DesignInstance vm:MainShellViewModel, IsDesignTimeCreatable=False}">
-    <ui:FluentWindow.InputBindings>
-        <KeyBinding Key="F"
-                    Modifiers="Control"
-                    Command="{Binding ElementName=AutoSuggestBox, Path=FocusCommand}" />
-    </ui:FluentWindow.InputBindings>
     <Grid>
         <ui:NavigationView x:Name="NavigationView"
                            Padding="42,0,42,0"
                            BreadcrumbBar="{Binding ElementName=BreadcrumbBar}"
+                           EnableDebugMessages="True"
                            FrameMargin="0"
-                           IsBackButtonVisible="Collapsed"
+                           IsBackButtonVisible="Visible"
                            IsPaneToggleVisible="True"
                            IsPaneOpen="{Binding IsSidebarVisible, Mode=TwoWay}"
                            MenuItemsSource="{Binding MenuItems}"
@@ -50,16 +46,6 @@
                                FontSize="12" />
                 </StackPanel>
             </ui:NavigationView.Header>
-            <ui:NavigationView.AutoSuggestBox>
-                <ui:AutoSuggestBox x:Name="AutoSuggestBox"
-                                   PlaceholderText="搜索 (Ctrl+F)">
-                    <ui:AutoSuggestBox.Icon>
-                        <ui:IconSourceElement>
-                            <ui:SymbolIconSource Symbol="Search24" />
-                        </ui:IconSourceElement>
-                    </ui:AutoSuggestBox.Icon>
-                </ui:AutoSuggestBox>
-            </ui:NavigationView.AutoSuggestBox>
             <ui:NavigationView.ContentOverlay>
                 <Grid>
                     <ui:SnackbarPresenter x:Name="SnackbarPresenter" />
@@ -89,6 +75,9 @@
         <ui:TitleBar x:Name="TitleBar"
                      Title="AutoScrew 智能锁附系统"
                      CloseWindowByDoubleClickOnIcon="True">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/logo_new.png" />
+            </ui:TitleBar.Icon>
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">

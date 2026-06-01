@@ -48,6 +48,13 @@ public partial class MainWindow : FluentWindow
     {
         if (DataContext is MainShellViewModel shell)
             shell.OnNavigationViewSelectionChanged(sender);
+
+        // 对齐 Wpf.Ui.Gallery：默认页（类似 Dashboard）隐藏 Header，其它页面显示 Header。
+        var targetPageType = (sender.SelectedItem as INavigationViewItem)?.TargetPageType;
+        NavigationView.SetCurrentValue(
+            NavigationView.HeaderVisibilityProperty,
+            targetPageType != typeof(OperationNavPage) ? Visibility.Visible : Visibility.Collapsed
+        );
     }
 
     private void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)
