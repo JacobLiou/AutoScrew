@@ -19,4 +19,7 @@ public sealed class AutoScrewAppOptions
     public string? OptionalNetworkArchiveRoot { get; set; }
 
     public string StationId { get; set; } = "STATION-01";
+
+    /// <summary>UI 默认语言：zh-CN 或 en-US。</summary>
+    public string UiCulture { get; set; } = "zh-CN";
 }

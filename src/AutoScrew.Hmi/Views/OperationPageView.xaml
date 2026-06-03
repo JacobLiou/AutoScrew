@@ -21,27 +21,27 @@
                         Width="220"
                         Margin="0,0,8,8"
                         VerticalAlignment="Center"
-                        PlaceholderText="序列号 SN"
+                        PlaceholderText="{DynamicResource S.Operation.SnPlaceholder}"
                         IsEnabled="{Binding IsSnInputEnabled}"
                         Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"
                         KeyDown="SnInputBox_OnKeyDown"/>
-            <ui:Button Content="提交 SN"
+            <ui:Button Content="{DynamicResource S.Operation.SubmitSn}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
                        Command="{Binding SubmitSnCommand}"/>
-            <ui:Button Content="当前螺钉：取钉+拧紧"
+            <ui:Button Content="{DynamicResource S.Operation.RunScrew}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
                        Command="{Binding RunCurrentScrewCommand}"/>
-            <ui:Button Content="确认翻面"
+            <ui:Button Content="{DynamicResource S.Operation.ConfirmFlip}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
                        Command="{Binding ConfirmFlipCommand}"/>
-            <ui:Button Content="技术员解锁 NG"
+            <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
                        Command="{Binding UnlockNgCommand}"/>
-            <ui:Button Content="复位会话"
+            <ui:Button Content="{DynamicResource S.Operation.ResetSession}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
                        Command="{Binding ResetSessionCommand}"/>
@@ -76,7 +76,7 @@
                     Padding="8">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top"
-                               Text="作业进度"
+                               Text="{DynamicResource S.Operation.ProgressTree}"
                                FontWeight="SemiBold"
                                Margin="4,0,0,8"/>
                     <TreeView x:Name="ProgressTree"
@@ -157,9 +157,9 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="120"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="扭矩–角度（最近一步）" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="0" Text="{DynamicResource S.Operation.CurveTitle}" FontWeight="SemiBold" Margin="0,0,0,8"/>
                     <sp:WpfPlot x:Name="CurvePlot" Grid.Row="1" MinHeight="180"/>
-                    <TextBlock Grid.Row="2" Text="作业日志" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                    <TextBlock Grid.Row="2" Text="{DynamicResource S.Operation.ActivityLog}" FontWeight="SemiBold" Margin="0,12,0,4"/>
                     <ListBox Grid.Row="3"
                              ItemsSource="{Binding ActivityLog}"
                              BorderThickness="0"

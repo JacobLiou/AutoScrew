@@ -5,15 +5,17 @@ namespace AutoScrew.Hmi.ViewModels.Operation;
 
 public sealed partial class OperatorScrewNodeViewModel : ObservableObject
 {
-    public OperatorScrewNodeViewModel(int localIndex, StationScrewState state)
+    public OperatorScrewNodeViewModel(int localIndex, StationScrewState state, string displayLabel)
     {
         LocalIndex = localIndex;
         _state = state;
+        _displayLabel = displayLabel;
     }
 
     public int LocalIndex { get; }
 
-    public string DisplayLabel => $"钉 {LocalIndex}";
+    [ObservableProperty]
+    private string _displayLabel;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StateGlyph))]

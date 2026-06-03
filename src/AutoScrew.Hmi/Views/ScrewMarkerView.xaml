@@ -11,14 +11,14 @@
             MouseLeftButtonDown="OnMouseLeftButtonDown">
         <Border.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="螺钉类型（圆圈大小）" IsEnabled="False" FontWeight="SemiBold" />
+                <MenuItem Header="{DynamicResource S.Screw.TypeMenu}" IsEnabled="False" FontWeight="SemiBold" />
                 <Separator />
-                <MenuItem Header="M1.0 / 极小 (18px)" Tag="1" Click="OnScrewTypeMenuClick" />
-                <MenuItem Header="M1.4 / 很小 (22px)" Tag="2" Click="OnScrewTypeMenuClick" />
-                <MenuItem Header="M2（默认）(26px)" Tag="3" Click="OnScrewTypeMenuClick" />
-                <MenuItem Header="M2.5 (30px)" Tag="4" Click="OnScrewTypeMenuClick" />
-                <MenuItem Header="M3 (34px)" Tag="5" Click="OnScrewTypeMenuClick" />
-                <MenuItem Header="M4 / 较大 (40px)" Tag="6" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M10}" Tag="1" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M14}" Tag="2" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M2Default}" Tag="3" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M25}" Tag="4" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M3}" Tag="5" Click="OnScrewTypeMenuClick" />
+                <MenuItem Header="{DynamicResource S.Screw.M4}" Tag="6" Click="OnScrewTypeMenuClick" />
             </ContextMenu>
         </Border.ContextMenu>
         <Border.Style>

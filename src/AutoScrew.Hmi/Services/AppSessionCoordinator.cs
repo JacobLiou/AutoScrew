@@ -11,7 +11,7 @@ public sealed class AppSessionCoordinator(
     public void RequestLogout()
     {
         var mainWindow = services.GetRequiredService<MainWindow>();
-        if (!ConfirmTips.ShowDialog("确定要登出并返回登录界面吗？", mainWindow, "登出"))
+        if (!ConfirmTips.ShowDialog(Loc.Get("S.Dialog.LogoutConfirm"), mainWindow, Loc.Get("S.Dialog.Logout")))
             return;
 
         session.ResetToIdle();

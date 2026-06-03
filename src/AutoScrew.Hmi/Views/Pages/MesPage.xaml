@@ -21,15 +21,15 @@
                     </Grid.RowDefinitions>
                     <ui:TextBlock Grid.Row="0"
                                   FontTypography="Body"
-                                  Text="启用 MES 对接" />
+                                  Text="{DynamicResource S.Mes.Enable}" />
                     <ui:TextBlock Grid.Row="1"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="开启后，将上传锁附结果与追溯数据" />
+                                  Text="{DynamicResource S.Mes.EnableDesc}" />
                 </Grid>
             </ui:CardControl.Header>
             <ui:ToggleSwitch HorizontalAlignment="Right"
-                             OnContent="启用"
-                             OffContent="停用"
+                             OnContent="{DynamicResource S.Common.On}"
+                             OffContent="{DynamicResource S.Common.Off}"
                              IsChecked="{Binding ViewModel.IsEnabled, Mode=TwoWay}" />
         </ui:CardControl>
         <ui:CardControl Margin="0,0,0,12"
@@ -42,19 +42,19 @@
                     </Grid.RowDefinitions>
                     <ui:TextBlock Grid.Row="0"
                                   FontTypography="Body"
-                                  Text="MES 地址" />
+                                  Text="{DynamicResource S.Mes.Address}" />
                     <ui:TextBlock Grid.Row="1"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="appsettings 中 Mes:BaseUrl" />
+                                  Text="{DynamicResource S.Mes.AddressDesc}" />
                 </Grid>
             </ui:CardControl.Header>
             <ui:TextBox MinWidth="360"
-                        PlaceholderText="https://mes.example.com/api"
+                        PlaceholderText="{DynamicResource S.Mes.UrlPlaceholder}"
                         Text="{Binding ViewModel.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         </ui:CardControl>
         <ui:Button Appearance="Primary"
                    HorizontalAlignment="Left"
                    Command="{Binding ViewModel.TestConnectionCommand}"
-                   Content="测试连接" />
+                   Content="{DynamicResource S.Mes.TestConnection}" />
     </StackPanel>
 </UserControl>

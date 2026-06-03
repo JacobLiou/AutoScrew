@@ -19,12 +19,18 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private bool _suppressSelectionRevert;
     private bool _suppressTreeSelectionHandling;
     private SurfaceListItemViewModel? _loadedSurface;
+    private readonly LocalizationService _localization;
 
-    public ProductTemplateEditorViewModel(SurfaceBoardEditorViewModel currentSurfaceEditor)
+    public ProductTemplateEditorViewModel(
+        SurfaceBoardEditorViewModel currentSurfaceEditor,
+        LocalizationService localization)
     {
         CurrentSurfaceEditor = currentSurfaceEditor;
+        _localization = localization;
         CurrentSurfaceEditor.ContentChanged += (_, _) => MarkDirty();
+        _localization.CultureChanged += (_, _) => RefreshLocalizedUi();
         ProductTreeRoots = new ObservableCollection<ProductTemplateTreeRootViewModel>();
+        StatusMessage = Loc.Get("S.Template.StatusInitial");
     }
 
     public SurfaceBoardEditorViewModel CurrentSurfaceEditor { get; }
@@ -57,7 +63,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private SurfaceListItemViewModel? _selectedSurface;
 
     [ObservableProperty]
-    private string _statusMessage = "打开或新建产品模板。";
+    private string _statusMessage = "";
 
     public bool HasProduct => ProductRoot is not null;
 
@@ -65,8 +71,8 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
     public string WindowTitle =>
         string.IsNullOrWhiteSpace(ProductId)
-            ? "螺钉模板"
-            : $"螺钉模板 · {ProductId}{(IsDirty ? " *" : "")}";
+            ? Loc.Get("S.Template.Title")
+            : Loc.Format("S.Template.TitleWithProduct", ProductId, IsDirty ? " *" : "");
 
     partial void OnSelectedSurfaceChanged(SurfaceListItemViewModel? value)
     {
@@ -114,9 +120,8 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             _suppressSelectionRevert = true;
             SelectedSurface = null;
             _suppressSelectionRevert = false;
-            StatusMessage = HasProduct
-                ? $"产品：{ProductRoot!.TreeHeader}，共 {ProductRoot.Surfaces.Count} 面。请选中一个面进行编辑。"
-                : StatusMessage;
+            if (HasProduct)
+                StatusMessage = Loc.Format("S.Template.StatusSelectSurface", ProductRoot!.TreeHeader, ProductRoot.Surfaces.Count);
         }
     }
 
@@ -128,7 +133,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
         var dlg = new OpenFileDialog
         {
-            Filter = "产品模板 (*.product-template.json;*.json)|*.product-template.json;*.json|所有文件 (*.*)|*.*",
+            Filter = Loc.Get("S.Template.OpenFilter"),
         };
 
         if (dlg.ShowDialog() != true)
@@ -143,12 +148,12 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 _templateDirectory = Path.GetDirectoryName(dlg.FileName);
                 LoadProductDocument(doc);
                 IsDirty = false;
-                StatusMessage = $"已打开：{dlg.FileName}（{doc.Surfaces.Count} 面）";
+                StatusMessage = Loc.Format("S.Template.StatusOpened", dlg.FileName, doc.Surfaces.Count);
             });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"打开失败：{ex.Message}";
+            StatusMessage = Loc.Format("S.Template.StatusOpenFailed", ex.Message);
         }
     }
 
@@ -157,7 +162,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     {
         if (ProductRoot is null || string.IsNullOrWhiteSpace(ProductId))
         {
-            StatusMessage = "请先新建或打开产品模板。";
+            StatusMessage = Loc.Get("S.Template.StatusNoProduct");
             return;
         }
 
@@ -170,7 +175,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             {
                 var dlg = new SaveFileDialog
                 {
-                    Filter = "产品模板 (*.product-template.json)|*.product-template.json|JSON (*.json)|*.json",
+                    Filter = Loc.Get("S.Template.SaveFilter"),
                     DefaultExt = ".product-template.json",
                     FileName = $"{ProductId}.product-template.json",
                 };
@@ -188,11 +193,11 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 ProductTemplateJsonSerializer.Save(_filePath!, doc);
                 IsDirty = false;
                 RefreshTreeEditStates();
-                StatusMessage = $"已保存：{_filePath}";
+                StatusMessage = Loc.Format("S.Template.StatusSaved", _filePath);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"保存失败：{ex.Message}";
+                StatusMessage = Loc.Format("S.Template.StatusSaveFailed", ex.Message);
             }
         });
     }
@@ -210,7 +215,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         ResetSession();
         ApplyProductInfo(info!);
         IsDirty = true;
-        StatusMessage = "已创建新产品，请添加面并编辑。";
+        StatusMessage = Loc.Get("S.Template.StatusCreated");
     }
 
     [RelayCommand]
@@ -224,7 +229,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         var maxOrder = surfaces.Count == 0 ? 0 : surfaces.Max(s => s.Order);
         var initial = new SurfaceParamsResult(
             $"S{nextIndex}",
-            $"面 {nextIndex}",
+            Loc.Format("S.Template.DefaultSurfaceName", nextIndex),
             maxOrder + 1,
             800,
             600);
@@ -234,7 +239,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 initial,
                 GetExistingSurfaceIds(),
                 excludeId: null,
-                title: "添加面",
+                title: Loc.Get("S.Template.AddSurfaceDialog"),
                 out result)))
             return;
 
@@ -245,7 +250,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         surfaces.Insert(insertAt, item);
         SelectSurfaceInTree(item);
         IsDirty = true;
-        StatusMessage = $"已添加面：{item.Name}";
+        StatusMessage = Loc.Format("S.Template.StatusSurfaceAdded", item.Name);
     }
 
     [RelayCommand(CanExecute = nameof(CanEditSelectedSurface))]
@@ -271,7 +276,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 initial,
                 GetExistingSurfaceIds(),
                 excludeId: SelectedSurface.SurfaceId,
-                title: "编辑面",
+                title: Loc.Get("S.Template.EditSurfaceDialog"),
                 out result)))
             return;
 
@@ -280,7 +285,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             LoadSurfaceIntoEditor(SelectedSurface);
 
         IsDirty = true;
-        StatusMessage = $"已更新面：{SelectedSurface.Name}";
+        StatusMessage = Loc.Format("S.Template.StatusSurfaceUpdated", SelectedSurface.Name);
     }
 
     [RelayCommand(CanExecute = nameof(CanEditSelectedSurface))]
@@ -289,7 +294,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (SelectedSurface is null || ProductRoot is null)
             return;
 
-        if (!ConfirmTips.ShowDialog($"确定删除面「{SelectedSurface.Name}」？"))
+        if (!ConfirmTips.ShowDialog(Loc.Format("S.Template.ConfirmDeleteSurface", SelectedSurface.Name)))
             return;
 
         var index = GetSurfaceIndex(SelectedSurface);
@@ -310,7 +315,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             ClearBoardEditor();
 
         IsDirty = true;
-        StatusMessage = "已删除面。";
+        StatusMessage = Loc.Get("S.Template.StatusSurfaceDeleted");
     }
 
     [RelayCommand(CanExecute = nameof(CanMoveSurfaceUp))]
@@ -371,7 +376,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         (_surfaceDocuments[index], _surfaceDocuments[otherIndex]) = (_surfaceDocuments[otherIndex], _surfaceDocuments[index]);
 
         IsDirty = true;
-        StatusMessage = $"已调整顺序：{SelectedSurface.Name} order={SelectedSurface.Order}";
+        StatusMessage = Loc.Format("S.Template.StatusOrderChanged", SelectedSurface.Name, SelectedSurface.Order);
         MoveSurfaceUpCommand.NotifyCanExecuteChanged();
         MoveSurfaceDownCommand.NotifyCanExecuteChanged();
     }
@@ -461,7 +466,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         CurrentSurfaceEditor.SetTemplateDirectory(_templateDirectory);
         CurrentSurfaceEditor.LoadFrom(_surfaceDocuments[index], _templateDirectory);
         item.MarkerCount = _surfaceDocuments[index].Markers.Count;
-        StatusMessage = $"正在编辑：{item.Name}（{item.MarkerCount} 钉）";
+        StatusMessage = Loc.Format("S.Template.StatusEditing", item.Name, item.MarkerCount);
         _suppressDirty = false;
     }
 
@@ -618,8 +623,23 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             SelectedSurface.EditState = SurfaceEditState.Edited;
     }
 
+    private void RefreshLocalizedUi()
+    {
+        OnPropertyChanged(nameof(WindowTitle));
+        if (!HasProduct)
+        {
+            StatusMessage = Loc.Get("S.Template.StatusInitial");
+            return;
+        }
+
+        if (_loadedSurface is not null)
+            StatusMessage = Loc.Format("S.Template.StatusEditing", _loadedSurface.Name, _loadedSurface.MarkerCount);
+        else if (ProductRoot is not null)
+            StatusMessage = Loc.Format("S.Template.StatusSelectSurface", ProductRoot.TreeHeader, ProductRoot.Surfaces.Count);
+    }
+
     private static bool ConfirmDiscardChanges() =>
-        ConfirmTips.ShowDialog("有未保存的更改，是否放弃？");
+        ConfirmTips.ShowDialog(Loc.Get("S.Template.ConfirmDiscard"));
 
     private void RunWithTreeSelectionSuppressed(Action action)
     {

@@ -1,0 +1,28 @@
+<UserControl x:Class="AutoScrew.Hmi.Controls.CultureSelector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:AutoScrew.Hmi.Models"
+             x:Name="Root">
+    <ComboBox x:Name="CultureCombo"
+              MinWidth="128"
+              MaxWidth="160"
+              VerticalAlignment="Center"
+              ItemsSource="{Binding CultureOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              SelectedValue="{Binding SelectedCulture, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+              SelectedValuePath="CultureName"
+              ToolTip="{DynamicResource S.Shell.Language}">
+        <ComboBox.ItemTemplate>
+            <DataTemplate DataType="{x:Type models:UiCultureOption}">
+                <StackPanel Orientation="Horizontal"
+                            Margin="4,2">
+                    <TextBlock Text="{Binding FlagGlyph}"
+                               FontSize="15"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0" />
+                    <TextBlock Text="{Binding DisplayName}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </DataTemplate>
+        </ComboBox.ItemTemplate>
+    </ComboBox>
+</UserControl>

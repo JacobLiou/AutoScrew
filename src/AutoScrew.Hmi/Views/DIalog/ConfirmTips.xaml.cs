@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Input;
+using AutoScrew.Hmi.Services;
 
 namespace AutoScrew.Hmi.Dialog;
 
@@ -12,7 +13,7 @@ public partial class ConfirmTips
     {
         InitializeComponent();
         txt_Content.Text = message;
-        var header = string.IsNullOrWhiteSpace(title) ? "确认" : title.Trim();
+        var header = string.IsNullOrWhiteSpace(title) ? Loc.Get("S.Common.Confirm") : title.Trim();
         txt_Title.Text = header;
         Title = header;
     }

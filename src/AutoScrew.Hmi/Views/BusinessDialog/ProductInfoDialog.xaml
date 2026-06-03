@@ -13,19 +13,19 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TextBlock Text="产品 PN / productId" Margin="0,0,0,4" />
+        <TextBlock Text="{DynamicResource S.Template.ProductPn}" Margin="0,0,0,4" />
         <ui:TextBox x:Name="ProductIdBox"
                     Grid.Row="1"
                     Margin="0,0,0,12"
-                    PlaceholderText="例如 K1927020" />
-        <TextBlock Grid.Row="2" Text="显示名称" Margin="0,0,0,4" />
+                    PlaceholderText="{DynamicResource S.Template.PnPlaceholder}" />
+        <TextBlock Grid.Row="2" Text="{DynamicResource S.Template.DisplayName}" Margin="0,0,0,4" />
         <ui:TextBox x:Name="DisplayNameBox"
                     Grid.Row="3"
                     Margin="0,0,0,12"
-                    PlaceholderText="可选，默认同 PN" />
+                    PlaceholderText="{DynamicResource S.Template.DisplayNamePlaceholder}" />
         <StackPanel Grid.Row="4">
-            <TextBlock Text="Revision" Margin="0,0,0,4" />
-            <ui:TextBox x:Name="RevisionBox" PlaceholderText="例如 2026-05-21" />
+            <TextBlock Text="{DynamicResource S.Template.Revision}" Margin="0,0,0,4" />
+            <ui:TextBox x:Name="RevisionBox" PlaceholderText="{DynamicResource S.Template.RevisionPlaceholder}" />
             <TextBlock x:Name="ErrorText"
                        Margin="0,12,0,0"
                        Foreground="#C62828"

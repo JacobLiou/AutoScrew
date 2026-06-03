@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="UpdateAccount"
+        Title="{DynamicResource S.Account.Update}"
         Height="371"
         Width="329">
     <Grid>
@@ -17,12 +17,12 @@
                    Opacity="0.705"
                    Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
 
-        <Label Content="User Name"
+        <Label Content="{DynamicResource S.Account.UserName}"
                HorizontalAlignment="Left"
                Margin="30,22,0,0"
                VerticalAlignment="Top"
                Width="120" />
-        <Label Content="Admission Number"
+        <Label Content="{DynamicResource S.Account.AdmissionNumber}"
                HorizontalAlignment="Left"
                Margin="30,79,0,0"
                VerticalAlignment="Top"
@@ -43,7 +43,7 @@
                  Name="tbUAdNo"
                  VerticalAlignment="Top"
                  Width="262" />
-        <Label Content="Email Address"
+        <Label Content="{DynamicResource S.Account.Email}"
                HorizontalAlignment="Left"
                Margin="30,135,0,0"
                VerticalAlignment="Top"
@@ -56,7 +56,7 @@
                  Name="tbUEmail"
                  VerticalAlignment="Top"
                  Width="262" />
-        <Label Content="Password"
+        <Label Content="{DynamicResource S.Account.Password}"
                HorizontalAlignment="Left"
                Margin="30,191,0,0"
                VerticalAlignment="Top"
@@ -69,7 +69,7 @@
                  Name="tbUPass"
                  VerticalAlignment="Top"
                  Width="262" />
-        <Button Content="Update"
+        <Button Content="{DynamicResource S.Account.Update}"
                 HorizontalAlignment="Left"
                 Height="26"
                 Margin="30,277,0,0"

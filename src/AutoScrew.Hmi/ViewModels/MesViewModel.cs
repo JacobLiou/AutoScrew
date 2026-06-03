@@ -1,3 +1,4 @@
+using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Configuration;
@@ -27,8 +28,8 @@ public sealed partial class MesViewModel : ObservableObject
     private void TestConnection()
     {
         _snackbarService.Show(
-            "MES",
-            "当前版本仅提供页面与配置入口，MES 连接将在对接协议确定后接入。",
+            Loc.Get("S.Mes.SnackbarTitle"),
+            Loc.Get("S.Mes.PlaceholderNote"),
             ControlAppearance.Info,
             new SymbolIcon(SymbolRegular.Info24),
             TimeSpan.FromSeconds(4)

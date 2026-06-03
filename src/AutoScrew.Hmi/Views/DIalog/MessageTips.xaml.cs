@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using AutoScrew.Hmi.Services;
 
 namespace AutoScrew.Hmi.Dialog;
 
@@ -31,7 +32,7 @@ public partial class MessageTips
             && !string.IsNullOrWhiteSpace(hint))
             return hint;
 
-        return "提示";
+        return Loc.Get("S.Common.Hint");
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

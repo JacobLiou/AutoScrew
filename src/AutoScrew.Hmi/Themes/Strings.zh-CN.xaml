@@ -1,10 +1,247 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <!-- Common -->
     <system:String x:Key="S.Common.Confirm">确认</system:String>
     <system:String x:Key="S.Common.Cancel">取消</system:String>
     <system:String x:Key="S.Common.Warning">警告</system:String>
+    <system:String x:Key="S.Common.Ok">确定</system:String>
+    <system:String x:Key="S.Common.Hint">提示</system:String>
     <system:String x:Key="WinCommon_Hint">提示</system:String>
+    <system:String x:Key="S.Common.Close">关闭</system:String>
+    <system:String x:Key="S.Common.Edit">编辑</system:String>
+    <system:String x:Key="S.Common.Save">保存</system:String>
+    <system:String x:Key="S.Common.Refresh">刷新</system:String>
+    <system:String x:Key="S.Common.Name">名称</system:String>
+    <system:String x:Key="S.Common.Width">宽</system:String>
+    <system:String x:Key="S.Common.Height">高</system:String>
+    <system:String x:Key="S.Common.Light">浅色</system:String>
+    <system:String x:Key="S.Common.Dark">深色</system:String>
+    <system:String x:Key="S.Common.On">启用</system:String>
+    <system:String x:Key="S.Common.Off">停用</system:String>
+    <system:String x:Key="S.Common.About">关于</system:String>
+    <system:String x:Key="S.Common.PleaseWait">请稍候…</system:String>
+    <system:String x:Key="S.Common.Item">项</system:String>
+    <system:String x:Key="S.Common.Content">内容</system:String>
+
+    <!-- App -->
+    <system:String x:Key="S.App.TitleMain">AutoScrew 智能锁附系统</system:String>
+    <system:String x:Key="S.App.TitleLogin">AutoScrew 自动取螺钉系统</system:String>
+    <system:String x:Key="S.App.ProductName">智能锁附</system:String>
+    <system:String x:Key="S.App.AboutProduct">AutoScrew 智能锁附系统</system:String>
+    <system:String x:Key="S.App.Version">版本 {0}</system:String>
+
+    <!-- Navigation -->
+    <system:String x:Key="S.Nav.Operation">作业台</system:String>
+    <system:String x:Key="S.Nav.Template">螺钉模板</system:String>
+    <system:String x:Key="S.Nav.System">系统</system:String>
+    <system:String x:Key="S.Nav.Production">生产</system:String>
+    <system:String x:Key="S.Nav.Logs">日志</system:String>
+    <system:String x:Key="S.Nav.Settings">设置</system:String>
+    <system:String x:Key="S.Nav.BreadcrumbDefault">生产 / 作业台</system:String>
+
+    <!-- Shell -->
+    <system:String x:Key="S.Shell.Notepad">记事本</system:String>
+    <system:String x:Key="S.Shell.Calculator">计算器</system:String>
+    <system:String x:Key="S.Shell.Logout">登出</system:String>
+    <system:String x:Key="S.Shell.LoggedIn">已登录</system:String>
+    <system:String x:Key="S.Shell.Screenshot">程序截屏</system:String>
+    <system:String x:Key="S.Shell.OpenLogs">打开程序日志</system:String>
+    <system:String x:Key="S.Shell.OpenAppPath">打开程序路径</system:String>
+    <system:String x:Key="S.Shell.Language">界面语言</system:String>
+    <system:String x:Key="S.Shell.LanguageZh">中文</system:String>
+    <system:String x:Key="S.Shell.LanguageEn">English</system:String>
+    <system:String x:Key="S.Shell.SidebarCollapse">点击折叠侧栏</system:String>
+    <system:String x:Key="S.Shell.SidebarExpand">点击展开侧栏</system:String>
+    <system:String x:Key="S.Shell.ScreenshotFailed">截屏保存失败，请查看日志。</system:String>
+
+    <!-- Role -->
+    <system:String x:Key="S.Role.Operator">· 操作员</system:String>
+    <system:String x:Key="S.Role.Technician">· 技术员</system:String>
+
+    <!-- Login -->
+    <system:String x:Key="S.Login.UserName">用户名</system:String>
+    <system:String x:Key="S.Login.Password">密码</system:String>
+    <system:String x:Key="S.Login.SignIn">登录</system:String>
+    <system:String x:Key="S.Login.RememberMe">记住密码</system:String>
+    <system:String x:Key="S.Login.ForgotPassword">忘记密码</system:String>
+    <system:String x:Key="S.Login.Failed">登录失败。</system:String>
+    <system:String x:Key="S.Login.CreateAccountTitle">创建账号</system:String>
+    <system:String x:Key="S.Login.CreateAccountBody">新账号由 MIMS 管理员在系统中创建；本机无法自助注册。请联系信息化或产线管理员。</system:String>
+    <system:String x:Key="S.Login.ForgotPasswordTitle">忘记密码</system:String>
+    <system:String x:Key="S.Login.ForgotPasswordBody">无法打开默认邮件程序（通常为 Outlook）：{0}&#10;请手动发邮件至：{1}</system:String>
+    <system:String x:Key="S.Login.HelpTitle">其他帮助</system:String>
+    <system:String x:Key="S.Login.HelpBody">若无法连接 MIMS 数据库，请检查网络与 appsettings 中的数据库配置；开发环境可使用 appsettings.Development.json 中的演示账号。</system:String>
+
+    <!-- Operation -->
+    <system:String x:Key="S.Operation.SnPlaceholder">序列号 SN</system:String>
+    <system:String x:Key="S.Operation.SubmitSn">提交 SN</system:String>
+    <system:String x:Key="S.Operation.RunScrew">当前螺钉：取钉+拧紧</system:String>
+    <system:String x:Key="S.Operation.ConfirmFlip">确认翻面</system:String>
+    <system:String x:Key="S.Operation.UnlockNg">技术员解锁 NG</system:String>
+    <system:String x:Key="S.Operation.ResetSession">复位会话</system:String>
+    <system:String x:Key="S.Operation.ProgressTree">作业进度</system:String>
+    <system:String x:Key="S.Operation.CurveTitle">扭矩–角度（最近一步）</system:String>
+    <system:String x:Key="S.Operation.ActivityLog">作业日志</system:String>
+    <system:String x:Key="S.Operation.WaitScan">等待扫码</system:String>
+    <system:String x:Key="S.Operation.SnPnLabel">SN: {0}  PN: {1}</system:String>
+    <system:String x:Key="S.Operation.ScrewNode">钉 {0}</system:String>
+    <system:String x:Key="S.Operation.GuideIdle">请点击或扫描 SN 开始作业。</system:String>
+    <system:String x:Key="S.Operation.GuideSnPending">请输入或扫描 SN，按 Enter 或点击提交。</system:String>
+    <system:String x:Key="S.Operation.GuideSnRejected">SN 无效，请重新扫描。</system:String>
+    <system:String x:Key="S.Operation.GuideLoading">正在加载配方与模板…</system:String>
+    <system:String x:Key="S.Operation.GuideRunningScrew">请锁附【{0}】第 {1} 钉</system:String>
+    <system:String x:Key="S.Operation.GuideRunningSurface">请锁附【{0}】</system:String>
+    <system:String x:Key="S.Operation.GuideAwaitFlip">【{0}】已完成，请翻面至【{1}】后点击「确认翻面」。</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">螺钉 NG，请联系技术员解锁后继续。</system:String>
+    <system:String x:Key="S.Operation.GuideCompleted">本单完成，请扫描下一 SN。</system:String>
+    <system:String x:Key="S.Operation.CurrentSurface">当前面</system:String>
+    <system:String x:Key="S.Operation.NextSurface">下一面</system:String>
+    <system:String x:Key="S.Operation.FlipConfirm">【{0}】已完成，请翻面至【{1}】后点击确认。</system:String>
+    <system:String x:Key="S.Operation.AwaitFlipStatus">等待确认翻面。</system:String>
+    <system:String x:Key="S.Operation.EnteredSurface">已进入【{0}】。</system:String>
+    <system:String x:Key="S.Operation.LogSnLoaded">SN {0} → PN {1}，共 {2} 面</system:String>
+    <system:String x:Key="S.Operation.LogOk">OK 【{0}】#{1}</system:String>
+    <system:String x:Key="S.Operation.LogNg">NG 【{0}】#{1} — {2}</system:String>
+    <system:String x:Key="S.Operation.LogUnlock">技术员解锁 NG</system:String>
+    <system:String x:Key="S.Operation.LogFlip">翻面确认 → 【{0}】</system:String>
+    <system:String x:Key="S.Operation.StatusReady">就绪。</system:String>
+    <system:String x:Key="S.Operation.StatusEnterSn">请输入 SN 并确认。</system:String>
+    <system:String x:Key="S.Operation.StatusValidating">正在校验 SN…</system:String>
+    <system:String x:Key="S.Operation.StatusRecipeLoaded">配方已加载。</system:String>
+    <system:String x:Key="S.Operation.StatusPickTighten">取钉 + 拧紧（模拟）…</system:String>
+    <system:String x:Key="S.Operation.StatusStepDone">本步完成。</system:String>
+    <system:String x:Key="S.Operation.StatusUnlocked">已解锁，请继续。</system:String>
+    <system:String x:Key="S.Operation.StatusReset">会话已复位。</system:String>
+
+    <!-- Template -->
+    <system:String x:Key="S.Template.Title">螺钉模板</system:String>
+    <system:String x:Key="S.Template.TitleWithProduct">螺钉模板 · {0}{1}</system:String>
+    <system:String x:Key="S.Template.Open">打开…</system:String>
+    <system:String x:Key="S.Template.NewProduct">新建产品</system:String>
+    <system:String x:Key="S.Template.AddSurface">添加面</system:String>
+    <system:String x:Key="S.Template.Delete">删除</system:String>
+    <system:String x:Key="S.Template.TreeHeader">产品 / 面</system:String>
+    <system:String x:Key="S.Template.SelectSurfaceHint">请在左侧树中选择一个面</system:String>
+    <system:String x:Key="S.Template.SelectSurfaceDetail">使用「新建产品」创建模板，或「添加面」录入面参数后开始编辑画板。</system:String>
+    <system:String x:Key="S.Template.ApplySize">应用尺寸</system:String>
+    <system:String x:Key="S.Template.LoadImage">加载底图</system:String>
+    <system:String x:Key="S.Template.MatchImagePixels">画板=底图像素</system:String>
+    <system:String x:Key="S.Template.MatchImagePixelsTip">将画板宽高设为底图像素尺寸，使标注与图片 1:1 对齐</system:String>
+    <system:String x:Key="S.Template.ClearImage">清除底图</system:String>
+    <system:String x:Key="S.Template.ImageOpacity">底图透明度</system:String>
+    <system:String x:Key="S.Template.SelectAll">全选</system:String>
+    <system:String x:Key="S.Template.DeleteSelected">删除选中</system:String>
+    <system:String x:Key="S.Template.ClearSelection">取消选中</system:String>
+    <system:String x:Key="S.Template.BoardHint">底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选</system:String>
+    <system:String x:Key="S.Template.SurfaceId">surfaceId</system:String>
+    <system:String x:Key="S.Template.Order">作业顺序 order</system:String>
+    <system:String x:Key="S.Template.BoardWidthPx">画板宽 (px)</system:String>
+    <system:String x:Key="S.Template.BoardHeightPx">画板高 (px)</system:String>
+    <system:String x:Key="S.Template.ProductPn">产品 PN / productId</system:String>
+    <system:String x:Key="S.Template.DisplayName">显示名称</system:String>
+    <system:String x:Key="S.Template.Revision">修订号</system:String>
+    <system:String x:Key="S.Template.PnPlaceholder">例如 K1927020</system:String>
+    <system:String x:Key="S.Template.DisplayNamePlaceholder">可选，默认同 PN</system:String>
+    <system:String x:Key="S.Template.RevisionPlaceholder">例如 2026-05-21</system:String>
+    <system:String x:Key="S.Template.NewProductDialog">新建产品</system:String>
+    <system:String x:Key="S.Template.ProductInfoDialog">产品信息</system:String>
+    <system:String x:Key="S.Template.AddSurfaceDialog">添加面</system:String>
+    <system:String x:Key="S.Template.EditSurfaceDialog">编辑面</system:String>
+    <system:String x:Key="S.Template.DefaultSurfaceName">面 {0}</system:String>
+    <system:String x:Key="S.Template.StatusInitial">打开或新建产品模板。</system:String>
+    <system:String x:Key="S.Template.StatusSelectSurface">产品：{0}，共 {1} 面。请选中一个面进行编辑。</system:String>
+    <system:String x:Key="S.Template.StatusOpened">已打开：{0}（{1} 面）</system:String>
+    <system:String x:Key="S.Template.StatusOpenFailed">打开失败：{0}</system:String>
+    <system:String x:Key="S.Template.StatusNoProduct">请先新建或打开产品模板。</system:String>
+    <system:String x:Key="S.Template.StatusSaved">已保存：{0}</system:String>
+    <system:String x:Key="S.Template.StatusSaveFailed">保存失败：{0}</system:String>
+    <system:String x:Key="S.Template.StatusCreated">已创建新产品，请添加面并编辑。</system:String>
+    <system:String x:Key="S.Template.StatusSurfaceAdded">已添加面：{0}</system:String>
+    <system:String x:Key="S.Template.StatusSurfaceUpdated">已更新面：{0}</system:String>
+    <system:String x:Key="S.Template.StatusSurfaceDeleted">已删除面。</system:String>
+    <system:String x:Key="S.Template.StatusOrderChanged">已调整顺序：{0} order={1}</system:String>
+    <system:String x:Key="S.Template.StatusEditing">正在编辑：{0}（{1} 钉）</system:String>
+    <system:String x:Key="S.Template.ConfirmDeleteSurface">确定删除面「{0}」？</system:String>
+    <system:String x:Key="S.Template.ConfirmDiscard">有未保存的更改，是否放弃？</system:String>
+    <system:String x:Key="S.Template.OpenFilter">产品模板 (*.product-template.json;*.json)|*.product-template.json;*.json|所有文件 (*.*)|*.*</system:String>
+    <system:String x:Key="S.Template.SaveFilter">产品模板 (*.product-template.json)|*.product-template.json|JSON (*.json)|*.json</system:String>
+    <system:String x:Key="S.Template.ErrSurfaceIdEmpty">surfaceId 不能为空。</system:String>
+    <system:String x:Key="S.Template.ErrOrder">order 须为 ≥1 的整数。</system:String>
+    <system:String x:Key="S.Template.ErrBoardWidth">画板宽度须为大于 0 的数值。</system:String>
+    <system:String x:Key="S.Template.ErrBoardHeight">画板高度须为大于 0 的数值。</system:String>
+    <system:String x:Key="S.Template.ErrSurfaceIdDup">surfaceId「{0}」已存在。</system:String>
+    <system:String x:Key="S.Template.ErrProductId">请填写产品 PN / productId。</system:String>
+    <system:String x:Key="S.Template.BoardLoaded">已加载面 {0}（{1} 个点位）。</system:String>
+    <system:String x:Key="S.Template.BoardWidthInvalid">画板宽度无效，请输入正数。</system:String>
+    <system:String x:Key="S.Template.BoardHeightInvalid">画板高度无效，请输入正数。</system:String>
+    <system:String x:Key="S.Template.BoardSizeApplied">画板尺寸已应用：{0} × {1}</system:String>
+    <system:String x:Key="S.Template.ImageFilter">图片 (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|所有文件 (*.*)|*.*</system:String>
+    <system:String x:Key="S.Template.ImageLoadFailed">加载底图失败：{0}</system:String>
+    <system:String x:Key="S.Template.ImageCleared">已清除产品底图。</system:String>
+    <system:String x:Key="S.Template.BoardMatched">画板已按底图像素设为 {0} × {1}。</system:String>
+    <system:String x:Key="S.Template.MarkerOutOfBounds">标注位置超出画板范围。</system:String>
+    <system:String x:Key="S.Template.MarkerAdded">已添加螺钉位 {0}。</system:String>
+    <system:String x:Key="S.Template.NoMarkers">画板上没有标注。</system:String>
+    <system:String x:Key="S.Template.AllSelected">已全选 {0} 个标注。</system:String>
+    <system:String x:Key="S.Template.MarkersDeleted">已删除 {0} 个标注。</system:String>
+    <system:String x:Key="S.Template.ImageLoaded">已加载产品底图：{0}。</system:String>
+    <system:String x:Key="S.Template.MarkersOutOfBounds">有 {0} 个点位超出当前画板范围。</system:String>
+
+    <!-- MES -->
+    <system:String x:Key="S.Mes.Enable">启用 MES 对接</system:String>
+    <system:String x:Key="S.Mes.EnableDesc">开启后，将上传锁附结果与追溯数据</system:String>
+    <system:String x:Key="S.Mes.Address">MES 地址</system:String>
+    <system:String x:Key="S.Mes.AddressDesc">appsettings 中 Mes:BaseUrl</system:String>
+    <system:String x:Key="S.Mes.UrlPlaceholder">https://mes.example.com/api</system:String>
+    <system:String x:Key="S.Mes.TestConnection">测试连接</system:String>
+    <system:String x:Key="S.Mes.PlaceholderNote">当前版本仅提供页面与配置入口，MES 连接将在对接协议确定后接入。</system:String>
+
+    <!-- Settings -->
+    <system:String x:Key="S.Settings.Appearance">外观与行为</system:String>
+    <system:String x:Key="S.Settings.Theme">应用主题</system:String>
+    <system:String x:Key="S.Settings.ThemeDesc">选择应用的显示主题</system:String>
+    <system:String x:Key="S.Settings.AboutTitle">Auto Screw 自动取螺钉系统</system:String>
+    <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com &amp; AutoScrew 智能锁附</system:String>
+    <system:String x:Key="S.Settings.TechStack">技术实现</system:String>
+    <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
+    <system:String x:Key="S.Settings.BugReport">File a bug or request a new sample</system:String>
+    <system:String x:Key="S.Settings.Docs">Check out the docs</system:String>
+
+    <!-- Logs -->
+    <system:String x:Key="S.Logs.OpenFolder">打开日志目录</system:String>
+    <system:String x:Key="S.Logs.OpenFile">打开选中文件</system:String>
+    <system:String x:Key="S.Logs.FileList">文件列表</system:String>
+    <system:String x:Key="S.Logs.FileListDesc">默认显示 Logs 目录下的 .log/.txt</system:String>
+    <system:String x:Key="S.Logs.Preview">预览</system:String>
+    <system:String x:Key="S.Logs.PreviewDesc">最多显示 8000 字符</system:String>
+    <system:String x:Key="S.Logs.OpenFolderFailed">打开日志目录失败，请检查系统权限。</system:String>
+    <system:String x:Key="S.Logs.OpenFileFailed">打开日志文件失败。</system:String>
+
+    <!-- Dialog -->
+    <system:String x:Key="S.Dialog.Logout">登出</system:String>
+    <system:String x:Key="S.Dialog.LogoutConfirm">确定要登出并返回登录界面吗？</system:String>
+    <system:String x:Key="S.Dialog.AbortSession">确定放弃当前作业？</system:String>
+    <system:String x:Key="S.Dialog.Exception">运行异常</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Title">确认退出</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">确定要退出程序吗？</system:String>
+
+    <!-- Screw marker -->
+    <system:String x:Key="S.Screw.TypeMenu">螺钉类型（圆圈大小）</system:String>
+    <system:String x:Key="S.Screw.M10">M1.0 / 极小 (18px)</system:String>
+    <system:String x:Key="S.Screw.M14">M1.4 / 很小 (22px)</system:String>
+    <system:String x:Key="S.Screw.M2Default">M2（默认）(26px)</system:String>
+    <system:String x:Key="S.Screw.M25">M2.5 (30px)</system:String>
+    <system:String x:Key="S.Screw.M3">M3 (34px)</system:String>
+    <system:String x:Key="S.Screw.M4">M4 / 较大 (40px)</system:String>
+    <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew 忘记密码</system:String>
+    <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
+    <system:String x:Key="S.Logs.SnackbarTitle">日志</system:String>
+
+    <!-- UpdateAccount (legacy) -->
+    <system:String x:Key="S.Account.UserName">User Name</system:String>
+    <system:String x:Key="S.Account.AdmissionNumber">Admission Number</system:String>
+    <system:String x:Key="S.Account.Email">Email Address</system:String>
+    <system:String x:Key="S.Account.Password">Password</system:String>
+    <system:String x:Key="S.Account.Update">Update</system:String>
 </ResourceDictionary>

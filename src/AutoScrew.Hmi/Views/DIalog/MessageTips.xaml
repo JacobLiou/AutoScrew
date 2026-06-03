@@ -23,7 +23,7 @@
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal">
             <TextBlock x:Name="txt_Title"
-                       Text="提示"
+                       Text="{DynamicResource S.Common.Hint}"
                        FontSize="18"
                        FontWeight="SemiBold" />
             <TextBlock x:Name="txt_Time"
@@ -39,7 +39,7 @@
                    Margin="0,16" />
         <ui:Button x:Name="btn_OK"
                    Grid.Row="2"
-                   Content="确定"
+                   Content="{DynamicResource S.Common.Ok}"
                    Appearance="Primary"
                    MinWidth="100"
                    HorizontalAlignment="Center"

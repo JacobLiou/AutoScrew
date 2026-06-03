@@ -18,7 +18,7 @@
     <StackPanel Margin="0,0,0,24">
         <ui:TextBlock Margin="0,0,0,8"
                       FontTypography="BodyStrong"
-                      Text="外观与行为" />
+                      Text="{DynamicResource S.Settings.Appearance}" />
         <ui:CardControl Margin="0,0,0,12"
                         Icon="{ui:SymbolIcon Color24}">
             <ui:CardControl.Header>
@@ -29,23 +29,23 @@
                     </Grid.RowDefinitions>
                     <ui:TextBlock Grid.Row="0"
                                   FontTypography="Body"
-                                  Text="应用主题" />
+                                  Text="{DynamicResource S.Settings.Theme}" />
                     <ui:TextBlock Grid.Row="1"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="选择应用的显示主题" />
+                                  Text="{DynamicResource S.Settings.ThemeDesc}" />
                 </Grid>
             </ui:CardControl.Header>
             <ComboBox Grid.Column="1"
                       MinWidth="200"
                       SelectedIndex="{Binding ViewModel.CurrentApplicationTheme, Converter={StaticResource ThemeToIndexConverter}, Mode=TwoWay}">
-                <ComboBoxItem Content="Light" />
-                <ComboBoxItem Content="Dark" />
+                <ComboBoxItem Content="{DynamicResource S.Common.Light}" />
+                <ComboBoxItem Content="{DynamicResource S.Common.Dark}" />
             </ComboBox>
         </ui:CardControl>
 
         <ui:TextBlock Margin="0,24,0,8"
                       FontTypography="BodyStrong"
-                      Text="About" />
+                      Text="{DynamicResource S.Common.About}" />
         <ui:CardExpander ContentPadding="0"
                          Icon="{ui:SymbolIcon Info24}">
             <ui:CardExpander.Header>
@@ -61,11 +61,11 @@
                     <ui:TextBlock Grid.Row="0"
                                   Grid.Column="0"
                                   FontTypography="Body"
-                                  Text="Auto Screw 自动取螺钉系统" />
+                                  Text="{DynamicResource S.Settings.AboutTitle}" />
                     <ui:TextBlock Grid.Row="1"
                                   Grid.Column="0"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="© 2026 Molex.com | menghui.liu1@molex.com &amp; AutoScrew 智能锁附" />
+                                  Text="{DynamicResource S.Settings.AboutCopyright}" />
                     <TextBlock Grid.Row="0"
                                Grid.RowSpan="2"
                                Grid.Column="1"
@@ -82,10 +82,10 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               Text="技术实现" />
+                               Text="{DynamicResource S.Settings.TechStack}" />
                     <TextBlock Grid.Column="1"
                                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                               Text=".NET C# WPF" />
+                               Text="{DynamicResource S.Settings.TechDetail}" />
                 </Grid>
                 <ui:Anchor Margin="0"
                            Padding="16"
@@ -101,7 +101,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0"
-                                   Text="File a bug or request a new sample" />
+                                   Text="{DynamicResource S.Settings.BugReport}" />
                         <ui:SymbolIcon Grid.Column="1"
                                        Symbol="Link24" />
                     </Grid>
@@ -120,7 +120,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0"
-                                   Text="Check out the docs" />
+                                   Text="{DynamicResource S.Settings.Docs}" />
                         <ui:SymbolIcon Grid.Column="1"
                                        Symbol="Link24" />
                     </Grid>

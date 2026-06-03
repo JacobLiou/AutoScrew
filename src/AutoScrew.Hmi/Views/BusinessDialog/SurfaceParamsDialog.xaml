@@ -17,11 +17,11 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TextBlock Text="surfaceId" Margin="0,0,0,4" />
+        <TextBlock Text="{DynamicResource S.Template.SurfaceId}" Margin="0,0,0,4" />
         <ui:TextBox x:Name="SurfaceIdBox" Grid.Row="1" Margin="0,0,0,12" />
-        <TextBlock Grid.Row="2" Text="名称" Margin="0,0,0,4" />
+        <TextBlock Grid.Row="2" Text="{DynamicResource S.Common.Name}" Margin="0,0,0,4" />
         <ui:TextBox x:Name="NameBox" Grid.Row="3" Margin="0,0,0,12" />
-        <TextBlock Grid.Row="4" Text="作业顺序 order" Margin="0,0,0,4" />
+        <TextBlock Grid.Row="4" Text="{DynamicResource S.Template.Order}" Margin="0,0,0,4" />
         <ui:TextBox x:Name="OrderBox" Grid.Row="5" Margin="0,0,0,12" Width="120" HorizontalAlignment="Left" />
         <Grid Grid.Row="6" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
@@ -30,11 +30,11 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <StackPanel>
-                <TextBlock Text="画板宽 (px)" Margin="0,0,0,4" />
+                <TextBlock Text="{DynamicResource S.Template.BoardWidthPx}" Margin="0,0,0,4" />
                 <ui:TextBox x:Name="BoardWidthBox" />
             </StackPanel>
             <StackPanel Grid.Column="2">
-                <TextBlock Text="画板高 (px)" Margin="0,0,0,4" />
+                <TextBlock Text="{DynamicResource S.Template.BoardHeightPx}" Margin="0,0,0,4" />
                 <ui:TextBox x:Name="BoardHeightBox" />
             </StackPanel>
         </Grid>

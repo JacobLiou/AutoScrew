@@ -34,29 +34,76 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private readonly INavigationService _navigationService;
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
+    private readonly LocalizationService _localization;
     private readonly ILogger<MainShellViewModel> _logger;
+
     public MainShellViewModel(
         INavigationService navigationService,
         ICurrentUser currentUser,
         IAppSessionCoordinator sessionCoordinator,
+        LocalizationService localization,
         ILogger<MainShellViewModel> logger)
     {
         _navigationService = navigationService;
         _currentUser = currentUser;
         _sessionCoordinator = sessionCoordinator;
+        _localization = localization;
         _logger = logger;
+        _selectedCulture = _localization.CurrentCultureName;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
+        _localization.CultureChanged += OnCultureChanged;
 
         RebuildMenuItems();
         RefreshUserBanner();
         UpdateSidebarSymbol();
+        RefreshLocalizedChrome();
+        Breadcrumb = Loc.Get("S.Nav.BreadcrumbDefault");
+    }
+
+    partial void OnSelectedCultureChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCultureZh));
+        OnPropertyChanged(nameof(IsCultureEn));
     }
 
     public void Dispose()
     {
+        _localization.CultureChanged -= OnCultureChanged;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged -= OnCurrentUserPropertyChanged;
+    }
+
+    [ObservableProperty]
+    private string _selectedCulture;
+
+    public string AppTitle => Loc.Get("S.App.TitleMain");
+
+    public bool IsCultureZh => string.Equals(SelectedCulture, LocalizationService.ZhCn, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsCultureEn => string.Equals(SelectedCulture, LocalizationService.EnUs, StringComparison.OrdinalIgnoreCase);
+
+    [RelayCommand]
+    private void SetCultureZh() => _localization.SetCulture(LocalizationService.ZhCn);
+
+    [RelayCommand]
+    private void SetCultureEn() => _localization.SetCulture(LocalizationService.EnUs);
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        SelectedCulture = _localization.CurrentCultureName;
+        RebuildMenuItems();
+        RefreshUserBanner();
+        OnPropertyChanged(nameof(SidebarToggleHint));
+        OnPropertyChanged(nameof(AppTitle));
+        Breadcrumb = Loc.Get("S.Nav.BreadcrumbDefault");
+        EnsureRoleAllowedSection();
+    }
+
+    private void RefreshLocalizedChrome()
+    {
+        OnPropertyChanged(nameof(AppTitle));
+        OnPropertyChanged(nameof(SidebarToggleHint));
     }
 
     [ObservableProperty]
@@ -82,7 +129,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     public SymbolRegular SidebarSymbol =>
         IsSidebarVisible ? SymbolRegular.PanelLeftContract24 : SymbolRegular.PanelLeft24;
 
-    public string SidebarToggleHint => IsSidebarVisible ? "点击折叠侧栏" : "点击展开侧栏";
+    public string SidebarToggleHint => IsSidebarVisible
+        ? Loc.Get("S.Shell.SidebarCollapse")
+        : Loc.Get("S.Shell.SidebarExpand");
 
     [ObservableProperty]
     private MainAppSection _selectedSection = MainAppSection.Operation;
@@ -90,7 +139,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     public bool CanUseTemplateBoard => _currentUser.Role >= UserRole.Technician;
 
     [ObservableProperty]
-    private string _breadcrumb = "生产 / 作业台";
+    private string _breadcrumb = "";
 
     public void OnNavigationViewSelectionChanged(NavigationView navigationView)
     {
@@ -210,9 +259,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         {
             _logger.LogError(ex, "程序截屏失败");
             MessageTips.ShowDialog(
-                "截屏保存失败，请查看日志。",
+                Loc.Get("S.Shell.ScreenshotFailed"),
                 System.Windows.Application.Current.MainWindow,
-                "程序截屏");
+                Loc.Get("S.Shell.Screenshot"));
         }
     }
 
@@ -278,7 +327,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         var operationItem = new NavigationViewItem
         {
-            Content = "作业台",
+            Content = Loc.Get("S.Nav.Operation"),
             Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
             TargetPageType = typeof(OperationNavPage),
             TargetPageTag = "operation"
@@ -286,7 +335,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
         var productionGroup = new NavigationViewItem
         {
-            Content = "生产",
+            Content = Loc.Get("S.Nav.Production"),
             Icon = new SymbolIcon { Symbol = SymbolRegular.BuildingFactory24 },
             IsExpanded = true
         };
@@ -297,7 +346,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         {
             productionGroup.MenuItems.Add(new NavigationViewItem
             {
-                Content = "螺钉模板",
+                Content = Loc.Get("S.Nav.Template"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.DesignIdeas24 },
                 TargetPageType = typeof(TemplateNavPage),
                 TargetPageTag = "template"
@@ -306,7 +355,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
         var systemGroup = new NavigationViewItem
         {
-            Content = "系统",
+            Content = Loc.Get("S.Nav.System"),
             Icon = new SymbolIcon { Symbol = SymbolRegular.Airplane24 },
             IsExpanded = true
         };
@@ -320,7 +369,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         });
         systemGroup.MenuItems.Add(new NavigationViewItem
         {
-            Content = "日志",
+            Content = Loc.Get("S.Nav.Logs"),
             Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
             TargetPageType = typeof(LogsPage),
             TargetPageTag = "logs"
@@ -337,7 +386,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         [
             new NavigationViewItem
             {
-                Content = "设置",
+                Content = Loc.Get("S.Nav.Settings"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
                 TargetPageType = typeof(SettingsPage),
                 TargetPageTag = "settings"
@@ -354,5 +403,5 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     }
 
     private static string FormatRoleDisplay(UserRole role) =>
-        role == UserRole.Operator ? "· 操作员" : "· 技术员";
+        role == UserRole.Operator ? Loc.Get("S.Role.Operator") : Loc.Get("S.Role.Technician");
 }

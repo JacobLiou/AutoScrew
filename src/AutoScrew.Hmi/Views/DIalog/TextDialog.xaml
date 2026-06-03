@@ -10,7 +10,7 @@
              Background="{DynamicResource ShellCardBrush}">
     <Grid Margin="16">
         <TextBlock Name="textBlock"
-                   Text="请稍候…"
+                   Text="{DynamicResource S.Common.PleaseWait}"
                    TextWrapping="Wrap"
                    FontSize="16"
                    FontWeight="SemiBold"

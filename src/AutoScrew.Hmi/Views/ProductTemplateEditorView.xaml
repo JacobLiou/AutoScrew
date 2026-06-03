@@ -26,14 +26,14 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <ui:Button Content="打开…"
+                    <ui:Button Content="{DynamicResource S.Template.Open}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                Command="{Binding OpenProductCommand}" />
-                    <ui:Button Content="新建产品"
+                    <ui:Button Content="{DynamicResource S.Template.NewProduct}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                Margin="8,0,0,0"
                                Command="{Binding NewProductCommand}" />
-                    <ui:Button Content="保存"
+                    <ui:Button Content="{DynamicResource S.Common.Save}"
                                Appearance="Primary"
                                Margin="8,0,0,0"
                                Command="{Binding SaveProductCommand}" />
@@ -64,14 +64,14 @@
                     Padding="8">
                 <DockPanel>
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <ui:Button Content="添加面"
+                        <ui:Button Content="{DynamicResource S.Template.AddSurface}"
                                    Style="{StaticResource ShellSecondaryButtonStyle}"
                                    Command="{Binding AddSurfaceCommand}" />
-                        <ui:Button Content="编辑"
+                        <ui:Button Content="{DynamicResource S.Common.Edit}"
                                    Style="{StaticResource ShellSecondaryButtonStyle}"
                                    Margin="4,0,0,0"
                                    Command="{Binding EditSurfaceCommand}" />
-                        <ui:Button Content="删除"
+                        <ui:Button Content="{DynamicResource S.Template.Delete}"
                                    Style="{StaticResource ShellSecondaryButtonStyle}"
                                    Margin="4,0,0,0"
                                    Command="{Binding DeleteSurfaceCommand}" />
@@ -87,7 +87,7 @@
                                    Command="{Binding MoveSurfaceDownCommand}" />
                     </WrapPanel>
                     <TextBlock DockPanel.Dock="Top"
-                               Text="产品 / 面"
+                               Text="{DynamicResource S.Template.TreeHeader}"
                                FontWeight="SemiBold"
                                Margin="4,0,0,8" />
                     <TreeView x:Name="SurfaceTree"
@@ -127,12 +127,12 @@
                     <StackPanel VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
                                 MaxWidth="360">
-                        <TextBlock Text="请在左侧树中选择一个面"
+                        <TextBlock Text="{DynamicResource S.Template.SelectSurfaceHint}"
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="使用「新建产品」创建模板，或「添加面」录入面参数后开始编辑画板。"
+                                   Text="{DynamicResource S.Template.SelectSurfaceDetail}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource ShellMutedForegroundBrush}"
                                    HorizontalAlignment="Center"

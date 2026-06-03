@@ -17,9 +17,10 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
 
     public IReadOnlyList<ScrewTypePreset> ScrewTypes => ScrewTypeCatalog.All;
 
+    private readonly LocalizationService _localization;
     private string? _templateDirectory;
-
     private string? _productImageAbsolutePath;
+    private string? _loadedSurfaceName;
 
     [ObservableProperty]
     private string _boardWidthInput = "800";
@@ -53,6 +54,12 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
 
     public event EventHandler? ContentChanged;
 
+    public SurfaceBoardEditorViewModel(LocalizationService localization)
+    {
+        _localization = localization;
+        _localization.CultureChanged += (_, _) => RefreshLocalizedMessages();
+    }
+
     public void LoadFrom(SurfaceLayoutDocument surface, string? templateDirectory)
     {
         _templateDirectory = templateDirectory;
@@ -73,7 +80,8 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         DeleteSelectedCommand.NotifyCanExecuteChanged();
         ClearProductImageCommand.NotifyCanExecuteChanged();
         MatchBoardToImageSizeCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"已加载面 {surface.Name}（{Markers.Count} 个点位）。";
+        _loadedSurfaceName = surface.Name;
+        StatusMessage = Loc.Format("S.Template.BoardLoaded", surface.Name, Markers.Count);
     }
 
     public SurfaceLayoutDocument ToDocument(string surfaceId, string name, int order)
@@ -116,6 +124,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         BoardHeightInput = "600";
         OutOfBoundsWarning = string.Empty;
         StatusMessage = string.Empty;
+        _loadedSurfaceName = null;
         DeleteSelectedCommand.NotifyCanExecuteChanged();
         ClearProductImageCommand.NotifyCanExecuteChanged();
         MatchBoardToImageSizeCommand.NotifyCanExecuteChanged();
@@ -126,19 +135,19 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     {
         if (!double.TryParse(BoardWidthInput, out var w) || w <= 0 || w > 32_000)
         {
-            StatusMessage = "画板宽度无效，请输入正数。";
+            StatusMessage = Loc.Get("S.Template.BoardWidthInvalid");
             return;
         }
 
         if (!double.TryParse(BoardHeightInput, out var h) || h <= 0 || h > 32_000)
         {
-            StatusMessage = "画板高度无效，请输入正数。";
+            StatusMessage = Loc.Get("S.Template.BoardHeightInvalid");
             return;
         }
 
         BoardWidth = w;
         BoardHeight = h;
-        StatusMessage = $"画板尺寸已应用：{w:0.##} × {h:0.##}";
+        StatusMessage = Loc.Format("S.Template.BoardSizeApplied", w, h);
         RefreshOutOfBoundsWarning();
         RaiseContentChanged();
     }
@@ -148,7 +157,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "图片 (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|所有文件 (*.*)|*.*",
+            Filter = Loc.Get("S.Template.ImageFilter"),
         };
 
         if (dlg.ShowDialog() != true)
@@ -161,7 +170,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"加载底图失败：{ex.Message}";
+            StatusMessage = Loc.Format("S.Template.ImageLoadFailed", ex.Message);
         }
     }
 
@@ -171,7 +180,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         BoardImageSource = null;
         _productImageAbsolutePath = null;
         BoardImageOpacity = 1.0;
-        StatusMessage = "已清除产品底图。";
+        StatusMessage = Loc.Get("S.Template.ImageCleared");
         RaiseContentChanged();
     }
 
@@ -187,7 +196,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         BoardHeight = bmp.PixelHeight;
         BoardWidthInput = BoardWidth.ToString("0.##");
         BoardHeightInput = BoardHeight.ToString("0.##");
-        StatusMessage = $"画板已按底图像素设为 {bmp.PixelWidth} × {bmp.PixelHeight}。";
+        StatusMessage = Loc.Format("S.Template.BoardMatched", bmp.PixelWidth, bmp.PixelHeight);
         RefreshOutOfBoundsWarning();
         RaiseContentChanged();
     }
@@ -198,7 +207,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     {
         if (centerX < 0 || centerY < 0 || centerX > BoardWidth || centerY > BoardHeight)
         {
-            StatusMessage = "标注位置超出画板范围。";
+            StatusMessage = Loc.Get("S.Template.MarkerOutOfBounds");
             return;
         }
 
@@ -206,7 +215,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         Markers.Add(marker);
         RenumberMarkers();
         SelectSingle(marker);
-        StatusMessage = $"已添加螺钉位 {marker.Index}。";
+        StatusMessage = Loc.Format("S.Template.MarkerAdded", marker.Index);
         RefreshOutOfBoundsWarning();
         RaiseContentChanged();
     }
@@ -244,7 +253,9 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
             m.IsSelected = true;
 
         DeleteSelectedCommand.NotifyCanExecuteChanged();
-        StatusMessage = Markers.Count == 0 ? "画板上没有标注。" : $"已全选 {Markers.Count} 个标注。";
+        StatusMessage = Markers.Count == 0
+            ? Loc.Get("S.Template.NoMarkers")
+            : Loc.Format("S.Template.AllSelected", Markers.Count);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteSelected))]
@@ -258,7 +269,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
             Markers.Remove(m);
 
         RenumberMarkers();
-        StatusMessage = $"已删除 {toRemove.Count} 个标注。";
+        StatusMessage = Loc.Format("S.Template.MarkersDeleted", toRemove.Count);
         RefreshOutOfBoundsWarning();
         DeleteSelectedCommand.NotifyCanExecuteChanged();
         RaiseContentChanged();
@@ -298,7 +309,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
 
         BoardImageSource = bmp;
         _productImageAbsolutePath = Path.GetFullPath(absolutePath);
-        StatusMessage = $"已加载产品底图：{Path.GetFileName(absolutePath)}。";
+        StatusMessage = Loc.Format("S.Template.ImageLoaded", Path.GetFileName(absolutePath));
     }
 
     private void TryLoadProductImageFromDocument(SurfaceLayoutDocument doc)
@@ -350,7 +361,14 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         var bad = Markers.Count(m => m.CenterX < 0 || m.CenterY < 0 || m.CenterX > BoardWidth || m.CenterY > BoardHeight);
         OutOfBoundsWarning = bad == 0
             ? string.Empty
-            : $"有 {bad} 个点位超出当前画板范围。";
+            : Loc.Format("S.Template.MarkersOutOfBounds", bad);
+    }
+
+    private void RefreshLocalizedMessages()
+    {
+        RefreshOutOfBoundsWarning();
+        if (!string.IsNullOrEmpty(_loadedSurfaceName) && Markers.Count >= 0)
+            StatusMessage = Loc.Format("S.Template.BoardLoaded", _loadedSurfaceName, Markers.Count);
     }
 
     private void RaiseContentChanged()

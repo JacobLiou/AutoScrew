@@ -13,14 +13,21 @@ public partial class LoginViewModel : ObservableObject
 
     private readonly IUserAuthenticationService _authentication;
     private readonly SessionCurrentUser _currentUser;
+    private readonly LocalizationService _localization;
 
     /// <summary>从本机凭据存储读出的口令，由 <see cref="LoginWindow"/> 在窗口就绪后写入密码框并清空。</summary>
     private string? _deferredRememberedPassword;
 
-    public LoginViewModel(IUserAuthenticationService authentication, SessionCurrentUser currentUser)
+    public LoginViewModel(
+        IUserAuthenticationService authentication,
+        SessionCurrentUser currentUser,
+        LocalizationService localization)
     {
         _authentication = authentication;
         _currentUser = currentUser;
+        _localization = localization;
+        _selectedCulture = _localization.CurrentCultureName;
+        _localization.CultureChanged += OnLocalizationCultureChanged;
 
         if (LoginRememberedCredentialStore.TryLoad(out var u, out var p) && !string.IsNullOrWhiteSpace(p))
         {
@@ -63,6 +70,37 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private bool _rememberMe;
 
+    [ObservableProperty]
+    private string _selectedCulture;
+
+    public string WindowTitle => Loc.Get("S.App.TitleLogin");
+
+    public string ForgotPasswordLabel => Loc.Get("S.Login.ForgotPassword");
+
+    private void OnLocalizationCultureChanged(object? sender, EventArgs e)
+    {
+        SelectedCulture = _localization.CurrentCultureName;
+        OnPropertyChanged(nameof(WindowTitle));
+        OnPropertyChanged(nameof(ForgotPasswordLabel));
+    }
+
+    public bool IsCultureZh => string.Equals(SelectedCulture, LocalizationService.ZhCn, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsCultureEn => string.Equals(SelectedCulture, LocalizationService.EnUs, StringComparison.OrdinalIgnoreCase);
+
+    [RelayCommand]
+    private void SetCultureZh() => _localization.SetCulture(LocalizationService.ZhCn);
+
+    [RelayCommand]
+    private void SetCultureEn() => _localization.SetCulture(LocalizationService.EnUs);
+
+    partial void OnSelectedCultureChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCultureZh));
+        OnPropertyChanged(nameof(IsCultureEn));
+        OnPropertyChanged(nameof(WindowTitle));
+    }
+
     [RelayCommand]
     private async Task LoginAsync()
     {
@@ -72,7 +110,7 @@ public partial class LoginViewModel : ObservableObject
         var result = await _authentication.SignInAsync(UserName, password).ConfigureAwait(true);
         if (!result.Success)
         {
-            ErrorMessage = result.ErrorMessage ?? "登录失败。";
+            ErrorMessage = result.ErrorMessage ?? Loc.Get("S.Login.Failed");
             return;
         }
 
@@ -103,13 +141,13 @@ public partial class LoginViewModel : ObservableObject
     [RelayCommand]
     private void OpenCreateAccount() =>
         NoticeRequested?.Invoke(this, new LoginNotice(
-            "创建账号",
-            "新账号由 MIMS 管理员在系统中创建；本机无法自助注册。请联系信息化或产线管理员。"));
+            Loc.Get("S.Login.CreateAccountTitle"),
+            Loc.Get("S.Login.CreateAccountBody")));
 
     [RelayCommand]
     private void OpenForgotPassword()
     {
-        var subject = Uri.EscapeDataString("AutoScrew 忘记密码");
+        var subject = Uri.EscapeDataString(Loc.Get("S.Login.ForgotPasswordSubject"));
         var uri = $"mailto:{ForgotPasswordMailTo}?subject={subject}";
         try
         {
@@ -122,14 +160,14 @@ public partial class LoginViewModel : ObservableObject
         catch (Exception ex)
         {
             NoticeRequested?.Invoke(this, new LoginNotice(
-                "忘记密码",
-                $"无法打开默认邮件程序（通常为 Outlook）：{ex.Message}\n请手动发邮件至：{ForgotPasswordMailTo}"));
+                Loc.Get("S.Login.ForgotPasswordTitle"),
+                Loc.Format("S.Login.ForgotPasswordBody", ex.Message, ForgotPasswordMailTo)));
         }
     }
 
     [RelayCommand]
     private void OpenOtherHelp() =>
         NoticeRequested?.Invoke(this, new LoginNotice(
-            "其他帮助",
-            "若无法连接 MIMS 数据库，请检查网络与 appsettings 中的数据库配置；开发环境可使用 appsettings.Development.json 中的演示账号。"));
+            Loc.Get("S.Login.HelpTitle"),
+            Loc.Get("S.Login.HelpBody")));
 }

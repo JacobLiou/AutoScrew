@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using AutoScrew.Hmi.Dialog;
+using AutoScrew.Hmi.Services;
 
 namespace AutoScrew.Hmi.BusinessDialog;
 
@@ -40,25 +41,25 @@ public partial class SurfaceParamsDialog : UserControl
         var surfaceId = SurfaceIdBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(surfaceId))
         {
-            ShowError("surfaceId 不能为空。");
+            ShowError(Loc.Get("S.Template.ErrSurfaceIdEmpty"));
             return false;
         }
 
         if (!int.TryParse(OrderBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var order) || order < 1)
         {
-            ShowError("order 须为 ≥1 的整数。");
+            ShowError(Loc.Get("S.Template.ErrOrder"));
             return false;
         }
 
         if (!double.TryParse(BoardWidthBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var width) || width <= 0)
         {
-            ShowError("画板宽度须为大于 0 的数值。");
+            ShowError(Loc.Get("S.Template.ErrBoardWidth"));
             return false;
         }
 
         if (!double.TryParse(BoardHeightBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var height) || height <= 0)
         {
-            ShowError("画板高度须为大于 0 的数值。");
+            ShowError(Loc.Get("S.Template.ErrBoardHeight"));
             return false;
         }
 
@@ -67,7 +68,7 @@ public partial class SurfaceParamsDialog : UserControl
             string.Equals(id, surfaceId, StringComparison.OrdinalIgnoreCase));
         if (duplicate)
         {
-            ShowError($"surfaceId「{surfaceId}」已存在。");
+            ShowError(Loc.Format("S.Template.ErrSurfaceIdDup", surfaceId));
             return false;
         }
 

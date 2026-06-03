@@ -81,11 +81,17 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<IAppSessionCoordinator, AppSessionCoordinator>();
+        builder.Services.AddSingleton<LocalizationService>();
 
         _host = builder.Build();
 
         _host.Services.InitializeAutoScrewDatabase();
         await _host.StartAsync().ConfigureAwait(true);
+
+        var localization = _host.Services.GetRequiredService<LocalizationService>();
+        var appOptions = _host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AutoScrewAppOptions>>().Value;
+        localization.Initialize(appOptions.UiCulture);
+        Loc.Initialize(localization);
 
         var login = _host.Services.GetRequiredService<LoginWindow>();
         var loginOk = login.ShowDialog() == true;

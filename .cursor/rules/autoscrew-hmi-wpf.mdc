@@ -27,3 +27,11 @@ alwaysApply: false
 ## 状态色
 
 复用 `App.xaml` 的 `BrushPending/Ok/Ng` 与 `ScrewMarkerStyle`；作业与编辑共用螺钉 Marker 视觉。
+
+## 多语言（zh-CN / en-US）
+
+- 文案键：`Themes/Strings.zh-CN.xaml` 与 `Strings.en-US.xaml`，命名 `S.{区域}.{名称}`，两文件键集合必须一致。
+- XAML 用户可见文本：`{DynamicResource S.*}`（勿用 `StaticResource`，否则切换语言不刷新）。
+- C# 用户可见文案：`Loc.Get` / `Loc.Format`（`LocalizationService` 单例 + 静态 `Loc`）；禁止 XAML/VM 硬编码中文或英文展示串。
+- 切换：`LocalizationService.SetCulture`，顶栏/登录窗「中文 / English」；偏好写入 `%LocalAppData%/AutoScrew/ui-culture.txt`，`appsettings` 中 `AutoScrew:UiCulture` 为首次默认。
+- 新增 UI 文案时同步添加双语键；格式化串用 `{0}`/`{1}`。

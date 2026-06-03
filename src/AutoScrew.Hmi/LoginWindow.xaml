@@ -6,7 +6,7 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
                  mc:Ignorable="d"
-                 Title="AutoScrew 自动取螺钉系统"
+                 Title="{Binding WindowTitle}"
                  Height="380"
                  Width="520"
                  MinHeight="380"
@@ -60,7 +60,7 @@
             <Setter Property="CaretBrush"
                     Value="White" />
             <Setter Property="PlaceholderText"
-                    Value="用户名" />
+                    Value="{DynamicResource S.Login.UserName}" />
         </Style>
         <Style x:Key="LoginInnerPasswordBox"
                TargetType="ui:PasswordBox">
@@ -73,7 +73,7 @@
             <Setter Property="CaretBrush"
                     Value="White" />
             <Setter Property="PlaceholderText"
-                    Value="密码" />
+                    Value="{DynamicResource S.Login.Password}" />
         </Style>
         <Style x:Key="LoginLinkButton"
                TargetType="ui:Button">
@@ -106,7 +106,26 @@
     <Border CornerRadius="0"
             Background="#FF0A1620">
         <Grid>
-            <!-- Close button (top-right) -->
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Top"
+                        HorizontalAlignment="Right"
+                        Margin="0,8,40,0"
+                        Panel.ZIndex="10"
+                        ToolTip="{DynamicResource S.Shell.Language}">
+                <ui:Button Content="{DynamicResource S.Shell.LanguageZh}"
+                           Appearance="Transparent"
+                           Foreground="#CCFFFFFF"
+                           Margin="0,0,4,0"
+                           Padding="8,4"
+                           Command="{Binding SetCultureZhCommand}"
+                           IsEnabled="{Binding IsCultureEn}" />
+                <ui:Button Content="{DynamicResource S.Shell.LanguageEn}"
+                           Appearance="Transparent"
+                           Foreground="#CCFFFFFF"
+                           Padding="8,4"
+                           Command="{Binding SetCultureEnCommand}"
+                           IsEnabled="{Binding IsCultureZh}" />
+            </StackPanel>
             <Button Command="{Binding CancelCommand}"
                     VerticalAlignment="Top"
                     HorizontalAlignment="Right"
@@ -117,7 +136,7 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Cursor="Hand"
-                    ToolTip="关闭">
+                    ToolTip="{DynamicResource S.Common.Close}">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Grid>
@@ -210,7 +229,7 @@
                                TextWrapping="Wrap"
                                MinHeight="22"
                                Margin="4,0,4,10" />
-                    <ui:Button Content="登录"
+                    <ui:Button Content="{DynamicResource S.Login.SignIn}"
                                Height="38"
                                FontSize="13"
                                FontWeight="SemiBold"
@@ -224,7 +243,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <CheckBox Grid.Column="0"
-                                  Content="记住密码"
+                                  Content="{DynamicResource S.Login.RememberMe}"
                                   IsChecked="{Binding RememberMe, Mode=TwoWay}"
                                   VerticalAlignment="Center"
                                   Foreground="#CCFFFFFF"
@@ -241,7 +260,7 @@
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center">
                             <Hyperlink Command="{Binding OpenForgotPasswordCommand}">
-                                忘记密码
+                                <Run Text="{Binding ForgotPasswordLabel, Mode=OneWay}" />
                             </Hyperlink></TextBlock>
                     </Grid>
                 </StackPanel>

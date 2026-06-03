@@ -273,35 +273,6 @@ public sealed class OperatorSessionController
         NotifyChanged();
     }
 
-    public string BuildGuideHint()
-    {
-        return _phase switch
-        {
-            JobSessionPhase.Idle => "请点击或扫描 SN 开始作业。",
-            JobSessionPhase.SnPending => "请输入或扫描 SN，按 Enter 或点击提交。",
-            JobSessionPhase.SnRejected => _lastErrorMessage ?? "SN 无效，请重新扫描。",
-            JobSessionPhase.LoadingRecipe => "正在加载配方与模板…",
-            JobSessionPhase.Running when _currentIndex >= 0 && _currentIndex < _positions.Length =>
-                $"请锁附【{ActiveSurfaceName ?? ActiveSurfaceId}】第 {CurrentScrewLocalIndex} 钉",
-            JobSessionPhase.Running => $"请锁附【{ActiveSurfaceName ?? ActiveSurfaceId}】",
-            JobSessionPhase.AwaitFlip =>
-                BuildAwaitFlipHint(),
-            JobSessionPhase.NgLocked =>
-                _lastErrorMessage ?? "螺钉 NG，请联系技术员解锁后继续。",
-            JobSessionPhase.Completed => "本单完成，请扫描下一 SN。",
-            _ => ""
-        };
-    }
-
-    private string BuildAwaitFlipHint()
-    {
-        var (_, completedName) = GetCompletedSurfaceForFlip();
-        var (_, nextName) = GetPendingFlipTarget();
-        var done = completedName ?? ActiveSurfaceName ?? "当前面";
-        var next = nextName ?? "下一面";
-        return $"【{done}】已完成，请翻面至【{next}】后点击「确认翻面」。";
-    }
-
     private void ApplyActiveSurfaceToBoard(RecipeBundle? recipe)
     {
         var surface = _surfaces[_activeSurfaceOrdinal];

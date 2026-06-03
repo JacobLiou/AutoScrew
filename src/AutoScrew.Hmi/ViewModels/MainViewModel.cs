@@ -2,6 +2,7 @@ using AutoScrew.Application.Services;
 using AutoScrew.Domain.Models;
 using AutoScrew.Domain.Session;
 using AutoScrew.Hmi.Dialog;
+using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels.Operation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,17 +14,21 @@ public partial class MainViewModel : ObservableObject
 {
     private const int MaxLogEntries = 50;
     private readonly OperatorSessionController _session;
+    private readonly LocalizationService _localization;
 
-    public MainViewModel(OperatorSessionController session)
+    public MainViewModel(OperatorSessionController session, LocalizationService localization)
     {
         _session = session;
+        _localization = localization;
         _session.Changed += (_, _) =>
         {
             RefreshFromSession();
             NotifyCommandStates();
         };
+        _localization.CultureChanged += (_, _) => RefreshFromSession();
         ProgressTreeRoot = new OperatorProgressRootViewModel();
         ProgressTreeRoots.Add(ProgressTreeRoot);
+        GuideHint = BuildGuideHint();
     }
 
     public OperatorSessionController Session => _session;
@@ -43,10 +48,10 @@ public partial class MainViewModel : ObservableObject
     private string _phaseDisplay = JobSessionPhase.Idle.ToString();
 
     [ObservableProperty]
-    private string _statusMessage = "Ready.";
+    private string _statusMessage = "";
 
     [ObservableProperty]
-    private string _guideHint = "请点击或扫描 SN 开始作业。";
+    private string _guideHint = "";
 
     [ObservableProperty]
     private string? _productImagePath;
@@ -88,7 +93,7 @@ public partial class MainViewModel : ObservableObject
         {
             _session.RequestScanDialog();
             IsSnInputEnabled = true;
-            StatusMessage = "Enter SN and confirm.";
+            StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
         }
         catch (Exception ex)
         {
@@ -101,14 +106,18 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            StatusMessage = "Validating SN…";
+            StatusMessage = Loc.Get("S.Operation.StatusValidating");
             await _session.SubmitSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
             if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage))
                 StatusMessage = _session.LastErrorMessage;
             else if (_session.Phase == JobSessionPhase.Running)
             {
-                StatusMessage = "Recipe loaded.";
-                AddLog($"SN {_session.SerialNumber} → PN {_session.PartNumber}，共 {_session.TemplateSurfaceCount} 面");
+                StatusMessage = Loc.Get("S.Operation.StatusRecipeLoaded");
+                AddLog(Loc.Format(
+                    "S.Operation.LogSnLoaded",
+                    _session.SerialNumber!,
+                    _session.PartNumber!,
+                    _session.TemplateSurfaceCount));
             }
 
             IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected;
@@ -124,20 +133,20 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? "当前面";
+            var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
             var screwNo = _session.CurrentScrewLocalIndex;
-            StatusMessage = "Pick + tighten (simulated)…";
+            StatusMessage = Loc.Get("S.Operation.StatusPickTighten");
             await _session.RunCurrentScrewCycleAsync().ConfigureAwait(true);
 
             if (_session.LastErrorMessage is not null)
             {
                 StatusMessage = _session.LastErrorMessage;
-                AddLog($"{DateTime.Now:HH:mm:ss} NG 【{surfaceName}】#{screwNo} — {_session.LastErrorMessage}");
+                AddLog(Loc.Format("S.Operation.LogNg", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo, _session.LastErrorMessage));
             }
             else
             {
-                StatusMessage = "Step done.";
-                AddLog($"{DateTime.Now:HH:mm:ss} OK 【{surfaceName}】#{screwNo}");
+                StatusMessage = Loc.Get("S.Operation.StatusStepDone");
+                AddLog(Loc.Format("S.Operation.LogOk", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo));
                 CurveChanged?.Invoke(this, EventArgs.Empty);
             }
 
@@ -162,8 +171,8 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _session.UnlockNgContinue();
-            StatusMessage = "Unlocked; continue.";
-            AddLog($"{DateTime.Now:HH:mm:ss} 技术员解锁 NG");
+            StatusMessage = Loc.Get("S.Operation.StatusUnlocked");
+            AddLog($"{DateTime.Now:HH:mm:ss} {Loc.Get("S.Operation.LogUnlock")}");
         }
         catch (Exception ex)
         {
@@ -176,14 +185,14 @@ public partial class MainViewModel : ObservableObject
     {
         if (_session.Phase != JobSessionPhase.Idle
             && _session.Phase != JobSessionPhase.SnPending
-            && !ConfirmTips.ShowDialog("确定放弃当前作业？", System.Windows.Application.Current.MainWindow))
+            && !ConfirmTips.ShowDialog(Loc.Get("S.Dialog.AbortSession"), System.Windows.Application.Current.MainWindow))
             return;
 
         _session.ResetToIdle();
         SerialNumberInput = "";
         ActivityLog.Clear();
         IsSnInputEnabled = true;
-        StatusMessage = "Session reset.";
+        StatusMessage = Loc.Get("S.Operation.StatusReset");
         try
         {
             _session.RequestScanDialog();
@@ -203,17 +212,18 @@ public partial class MainViewModel : ObservableObject
             if (_session.Phase == JobSessionPhase.Idle)
                 _session.RequestScanDialog();
             IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected;
+            StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
         }
         catch
         {
-            // ignore — page may load before shell ready
+            // ignore
         }
     }
 
     public void RefreshFromSession()
     {
         PhaseDisplay = _session.Phase.ToString();
-        GuideHint = _session.BuildGuideHint();
+        GuideHint = BuildGuideHint();
         ProductImagePath = _session.ResolvedProductImagePath;
         BoardWidth = _session.BoardWidth;
         BoardHeight = _session.BoardHeight;
@@ -233,14 +243,47 @@ public partial class MainViewModel : ObservableObject
         RefreshProgressTree();
     }
 
+    private string BuildGuideHint()
+    {
+        return _session.Phase switch
+        {
+            JobSessionPhase.Idle => Loc.Get("S.Operation.GuideIdle"),
+            JobSessionPhase.SnPending => Loc.Get("S.Operation.GuideSnPending"),
+            JobSessionPhase.SnRejected => _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideSnRejected"),
+            JobSessionPhase.LoadingRecipe => Loc.Get("S.Operation.GuideLoading"),
+            JobSessionPhase.Running when _session.CurrentScrewIndex >= 0 && _session.Positions.Count > 0 =>
+                Loc.Format(
+                    "S.Operation.GuideRunningScrew",
+                    _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface"),
+                    _session.CurrentScrewLocalIndex),
+            JobSessionPhase.Running =>
+                Loc.Format(
+                    "S.Operation.GuideRunningSurface",
+                    _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface")),
+            JobSessionPhase.AwaitFlip => BuildAwaitFlipGuideHint(),
+            JobSessionPhase.NgLocked =>
+                _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked"),
+            JobSessionPhase.Completed => Loc.Get("S.Operation.GuideCompleted"),
+            _ => ""
+        };
+    }
+
+    private string BuildAwaitFlipGuideHint()
+    {
+        var (_, completedName) = _session.GetCompletedSurfaceForFlip();
+        var (_, nextName) = _session.GetPendingFlipTarget();
+        var done = completedName ?? _session.ActiveSurfaceName ?? Loc.Get("S.Operation.CurrentSurface");
+        var next = nextName ?? Loc.Get("S.Operation.NextSurface");
+        return Loc.Format("S.Operation.GuideAwaitFlip", done, next);
+    }
+
     private void RefreshProgressTree()
     {
         ProgressTreeRoot.SerialNumber = _session.SerialNumber ?? "";
         ProgressTreeRoot.PartNumber = _session.PartNumber ?? "";
-        if (string.IsNullOrWhiteSpace(_session.SerialNumber))
-            ProgressTreeRoot.DisplayLabel = "等待扫码";
-        else
-            ProgressTreeRoot.DisplayLabel = $"SN: {_session.SerialNumber}  PN: {_session.PartNumber}";
+        ProgressTreeRoot.DisplayLabel = string.IsNullOrWhiteSpace(_session.SerialNumber)
+            ? Loc.Get("S.Operation.WaitScan")
+            : Loc.Format("S.Operation.SnPnLabel", _session.SerialNumber!, _session.PartNumber!);
 
         ProgressTreeRoot.Surfaces.Clear();
         ActiveSurfaceNode = null;
@@ -265,7 +308,10 @@ public partial class MainViewModel : ObservableObject
                 var localIndex = i < snapshot.ScrewLocalIndices.Count
                     ? snapshot.ScrewLocalIndices[i]
                     : i + 1;
-                node.Screws.Add(new OperatorScrewNodeViewModel(localIndex, snapshot.ScrewStates[i]));
+                node.Screws.Add(new OperatorScrewNodeViewModel(
+                    localIndex,
+                    snapshot.ScrewStates[i],
+                    Loc.Format("S.Operation.ScrewNode", localIndex)));
             }
 
             if (isActive)
@@ -283,21 +329,22 @@ public partial class MainViewModel : ObservableObject
     {
         var (completedId, completedName) = _session.GetCompletedSurfaceForFlip();
         var (_, nextName) = _session.GetPendingFlipTarget();
-        var done = completedName ?? completedId ?? "当前面";
-        var next = nextName ?? "下一面";
-        var message = $"【{done}】已完成，请翻面至【{next}】后点击确认。";
+        var done = completedName ?? completedId ?? Loc.Get("S.Operation.CurrentSurface");
+        var next = nextName ?? Loc.Get("S.Operation.NextSurface");
+        var message = Loc.Format("S.Operation.FlipConfirm", done, next);
 
         if (!ConfirmTips.ShowDialog(message, System.Windows.Application.Current.MainWindow))
         {
-            StatusMessage = "等待确认翻面。";
+            StatusMessage = Loc.Get("S.Operation.AwaitFlipStatus");
             return;
         }
 
         try
         {
             _session.ConfirmAdvanceToNextSurface();
-            StatusMessage = $"已进入【{_session.ActiveSurfaceName ?? _session.ActiveSurfaceId}】。";
-            AddLog($"{DateTime.Now:HH:mm:ss} 翻面确认 → 【{_session.ActiveSurfaceName}】");
+            var surface = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? "";
+            StatusMessage = Loc.Format("S.Operation.EnteredSurface", surface);
+            AddLog($"{DateTime.Now:HH:mm:ss} {Loc.Format("S.Operation.LogFlip", surface)}");
         }
         catch (Exception ex)
         {

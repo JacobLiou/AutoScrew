@@ -8,7 +8,7 @@
                  WindowStartupLocation="CenterOwner"
                  Height="500"
                  Width="800"
-                 Title="运行异常">
+                 Title="{DynamicResource S.Dialog.Exception}">
     <Border x:Name="MainGrid" Margin="12" BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1">
         <DataGrid ItemsSource="{Binding Details}"
                   CanUserAddRows="False"
@@ -20,11 +20,11 @@
                   HeadersVisibility="Column">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Key}"
-                                    Header="项"
+                                    Header="{DynamicResource S.Common.Item}"
                                     IsReadOnly="True"
                                     Width="160" />
                 <DataGridTextColumn Binding="{Binding Value}"
-                                    Header="内容"
+                                    Header="{DynamicResource S.Common.Content}"
                                     Width="*"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>

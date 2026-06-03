@@ -17,15 +17,15 @@
     </UserControl.InputBindings>
     <DockPanel>
         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-            <TextBlock VerticalAlignment="Center" Text="宽" Margin="0,0,4,8" />
+            <TextBlock VerticalAlignment="Center" Text="{DynamicResource S.Common.Width}" Margin="0,0,4,8" />
             <ui:TextBox Width="72" Margin="0,0,8,8" Text="{Binding BoardWidthInput, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock VerticalAlignment="Center" Text="高" Margin="0,0,4,8" />
+            <TextBlock VerticalAlignment="Center" Text="{DynamicResource S.Common.Height}" Margin="0,0,4,8" />
             <ui:TextBox Width="72" Margin="0,0,8,8" Text="{Binding BoardHeightInput, UpdateSourceTrigger=PropertyChanged}" />
-            <ui:Button Content="应用尺寸" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ApplyBoardSizeCommand}" />
-            <ui:Button Content="加载底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding LoadProductImageCommand}" />
-            <ui:Button Content="画板=底图像素" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding MatchBoardToImageSizeCommand}" ToolTip="将画板宽高设为底图像素尺寸，使标注与图片 1:1 对齐" />
-            <ui:Button Content="清除底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearProductImageCommand}" />
-            <TextBlock VerticalAlignment="Center" Margin="0,0,4,8" FontSize="11" Text="底图透明度" />
+            <ui:Button Content="{DynamicResource S.Template.ApplySize}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ApplyBoardSizeCommand}" />
+            <ui:Button Content="{DynamicResource S.Template.LoadImage}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding LoadProductImageCommand}" />
+            <ui:Button Content="{DynamicResource S.Template.MatchImagePixels}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding MatchBoardToImageSizeCommand}" ToolTip="{DynamicResource S.Template.MatchImagePixelsTip}" />
+            <ui:Button Content="{DynamicResource S.Template.ClearImage}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearProductImageCommand}" />
+            <TextBlock VerticalAlignment="Center" Margin="0,0,4,8" FontSize="11" Text="{DynamicResource S.Template.ImageOpacity}" />
             <Slider Width="120"
                     VerticalAlignment="Center"
                     Margin="0,0,8,8"
@@ -37,11 +37,11 @@
                     IsEnabled="{Binding HasBoardImage}" />
             <TextBlock VerticalAlignment="Center" Margin="0,0,8,8" Width="40" FontSize="11"
                        Text="{Binding BoardImageOpacity, StringFormat={}{0:P0}}" />
-            <ui:Button Content="全选" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SelectAllMarkersCommand}" />
-            <ui:Button Content="删除选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding DeleteSelectedCommand}" />
-            <ui:Button Content="取消选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearSelectionCommand}" />
+            <ui:Button Content="{DynamicResource S.Template.SelectAll}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SelectAllMarkersCommand}" />
+            <ui:Button Content="{DynamicResource S.Template.DeleteSelected}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding DeleteSelectedCommand}" />
+            <ui:Button Content="{DynamicResource S.Template.ClearSelection}" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearSelectionCommand}" />
             <TextBlock VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource ShellMutedForegroundBrush}" Margin="0,0,0,8"
-                       Text="底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选" />
+                       Text="{DynamicResource S.Template.BoardHint}" />
         </WrapPanel>
 
         <Border DockPanel.Dock="Bottom"

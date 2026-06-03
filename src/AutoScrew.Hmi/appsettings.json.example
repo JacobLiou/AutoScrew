@@ -16,7 +16,8 @@
     "MesBaseUrl": "https://localhost/",
     "DataDirectory": "",
     "TemplateDirectory": "Samples",
-    "StationId": "STATION-01"
+    "StationId": "STATION-01",
+    "UiCulture": "zh-CN"
   },
   "IemdSd": {
     "Enabled": false,

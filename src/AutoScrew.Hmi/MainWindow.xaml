@@ -6,7 +6,7 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
                  mc:Ignorable="d"
-                 Title="AutoScrew 智能锁附系统"
+                 Title="{Binding AppTitle}"
                  Height="780"
                  Width="1280"
                  MinHeight="640"
@@ -59,7 +59,7 @@
                                Height="28"
                                Width="100"
                                Stretch="Fill" />
-                        <TextBlock Text="智能锁附"
+                        <TextBlock Text="{DynamicResource S.App.ProductName}"
                                    FontSize="18"
                                    Margin="8,0,0,0"
                                    FontWeight="SemiBold"
@@ -73,7 +73,7 @@
 
         <ContentPresenter x:Name="RootContentDialog" />
         <ui:TitleBar x:Name="TitleBar"
-                     Title="AutoScrew 智能锁附系统"
+                     Title="{Binding AppTitle}"
                      CloseWindowByDoubleClickOnIcon="True">
             <ui:TitleBar.Icon>
                 <ui:ImageIcon Source="pack://application:,,,/Assets/logo_new.png" />
@@ -81,27 +81,42 @@
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <ui:Button Content="记事本"
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,8,0"
+                                ToolTip="{DynamicResource S.Shell.Language}">
+                        <ui:Button Content="{DynamicResource S.Shell.LanguageZh}"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Margin="0,0,4,0"
+                                   Padding="10,4"
+                                   Command="{Binding SetCultureZhCommand}"
+                                   IsEnabled="{Binding IsCultureEn}" />
+                        <ui:Button Content="{DynamicResource S.Shell.LanguageEn}"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Padding="10,4"
+                                   Command="{Binding SetCultureEnCommand}"
+                                   IsEnabled="{Binding IsCultureZh}" />
+                    </StackPanel>
+                    <ui:Button Content="{DynamicResource S.Shell.Notepad}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
-                               ToolTip="记事本"
+                               ToolTip="{DynamicResource S.Shell.Notepad}"
                                Command="{Binding OpenNotepadCommand}" />
-                    <ui:Button Content="计算器"
+                    <ui:Button Content="{DynamicResource S.Shell.Calculator}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
-                               ToolTip="计算器"
+                               ToolTip="{DynamicResource S.Shell.Calculator}"
                                Command="{Binding OpenCalcCommand}" />
                     <ui:Button Style="{StaticResource HeaderIconButtonStyle}"
-                               ToolTip="登出"
+                               ToolTip="{DynamicResource S.Shell.Logout}"
                                Command="{Binding LogoutCommand}">
                         <ui:SymbolIcon Symbol="SignOut24" />
                     </ui:Button>
                     <Menu VerticalAlignment="Center">
                         <MenuItem Header="…">
-                            <MenuItem Header="程序截屏"
+                            <MenuItem Header="{DynamicResource S.Shell.Screenshot}"
                                       Command="{Binding PrintScreenCommand}" />
                             <Separator />
-                            <MenuItem Header="打开程序日志"
+                            <MenuItem Header="{DynamicResource S.Shell.OpenLogs}"
                                       Command="{Binding ExplorerLogsCommand}" />
-                            <MenuItem Header="打开程序路径"
+                            <MenuItem Header="{DynamicResource S.Shell.OpenAppPath}"
                                       Command="{Binding OpenAppPathCommand}" />
                         </MenuItem>
                     </Menu>
@@ -123,7 +138,7 @@
                             <TextBlock Text="{Binding UserGreeting}"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource ShellForegroundBrush}" />
-                            <TextBlock Text="已登录"
+                            <TextBlock Text="{DynamicResource S.Shell.LoggedIn}"
                                        FontSize="11"
                                        Foreground="{DynamicResource ShellMutedForegroundBrush}" />
                         </StackPanel>

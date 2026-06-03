@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using AutoScrew.Hmi.Dialog;
+using AutoScrew.Hmi.Services;
 
 namespace AutoScrew.Hmi.BusinessDialog;
 
@@ -33,7 +34,7 @@ public partial class ProductInfoDialog : UserControl
         var productId = ProductIdBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(productId))
         {
-            ShowError("请填写产品 PN / productId。");
+            ShowError(Loc.Get("S.Template.ErrProductId"));
             return false;
         }
 
@@ -60,7 +61,7 @@ public partial class ProductInfoDialog : UserControl
         dialog.SetInitial(initial);
 
         var container = new ContainerWindow();
-        container.Title = initial is null ? "新建产品" : "产品信息";
+        container.Title = initial is null ? Loc.Get("S.Template.NewProductDialog") : Loc.Get("S.Template.ProductInfoDialog");
         container.SetChildControl(dialog);
         container.Owner = owner ?? System.Windows.Application.Current.MainWindow;
         container.WindowStartupLocation = container.Owner is null

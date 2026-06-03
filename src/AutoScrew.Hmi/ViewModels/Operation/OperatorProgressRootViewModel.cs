@@ -12,7 +12,7 @@ public sealed partial class OperatorProgressRootViewModel : ObservableObject
     private string _partNumber = "";
 
     [ObservableProperty]
-    private string _displayLabel = "等待扫码";
+    private string _displayLabel = "";
 
     public ObservableCollection<OperatorSurfaceNodeViewModel> Surfaces { get; } = new();
 }

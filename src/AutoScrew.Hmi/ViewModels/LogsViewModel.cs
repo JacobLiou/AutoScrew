@@ -1,3 +1,4 @@
+using AutoScrew.Hmi.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -76,8 +77,8 @@ public sealed partial class LogsViewModel : ObservableObject
         catch
         {
             _snackbarService.Show(
-                "日志",
-                "打开日志目录失败，请检查系统权限。",
+                Loc.Get("S.Logs.SnackbarTitle"),
+                Loc.Get("S.Logs.OpenFolderFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.Warning24),
                 TimeSpan.FromSeconds(4)
@@ -98,8 +99,8 @@ public sealed partial class LogsViewModel : ObservableObject
         catch
         {
             _snackbarService.Show(
-                "日志",
-                "打开日志文件失败。",
+                Loc.Get("S.Logs.SnackbarTitle"),
+                Loc.Get("S.Logs.OpenFileFailed"),
                 ControlAppearance.Caution,
                 new SymbolIcon(SymbolRegular.Warning24),
                 TimeSpan.FromSeconds(4)
