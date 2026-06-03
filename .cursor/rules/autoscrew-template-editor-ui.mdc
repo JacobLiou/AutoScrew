@@ -1,0 +1,56 @@
+---
+description: 多面模板编辑页 — 树 + 画板 Master-Detail 与已知坑
+globs: src/AutoScrew.Hmi/**/*.{xaml,cs}
+alwaysApply: false
+---
+
+# 模板编辑 UI（Technician）
+
+## 布局（唯一模式）
+
+左：`TreeView`（产品根 `ProductTemplateTreeRootViewModel` → 子节点 `SurfaceListItemViewModel`）+ 面操作按钮（添加/编辑/删除/↑/↓）。  
+右：`TemplateBoardView` 绑定 `CurrentSurfaceEditor`；未选面时显示占位，**不要**用 Wizard 双模式。
+
+工具栏：打开 | 新建产品 | 保存。
+
+## TreeView 绑定（易错）
+
+```xml
+<!-- ✅ 根用 HierarchicalDataTemplate，子面用 ItemTemplate 嵌套 -->
+<TreeView.ItemTemplate>
+  <HierarchicalDataTemplate ItemsSource="{Binding Surfaces}">
+    <TextBlock Text="{Binding TreeHeader}" />
+    <HierarchicalDataTemplate.ItemTemplate>
+      <DataTemplate><!-- SurfaceListItemViewModel --></DataTemplate>
+    </HierarchicalDataTemplate.ItemTemplate>
+  </HierarchicalDataTemplate>
+</TreeView.ItemTemplate>
+```
+
+- **不要**在 `TreeView` 上设置扁平 `ItemTemplate`，否则 `Surfaces` 子节点不显示。
+- `TreeView.SelectedItem` **只读**；程序化选中用 `TreeViewItem.IsSelected = true` 递归查找容器。
+
+## 画板 Visibility vs DataContext
+
+`TemplateBoardView` 若同时设 `DataContext="{Binding CurrentSurfaceEditor}"`，同一元素上**不要**再绑 `IsSurfaceSelected`（会落到 SurfaceBoardEditorViewModel）。用外层 `Grid` 绑 Visibility。
+
+## ViewModel 切换面（关键）
+
+`OnSelectedSurfaceChanged` 触发时 `SelectedSurface` **已是新面**。flush 必须写回 **`_loadedSurface`（旧面）**，再 `LoadFrom` 新面。错误写法会把旧面钉位写入新面文档。
+
+选中产品根：flush 当前面到内存模型 → `SelectedSurface = null`（隐藏画板），**不要** `ClearBoardEditor()`，以便再次选中同一面时内容仍在。
+
+## 模态框与保存
+
+`SaveFileDialog` / 业务弹框会抢走焦点导致树误选产品根。在 `SaveProduct`、打开文件、添加/编辑面等流程用 `_suppressTreeSelectionHandling` 包裹，避免弹出「是否放弃更改」。
+
+选中产品根时**不要**对 dirty 弹放弃确认；应先 flush 到内存。
+
+## 弹框职责
+
+| 弹框 | 字段 |
+|------|------|
+| `ProductInfoDialog` | productId、displayName、revision |
+| `SurfaceParamsDialog` | surfaceId、name、order、boardWidth、boardHeight |
+
+添加面：无产品时先弹产品信息；默认值 `S{n}`、`order = max+1`、800×600。

@@ -1,0 +1,31 @@
+---
+description: Application / Infrastructure / Hmi 分层与多面模板数据契约
+globs: src/**/*.{cs,csproj}
+alwaysApply: false
+---
+
+# 分层与多面模板数据
+
+## 项目结构
+
+- `AutoScrew.Domain` — 领域模型、状态机（纯逻辑）
+- `AutoScrew.Application` — 用例、`OperatorSessionController`、DTO、`ITemplateLayoutLoader`
+- `AutoScrew.Infrastructure` — JSON Loader、MES、持久化
+- `AutoScrew.Hmi` — WPF UI、Hmi 模型、`ProductTemplateJsonSerializer`
+
+**禁止** `Application` 引用 `Hmi`。序列化/Loader 用 `ProductTemplateDto`（Application），编辑页可用 `ProductTemplateDocument`（Hmi）并经由 `ProductTemplateJsonSerializer` 转换。
+
+## v2 产品模板
+
+- 单文件 `*.product-template.json`，`schemaVersion: 2`，`surfaces[]` 每面独立布局。
+- `ITemplateLayoutLoader.LoadAsync` — 作业台兼容：**仅暴露 order 最小启用面**。
+- `LoadProductAsync` — 返回完整多面包。
+- v1 单面 JSON 在 Loader 内包装为 1 面产品。
+
+## 全局位号
+
+跨面顺序用 `ProductTemplateSequence.ExpandGlobalSequence`（`surfaceOrderThenLocalIndex`）；编辑 UI 不必展示 globalIndex。
+
+## 二期范围（默认不做）
+
+作业台多面状态机、进度树、翻面 Dialog、`screw_details.surface_id` 写入 MES — 除非用户明确要求 Phase 2。

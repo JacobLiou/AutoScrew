@@ -1,0 +1,29 @@
+---
+description: HMI WPF/WPF-UI/MVVM 壳层与导航约定
+globs: src/AutoScrew.Hmi/**/*
+alwaysApply: false
+---
+
+# HMI：WPF + WPF-UI
+
+## 技术栈
+
+.NET 8 WPF、`WPF-UI` 4.x、`CommunityToolkit.Mvvm`、ScottPlot（作业曲线）。主壳 `FluentWindow` + `NavigationView`；页内用 `INavigableView<TViewModel>`。
+
+## DI
+
+- `SurfaceBoardEditorViewModel` — 单面画板（singleton）
+- `ProductTemplateEditorViewModel` — 产品树 + 保存/打开（singleton）
+- `TemplateBoardViewModel` 仅为兼容别名，逻辑在 `SurfaceBoardEditorViewModel`
+
+## 对话框
+
+业务表单放 `Views/BusinessDialog/`（如 `ProductInfoDialog`、`SurfaceParamsDialog`），外壳用 `Dialog.ContainerWindow`。在 Hmi 代码中用 `System.Windows.Application.Current`，避免与 `AutoScrew.Application` 命名空间冲突。
+
+## 登录/导航
+
+首次导航在 `MainWindow.Loaded` + `Dispatcher.BeginInvoke` 执行，勿在 `Show()` 前 Navigate。
+
+## 状态色
+
+复用 `App.xaml` 的 `BrushPending/Ok/Ng` 与 `ScrewMarkerStyle`；作业与编辑共用螺钉 Marker 视觉。

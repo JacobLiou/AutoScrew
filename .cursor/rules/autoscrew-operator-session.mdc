@@ -1,0 +1,21 @@
+---
+description: 作业台会话与多面模板加载（Phase 1 兼容行为）
+globs: src/AutoScrew.{Application,Hmi}/**/*
+alwaysApply: false
+---
+
+# 作业台（Operator）与模板加载
+
+## Phase 1 行为
+
+- `OperatorSessionController` 仍用 `ITemplateLayoutLoader.LoadAsync`（首面扁平布局）。
+- v2 模板含多面时：`MainViewModel` / 状态栏提示「模板含 N 面，当前仅运行首面」。
+- **不要**在未要求时实现多面进度树、翻面 Dialog 或按面状态机。
+
+## 会话字段扩展（已实现）
+
+`TemplateSurfaceCount`、`ActiveSurfaceId`、`ActiveSurfaceName` 来自 `TemplateLoadResult`，供 UI 提示；不改变单面 `_positions` 数组语义。
+
+## 改 MES / 追溯字段
+
+先更新 `doc/DATA_AND_TRACE.md`，再改 `LockJobResultPayload` / `IMesClient`；`surface_id` 等待 IT 定稿。

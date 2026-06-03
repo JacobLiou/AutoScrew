@@ -1,0 +1,34 @@
+---
+description: AutoScrew 项目边界、文档权威与安全约束（始终适用）
+alwaysApply: true
+---
+
+# AutoScrew 项目核心
+
+## 目的
+
+智能锁附系统上位机：取钉/拧紧、曲线判定、SN–PN 任务、MES 追溯。α 阶段以硬件验证与软件实现为主。
+
+## 权威文档（改需求前先读）
+
+| 文档 | 用途 |
+|------|------|
+| `readme.md` | 门面与架构 |
+| `doc/SPEC.md` | V1 验收追溯 |
+| `doc/DATA_AND_TRACE.md` | MES/追溯字段；**MES 或 surface_id 变更先改此文件** |
+| `doc/MULTI_SURFACE_TEMPLATE.md` | 多面模板 v2 契约 |
+| `doc/MULTI_SURFACE_UI_WIREFRAME.md` | HMI 线框 |
+| `AGENTS.md` / `CLAUDE.md` | 协作与安全边界 |
+
+未确认前**不要**将二期能力（视觉、作业台多面引导）标为已实现。
+
+## 安全（产线）
+
+禁止绕过急停、互锁、扭矩保护。真机/扭矩相关改动默认在脱机或维护模式下验证。
+
+## 编码习惯
+
+- 说明用**中文**；代码标识符用清晰英文。
+- **最小 diff**：只改与任务相关文件；匹配现有分层与命名。
+- 不擅自改验收数字、阶段日期或编造硬件型号/总线细节。
+- 用户未要求时不创建 git commit / 不编辑已附带的 `.plan.md` 计划文件。

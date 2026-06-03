@@ -1,0 +1,30 @@
+---
+description: 构建、测试与完成前验证
+globs: "**/*"
+alwaysApply: false
+---
+
+# 验证
+
+## 构建
+
+```bash
+dotnet build AutoScrew.sln
+dotnet test tests/AutoScrew.Tests
+```
+
+HMI 运行中会锁定 `AutoScrew.Hmi.exe`；构建失败 MSB3021 时先关闭应用。
+
+## 多面模板相关测试
+
+- `ProductTemplateSequenceTests` — 首面选取、globalIndex 序列
+- Loader v1/v2 兼容变更需跑 Infrastructure/Application 测试
+
+## 模板编辑手工检查清单
+
+1. 新建产品 → 添加多面 → 逐面打点 → 保存 v2 → 重开
+2. 面切换：新面为空、旧面钉位保留
+3. 保存：不出现「放弃更改」误弹窗，画板不消失
+4. 打开 `Samples/demo-product-multisurface.product-template.json` 树结构正确
+
+完成前声称 fixed/done 须有 build/test 输出依据。
