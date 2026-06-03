@@ -76,7 +76,7 @@ public partial class ScrewMarkerView
         if (DataContext is not ScrewMarkerViewModel vm)
             return;
 
-        if (FindTemplateBoardViewModel(this) is { } board)
+        if (FindBoardEditorViewModel(this) is { } board)
             board.SelectMarkerCommand.Execute(vm);
     }
 
@@ -94,13 +94,13 @@ public partial class ScrewMarkerView
 
         vm.ApplyScrewType(preset);
 
-        FindTemplateBoardViewModel(this)?.NotifyDeleteCommandCanExecute();
+        FindBoardEditorViewModel(this)?.NotifyDeleteCommandCanExecute();
     }
 
-    private static TemplateBoardViewModel? FindTemplateBoardViewModel(DependencyObject from)
+    private static SurfaceBoardEditorViewModel? FindBoardEditorViewModel(DependencyObject from)
     {
         var view = FindAncestor<TemplateBoardView>(from);
-        return view?.DataContext as TemplateBoardViewModel;
+        return view?.DataContext as SurfaceBoardEditorViewModel;
     }
 
     private static T? FindAncestor<T>(DependencyObject? child) where T : DependencyObject

@@ -73,6 +73,8 @@ flowchart LR
 | [doc/RISK_REGISTER.md](doc/RISK_REGISTER.md) | 风险登记（供料、节拍、噪声、吸头寿命、MES 窗口等） |
 | [doc/VERIFICATION_FAT_SAT.md](doc/VERIFICATION_FAT_SAT.md) | FAT/SAT 检查表草案（与 SPEC 验收条可追溯） |
 | [doc/DATA_AND_TRACE.md](doc/DATA_AND_TRACE.md) | 曲线采样、存盘字段、SN–位号绑定与 MES 最小集占位 |
+| [doc/MULTI_SURFACE_TEMPLATE.md](doc/MULTI_SURFACE_TEMPLATE.md) | **草案**：多面产品模板 JSON 契约（v2）与 v1 兼容 |
+| [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | **草案**：多面模板编辑 / 作业台 UI 线框 |
 | [doc/CONNECTION_STRING_ENCRYPTION.md](doc/CONNECTION_STRING_ENCRYPTION.md) | **部署必读**：MIMS 连接串加密与跨机配置方法 |
 
 ## 仓库结构
@@ -84,6 +86,8 @@ flowchart LR
 | [doc/RISK_REGISTER.md](doc/RISK_REGISTER.md) | 风险台账 |
 | [doc/VERIFICATION_FAT_SAT.md](doc/VERIFICATION_FAT_SAT.md) | FAT/SAT 验证检查表 |
 | [doc/DATA_AND_TRACE.md](doc/DATA_AND_TRACE.md) | 数据模型与追溯契约 |
+| [doc/MULTI_SURFACE_TEMPLATE.md](doc/MULTI_SURFACE_TEMPLATE.md) | 多面产品模板 JSON 契约（草案） |
+| [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | 多面模板 / 作业 HMI 线框（草案） |
 | [doc/driverAnaC.md](doc/driverAnaC.md) | 智能电批 Modbus/FTP 通信与厂商 Demo 梳理 |
 | [doc/智能锁附系统开发 (V1).xls](<doc/智能锁附系统开发 (V1).xls>) | 原始需求与验收表（含图） |
 | `src/` | 应用软件代码（待建） |

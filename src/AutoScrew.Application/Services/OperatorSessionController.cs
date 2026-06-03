@@ -39,6 +39,9 @@ public sealed class OperatorSessionController
     private double _boardHeight;
     private bool _isRework;
     private string? _lastErrorMessage;
+    private int _templateSurfaceCount = 1;
+    private string? _activeSurfaceId;
+    private string? _activeSurfaceName;
 
     public OperatorSessionController(
         IMesClient mesClient,
@@ -69,6 +72,15 @@ public sealed class OperatorSessionController
     public string? PartNumber => _partNumber;
 
     public string? LastErrorMessage => _lastErrorMessage;
+
+    /// <summary>模板文件中的面总数（v2）；v1 为 1。</summary>
+    public int TemplateSurfaceCount => _templateSurfaceCount;
+
+    /// <summary>作业台当前加载的首面 surfaceId。</summary>
+    public string? ActiveSurfaceId => _activeSurfaceId;
+
+    /// <summary>作业台当前加载的首面显示名。</summary>
+    public string? ActiveSurfaceName => _activeSurfaceName;
 
     public int CurrentScrewIndex => _currentIndex;
 
@@ -140,6 +152,9 @@ public sealed class OperatorSessionController
             _boardHeight = layout.Raw.BoardHeight;
             _resolvedImagePath = layout.ResolvedProductImagePath;
             _positions = layout.Positions.ToImmutableArray();
+            _templateSurfaceCount = layout.TotalSurfaceCount;
+            _activeSurfaceId = layout.ActiveSurfaceId;
+            _activeSurfaceName = layout.ActiveSurfaceName;
 
             var states = new StationScrewState[_positions.Length];
             for (var i = 0; i < states.Length; i++)
@@ -388,6 +403,9 @@ public sealed class OperatorSessionController
         _resolvedImagePath = null;
         _boardWidth = 0;
         _boardHeight = 0;
+        _templateSurfaceCount = 1;
+        _activeSurfaceId = null;
+        _activeSurfaceName = null;
         _lastErrorMessage = null;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
     }

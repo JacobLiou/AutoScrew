@@ -67,6 +67,8 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
         builder.Services.AddSingleton<MainViewModel>();
+        builder.Services.AddSingleton<SurfaceBoardEditorViewModel>();
+        builder.Services.AddSingleton<ProductTemplateEditorViewModel>();
         builder.Services.AddSingleton<TemplateBoardViewModel>();
         builder.Services.AddSingleton<SettingsViewModel>();
         builder.Services.AddSingleton<MesViewModel>();

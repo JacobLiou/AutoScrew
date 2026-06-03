@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoScrew.Application\AutoScrew.Application.csproj" />
     <ProjectReference Include="..\..\src\AutoScrew.Domain\AutoScrew.Domain.csproj" />
     <ProjectReference Include="..\..\src\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,0 +1,145 @@
+<UserControl x:Class="AutoScrew.Hmi.Views.ProductTemplateEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             xmlns:views="clr-namespace:AutoScrew.Hmi.Views"
+             xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="720"
+             d:DesignWidth="1200">
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    <DockPanel>
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource ShellCardBrush}"
+                BorderBrush="{DynamicResource ShellBorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button Content="打开…"
+                               Style="{StaticResource ShellSecondaryButtonStyle}"
+                               Command="{Binding OpenProductCommand}" />
+                    <ui:Button Content="新建产品"
+                               Style="{StaticResource ShellSecondaryButtonStyle}"
+                               Margin="8,0,0,0"
+                               Command="{Binding NewProductCommand}" />
+                    <ui:Button Content="保存"
+                               Appearance="Primary"
+                               Margin="8,0,0,0"
+                               Command="{Binding SaveProductCommand}" />
+                    <TextBlock Text="{Binding WindowTitle}"
+                               Margin="16,0,0,0"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding StatusMessage}"
+                           Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="420" />
+            </Grid>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" MinWidth="220" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0"
+                    Background="{DynamicResource ShellCardBrush}"
+                    BorderBrush="{DynamicResource ShellBorderBrush}"
+                    BorderThickness="0,0,1,0"
+                    Padding="8">
+                <DockPanel>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <ui:Button Content="添加面"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Command="{Binding AddSurfaceCommand}" />
+                        <ui:Button Content="编辑"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Margin="4,0,0,0"
+                                   Command="{Binding EditSurfaceCommand}" />
+                        <ui:Button Content="删除"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Margin="4,0,0,0"
+                                   Command="{Binding DeleteSurfaceCommand}" />
+                        <ui:Button Content="↑"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Margin="4,0,0,0"
+                                   Padding="8,4"
+                                   Command="{Binding MoveSurfaceUpCommand}" />
+                        <ui:Button Content="↓"
+                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                   Margin="4,0,0,0"
+                                   Padding="8,4"
+                                   Command="{Binding MoveSurfaceDownCommand}" />
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="产品 / 面"
+                               FontWeight="SemiBold"
+                               Margin="4,0,0,8" />
+                    <TreeView x:Name="SurfaceTree"
+                              ItemsSource="{Binding ProductTreeRoots}"
+                              SelectedItemChanged="SurfaceTree_OnSelectedItemChanged">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="True" />
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Surfaces}">
+                                <TextBlock Text="{Binding TreeHeader}" FontWeight="SemiBold" />
+                                <HierarchicalDataTemplate.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:SurfaceListItemViewModel}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StateGlyph}"
+                                                       Width="16"
+                                                       Foreground="{DynamicResource ShellMutedForegroundBrush}" />
+                                            <TextBlock Text="{Binding DisplayLabel}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </HierarchicalDataTemplate.ItemTemplate>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent" />
+            <Grid Grid.Column="2">
+                <Grid Visibility="{Binding IsSurfaceSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <views:TemplateBoardView DataContext="{Binding CurrentSurfaceEditor}"
+                                             ShowFileCommands="False" />
+                </Grid>
+                <Border Background="{DynamicResource ShellCardBrush}"
+                        Visibility="{Binding IsSurfaceSelected, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <StackPanel VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                MaxWidth="360">
+                        <TextBlock Text="请在左侧树中选择一个面"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="使用「新建产品」创建模板，或「添加面」录入面参数后开始编辑画板。"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>

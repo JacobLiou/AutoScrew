@@ -8,6 +8,19 @@ namespace AutoScrew.Hmi.Views;
 
 public partial class TemplateBoardView : UserControl
 {
+    public static readonly DependencyProperty ShowFileCommandsProperty =
+        DependencyProperty.Register(
+            nameof(ShowFileCommands),
+            typeof(bool),
+            typeof(TemplateBoardView),
+            new PropertyMetadata(false));
+
+    public bool ShowFileCommands
+    {
+        get => (bool)GetValue(ShowFileCommandsProperty);
+        set => SetValue(ShowFileCommandsProperty, value);
+    }
+
     public TemplateBoardView()
     {
         InitializeComponent();
@@ -15,7 +28,7 @@ public partial class TemplateBoardView : UserControl
 
     private void BoardCanvas_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is not TemplateBoardViewModel vm)
+        if (DataContext is not SurfaceBoardEditorViewModel vm)
             return;
 
         if (IsFromMarker(e.OriginalSource))

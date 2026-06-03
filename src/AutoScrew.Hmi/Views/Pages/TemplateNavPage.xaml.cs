@@ -3,11 +3,11 @@ using Wpf.Ui.Abstractions.Controls;
 
 namespace AutoScrew.Hmi.Views.Pages;
 
-public partial class TemplateNavPage : INavigableView<TemplateBoardViewModel>
+public partial class TemplateNavPage : INavigableView<ProductTemplateEditorViewModel>
 {
-    public TemplateBoardViewModel ViewModel { get; }
+    public ProductTemplateEditorViewModel ViewModel { get; }
 
-    public TemplateNavPage(TemplateBoardViewModel viewModel)
+    public TemplateNavPage(ProductTemplateEditorViewModel viewModel)
     {
         ViewModel = viewModel;
         DataContext = this;

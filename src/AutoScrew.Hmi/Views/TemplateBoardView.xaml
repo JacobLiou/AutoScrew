@@ -22,7 +22,7 @@
             <TextBlock VerticalAlignment="Center" Text="高" Margin="0,0,4,8" />
             <ui:TextBox Width="72" Margin="0,0,8,8" Text="{Binding BoardHeightInput, UpdateSourceTrigger=PropertyChanged}" />
             <ui:Button Content="应用尺寸" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ApplyBoardSizeCommand}" />
-            <ui:Button Content="加载产品底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding LoadProductImageCommand}" />
+            <ui:Button Content="加载底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding LoadProductImageCommand}" />
             <ui:Button Content="画板=底图像素" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding MatchBoardToImageSizeCommand}" ToolTip="将画板宽高设为底图像素尺寸，使标注与图片 1:1 对齐" />
             <ui:Button Content="清除底图" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearProductImageCommand}" />
             <TextBlock VerticalAlignment="Center" Margin="0,0,4,8" FontSize="11" Text="底图透明度" />
@@ -37,8 +37,6 @@
                     IsEnabled="{Binding HasBoardImage}" />
             <TextBlock VerticalAlignment="Center" Margin="0,0,8,8" Width="40" FontSize="11"
                        Text="{Binding BoardImageOpacity, StringFormat={}{0:P0}}" />
-            <ui:Button Content="保存 JSON" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SaveTemplateCommand}" />
-            <ui:Button Content="打开 JSON" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding OpenTemplateCommand}" />
             <ui:Button Content="全选" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SelectAllMarkersCommand}" />
             <ui:Button Content="删除选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding DeleteSelectedCommand}" />
             <ui:Button Content="取消选中" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ClearSelectionCommand}" />

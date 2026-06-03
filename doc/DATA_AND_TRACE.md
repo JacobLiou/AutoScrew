@@ -21,6 +21,14 @@
 - `session_checkpoints`：作业断电恢复 checkpoint（JSON）。
 - `outbox_uploads`：MES 上传重试队列。
 
+## 多面产品模板（草案）
+
+- **契约**：[MULTI_SURFACE_TEMPLATE.md](MULTI_SURFACE_TEMPLATE.md)（`schemaVersion: 2`、面 ID、全局/面内位号）。
+- **HMI 线框**：[MULTI_SURFACE_UI_WIREFRAME.md](MULTI_SURFACE_UI_WIREFRAME.md)。
+- **定稿后**须在本节增补：`screw_details.surface_id`、`local_index`、`global_index` 字段及曲线文件命名；`RecipeBundle` / `LockJobResultPayload` 与 MES 对齐后再改实现。
+- **Phase 1（已实现）**：HMI 技术员侧 v2 整包编辑（Wizard + 面树）；`ITemplateLayoutLoader.LoadAsync` 仅暴露 order 最小启用面供作业台；多面时状态栏提示面数。
+- **Phase 2（待办）**：`OperatorSessionController` 多面状态机（`CurrentSurfaceId`、按面 `_states[][]`）、`OperationPageView` 进度树、严格顺序翻面 Dialog、`screw_details.surface_id` 写入与 MES 字段对齐。
+
 ## HTTPS
 
 - 生产环境 MES 基址使用 HTTPS（TLS 1.2+），见 `MesHttpClient` 与现场证书策略。

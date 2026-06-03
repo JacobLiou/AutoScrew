@@ -63,7 +63,7 @@ public partial class MainViewModel : ObservableObject
             StatusMessage = "Validating SN…";
             await _session.SubmitSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
             RefreshFromSession();
-            StatusMessage = _session.LastErrorMessage ?? "Recipe loaded.";
+            StatusMessage = BuildStatusAfterLoad();
         }
         catch (Exception ex)
         {
@@ -130,6 +130,20 @@ public partial class MainViewModel : ObservableObject
             var st = i < states.Count ? states[i] : StationScrewState.Pending;
             Markers.Add(new ScrewMarkerVm(p.Index, p.CenterX, p.CenterY, diameter, st));
         }
+    }
+
+    private string BuildStatusAfterLoad()
+    {
+        if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage))
+            return _session.LastErrorMessage;
+
+        if (_session.TemplateSurfaceCount <= 1)
+            return "Recipe loaded.";
+
+        var surfaceLabel = string.IsNullOrWhiteSpace(_session.ActiveSurfaceName)
+            ? _session.ActiveSurfaceId ?? "首面"
+            : _session.ActiveSurfaceName;
+        return $"Recipe loaded. 模板含 {_session.TemplateSurfaceCount} 面，作业台当前仅运行「{surfaceLabel}」；多面引导下一版启用。";
     }
 }
 
