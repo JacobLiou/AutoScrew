@@ -5,6 +5,7 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+                 xmlns:controls="clr-namespace:AutoScrew.Hmi.Controls"
                  mc:Ignorable="d"
                  Title="{Binding WindowTitle}"
                  Height="380"
@@ -102,30 +103,40 @@
             <Setter Property="BorderBrush"
                     Value="Transparent" />
         </Style>
+        <Style x:Key="LoginCultureComboStyle"
+               TargetType="ComboBox">
+            <Setter Property="Height"
+                    Value="34" />
+            <Setter Property="MinWidth"
+                    Value="132" />
+            <Setter Property="Padding"
+                    Value="10,6" />
+            <Setter Property="FontSize"
+                    Value="13" />
+            <Setter Property="Background"
+                    Value="#44FFFFFF" />
+            <Setter Property="Foreground"
+                    Value="#F2FFFFFF" />
+            <Setter Property="BorderBrush"
+                    Value="#66FFFFFF" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+        </Style>
     </ui:FluentWindow.Resources>
     <Border CornerRadius="0"
             Background="#FF0A1620">
         <Grid>
-            <StackPanel Orientation="Horizontal"
-                        VerticalAlignment="Top"
-                        HorizontalAlignment="Right"
-                        Margin="0,8,40,0"
-                        Panel.ZIndex="10"
-                        ToolTip="{DynamicResource S.Shell.Language}">
-                <ui:Button Content="{DynamicResource S.Shell.LanguageZh}"
-                           Appearance="Transparent"
-                           Foreground="#CCFFFFFF"
-                           Margin="0,0,4,0"
-                           Padding="8,4"
-                           Command="{Binding SetCultureZhCommand}"
-                           IsEnabled="{Binding IsCultureEn}" />
-                <ui:Button Content="{DynamicResource S.Shell.LanguageEn}"
-                           Appearance="Transparent"
-                           Foreground="#CCFFFFFF"
-                           Padding="8,4"
-                           Command="{Binding SetCultureEnCommand}"
-                           IsEnabled="{Binding IsCultureZh}" />
-            </StackPanel>
+            <!--<controls:CultureSelector VerticalAlignment="Top"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,8,40,0"
+                                    Panel.ZIndex="10"
+                                    Variant="Login"
+                                    CultureOptions="{Binding CultureOptions}"
+                                    SelectedCulture="{Binding SelectedCulture, Mode=TwoWay}" />-->
             <Button Command="{Binding CancelCommand}"
                     VerticalAlignment="Top"
                     HorizontalAlignment="Right"

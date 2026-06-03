@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Dialog;
+using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -50,6 +51,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         _localization = localization;
         _logger = logger;
         _selectedCulture = _localization.CurrentCultureName;
+        _cultureOptions = new ObservableCollection<UiCultureOption>(UiCultureCatalog.CreateOptions());
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
         _localization.CultureChanged += OnCultureChanged;
@@ -63,8 +65,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     partial void OnSelectedCultureChanged(string value)
     {
-        OnPropertyChanged(nameof(IsCultureZh));
-        OnPropertyChanged(nameof(IsCultureEn));
+        if (string.IsNullOrWhiteSpace(value)
+            || string.Equals(_localization.CurrentCultureName, value, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _localization.SetCulture(value);
     }
 
     public void Dispose()
@@ -77,21 +82,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _selectedCulture;
 
+    [ObservableProperty]
+    private ObservableCollection<UiCultureOption> _cultureOptions;
+
     public string AppTitle => Loc.Get("S.App.TitleMain");
-
-    public bool IsCultureZh => string.Equals(SelectedCulture, LocalizationService.ZhCn, StringComparison.OrdinalIgnoreCase);
-
-    public bool IsCultureEn => string.Equals(SelectedCulture, LocalizationService.EnUs, StringComparison.OrdinalIgnoreCase);
-
-    [RelayCommand]
-    private void SetCultureZh() => _localization.SetCulture(LocalizationService.ZhCn);
-
-    [RelayCommand]
-    private void SetCultureEn() => _localization.SetCulture(LocalizationService.EnUs);
 
     private void OnCultureChanged(object? sender, EventArgs e)
     {
         SelectedCulture = _localization.CurrentCultureName;
+        RefreshCultureOptions();
         RebuildMenuItems();
         RefreshUserBanner();
         OnPropertyChanged(nameof(SidebarToggleHint));
@@ -104,6 +103,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(AppTitle));
         OnPropertyChanged(nameof(SidebarToggleHint));
+    }
+
+    private void RefreshCultureOptions()
+    {
+        var current = SelectedCulture;
+        CultureOptions.Clear();
+        foreach (var option in UiCultureCatalog.CreateOptions())
+            CultureOptions.Add(option);
+        SelectedCulture = current;
     }
 
     [ObservableProperty]

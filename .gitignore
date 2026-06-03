@@ -255,3 +255,4 @@ appsettings.Development.json
 # Local MIMS credentials (do not commit)
 src/temp/connstring.txt
 /src/wpfui-4.0.0/wpfui-4.0.0
+/_build_tmp/Hmi

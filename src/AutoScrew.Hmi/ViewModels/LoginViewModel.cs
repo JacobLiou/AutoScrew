@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Infrastructure;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,6 +29,7 @@ public partial class LoginViewModel : ObservableObject
         _currentUser = currentUser;
         _localization = localization;
         _selectedCulture = _localization.CurrentCultureName;
+        _cultureOptions = new ObservableCollection<UiCultureOption>(UiCultureCatalog.CreateOptions());
         _localization.CultureChanged += OnLocalizationCultureChanged;
 
         if (LoginRememberedCredentialStore.TryLoad(out var u, out var p) && !string.IsNullOrWhiteSpace(p))
@@ -73,6 +76,9 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedCulture;
 
+    [ObservableProperty]
+    private ObservableCollection<UiCultureOption> _cultureOptions;
+
     public string WindowTitle => Loc.Get("S.App.TitleLogin");
 
     public string ForgotPasswordLabel => Loc.Get("S.Login.ForgotPassword");
@@ -80,25 +86,28 @@ public partial class LoginViewModel : ObservableObject
     private void OnLocalizationCultureChanged(object? sender, EventArgs e)
     {
         SelectedCulture = _localization.CurrentCultureName;
+        RefreshCultureOptions();
         OnPropertyChanged(nameof(WindowTitle));
         OnPropertyChanged(nameof(ForgotPasswordLabel));
     }
 
-    public bool IsCultureZh => string.Equals(SelectedCulture, LocalizationService.ZhCn, StringComparison.OrdinalIgnoreCase);
-
-    public bool IsCultureEn => string.Equals(SelectedCulture, LocalizationService.EnUs, StringComparison.OrdinalIgnoreCase);
-
-    [RelayCommand]
-    private void SetCultureZh() => _localization.SetCulture(LocalizationService.ZhCn);
-
-    [RelayCommand]
-    private void SetCultureEn() => _localization.SetCulture(LocalizationService.EnUs);
-
     partial void OnSelectedCultureChanged(string value)
     {
-        OnPropertyChanged(nameof(IsCultureZh));
-        OnPropertyChanged(nameof(IsCultureEn));
+        if (string.IsNullOrWhiteSpace(value)
+            || string.Equals(_localization.CurrentCultureName, value, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _localization.SetCulture(value);
         OnPropertyChanged(nameof(WindowTitle));
+    }
+
+    private void RefreshCultureOptions()
+    {
+        var current = SelectedCulture;
+        CultureOptions.Clear();
+        foreach (var option in UiCultureCatalog.CreateOptions())
+            CultureOptions.Add(option);
+        SelectedCulture = current;
     }
 
     [RelayCommand]

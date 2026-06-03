@@ -1,13 +1,20 @@
 namespace AutoScrew.Hmi.Models;
 
 /// <summary>界面语言下拉项（文化代码 + 国旗 + 显示名）。</summary>
-public sealed class UiCultureOption(string cultureName, string flagGlyph, string displayName)
+public sealed class UiCultureOption
 {
-    public string CultureName { get; } = cultureName;
+    public UiCultureOption(string cultureName, string flagGlyph, string displayName)
+    {
+        CultureName = cultureName;
+        FlagGlyph = flagGlyph;
+        DisplayName = displayName;
+    }
 
-    public string FlagGlyph { get; } = flagGlyph;
+    public string CultureName { get; }
 
-    public string DisplayName { get; } = displayName;
+    public string FlagGlyph { get; }
 
-    public string DisplayText => $"{FlagGlyph}  {displayName}";
+    public string DisplayName { get; }
+
+    public string DisplayText => $"{FlagGlyph}  {DisplayName}";
 }

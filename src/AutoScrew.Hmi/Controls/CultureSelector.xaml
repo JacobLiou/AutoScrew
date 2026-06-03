@@ -16,7 +16,8 @@
                 <StackPanel Orientation="Horizontal"
                             Margin="4,2">
                     <TextBlock Text="{Binding FlagGlyph}"
-                               FontSize="15"
+                               FontFamily="Segoe UI Emoji"
+                               FontSize="12"
                                VerticalAlignment="Center"
                                Margin="0,0,8,0" />
                     <TextBlock Text="{Binding DisplayName}"

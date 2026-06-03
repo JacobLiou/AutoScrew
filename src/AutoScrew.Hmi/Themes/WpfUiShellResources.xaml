@@ -45,4 +45,17 @@
         <Setter Property="Padding" Value="16" />
     </Style>
 
+    <Style x:Key="ShellCultureComboStyle" TargetType="ComboBox">
+        <Setter Property="Height" Value="34" />
+        <Setter Property="MinWidth" Value="132" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Background" Value="{StaticResource ShellCardBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ShellForegroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ShellBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
 </ResourceDictionary>

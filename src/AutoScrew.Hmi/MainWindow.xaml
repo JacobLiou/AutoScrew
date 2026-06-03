@@ -5,6 +5,7 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+                 xmlns:controls="clr-namespace:AutoScrew.Hmi.Controls"
                  mc:Ignorable="d"
                  Title="{Binding AppTitle}"
                  Height="780"
@@ -81,21 +82,10 @@
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal"
-                                Margin="0,0,8,0"
-                                ToolTip="{DynamicResource S.Shell.Language}">
-                        <ui:Button Content="{DynamicResource S.Shell.LanguageZh}"
-                                   Style="{StaticResource ShellSecondaryButtonStyle}"
-                                   Margin="0,0,4,0"
-                                   Padding="10,4"
-                                   Command="{Binding SetCultureZhCommand}"
-                                   IsEnabled="{Binding IsCultureEn}" />
-                        <ui:Button Content="{DynamicResource S.Shell.LanguageEn}"
-                                   Style="{StaticResource ShellSecondaryButtonStyle}"
-                                   Padding="10,4"
-                                   Command="{Binding SetCultureEnCommand}"
-                                   IsEnabled="{Binding IsCultureZh}" />
-                    </StackPanel>
+                    <controls:CultureSelector Variant="Shell"
+                                            Margin="0,0,8,0"
+                                            CultureOptions="{Binding CultureOptions}"
+                                            SelectedCulture="{Binding SelectedCulture, Mode=TwoWay}" />
                     <ui:Button Content="{DynamicResource S.Shell.Notepad}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                ToolTip="{DynamicResource S.Shell.Notepad}"
