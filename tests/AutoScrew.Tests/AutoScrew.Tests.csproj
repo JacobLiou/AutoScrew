@@ -22,4 +22,10 @@
     <ProjectReference Include="..\..\src\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Fixtures\test-multisurface.product-template.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

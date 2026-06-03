@@ -27,6 +27,27 @@ public class JobSessionPhaseMachineTests
         Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.ScrewNg, out var next));
         Assert.Equal(JobSessionPhase.NgLocked, next);
     }
+
+    [Fact]
+    public void Running_to_AwaitFlip_on_SurfaceComplete()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.SurfaceComplete, out var next));
+        Assert.Equal(JobSessionPhase.AwaitFlip, next);
+    }
+
+    [Fact]
+    public void AwaitFlip_to_Running_on_SurfaceAdvanceConfirmed()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.AwaitFlip, JobSessionTrigger.SurfaceAdvanceConfirmed, out var next));
+        Assert.Equal(JobSessionPhase.Running, next);
+    }
+
+    [Fact]
+    public void Running_to_Completed_on_AllScrewsComplete()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.AllScrewsComplete, out var next));
+        Assert.Equal(JobSessionPhase.Completed, next);
+    }
 }
 
 public class LockCurveEvaluatorTests

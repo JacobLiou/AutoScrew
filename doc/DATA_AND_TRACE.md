@@ -26,8 +26,12 @@
 - **契约**：[MULTI_SURFACE_TEMPLATE.md](MULTI_SURFACE_TEMPLATE.md)（`schemaVersion: 2`、面 ID、全局/面内位号）。
 - **HMI 线框**：[MULTI_SURFACE_UI_WIREFRAME.md](MULTI_SURFACE_UI_WIREFRAME.md)。
 - **定稿后**须在本节增补：`screw_details.surface_id`、`local_index`、`global_index` 字段及曲线文件命名；`RecipeBundle` / `LockJobResultPayload` 与 MES 对齐后再改实现。
-- **Phase 1（已实现）**：HMI 技术员侧 v2 整包编辑（Wizard + 面树）；`ITemplateLayoutLoader.LoadAsync` 仅暴露 order 最小启用面供作业台；多面时状态栏提示面数。
-- **Phase 2（待办）**：`OperatorSessionController` 多面状态机（`CurrentSurfaceId`、按面 `_states[][]`）、`OperationPageView` 进度树、严格顺序翻面 Dialog、`screw_details.surface_id` 写入与 MES 字段对齐。
+- **Phase 1（已实现）**：HMI 技术员侧 v2 整包编辑（左树 + 右画板）；`LoadProductAsync` 加载完整产品包。
+- **Phase 2（已实现 · 作业台）**：
+  - `OperatorSessionController` 多面 runtime（`ActiveSurfaceOrdinal`、按面 `SurfaceCheckpointSurface`）。
+  - `session_checkpoints` JSON 含 `activeSurfaceOrdinal` + 每面 `surfaceId` / `progressState` / `screwStates`。
+  - 曲线文件仍用 `torque_curve_{globalPositionIndex}_{timestamp}.csv`（global 按 `surfaceOrderThenLocalIndex`）。
+  - **MES 待定稿**：`ScrewResultDto` 暂不增加 `surface_id` / `local_index` 上报字段；本地 checkpoint 与 `_screwRecords` 已按 `surfaceId` + `localIndex` 区分。
 
 ## HTTPS
 

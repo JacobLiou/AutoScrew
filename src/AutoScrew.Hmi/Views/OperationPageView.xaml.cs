@@ -1,11 +1,16 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 using AutoScrew.Hmi.ViewModels;
+using AutoScrew.Hmi.ViewModels.Operation;
 
 namespace AutoScrew.Hmi.Views;
 
 public partial class OperationPageView : UserControl
 {
+    private MainViewModel? _viewModel;
+
     public OperationPageView()
     {
         InitializeComponent();
@@ -16,25 +21,86 @@ public partial class OperationPageView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (DataContext is MainViewModel vm)
-            vm.CurveChanged -= OnCurveChanged;
+        UnhookViewModel(_viewModel);
     }
 
-    private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (e.OldValue is MainViewModel oldVm)
-            oldVm.CurveChanged -= OnCurveChanged;
-        if (e.NewValue is MainViewModel newVm)
-            newVm.CurveChanged += OnCurveChanged;
-    }
-
-    private void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
-    {
-        if (DataContext is MainViewModel vm)
+        UnhookViewModel(e.OldValue as MainViewModel);
+        _viewModel = e.NewValue as MainViewModel;
+        if (_viewModel is not null)
         {
-            vm.RefreshFromSession();
-            RefreshPlot();
+            _viewModel.CurveChanged += OnCurveChanged;
+            _viewModel.RequestSelectActiveSurface += OnRequestSelectActiveSurface;
         }
+    }
+
+    private void UnhookViewModel(MainViewModel? vm)
+    {
+        if (vm is null)
+            return;
+
+        vm.CurveChanged -= OnCurveChanged;
+        vm.RequestSelectActiveSurface -= OnRequestSelectActiveSurface;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm)
+            return;
+
+        vm.EnsureScanReady();
+        vm.RefreshFromSession();
+        RefreshPlot();
+        SnInputBox.Focus();
+    }
+
+    private void SnInputBox_OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || DataContext is not MainViewModel vm)
+            return;
+
+        if (vm.SubmitSnCommand.CanExecute(null))
+        {
+            vm.SubmitSnCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void OnRequestSelectActiveSurface(object? sender, EventArgs e)
+    {
+        Dispatcher.BeginInvoke(SyncTreeSelectionToActiveSurface, DispatcherPriority.Loaded);
+    }
+
+    private void SyncTreeSelectionToActiveSurface()
+    {
+        if (_viewModel?.ActiveSurfaceNode is null)
+            return;
+
+        ProgressTree.UpdateLayout();
+        TrySelectTreeViewItem(ProgressTree, _viewModel.ActiveSurfaceNode);
+    }
+
+    private static bool TrySelectTreeViewItem(ItemsControl parent, object item)
+    {
+        foreach (var child in parent.Items)
+        {
+            var container = parent.ItemContainerGenerator.ContainerFromItem(child) as TreeViewItem;
+            if (container is null)
+                continue;
+
+            if (ReferenceEquals(child, item))
+            {
+                container.IsSelected = true;
+                return true;
+            }
+
+            container.IsExpanded = true;
+            if (TrySelectTreeViewItem(container, item))
+                return true;
+        }
+
+        return false;
     }
 
     private void OnCurveChanged(object? sender, EventArgs e) => Dispatcher.Invoke(RefreshPlot);

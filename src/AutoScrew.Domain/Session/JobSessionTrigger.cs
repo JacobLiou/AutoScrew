@@ -8,6 +8,8 @@ public enum JobSessionTrigger
     RecipeLoaded,
     LoadFailed,
     ScrewNg,
+    SurfaceComplete,
+    SurfaceAdvanceConfirmed,
     AllScrewsComplete,
     TechUnlockContinue,
     Abort,

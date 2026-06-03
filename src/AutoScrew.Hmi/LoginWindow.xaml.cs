@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.ViewModels;
 
 namespace AutoScrew.Hmi;
@@ -43,7 +44,7 @@ public partial class LoginWindow : FluentWindow
 
     private void OnNoticeRequested(object? sender, LoginNotice e)
     {
-        System.Windows.MessageBox.Show(this, e.Body, e.Title, System.Windows.MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageTips.ShowDialog(e.Body, this, e.Title);
     }
 
     private void OnCloseRequested(object? sender, bool success)

@@ -10,6 +10,7 @@ public enum JobSessionPhase
     SnRejected,
     LoadingRecipe,
     Running,
+    AwaitFlip,
     NgLocked,
     Completed
 }

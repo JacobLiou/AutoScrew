@@ -1,21 +1,25 @@
 ---
-description: 作业台会话与多面模板加载（Phase 1 兼容行为）
+description: 作业台会话与多面模板加载
 globs: src/AutoScrew.{Application,Hmi}/**/*
 alwaysApply: false
 ---
 
-# 作业台（Operator）与模板加载
+# 作业台（Operator）与多面会话
 
-## Phase 1 行为
+## 加载与推进
 
-- `OperatorSessionController` 仍用 `ITemplateLayoutLoader.LoadAsync`（首面扁平布局）。
-- v2 模板含多面时：`MainViewModel` / 状态栏提示「模板含 N 面，当前仅运行首面」。
-- **不要**在未要求时实现多面进度树、翻面 Dialog 或按面状态机。
+- `OperatorSessionController` 使用 `ITemplateLayoutLoader.LoadProductAsync` 加载完整 v2 产品包。
+- 首面 = `order` 最小且 `enabled` 的面（`ActiveSurfaceOrdinal = 0`）。
+- 本面全部 OK 且有下一面 → `JobSessionPhase.AwaitFlip` → 操作员 `ConfirmAdvanceToNextSurface()` 后进入下一面。
+- 全部面 OK → `AllScrewsComplete` → MES 出站（`PositionIndex` = globalIndex）。
 
-## 会话字段扩展（已实现）
+## UI 约定
 
-`TemplateSurfaceCount`、`ActiveSurfaceId`、`ActiveSurfaceName` 来自 `TemplateLoadResult`，供 UI 提示；不改变单面 `_positions` 数组语义。
+- 左侧进度树只读（严格顺序）；仅 Active 面展开钉列表。
+- 翻面使用 `ConfirmTips`；命令按 `JobSessionPhase` 做 `CanExecute` 防呆。
+- 订阅 `OperatorSessionController.Changed` 刷新 `MainViewModel`。
 
-## 改 MES / 追溯字段
+## 追溯
 
-先更新 `doc/DATA_AND_TRACE.md`，再改 `LockJobResultPayload` / `IMesClient`；`surface_id` 等待 IT 定稿。
+- Checkpoint：`SessionCheckpointData` + `SurfaceCheckpointSurface`（含 `surfaceId`）。
+- MES 正式 `surface_id` 字段等 IT 定稿后再改 `LockJobResultPayload`；先改 [doc/DATA_AND_TRACE.md](../../doc/DATA_AND_TRACE.md)。

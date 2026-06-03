@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Application.Templates;
 using AutoScrew.Domain.Curves;
 using AutoScrew.Domain.Models;
 using AutoScrew.Domain.Session;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Options;
 namespace AutoScrew.Application.Services;
 
 /// <summary>
-/// Orchestrates operator job session: SN → recipe → per-screw pick/tighten/evaluate → MES/outbox.
+/// Orchestrates operator job session: SN → recipe → per-surface/per-screw pick/tighten/evaluate → MES/outbox.
 /// </summary>
 public sealed class OperatorSessionController
 {
@@ -33,6 +34,8 @@ public sealed class OperatorSessionController
     private ImmutableArray<SegmentedTorqueProgram> _programs = ImmutableArray<SegmentedTorqueProgram>.Empty;
     private ImmutableArray<ScrewRecipeDto> _recipeScrews = ImmutableArray<ScrewRecipeDto>.Empty;
     private readonly List<ScrewCycleRecord> _screwRecords = new();
+    private readonly List<OrderedSurfaceRuntime> _surfaces = new();
+    private int _activeSurfaceOrdinal;
     private int _currentIndex;
     private string? _resolvedImagePath;
     private double _boardWidth;
@@ -65,6 +68,8 @@ public sealed class OperatorSessionController
         _logger = logger;
     }
 
+    public event EventHandler? Changed;
+
     public JobSessionPhase Phase => _phase;
 
     public string? SerialNumber => _serialNumber;
@@ -73,22 +78,33 @@ public sealed class OperatorSessionController
 
     public string? LastErrorMessage => _lastErrorMessage;
 
-    /// <summary>模板文件中的面总数（v2）；v1 为 1。</summary>
     public int TemplateSurfaceCount => _templateSurfaceCount;
 
-    /// <summary>作业台当前加载的首面 surfaceId。</summary>
+    public int ActiveSurfaceOrdinal => _activeSurfaceOrdinal;
+
     public string? ActiveSurfaceId => _activeSurfaceId;
 
-    /// <summary>作业台当前加载的首面显示名。</summary>
     public string? ActiveSurfaceName => _activeSurfaceName;
 
     public int CurrentScrewIndex => _currentIndex;
+
+    public int CurrentScrewLocalIndex =>
+        _currentIndex >= 0 && _currentIndex < _positions.Length ? _positions[_currentIndex].Index : 0;
 
     public bool IsRework => _isRework;
 
     public IReadOnlyList<ScrewPosition> Positions => _positions;
 
     public IReadOnlyList<StationScrewState> ScrewStates => _states;
+
+    public IReadOnlyList<OperatorSurfaceSnapshot> SurfaceSnapshots =>
+        _surfaces.Select(s => new OperatorSurfaceSnapshot(
+            s.SurfaceId,
+            s.Name,
+            s.Order,
+            s.ProgressState,
+            s.Positions.Select(p => p.Index).ToList(),
+            s.States)).ToList();
 
     public string? ResolvedProductImagePath => _resolvedImagePath;
 
@@ -101,8 +117,16 @@ public sealed class OperatorSessionController
     public void RequestScanDialog()
     {
         _lastErrorMessage = null;
+        if (_phase == JobSessionPhase.SnPending)
+        {
+            NotifyChanged();
+            return;
+        }
+
         if (!TryApply(JobSessionTrigger.RequestScan))
             throw new InvalidOperationException($"Cannot open scan from {_phase}.");
+
+        NotifyChanged();
     }
 
     public async Task SubmitSerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default)
@@ -119,6 +143,7 @@ public sealed class OperatorSessionController
             _serialNumber = serialNumber.Trim();
             TryApply(JobSessionTrigger.SnRejected);
             _lastErrorMessage = validation.Message ?? "SN invalid.";
+            NotifyChanged();
             return;
         }
 
@@ -144,36 +169,62 @@ public sealed class OperatorSessionController
                 _lastErrorMessage = "Template file not found for PN.";
                 TryApply(JobSessionTrigger.LoadFailed);
                 ClearSession();
+                NotifyChanged();
                 return;
             }
 
-            var layout = await _templateLoader.LoadAsync(templatePath, cancellationToken).ConfigureAwait(false);
-            _boardWidth = layout.Raw.BoardWidth;
-            _boardHeight = layout.Raw.BoardHeight;
-            _resolvedImagePath = layout.ResolvedProductImagePath;
-            _positions = layout.Positions.ToImmutableArray();
-            _templateSurfaceCount = layout.TotalSurfaceCount;
-            _activeSurfaceId = layout.ActiveSurfaceId;
-            _activeSurfaceName = layout.ActiveSurfaceName;
+            var productLoad = await _templateLoader.LoadProductAsync(templatePath, cancellationToken).ConfigureAwait(false);
+            var ordered = productLoad.Product.Surfaces
+                .Where(s => s.Enabled)
+                .OrderBy(s => s.Order)
+                .ThenBy(s => s.SurfaceId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            var states = new StationScrewState[_positions.Length];
-            for (var i = 0; i < states.Length; i++)
-                states[i] = StationScrewState.Pending;
-            _states = states.ToImmutableArray();
+            if (ordered.Count == 0)
+            {
+                _lastErrorMessage = "Product template has no enabled surfaces.";
+                TryApply(JobSessionTrigger.LoadFailed);
+                ClearSession();
+                NotifyChanged();
+                return;
+            }
 
-            _programs = BuildPrograms(recipe, _positions.Length);
+            _surfaces.Clear();
+            foreach (var surface in ordered)
+            {
+                var positions = BuildPositions(surface);
+                var states = Enumerable.Repeat(StationScrewState.Pending, positions.Count).ToArray();
+                var imagePath = ResolveImagePath(productLoad.BaseDirectory, surface);
+                _surfaces.Add(new OrderedSurfaceRuntime(
+                    surface.SurfaceId,
+                    surface.Name,
+                    surface.Order,
+                    surface.BoardWidth,
+                    surface.BoardHeight,
+                    imagePath,
+                    positions,
+                    states,
+                    SurfaceProgressState.Locked));
+            }
+
+            _templateSurfaceCount = _surfaces.Count;
+            _activeSurfaceOrdinal = 0;
+            _surfaces[0].ProgressState = SurfaceProgressState.Active;
             _recipeScrews = recipe.Screws.ToImmutableArray();
             _screwRecords.Clear();
+            ApplyActiveSurfaceToBoard(recipe);
 
             if (!TryApply(JobSessionTrigger.RecipeLoaded))
             {
                 _lastErrorMessage = "State machine rejected RecipeLoaded.";
                 ClearSession();
+                NotifyChanged();
                 return;
             }
 
             _currentIndex = NextPendingIndex(0);
             await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+            NotifyChanged();
         }
         catch (Exception ex)
         {
@@ -181,7 +232,97 @@ public sealed class OperatorSessionController
             _lastErrorMessage = ex.Message;
             TryApply(JobSessionTrigger.LoadFailed);
             ClearSession();
+            NotifyChanged();
         }
+    }
+
+    public (string? SurfaceId, string? Name) GetPendingFlipTarget()
+    {
+        if (_phase != JobSessionPhase.AwaitFlip || _activeSurfaceOrdinal >= _surfaces.Count - 1)
+            return (null, null);
+
+        var next = _surfaces[_activeSurfaceOrdinal + 1];
+        return (next.SurfaceId, next.Name);
+    }
+
+    public (string? SurfaceId, string? Name) GetCompletedSurfaceForFlip()
+    {
+        if (_phase != JobSessionPhase.AwaitFlip || _activeSurfaceOrdinal >= _surfaces.Count)
+            return (null, null);
+
+        var current = _surfaces[_activeSurfaceOrdinal];
+        return (current.SurfaceId, current.Name);
+    }
+
+    public void ConfirmAdvanceToNextSurface()
+    {
+        if (_phase != JobSessionPhase.AwaitFlip)
+            throw new InvalidOperationException("Not awaiting surface flip confirmation.");
+
+        if (_activeSurfaceOrdinal >= _surfaces.Count - 1)
+            throw new InvalidOperationException("No next surface to advance to.");
+
+        _activeSurfaceOrdinal++;
+        _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
+        ApplyActiveSurfaceToBoard(null);
+        _currentIndex = NextPendingIndex(0);
+
+        if (!TryApply(JobSessionTrigger.SurfaceAdvanceConfirmed))
+            throw new InvalidOperationException("State machine rejected SurfaceAdvanceConfirmed.");
+
+        NotifyChanged();
+    }
+
+    public string BuildGuideHint()
+    {
+        return _phase switch
+        {
+            JobSessionPhase.Idle => "请点击或扫描 SN 开始作业。",
+            JobSessionPhase.SnPending => "请输入或扫描 SN，按 Enter 或点击提交。",
+            JobSessionPhase.SnRejected => _lastErrorMessage ?? "SN 无效，请重新扫描。",
+            JobSessionPhase.LoadingRecipe => "正在加载配方与模板…",
+            JobSessionPhase.Running when _currentIndex >= 0 && _currentIndex < _positions.Length =>
+                $"请锁附【{ActiveSurfaceName ?? ActiveSurfaceId}】第 {CurrentScrewLocalIndex} 钉",
+            JobSessionPhase.Running => $"请锁附【{ActiveSurfaceName ?? ActiveSurfaceId}】",
+            JobSessionPhase.AwaitFlip =>
+                BuildAwaitFlipHint(),
+            JobSessionPhase.NgLocked =>
+                _lastErrorMessage ?? "螺钉 NG，请联系技术员解锁后继续。",
+            JobSessionPhase.Completed => "本单完成，请扫描下一 SN。",
+            _ => ""
+        };
+    }
+
+    private string BuildAwaitFlipHint()
+    {
+        var (_, completedName) = GetCompletedSurfaceForFlip();
+        var (_, nextName) = GetPendingFlipTarget();
+        var done = completedName ?? ActiveSurfaceName ?? "当前面";
+        var next = nextName ?? "下一面";
+        return $"【{done}】已完成，请翻面至【{next}】后点击「确认翻面」。";
+    }
+
+    private void ApplyActiveSurfaceToBoard(RecipeBundle? recipe)
+    {
+        var surface = _surfaces[_activeSurfaceOrdinal];
+        _activeSurfaceId = surface.SurfaceId;
+        _activeSurfaceName = surface.Name;
+        _boardWidth = surface.BoardWidth;
+        _boardHeight = surface.BoardHeight;
+        _resolvedImagePath = surface.ResolvedImagePath;
+        _positions = surface.Positions.ToImmutableArray();
+        _states = surface.States.ToImmutableArray();
+        _programs = recipe is not null
+            ? BuildPrograms(recipe, _positions.Length)
+            : BuildProgramsFromExisting(_positions.Length);
+    }
+
+    private ImmutableArray<SegmentedTorqueProgram> BuildProgramsFromExisting(int markerCount)
+    {
+        if (_programs.Length == markerCount)
+            return _programs;
+
+        return BuildPrograms(new RecipeBundle(_partNumber ?? "", null, null, _recipeScrews), markerCount);
     }
 
     private static ImmutableArray<SegmentedTorqueProgram> BuildPrograms(RecipeBundle recipe, int markerCount)
@@ -207,6 +348,34 @@ public sealed class OperatorSessionController
         }
 
         return list.ToImmutableArray();
+    }
+
+    private static List<ScrewPosition> BuildPositions(SurfaceLayoutDto surface)
+    {
+        var markers = surface.Markers.OrderBy(m => m.Index).ToList();
+        var positions = new List<ScrewPosition>(markers.Count);
+        foreach (var m in markers)
+        {
+            var diameter = m.CircleDiameter ?? surface.CircleDiameter;
+            positions.Add(new ScrewPosition(m.Index, m.CenterX, m.CenterY, diameter, m.ScrewTypeId, m.PartNo));
+        }
+
+        return positions;
+    }
+
+    private static string? ResolveImagePath(string baseDir, SurfaceLayoutDto surface)
+    {
+        if (!string.IsNullOrWhiteSpace(surface.ProductImageRelativePath))
+        {
+            var rel = Path.Combine(baseDir, surface.ProductImageRelativePath);
+            if (File.Exists(rel))
+                return rel;
+        }
+
+        if (!string.IsNullOrWhiteSpace(surface.ProductImageAbsolutePath) && File.Exists(surface.ProductImageAbsolutePath))
+            return surface.ProductImageAbsolutePath;
+
+        return null;
     }
 
     private string? ResolveTemplatePath(string? templateJsonPathFromMes)
@@ -244,15 +413,19 @@ public sealed class OperatorSessionController
             throw new InvalidOperationException("No active screw index.");
 
         var idx = _currentIndex;
+        var localIndex = _positions[idx].Index;
+        var globalIndex = ComputeGlobalIndex(_activeSurfaceOrdinal, idx);
         SetState(idx, StationScrewState.InProgress);
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        NotifyChanged();
 
         await _hardware.PickScrewAsync(cancellationToken).ConfigureAwait(false);
 
-        var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == idx + 1)
+        var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == localIndex)
+                  ?? _recipeScrews.FirstOrDefault(s => s.PositionIndex == globalIndex)
                   ?? _recipeScrews.ElementAtOrDefault(idx);
-        var paramId = dto?.ControllerParameterId ?? idx + 1;
-        var tighteningContext = new TighteningContext(idx + 1, paramId);
+        var paramId = dto?.ControllerParameterId ?? localIndex;
+        var tighteningContext = new TighteningContext(globalIndex, paramId);
 
         var samples = new List<TorqueAngleSample>();
         await foreach (var sample in _hardware.RunTighteningAsync(tighteningContext, cancellationToken).ConfigureAwait(false))
@@ -267,7 +440,7 @@ public sealed class OperatorSessionController
         var combinedOk = eval.IsOk && deviceOk;
 
         var curvePath = await _curveArchive
-            .SaveCurveCsvAsync(_serialNumber!, idx + 1, samples, cancellationToken)
+            .SaveCurveCsvAsync(_serialNumber!, globalIndex, samples, cancellationToken)
             .ConfigureAwait(false);
 
         var finalTorque = device?.FinalTorqueNm ?? (samples.Count > 0 ? samples[^1].TorqueNm : (double?)null);
@@ -278,21 +451,27 @@ public sealed class OperatorSessionController
                 ? device?.DeviceErrorCode?.ToString() ?? "DEVICE_NG"
                 : eval.ErrorCode;
 
-        _screwRecords.Add(new ScrewCycleRecord(idx + 1, combinedOk, errorCode, finalTorque, finalAngle, curvePath));
+        _screwRecords.Add(new ScrewCycleRecord(
+            _activeSurfaceId!,
+            localIndex,
+            globalIndex,
+            combinedOk,
+            errorCode,
+            finalTorque,
+            finalAngle,
+            curvePath));
 
         if (combinedOk)
         {
             SetState(idx, StationScrewState.Ok);
             _currentIndex = NextPendingIndex(idx + 1);
             if (_currentIndex < 0)
-            {
-                if (TryApply(JobSessionTrigger.AllScrewsComplete))
-                    await CompleteSessionAsync(cancellationToken).ConfigureAwait(false);
-            }
+                await OnActiveSurfaceCompleteAsync(cancellationToken).ConfigureAwait(false);
         }
         else
         {
             SetState(idx, StationScrewState.Ng);
+            _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.NgLocked;
             TryApply(JobSessionTrigger.ScrewNg);
             _lastErrorMessage = !deviceOk
                 ? $"Device NG (code {device?.DeviceErrorCode})"
@@ -301,24 +480,55 @@ public sealed class OperatorSessionController
         }
 
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        NotifyChanged();
+    }
+
+    private async Task OnActiveSurfaceCompleteAsync(CancellationToken cancellationToken)
+    {
+        _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Complete;
+
+        if (_activeSurfaceOrdinal < _surfaces.Count - 1)
+        {
+            TryApply(JobSessionTrigger.SurfaceComplete);
+            return;
+        }
+
+        if (TryApply(JobSessionTrigger.AllScrewsComplete))
+            await CompleteSessionAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private int ComputeGlobalIndex(int surfaceOrdinal, int screwIndexInSurface)
+    {
+        var global = 1;
+        for (var s = 0; s < surfaceOrdinal; s++)
+            global += _surfaces[s].Positions.Count;
+
+        return global + screwIndexInSurface;
     }
 
     private async Task CompleteSessionAsync(CancellationToken cancellationToken)
     {
-        var screws = new List<ScrewResultDto>(_positions.Length);
-        for (var i = 0; i < _positions.Length; i++)
+        var screws = new List<ScrewResultDto>();
+        var globalIndex = 1;
+        foreach (var surface in _surfaces)
         {
-            var st = _states[i];
-            var record = _screwRecords.FirstOrDefault(r => r.PositionIndex == i + 1);
-            screws.Add(new ScrewResultDto
+            for (var i = 0; i < surface.States.Length; i++)
             {
-                PositionIndex = i + 1,
-                Result = st == StationScrewState.Ok ? "OK" : st == StationScrewState.Ng ? "NG" : "SKIPPED",
-                ErrorCode = record?.ErrorCode ?? (st == StationScrewState.Ng ? "NG" : null),
-                FinalTorqueNm = record?.FinalTorqueNm,
-                FinalAngleDeg = record?.FinalAngleDeg,
-                CurveRelativePath = record?.CurveRelativePath
-            });
+                var st = surface.States[i];
+                var localIndex = surface.Positions[i].Index;
+                var record = _screwRecords.FirstOrDefault(r =>
+                    r.SurfaceId == surface.SurfaceId && r.LocalIndex == localIndex);
+                screws.Add(new ScrewResultDto
+                {
+                    PositionIndex = globalIndex,
+                    Result = st == StationScrewState.Ok ? "OK" : st == StationScrewState.Ng ? "NG" : "SKIPPED",
+                    ErrorCode = record?.ErrorCode ?? (st == StationScrewState.Ng ? "NG" : null),
+                    FinalTorqueNm = record?.FinalTorqueNm,
+                    FinalAngleDeg = record?.FinalAngleDeg,
+                    CurveRelativePath = record?.CurveRelativePath
+                });
+                globalIndex++;
+            }
         }
 
         var started = DateTimeOffset.UtcNow.AddMinutes(-5);
@@ -333,7 +543,7 @@ public sealed class OperatorSessionController
             CompletedAt = DateTimeOffset.UtcNow,
             OverallResult = "OK",
             Screws = screws,
-            LockLogJson = JsonSerializer.Serialize(new { note = "minimal lock log v0" })
+            LockLogJson = JsonSerializer.Serialize(new { note = "minimal lock log v0", surfaceCount = _surfaces.Count })
         };
 
         var logJson = JsonSerializer.Serialize(payload);
@@ -362,7 +572,9 @@ public sealed class OperatorSessionController
     }
 
     private sealed record ScrewCycleRecord(
-        int PositionIndex,
+        string SurfaceId,
+        int LocalIndex,
+        int GlobalIndex,
         bool Ok,
         string? ErrorCode,
         double? FinalTorqueNm,
@@ -376,29 +588,40 @@ public sealed class OperatorSessionController
 
         if (!TryApply(JobSessionTrigger.TechUnlockContinue))
             throw new InvalidOperationException("Unlock not allowed in current phase.");
+
+        if (_activeSurfaceOrdinal < _surfaces.Count)
+            _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
+
+        NotifyChanged();
     }
 
     public void ResetToIdle()
     {
-        TryApply(JobSessionTrigger.ResetToIdle);
+        if (!TryApply(JobSessionTrigger.ResetToIdle))
+            TryApply(JobSessionTrigger.Abort);
+
         ClearSession();
+        NotifyChanged();
     }
 
     public void AbortToIdle()
     {
         TryApply(JobSessionTrigger.Abort);
         ClearSession();
+        NotifyChanged();
     }
 
     private void ClearSession()
     {
         _serialNumber = null;
         _partNumber = null;
+        _surfaces.Clear();
         _positions = ImmutableArray<ScrewPosition>.Empty;
         _states = ImmutableArray<StationScrewState>.Empty;
         _programs = ImmutableArray<SegmentedTorqueProgram>.Empty;
         _recipeScrews = ImmutableArray<ScrewRecipeDto>.Empty;
         _screwRecords.Clear();
+        _activeSurfaceOrdinal = 0;
         _currentIndex = 0;
         _resolvedImagePath = null;
         _boardWidth = 0;
@@ -409,6 +632,8 @@ public sealed class OperatorSessionController
         _lastErrorMessage = null;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
     }
+
+    private void NotifyChanged() => Changed?.Invoke(this, EventArgs.Empty);
 
     private bool TryApply(JobSessionTrigger trigger)
     {
@@ -434,6 +659,7 @@ public sealed class OperatorSessionController
         var arr = _states.ToArray();
         arr[index] = state;
         _states = arr.ToImmutableArray();
+        _surfaces[_activeSurfaceOrdinal].States = arr;
     }
 
     private async Task PersistCheckpointAsync(CancellationToken cancellationToken)
@@ -441,7 +667,63 @@ public sealed class OperatorSessionController
         if (_serialNumber is null)
             return;
 
-        var data = new SessionCheckpointData(_phase, _serialNumber, _partNumber ?? "", _currentIndex, _states.ToList(), DateTimeOffset.UtcNow);
+        var surfaceCheckpoints = _surfaces.Select(s => new SurfaceCheckpointSurface(
+            s.SurfaceId,
+            s.ProgressState,
+            s.States.ToList())).ToList();
+
+        var data = new SessionCheckpointData(
+            _phase,
+            _serialNumber,
+            _partNumber ?? "",
+            _activeSurfaceOrdinal,
+            _currentIndex,
+            surfaceCheckpoints,
+            DateTimeOffset.UtcNow);
+
         await _checkpointStore.SaveCheckpointAsync(data, cancellationToken).ConfigureAwait(false);
+    }
+
+    private sealed class OrderedSurfaceRuntime
+    {
+        public OrderedSurfaceRuntime(
+            string surfaceId,
+            string name,
+            int order,
+            double boardWidth,
+            double boardHeight,
+            string? resolvedImagePath,
+            List<ScrewPosition> positions,
+            StationScrewState[] states,
+            SurfaceProgressState progressState)
+        {
+            SurfaceId = surfaceId;
+            Name = name;
+            Order = order;
+            BoardWidth = boardWidth;
+            BoardHeight = boardHeight;
+            ResolvedImagePath = resolvedImagePath;
+            Positions = positions;
+            States = states;
+            ProgressState = progressState;
+        }
+
+        public string SurfaceId { get; }
+
+        public string Name { get; }
+
+        public int Order { get; }
+
+        public double BoardWidth { get; }
+
+        public double BoardHeight { get; }
+
+        public string? ResolvedImagePath { get; }
+
+        public List<ScrewPosition> Positions { get; }
+
+        public StationScrewState[] States { get; set; }
+
+        public SurfaceProgressState ProgressState { get; set; }
     }
 }

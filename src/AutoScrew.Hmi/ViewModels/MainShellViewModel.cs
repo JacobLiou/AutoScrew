@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -208,7 +209,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "程序截屏失败");
-            System.Windows.MessageBox.Show("截屏保存失败，请查看日志。", "程序截屏", System.Windows.MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageTips.ShowDialog(
+                "截屏保存失败，请查看日志。",
+                System.Windows.Application.Current.MainWindow,
+                "程序截屏");
         }
     }
 

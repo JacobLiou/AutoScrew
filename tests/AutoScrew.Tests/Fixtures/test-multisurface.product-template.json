@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "productId": "TEST-MULTI",
+  "displayName": "测试多面",
+  "surfaceCount": 3,
+  "assemblySequence": "surfaceOrderThenLocalIndex",
+  "surfaces": [
+    {
+      "surfaceId": "S1",
+      "name": "顶面",
+      "order": 1,
+      "enabled": true,
+      "boardWidth": 640,
+      "boardHeight": 480,
+      "circleDiameter": 26,
+      "markers": [
+        { "index": 1, "centerX": 160, "centerY": 120 },
+        { "index": 2, "centerX": 480, "centerY": 120 }
+      ]
+    },
+    {
+      "surfaceId": "S2",
+      "name": "底面",
+      "order": 2,
+      "enabled": true,
+      "boardWidth": 640,
+      "boardHeight": 480,
+      "circleDiameter": 26,
+      "markers": [
+        { "index": 1, "centerX": 320, "centerY": 240 }
+      ]
+    },
+    {
+      "surfaceId": "S3",
+      "name": "侧面",
+      "order": 3,
+      "enabled": true,
+      "boardWidth": 640,
+      "boardHeight": 480,
+      "circleDiameter": 26,
+      "markers": [
+        { "index": 1, "centerX": 200, "centerY": 300 },
+        { "index": 2, "centerX": 440, "centerY": 300 },
+        { "index": 3, "centerX": 320, "centerY": 180 }
+      ]
+    }
+  ]
+}

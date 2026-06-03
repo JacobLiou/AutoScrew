@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             xmlns:op="clr-namespace:AutoScrew.Hmi.ViewModels.Operation"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              mc:Ignorable="d"
@@ -16,29 +17,106 @@
     </UserControl.Resources>
     <DockPanel Margin="0">
         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-            <ui:Button Content="扫码 / 输入 SN" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding OpenScanCommand}"/>
-            <ui:TextBox Width="220" Margin="0,0,8,8" VerticalAlignment="Center" PlaceholderText="序列号 SN" Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"/>
-            <ui:Button Content="提交 SN" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding SubmitSnCommand}"/>
-            <ui:Button Content="当前螺钉：取钉+拧紧" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding RunCurrentScrewCommand}"/>
-            <ui:Button Content="技术员解锁 NG" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding UnlockNgCommand}"/>
-            <ui:Button Content="复位会话" Margin="0,0,8,8" Style="{StaticResource ShellSecondaryButtonStyle}" Command="{Binding ResetSessionCommand}"/>
+            <ui:TextBox x:Name="SnInputBox"
+                        Width="220"
+                        Margin="0,0,8,8"
+                        VerticalAlignment="Center"
+                        PlaceholderText="序列号 SN"
+                        IsEnabled="{Binding IsSnInputEnabled}"
+                        Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"
+                        KeyDown="SnInputBox_OnKeyDown"/>
+            <ui:Button Content="提交 SN"
+                       Margin="0,0,8,8"
+                       Style="{StaticResource ShellSecondaryButtonStyle}"
+                       Command="{Binding SubmitSnCommand}"/>
+            <ui:Button Content="当前螺钉：取钉+拧紧"
+                       Margin="0,0,8,8"
+                       Style="{StaticResource ShellSecondaryButtonStyle}"
+                       Command="{Binding RunCurrentScrewCommand}"/>
+            <ui:Button Content="确认翻面"
+                       Margin="0,0,8,8"
+                       Style="{StaticResource ShellSecondaryButtonStyle}"
+                       Command="{Binding ConfirmFlipCommand}"/>
+            <ui:Button Content="技术员解锁 NG"
+                       Margin="0,0,8,8"
+                       Style="{StaticResource ShellSecondaryButtonStyle}"
+                       Command="{Binding UnlockNgCommand}"/>
+            <ui:Button Content="复位会话"
+                       Margin="0,0,8,8"
+                       Style="{StaticResource ShellSecondaryButtonStyle}"
+                       Command="{Binding ResetSessionCommand}"/>
         </WrapPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ShellCardBrush}"
                 BorderBrush="{DynamicResource ShellBorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="12,8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding PhaseDisplay}" FontWeight="SemiBold" Margin="0,0,16,0"/>
-                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding PhaseDisplay}" FontWeight="SemiBold" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding GuideHint}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}"
+                           Margin="0,4,0,0"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
             </StackPanel>
         </Border>
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" MinWidth="180"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <ui:Card Grid.Column="0" Style="{StaticResource ShellCardStyle}" Margin="0,0,12,0">
+            <Border Grid.Column="0"
+                    Background="{DynamicResource ShellCardBrush}"
+                    BorderBrush="{DynamicResource ShellBorderBrush}"
+                    BorderThickness="0,0,1,0"
+                    Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="作业进度"
+                               FontWeight="SemiBold"
+                               Margin="4,0,0,8"/>
+                    <TreeView x:Name="ProgressTree"
+                              IsHitTestVisible="False"
+                              ItemsSource="{Binding ProgressTreeRoots}">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Surfaces}">
+                                <TextBlock Text="{Binding DisplayLabel}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <HierarchicalDataTemplate.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding Screws}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StateGlyph}"
+                                                       Width="16"
+                                                       Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+                                            <TextBlock Text="{Binding DisplayLabel}"/>
+                                        </StackPanel>
+                                        <HierarchicalDataTemplate.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type op:OperatorScrewNodeViewModel}">
+                                                <StackPanel Orientation="Horizontal" Margin="16,0,0,0">
+                                                    <TextBlock Text="{Binding StateGlyph}"
+                                                               Width="16"
+                                                               Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+                                                    <TextBlock Text="{Binding DisplayLabel}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </HierarchicalDataTemplate.ItemTemplate>
+                                    </HierarchicalDataTemplate>
+                                </HierarchicalDataTemplate.ItemTemplate>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
+            <ui:Card Grid.Column="2" Style="{StaticResource ShellCardStyle}" Margin="0,0,12,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900" MaxHeight="560">
                         <Grid Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
@@ -71,14 +149,29 @@
                     </Viewbox>
                 </ScrollViewer>
             </ui:Card>
-            <ui:Card Grid.Column="1" Style="{StaticResource ShellCardStyle}">
+            <ui:Card Grid.Column="3" Style="{StaticResource ShellCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="120"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="扭矩–角度（最近一步）" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                    <sp:WpfPlot x:Name="CurvePlot" Grid.Row="1" MinHeight="220"/>
+                    <sp:WpfPlot x:Name="CurvePlot" Grid.Row="1" MinHeight="180"/>
+                    <TextBlock Grid.Row="2" Text="作业日志" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                    <ListBox Grid.Row="3"
+                             ItemsSource="{Binding ActivityLog}"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12"
+                                           Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </ui:Card>
         </Grid>

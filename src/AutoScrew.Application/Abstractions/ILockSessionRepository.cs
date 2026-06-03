@@ -17,6 +17,13 @@ public sealed record SessionCheckpointData(
     JobSessionPhase Phase,
     string SerialNumber,
     string PartNumber,
+    int ActiveSurfaceOrdinal,
     int CurrentScrewIndex,
-    List<StationScrewState> ScrewStates,
+    List<SurfaceCheckpointSurface> Surfaces,
     DateTimeOffset UpdatedAt);
+
+/// <summary>Checkpoint 单面螺钉状态（含 surface_id 草案字段）。</summary>
+public sealed record SurfaceCheckpointSurface(
+    string SurfaceId,
+    SurfaceProgressState ProgressState,
+    List<StationScrewState> ScrewStates);

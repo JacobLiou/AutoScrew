@@ -71,9 +71,30 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
+                if (trigger == JobSessionTrigger.SurfaceComplete)
+                {
+                    next = JobSessionPhase.AwaitFlip;
+                    return true;
+                }
+
                 if (trigger == JobSessionTrigger.AllScrewsComplete)
                 {
                     next = JobSessionPhase.Completed;
+                    return true;
+                }
+
+                if (trigger == JobSessionTrigger.Abort)
+                {
+                    next = JobSessionPhase.Idle;
+                    return true;
+                }
+
+                break;
+
+            case JobSessionPhase.AwaitFlip:
+                if (trigger == JobSessionTrigger.SurfaceAdvanceConfirmed)
+                {
+                    next = JobSessionPhase.Running;
                     return true;
                 }
 
