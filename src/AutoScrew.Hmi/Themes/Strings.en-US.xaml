@@ -32,12 +32,14 @@
     <system:String x:Key="S.Nav.Operation">Workstation</system:String>
     <system:String x:Key="S.Nav.Template">Screw Template</system:String>
     <system:String x:Key="S.Nav.System">System</system:String>
+    <system:String x:Key="S.Nav.Configuration">Configuration</system:String>
     <system:String x:Key="S.Nav.Production">Production</system:String>
     <system:String x:Key="S.Nav.Logs">Logs</system:String>
+    <system:String x:Key="S.Nav.MesConnection">MES Connection</system:String>
     <system:String x:Key="S.Nav.ControllerParams">Tightening Params</system:String>
     <system:String x:Key="S.Nav.DeviceConnection">Device Connection</system:String>
     <system:String x:Key="S.Nav.Settings">Settings</system:String>
-    <system:String x:Key="S.Nav.BreadcrumbDefault">Production / Workstation</system:String>
+    <system:String x:Key="S.Nav.BreadcrumbDefault">Workstation</system:String>
 
     <system:String x:Key="S.Shell.Notepad">Notepad</system:String>
     <system:String x:Key="S.Shell.Calculator">Calculator</system:String>

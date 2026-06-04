@@ -353,25 +353,26 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             TargetPageTag = "operation"
         };
 
-        var productionGroup = new NavigationViewItem
-        {
-            Content = Loc.Get("S.Nav.Production"),
-            Icon = new SymbolIcon { Symbol = SymbolRegular.BuildingFactory24 },
-            IsExpanded = true
-        };
+        var items = new ObservableCollection<object> { operationItem };
 
-        productionGroup.MenuItems.Add(operationItem);
-
+        NavigationViewItem? configurationGroup = null;
         if (CanUseTemplateBoard)
         {
-            productionGroup.MenuItems.Add(new NavigationViewItem
+            configurationGroup = new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.Configuration"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
+                IsExpanded = true
+            };
+
+            configurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.Template"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.DesignIdeas24 },
                 TargetPageType = typeof(TemplateNavPage),
                 TargetPageTag = "template"
             });
-            productionGroup.MenuItems.Add(new NavigationViewItem
+            configurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerParams"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Wrench24 },
@@ -387,21 +388,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             IsExpanded = true
         };
 
-        systemGroup.MenuItems.Add(new NavigationViewItem
-        {
-            Content = "MES",
-            Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
-            TargetPageType = typeof(MesPage),
-            TargetPageTag = "mes"
-        });
-        systemGroup.MenuItems.Add(new NavigationViewItem
-        {
-            Content = Loc.Get("S.Nav.Logs"),
-            Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
-            TargetPageType = typeof(LogsPage),
-            TargetPageTag = "logs"
-        });
-
         if (CanUseTemplateBoard)
         {
             systemGroup.MenuItems.Add(new NavigationViewItem
@@ -413,11 +399,26 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
-        var items = new ObservableCollection<object>
+        systemGroup.MenuItems.Add(new NavigationViewItem
         {
-            productionGroup,
-            systemGroup
-        };
+            Content = Loc.Get("S.Nav.MesConnection"),
+            Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
+            TargetPageType = typeof(MesPage),
+            TargetPageTag = "mes"
+        });
+
+        // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）
+        // systemGroup.MenuItems.Add(new NavigationViewItem
+        // {
+        //     Content = Loc.Get("S.Nav.Logs"),
+        //     Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
+        //     TargetPageType = typeof(LogsPage),
+        //     TargetPageTag = "logs"
+        // });
+
+        if (configurationGroup is not null)
+            items.Add(configurationGroup);
+        items.Add(systemGroup);
 
         MenuItems = items;
         FooterMenuItems =

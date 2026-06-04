@@ -160,9 +160,13 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
+    public string StationIdDisplay => Loc.Format("S.Device.StationIdFormat", StationId);
+
     public StationDeviceSlotEditor SelectedSlot => Slots[SelectedSlotIndex];
 
     partial void OnSelectedSlotIndexChanged(int value) => OnPropertyChanged(nameof(SelectedSlot));
+
+    partial void OnStationIdChanged(string value) => OnPropertyChanged(nameof(StationIdDisplay));
 
     public async Task InitializeAsync()
     {

@@ -43,7 +43,7 @@
 
         <TextBlock Grid.Row="2"
                    Margin="0,0,0,12"
-                   Text="{Binding ViewModel.StationId, StringFormat={DynamicResource S.Device.StationIdFormat}}" />
+                   Text="{Binding ViewModel.StationIdDisplay}" />
 
         <TabControl Grid.Row="3"
                     ItemsSource="{Binding ViewModel.Slots}"
