@@ -3,7 +3,6 @@ using AutoScrew.Application.Abstractions;
 using AutoScrew.Domain.Curves;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using UDL.Delta.IemdSd;
 using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Infrastructure.Hardware;
@@ -14,18 +13,17 @@ namespace AutoScrew.Infrastructure.Hardware;
 /// </summary>
 public sealed class IemdSdLockStationHardware : ILockStationHardware
 {
-    private readonly IIemdSdClient _client;
+    private readonly IStationDeviceService _devices;
     private readonly SimulatedLockStationHardware _feederSim;
     private readonly IemdSdOptions _options;
     private readonly ILogger<IemdSdLockStationHardware> _logger;
-    private bool _initialized;
 
     public IemdSdLockStationHardware(
-        IIemdSdClient client,
+        IStationDeviceService devices,
         IOptions<IemdSdOptions> options,
         ILogger<IemdSdLockStationHardware> logger)
     {
-        _client = client;
+        _devices = devices;
         _options = options.Value;
         _logger = logger;
         _feederSim = new SimulatedLockStationHardware();
@@ -40,7 +38,9 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
         TighteningContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await EnsureReadyAsync(cancellationToken).ConfigureAwait(false);
+        await _devices.EnsureActiveClientAsync(cancellationToken).ConfigureAwait(false);
+        var client = _devices.GetActiveClient()
+                     ?? throw new InvalidOperationException("IEMD-SD active device is not connected.");
 
         var paramId = context.ControllerParameterId;
         if (paramId <= 0 && _options.ParameterIdByPosition.TryGetValue(context.PositionIndex.ToString(), out var mapped))
@@ -48,18 +48,18 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
         if (paramId <= 0)
             paramId = context.PositionIndex;
 
-        await _client.SwitchParameterAsync(paramId, 1, cancellationToken).ConfigureAwait(false);
+        await client.SwitchParameterAsync(paramId, 1, cancellationToken).ConfigureAwait(false);
 
-        var beforeId = await _client.GetCurrentReportIdAsync(cancellationToken).ConfigureAwait(false);
-        var cycle = await _client.ExecuteTighteningCycleAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        var beforeId = await client.GetCurrentReportIdAsync(cancellationToken).ConfigureAwait(false);
+        var cycle = await client.ExecuteTighteningCycleAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var reportId = cycle.ReportId > 0 ? cycle.ReportId : beforeId;
         ProductionReport? report = null;
         CurveSnapshot? curve = null;
         try
         {
-            report = await _client.ReadReportAsync(reportId, cancellationToken).ConfigureAwait(false);
-            curve = await _client.ReadCurveAsync(reportId, cancellationToken).ConfigureAwait(false);
+            report = await client.ReadReportAsync(reportId, cancellationToken).ConfigureAwait(false);
+            curve = await client.ReadCurveAsync(reportId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -85,16 +85,5 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
         {
             yield return new TorqueAngleSample(0, cycle.FinalTorqueNm, cycle.TotalAngle, 0, null);
         }
-    }
-
-    private async Task EnsureReadyAsync(CancellationToken cancellationToken)
-    {
-        if (_initialized)
-            return;
-
-        await _client.ConnectAsync(cancellationToken).ConfigureAwait(false);
-        await _client.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        _initialized = true;
-        _logger.LogInformation("IEMD-SD client initialized (host from options).");
     }
 }

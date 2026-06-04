@@ -26,6 +26,8 @@ public enum MainAppSection
     Template,
     Mes,
     Logs,
+    ControllerParameters,
+    DeviceConnection,
     Settings
 }
 
@@ -179,6 +181,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Mes;
         else if (pageType == typeof(LogsPage))
             SelectedSection = MainAppSection.Logs;
+        else if (pageType == typeof(ControllerParameterPage))
+            SelectedSection = MainAppSection.ControllerParameters;
+        else if (pageType == typeof(DeviceConnectionPage))
+            SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
             SelectedSection = MainAppSection.Settings;
     }
@@ -212,6 +218,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.Template => typeof(TemplateNavPage),
             MainAppSection.Mes => typeof(MesPage),
             MainAppSection.Logs => typeof(LogsPage),
+            MainAppSection.ControllerParameters => typeof(ControllerParameterPage),
+            MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
         };
@@ -329,6 +337,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
             NavigateToSection(MainAppSection.Operation);
+        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.ControllerParameters)
+            NavigateToSection(MainAppSection.Operation);
+        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.DeviceConnection)
+            NavigateToSection(MainAppSection.Operation);
     }
 
     private void RebuildMenuItems()
@@ -359,6 +371,13 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 TargetPageType = typeof(TemplateNavPage),
                 TargetPageTag = "template"
             });
+            productionGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.ControllerParams"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Wrench24 },
+                TargetPageType = typeof(ControllerParameterPage),
+                TargetPageTag = "controller-params"
+            });
         }
 
         var systemGroup = new NavigationViewItem
@@ -382,6 +401,17 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             TargetPageType = typeof(LogsPage),
             TargetPageTag = "logs"
         });
+
+        if (CanUseTemplateBoard)
+        {
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceConnection"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.PlugConnected24 },
+                TargetPageType = typeof(DeviceConnectionPage),
+                TargetPageTag = "device-connection"
+            });
+        }
 
         var items = new ObservableCollection<object>
         {

@@ -1,67 +1,61 @@
 using Microsoft.Extensions.Logging;
 using NModbus;
-using System.Net.Sockets;
+using NModbus.IO;
+using System.IO.Ports;
 using UDL.Delta.IemdSd.Exceptions;
 
 namespace UDL.Delta.IemdSd.Modbus;
 
-internal sealed class ModbusTransport : IModbusTransport
+internal sealed class ModbusRtuTransport : IModbusTransport
 {
-    private readonly string _host;
-    private readonly int _port;
     private readonly ILogger _logger;
+    private readonly IemdSdClientOptions _options;
     private readonly int _readWindowSize;
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private TcpClient? _tcpClient;
+    private SerialPort? _serialPort;
     private IModbusMaster? _master;
-    private const byte SlaveId = 1;
 
-    public ModbusTransport(IemdSdClientOptions options, ILogger logger)
+    public ModbusRtuTransport(IemdSdClientOptions options, ILogger logger)
     {
+        _options = options;
         _logger = logger;
-        _host = options.Host;
-        _port = options.Port;
         _readWindowSize = options.ReadWindowSize;
     }
-
-    public bool IsConnected => _tcpClient?.Connected == true;
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_tcpClient?.Connected == true)
+            if (_serialPort?.IsOpen == true)
                 return;
 
             _master?.Dispose();
-            _tcpClient?.Dispose();
+            _serialPort?.Dispose();
 
-            _tcpClient = new TcpClient();
-            await _tcpClient.ConnectAsync(_host, _port, cancellationToken).ConfigureAwait(false);
+            _serialPort = new SerialPort(
+                _options.SerialPortName,
+                _options.BaudRate,
+                ModbusTransportFactory.ParseParity(_options.Parity),
+                _options.DataBits,
+                ModbusTransportFactory.ParseStopBits(_options.StopBits))
+            {
+                ReadTimeout = _options.CommandTimeoutMs,
+                WriteTimeout = _options.CommandTimeoutMs,
+            };
+            _serialPort.Open();
+
             var factory = new ModbusFactory();
-            _master = factory.CreateMaster(_tcpClient);
-            _logger.LogInformation("IEMD-SD Modbus connected to {Host}:{Port}", _host, _port);
+            var stream = new SerialPortStreamResource(_serialPort);
+            _master = factory.CreateRtuMaster(stream);
+            _logger.LogInformation(
+                "IEMD-SD Modbus RTU connected on {Port} @ {Baud}",
+                _options.SerialPortName,
+                _options.BaudRate);
         }
         catch (Exception ex)
         {
-            throw new IemdSdCommunicationException("Modbus connect failed.", ex);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
-
-    public void Disconnect()
-    {
-        _gate.Wait();
-        try
-        {
-            _master?.Dispose();
-            _master = null;
-            _tcpClient?.Dispose();
-            _tcpClient = null;
+            throw new IemdSdCommunicationException($"Modbus RTU connect failed on {_options.SerialPortName}.", ex);
         }
         finally
         {
@@ -94,7 +88,8 @@ internal sealed class ModbusTransport : IModbusTransport
         try
         {
             EnsureMaster();
-            await _master!.WriteSingleRegisterAsync(SlaveId, (ushort)address, (ushort)value).ConfigureAwait(false);
+            await _master!.WriteSingleRegisterAsync(_options.ModbusSlaveId, (ushort)address, (ushort)value)
+                .ConfigureAwait(false);
         }
         catch (IemdSdCommunicationException)
         {
@@ -139,10 +134,15 @@ internal sealed class ModbusTransport : IModbusTransport
         {
             cancellationToken.ThrowIfCancellationRequested();
             var chunk = (ushort)Math.Min(_readWindowSize, count - offset);
-            var data = await _master!.ReadHoldingRegistersAsync(SlaveId, (ushort)(address + offset), chunk).ConfigureAwait(false);
+            var data = await _master!.ReadHoldingRegistersAsync(
+                    _options.ModbusSlaveId,
+                    (ushort)(address + offset),
+                    chunk)
+                .ConfigureAwait(false);
             for (var i = 0; i < chunk; i++)
                 result[offset + i] = data[i];
         }
+
         return result;
     }
 
@@ -156,14 +156,15 @@ internal sealed class ModbusTransport : IModbusTransport
             var slice = new ushort[chunk];
             for (var i = 0; i < chunk; i++)
                 slice[i] = (ushort)values[offset + i];
-            await _master!.WriteMultipleRegistersAsync(SlaveId, (ushort)(address + offset), slice).ConfigureAwait(false);
+            await _master!.WriteMultipleRegistersAsync(_options.ModbusSlaveId, (ushort)(address + offset), slice)
+                .ConfigureAwait(false);
         }
     }
 
     private void EnsureMaster()
     {
-        if (_master is null || _tcpClient?.Connected != true)
-            throw new IemdSdCommunicationException("Modbus not connected.");
+        if (_master is null || _serialPort?.IsOpen != true)
+            throw new IemdSdCommunicationException("Modbus RTU not connected.");
     }
 
     public void Dispose()
@@ -173,8 +174,10 @@ internal sealed class ModbusTransport : IModbusTransport
         {
             _master?.Dispose();
             _master = null;
-            _tcpClient?.Dispose();
-            _tcpClient = null;
+            if (_serialPort?.IsOpen == true)
+                _serialPort.Close();
+            _serialPort?.Dispose();
+            _serialPort = null;
         }
         finally
         {

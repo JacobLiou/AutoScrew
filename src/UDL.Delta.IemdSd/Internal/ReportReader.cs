@@ -5,10 +5,10 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class ReportReader
 {
-    private readonly ModbusTransport _transport;
+    private readonly IModbusTransport _transport;
     private readonly CommandMailbox _mailbox;
 
-    public ReportReader(ModbusTransport transport, CommandMailbox mailbox)
+    public ReportReader(IModbusTransport transport, CommandMailbox mailbox)
     {
         _transport = transport;
         _mailbox = mailbox;

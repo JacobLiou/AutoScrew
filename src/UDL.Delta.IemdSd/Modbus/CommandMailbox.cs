@@ -5,11 +5,11 @@ namespace UDL.Delta.IemdSd.Modbus;
 
 internal sealed class CommandMailbox
 {
-    private readonly ModbusTransport _transport;
+    private readonly IModbusTransport _transport;
     private readonly ILogger _logger;
     private readonly int _commandTimeoutMs;
 
-    public CommandMailbox(ModbusTransport transport, IemdSdClientOptions options, ILogger logger)
+    public CommandMailbox(IModbusTransport transport, IemdSdClientOptions options, ILogger logger)
     {
         _transport = transport;
         _logger = logger;

@@ -119,6 +119,8 @@ Demo 中通过 Modbus **`#517`** 写入 `CA=3` 开启 BIN 导出；与上位机 
 
 | Cmd | 手册名称 | Demo 典型写法 (0xC8 起 10 word) | 说明 |
 |-----|----------|----------------------------------|------|
+| **100** | 拧紧参数写入 | 先写 **0xD2~0x22E**（349 word），再 `[100,0,tool,ParamID,0,0,1,…]` | 见 §5.6.1；HMI 技术员页可维护本地 JSON 并下发 |
+| **150** | 拧紧参数读取 | `[150,0,tool,ParamID,0,0,1,…]` → 读 **0xD2~0x22E** | 与 #751 Mode=11 的 550 word **不是同一格式** |
 | **302** | 手动设定下切换拧紧参数写入 | `[302,0,tool,ParamID,ScrewCountL,ScrewCountH,…,1,…]` | 切换方式须为「手动设定」；见 §5.6 |
 | **406** | 限制拧紧操作写入 | `[406,0,0,…,1,…]` | GetResultStatus：**每轮读后发送**，Demo 注释为 Unlock |
 | **517** | 单颗螺丝运行结果输出成档案写入 | `[517,0,**3**,…,1,…]` 开启 BIN；`3→0` 关闭 | 仅 FTP Demo |
@@ -269,6 +271,27 @@ ReportID 编码在命令 word2–3：`ReportL = ID % 65536`，`ReportH = ID / 65
 常见异常：切换方式非手动(1)、参数 ID 超范围、双轴交互禁止等。  
 AutoScrew 扫码换 PN 工艺时，应在 α 联调阶段单独验证此命令，**不可照搬 GetResultStatus 的 #533 AutoLock 逻辑**。
 
+### 5.6.1 #100 / #150 拧紧参数块（手册 A.3.1，已实现）
+
+手册 **附录 A.3.1**：单条拧紧参数占用 **0xD2 ~ 0x22E**（**349 word**），含名称 ASCII（20 word）、基本设定、6 阶段各 50 word、拧松区等。
+
+| 步骤 | #150 读 | #100 写 |
+|------|---------|---------|
+| 1 | 邮箱 `[150,0,tool,ParamID,…,1]` | 写满 **0xD2~0x22E** |
+| 2 | 轮询 **0xCF~0xD1** OK | 邮箱 `[100,0,tool,ParamID,…,1]` |
+| 3 | 读 **0xD2~0x22E** | 轮询 **0xCF~0xD1** OK |
+
+**与 #751 Mode=11 区别**：曲线调阅 Mode=11 返回 **550 word** `ParamCommItemVer1` 快照；`#100`/`#150` 为控制器 HMI 参数表原生布局，移植时勿混用。
+
+**AutoScrew 落地**：
+
+- 驱动：`UDL.Delta.IemdSd` → `ReadParameterAsync` / `WriteParameterAsync`；`TighteningParameterCodec` 提供 Raw(349) + Core 字段互转。
+- 本地预设：`{DataDirectory}/controller-parameters/{id}.json`。
+- 工位设备：`{DataDirectory}/stations/{StationId}/devices.json`（最多 3 槽，网口 TCP / 串口 RTU）；`IStationDeviceService` 管理激活设备。
+- HMI（技术员）：**生产 → 拧紧参数**；**系统 → 设备连接**；支持 JSON 导入导出、#150/#100/#302。
+- 真机：`AutoScrew:UseSimulatedHardware=false` 后在设备连接页 **应用并重连**；`IemdSd` 节仅作首次迁移种子。
+- 联调：控制器拧紧来源须 **手动设定**；参数 ID **1~500**。
+
 ### 5.7 #406 / #533 与手册名称差异
 
 | Demo 用法 | 手册正式名称（摘录） |
@@ -375,27 +398,29 @@ ParamConvertNmThenConvertUserUnitCoef =
 
 | 组件 | 路径 | 说明 |
 |------|------|------|
-| 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Connect / Initialize / `#302` / 拧紧周期 / `#750` / `#751` |
-| 硬件适配 | `AutoScrew.Infrastructure` → `IemdSdLockStationHardware` | 实现 `ILockStationHardware`；`LastOutcome` 供会话层合并设备 NG |
-| 配置 | `src/AutoScrew.Hmi/appsettings.json.example` → 复制为 `appsettings.json` | `IemdSd:Enabled=true` 且 `AutoScrew:UseSimulatedHardware=false` 时接真机 |
+| 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Connect / Initialize / `#100`/`#150` / `#302` / 拧紧周期 / `#750` / `#751` |
+| 参数预设 | `IControllerParameterPresetService` | 本地 JSON + 设备读写；HMI **拧紧参数** |
+| 工位设备 | `IStationDeviceService` | 每工位最多 3 设备槽；TCP/RTU；HMI **设备连接** |
+| 硬件适配 | `AutoScrew.Infrastructure` → `IemdSdLockStationHardware` | 实现 `ILockStationHardware`；使用激活工位设备 |
+| 配置 | `appsettings.json` | `AutoScrew:StationId` + `UseSimulatedHardware=false` 接真机；设备地址在 HMI 保存 |
 | 判定 | `OperatorSessionController` | **曲线规则 NG 或设备 Status NG 则螺钉 NG** |
-| 单元测试 | `tests/UDL.Delta.IemdSd.Tests` | 邮箱请求、`ReportReader`、扭矩单位换算 |
+| 单元测试 | `tests/UDL.Delta.IemdSd.Tests` | 邮箱请求、`ReportReader`、参数 Codec、扭矩单位换算 |
 
 **联机步骤（FAT）**：
 
-1. 控制器与 PC 同网段；`appsettings.json` 中设置 `IemdSd:Host`、`Port`（默认 502）。
-2. `IemdSd:Enabled=true`，`AutoScrew:UseSimulatedHardware=false`，`TriggerMode` 与现场一致（`AutoDi` / `Manual`）。
-3. 启动 HMI，扫码加载工艺；MES 或 `ParameterIdByPosition` 提供 `#302` 用的 ParamID。
-4. 单颗拧紧：确认 `0x1F5D` 完成、曲线 CSV 落盘、MES 出站含 `FinalTorqueNm` / `FinalAngleDeg`。
+1. 设置 `AutoScrew:StationId` 与 `UseSimulatedHardware=false`。
+2. HMI **设备连接**：配置网口/串口（最多 3 槽），设激活设备并 **应用并重连**。
+3. **拧紧参数**：#150 回读 → 修改 → #100 写入 → #302 激活。
+4. 操作员流程：扫码 → `#302` ParamID → 拧紧 → `#750`/`#751` 曲线。
 
-**二期**：FTP Bin（`#517`）、`#100`/`#150` 全参数读写 → 可扩展 `UDL.Delta.IemdSd` 或独立 `UDL.Delta.IemdSd.Ftp`。
+**二期**：FTP Bin（`#517`）→ 可扩展 `UDL.Delta.IemdSd.Ftp` 或独立包。
 
 ### 8.1 分层（历史示意）
 
 驱动端口已落地为 `UDL.Delta.IemdSd.IIemdSdClient`；Application 仍通过 `ILockStationHardware` 抽象，不直接引用 Modbus。
 
-- **α（当前）**：GetResultStatus + `#750`/`#751` + `#302`。  
-- **β**：按需增加 FTP Bin 或更完整参数模板。  
+- **α（当前）**：GetResultStatus + `#750`/`#751` + `#302` + `#100`/`#150` 参数模板。  
+- **β**：FTP Bin、拧紧顺序 `#200`/`#250` 等。  
 - **工艺切换**：`ScrewRecipeDto.ControllerParameterId` 或 `IemdSd:ParameterIdByPosition`。  
 
 ### 8.2 禁止与改进项

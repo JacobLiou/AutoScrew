@@ -9,21 +9,25 @@ namespace UDL.Delta.IemdSd;
 public sealed class IemdSdClient : IIemdSdClient
 {
     private readonly ILogger _logger;
-    private readonly ModbusTransport _transport;
+    private readonly IModbusTransport _transport;
     private readonly CommandMailbox _mailbox;
     private readonly ReportReader _reportReader;
     private readonly CurveReader _curveReader;
     private readonly TighteningCycleRunner _cycleRunner;
+    private readonly ParameterBlockReader _parameterReader;
+    private readonly ParameterBlockWriter _parameterWriter;
 
     public IemdSdClient(IemdSdClientOptions options, ILogger<IemdSdClient>? logger = null)
     {
         Options = options;
         _logger = logger ?? NullLogger<IemdSdClient>.Instance;
-        _transport = new ModbusTransport(options, _logger);
+        _transport = ModbusTransportFactory.Create(options, _logger);
         _mailbox = new CommandMailbox(_transport, options, _logger);
         _reportReader = new ReportReader(_transport, _mailbox);
         _curveReader = new CurveReader(_transport, _mailbox);
         _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options);
+        _parameterReader = new ParameterBlockReader(_transport, _mailbox, options.ToolIndex);
+        _parameterWriter = new ParameterBlockWriter(_transport, _mailbox, options.ToolIndex);
     }
 
     public IemdSdClientOptions Options { get; }
@@ -87,13 +91,19 @@ public sealed class IemdSdClient : IIemdSdClient
     {
         var req = CommandMailbox.CreateRequest(
             ModbusFunctionCodes.SwitchParameter,
-            word1: Options.ToolIndex,
-            word2: parameterId,
-            word3: (int)(screwCount % 65536),
-            word4: (int)(screwCount / 65536));
+            word2: Options.ToolIndex,
+            word3: parameterId,
+            word4: (int)(screwCount % 65536),
+            word5: (int)(screwCount / 65536));
         await _mailbox.SendCommandAsync(ModbusFunctionCodes.SwitchParameter, req, cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("Switched parameter ID {ParamId} screwCount={Count}", parameterId, screwCount);
     }
+
+    public Task<TighteningParameterTemplate> ReadParameterAsync(int parameterId, CancellationToken cancellationToken = default) =>
+        _parameterReader.ReadAsync(parameterId, cancellationToken);
+
+    public Task WriteParameterAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default) =>
+        _parameterWriter.WriteAsync(template, cancellationToken);
 
     public Task<TighteningResult> ExecuteTighteningCycleAsync(
         TighteningTrigger? trigger = null,

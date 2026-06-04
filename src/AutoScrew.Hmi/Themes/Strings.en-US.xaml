@@ -34,6 +34,8 @@
     <system:String x:Key="S.Nav.System">System</system:String>
     <system:String x:Key="S.Nav.Production">Production</system:String>
     <system:String x:Key="S.Nav.Logs">Logs</system:String>
+    <system:String x:Key="S.Nav.ControllerParams">Tightening Params</system:String>
+    <system:String x:Key="S.Nav.DeviceConnection">Device Connection</system:String>
     <system:String x:Key="S.Nav.Settings">Settings</system:String>
     <system:String x:Key="S.Nav.BreadcrumbDefault">Production / Workstation</system:String>
 
@@ -224,6 +226,75 @@
     <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew password reset</system:String>
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
     <system:String x:Key="S.Logs.SnackbarTitle">Logs</system:String>
+
+    <system:String x:Key="S.ControllerParam.Title">Tightening parameters</system:String>
+    <system:String x:Key="S.ControllerParam.New">New</system:String>
+    <system:String x:Key="S.ControllerParam.SaveLocal">Save locally</system:String>
+    <system:String x:Key="S.ControllerParam.Delete">Delete</system:String>
+    <system:String x:Key="S.ControllerParam.Import">Import JSON</system:String>
+    <system:String x:Key="S.ControllerParam.Export">Export JSON</system:String>
+    <system:String x:Key="S.ControllerParam.ReadDevice">Read from device</system:String>
+    <system:String x:Key="S.ControllerParam.WriteDevice">Write to device</system:String>
+    <system:String x:Key="S.ControllerParam.Activate">Activate (#302)</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceStatus">Device status</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceOnline">IEMD-SD is configured; device read/write and activate are available.</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceOffline">Simulation mode: local JSON presets only. Set AutoScrew:UseSimulatedHardware=false to connect devices.</system:String>
+    <system:String x:Key="S.ControllerParam.ConfigureDeviceFirst">Station {0} has no active device. Configure it on Device Connection first.</system:String>
+    <system:String x:Key="S.ControllerParam.ActiveDeviceSummary">Station {0} · {1} · {2}</system:String>
+    <system:String x:Key="S.ControllerParam.LocalPresets">Local presets</system:String>
+    <system:String x:Key="S.ControllerParam.BasicSettings">Basic settings</system:String>
+    <system:String x:Key="S.ControllerParam.ParameterId">Parameter ID</system:String>
+    <system:String x:Key="S.ControllerParam.Name">Name</system:String>
+    <system:String x:Key="S.ControllerParam.MinAngle">Min angle (°)</system:String>
+    <system:String x:Key="S.ControllerParam.MaxAngle">Max angle (°)</system:String>
+    <system:String x:Key="S.ControllerParam.MaxRunTime">Max run time (×0.1s)</system:String>
+    <system:String x:Key="S.ControllerParam.Stages">Tightening stages</system:String>
+    <system:String x:Key="S.ControllerParam.ControlMode">Control mode</system:String>
+    <system:String x:Key="S.ControllerParam.SpeedRpm">Speed (rpm)</system:String>
+    <system:String x:Key="S.ControllerParam.TargetTorque">Target torque (mNm)</system:String>
+    <system:String x:Key="S.ControllerParam.TargetAngle">Target angle (°)</system:String>
+    <system:String x:Key="S.ControllerParam.MaxTorque">Max torque (mNm)</system:String>
+    <system:String x:Key="S.ControllerParam.MinTorque">Min torque (mNm)</system:String>
+    <system:String x:Key="S.ControllerParam.Loosen">Loosen</system:String>
+    <system:String x:Key="S.ControllerParam.LoosenAngle1">Stage 1 angle (°)</system:String>
+    <system:String x:Key="S.ControllerParam.LoosenSpeed1">Stage 1 speed (rpm)</system:String>
+    <system:String x:Key="S.ControllerParam.DetectTorque">Detect torque (mNm)</system:String>
+    <system:String x:Key="S.ControllerParam.DefaultName">Param {0}</system:String>
+    <system:String x:Key="S.ControllerParam.StatusNew">New preset draft created.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusSavedLocal">Saved locally.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusDeleted">Local preset deleted.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusLoaded">Loaded local preset #{0}.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImported">Imported from JSON.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusExported">Exported to JSON.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusReadDevice">Read parameter #{0} from device.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusWriteDevice">Wrote parameter #{0} to device.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusActivated">Activated parameter #{0} on device.</system:String>
+
+    <system:String x:Key="S.Device.Title">Device connection</system:String>
+    <system:String x:Key="S.Device.Save">Save</system:String>
+    <system:String x:Key="S.Device.RefreshPorts">Refresh COM ports</system:String>
+    <system:String x:Key="S.Device.TestConnection">Test connection</system:String>
+    <system:String x:Key="S.Device.Apply">Apply and reconnect</system:String>
+    <system:String x:Key="S.Device.StationTitle">Station devices</system:String>
+    <system:String x:Key="S.Device.StationIdFormat">Station: {0}</system:String>
+    <system:String x:Key="S.Device.Enabled">Enable this device slot</system:String>
+    <system:String x:Key="S.Device.SetActive">Set as active station device</system:String>
+    <system:String x:Key="S.Device.Transport">Transport</system:String>
+    <system:String x:Key="S.Device.TransportTcp">Network (Modbus TCP)</system:String>
+    <system:String x:Key="S.Device.TransportSerial">Serial (Modbus RTU)</system:String>
+    <system:String x:Key="S.Device.ToolIndex">Tool (0/1)</system:String>
+    <system:String x:Key="S.Device.Host">Host</system:String>
+    <system:String x:Key="S.Device.Port">Port</system:String>
+    <system:String x:Key="S.Device.SerialPort">COM port</system:String>
+    <system:String x:Key="S.Device.BaudRate">Baud rate</system:String>
+    <system:String x:Key="S.Device.DataBits">Data bits</system:String>
+    <system:String x:Key="S.Device.CommandTimeout">Command timeout (ms)</system:String>
+    <system:String x:Key="S.Device.TriggerAutoDi">Trigger: Auto DI</system:String>
+    <system:String x:Key="S.Device.TriggerManual">Trigger: Manual</system:String>
+    <system:String x:Key="S.Device.SimulationBanner">Simulation mode: you can save config; test/apply requires UseSimulatedHardware=false and restart.</system:String>
+    <system:String x:Key="S.Device.NoActiveDevice">No active device selected.</system:String>
+    <system:String x:Key="S.Device.ActiveSummary">Station {0} · Active: {1} ({2})</system:String>
+    <system:String x:Key="S.Device.StatusSaved">Device configuration saved.</system:String>
 
     <system:String x:Key="S.Account.UserName">User Name</system:String>
     <system:String x:Key="S.Account.AdmissionNumber">Admission Number</system:String>

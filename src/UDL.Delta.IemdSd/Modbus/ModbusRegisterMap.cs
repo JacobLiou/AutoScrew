@@ -6,6 +6,8 @@ public static class ModbusRegisterMap
     public const int CommandRequest = 0xC8;
     public const int CommandResponse = 0xCF;
     public const int CommandData = 0xD2;
+    public const int ParameterBlockEnd = 0x22E;
+    public const int ParameterBlockWordCount = ParameterBlockEnd - CommandData + 1;
 
     public const int DiStatus = 0x67;
     public const int DiCommand = 0x68;
@@ -23,6 +25,8 @@ public static class ModbusRegisterMap
 
 public static class ModbusFunctionCodes
 {
+    public const int WriteParameter = 100;
+    public const int ReadParameter = 150;
     public const int SwitchParameter = 302;
     public const int LimitTightening = 406;
     public const int AutoExportBin = 517;

@@ -32,9 +32,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
 
         var appOpts = configuration.GetSection(AutoScrewAppOptions.SectionName).Get<AutoScrewAppOptions>() ?? new AutoScrewAppOptions();
-        var iemdOpts = configuration.GetSection(IemdSdOptions.SectionName).Get<IemdSdOptions>() ?? new IemdSdOptions();
-        if (iemdOpts.Enabled && !appOpts.UseSimulatedHardware)
-            services.AddIemdSdDriver(configuration);
+        services.AddStationDeviceServices(configuration);
+        services.AddSingleton<LocalJsonControllerParameterPresetStore>();
+        services.AddSingleton<IControllerParameterPresetService, ControllerParameterPresetService>();
+
+        if (!appOpts.UseSimulatedHardware)
+            services.AddSingleton<ILockStationHardware, IemdSdLockStationHardware>();
         else
             services.AddSingleton<ILockStationHardware, SimulatedLockStationHardware>();
 

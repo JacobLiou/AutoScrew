@@ -18,6 +18,10 @@ public interface IIemdSdClient : IAsyncDisposable
 
     Task SwitchParameterAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default);
 
+    Task<TighteningParameterTemplate> ReadParameterAsync(int parameterId, CancellationToken cancellationToken = default);
+
+    Task WriteParameterAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
+
     Task<TighteningResult> ExecuteTighteningCycleAsync(
         TighteningTrigger? trigger = null,
         CancellationToken cancellationToken = default);

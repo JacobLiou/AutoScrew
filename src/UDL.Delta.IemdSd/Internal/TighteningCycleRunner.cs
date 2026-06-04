@@ -5,11 +5,11 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class TighteningCycleRunner
 {
-    private readonly ModbusTransport _transport;
+    private readonly IModbusTransport _transport;
     private readonly CommandMailbox _mailbox;
     private readonly IemdSdClientOptions _options;
 
-    public TighteningCycleRunner(ModbusTransport transport, CommandMailbox mailbox, IemdSdClientOptions options)
+    public TighteningCycleRunner(IModbusTransport transport, CommandMailbox mailbox, IemdSdClientOptions options)
     {
         _transport = transport;
         _mailbox = mailbox;

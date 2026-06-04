@@ -20,6 +20,7 @@
     "UiCulture": "zh-CN"
   },
   "IemdSd": {
+    "_comment": "Legacy seed for first-run migration to DataDirectory/stations/{StationId}/devices.json. Device connection is managed in HMI.",
     "Enabled": false,
     "Host": "192.168.1.11",
     "Port": 502,

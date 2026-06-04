@@ -20,6 +20,7 @@
     <ProjectReference Include="..\AutoScrew.Common\AutoScrew.Common.csproj" />
     <ProjectReference Include="..\AutoScrew.Domain\AutoScrew.Domain.csproj" />
     <ProjectReference Include="..\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
+    <ProjectReference Include="..\UDL.Delta.IemdSd\UDL.Delta.IemdSd.csproj" />
   </ItemGroup>
 
   <ItemGroup>

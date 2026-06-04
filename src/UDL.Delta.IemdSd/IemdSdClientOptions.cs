@@ -1,10 +1,30 @@
 namespace UDL.Delta.IemdSd;
 
+public enum ControllerTransportType
+{
+    ModbusTcp,
+    ModbusRtu,
+}
+
 public sealed class IemdSdClientOptions
 {
+    public ControllerTransportType Transport { get; set; } = ControllerTransportType.ModbusTcp;
+
     public string Host { get; set; } = "192.168.1.11";
 
     public int Port { get; set; } = 502;
+
+    public string SerialPortName { get; set; } = "COM1";
+
+    public int BaudRate { get; set; } = 115200;
+
+    public int DataBits { get; set; } = 8;
+
+    public string Parity { get; set; } = "None";
+
+    public string StopBits { get; set; } = "One";
+
+    public byte ModbusSlaveId { get; set; } = 1;
 
     public int ToolIndex { get; set; }
 
