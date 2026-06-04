@@ -25,10 +25,10 @@
     <system:String x:Key="S.Common.Content">内容</system:String>
 
     <!-- App -->
-    <system:String x:Key="S.App.TitleMain">AutoScrew 智能锁附系统</system:String>
+    <system:String x:Key="S.App.TitleMain">AutoScrew 自动取螺钉系统</system:String>
     <system:String x:Key="S.App.TitleLogin">AutoScrew 自动取螺钉系统</system:String>
-    <system:String x:Key="S.App.ProductName">智能锁附</system:String>
-    <system:String x:Key="S.App.AboutProduct">AutoScrew 智能锁附系统</system:String>
+    <system:String x:Key="S.App.ProductName">自动取螺钉</system:String>
+    <system:String x:Key="S.App.AboutProduct">AutoScrew 自动取螺钉系统</system:String>
     <system:String x:Key="S.App.Version">版本 {0}</system:String>
 
     <!-- Navigation -->
@@ -205,8 +205,10 @@
     <system:String x:Key="S.Settings.Appearance">外观与行为</system:String>
     <system:String x:Key="S.Settings.Theme">应用主题</system:String>
     <system:String x:Key="S.Settings.ThemeDesc">选择应用的显示主题</system:String>
+    <system:String x:Key="S.Settings.Language">显示语言</system:String>
+    <system:String x:Key="S.Settings.LanguageDesc">选择界面显示语言</system:String>
     <system:String x:Key="S.Settings.AboutTitle">Auto Screw 自动取螺钉系统</system:String>
-    <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com &amp; AutoScrew 智能锁附</system:String>
+    <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com</system:String>
     <system:String x:Key="S.Settings.TechStack">技术实现</system:String>
     <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
     <system:String x:Key="S.Settings.BugReport">File a bug or request a new sample</system:String>

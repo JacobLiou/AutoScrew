@@ -5,7 +5,6 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
-                 xmlns:controls="clr-namespace:AutoScrew.Hmi.Controls"
                  mc:Ignorable="d"
                  Title="{Binding AppTitle}"
                  Height="780"
@@ -55,7 +54,7 @@
             <ui:NavigationView.PaneHeader>
                 <StackPanel Margin="12,16,12,8">
                     <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center">
+                                HorizontalAlignment="Left">
                         <Image Source="pack://application:,,,/Assets/logo_new.png"
                                Height="28"
                                Width="100"
@@ -76,16 +75,14 @@
         <ui:TitleBar x:Name="TitleBar"
                      Title="{Binding AppTitle}"
                      CloseWindowByDoubleClickOnIcon="True">
-            <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/Assets/logo_new.png" />
-            </ui:TitleBar.Icon>
+            <!--<ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/logo_new.png" 
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"/>
+            </ui:TitleBar.Icon>-->
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <controls:CultureSelector Variant="Shell"
-                                            Margin="0,0,8,0"
-                                            CultureOptions="{Binding CultureOptions}"
-                                            SelectedCulture="{Binding SelectedCulture, Mode=TwoWay}" />
                     <ui:Button Content="{DynamicResource S.Shell.Notepad}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                ToolTip="{DynamicResource S.Shell.Notepad}"

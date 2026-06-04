@@ -1,3 +1,4 @@
+using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Reflection;
 using System.Windows.Media;
@@ -11,7 +12,8 @@ namespace AutoScrew.Hmi.ViewModels;
 public sealed partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly INavigationService _navigationService;
-    private bool _isInitialized = false;
+    private readonly LocalizationService _localization;
+    private bool _isInitialized;
 
     [ObservableProperty]
     private string _appVersion = string.Empty;
@@ -23,15 +25,31 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private NavigationViewPaneDisplayMode _currentApplicationNavigationStyle =
         NavigationViewPaneDisplayMode.Left;
 
-    public SettingsViewModel(INavigationService navigationService)
+    [ObservableProperty]
+    private string _selectedCulture = LocalizationService.ZhCn;
+
+    public SettingsViewModel(INavigationService navigationService, LocalizationService localization)
     {
         _navigationService = navigationService;
+        _localization = localization;
+        _selectedCulture = _localization.CurrentCultureName;
+        _localization.CultureChanged += OnCultureChanged;
         InitializeViewModel();
     }
 
     public void Dispose()
     {
         ApplicationThemeManager.Changed -= OnThemeChanged;
+        _localization.CultureChanged -= OnCultureChanged;
+    }
+
+    partial void OnSelectedCultureChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || string.Equals(_localization.CurrentCultureName, value, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _localization.SetCulture(value);
     }
 
     partial void OnCurrentApplicationThemeChanged(ApplicationTheme oldValue, ApplicationTheme newValue)
@@ -61,6 +79,11 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (CurrentApplicationTheme != currentApplicationTheme)
             CurrentApplicationTheme = currentApplicationTheme;
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        SelectedCulture = _localization.CurrentCultureName;
     }
 
     private static string GetAssemblyVersion()

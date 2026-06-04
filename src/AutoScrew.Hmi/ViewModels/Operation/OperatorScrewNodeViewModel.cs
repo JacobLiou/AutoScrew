@@ -18,6 +18,9 @@ public sealed partial class OperatorScrewNodeViewModel : ObservableObject
     private string _displayLabel;
 
     [ObservableProperty]
+    private bool _isExpanded;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StateGlyph))]
     private StationScrewState _state;
 

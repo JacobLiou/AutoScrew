@@ -14,5 +14,8 @@ public sealed partial class OperatorProgressRootViewModel : ObservableObject
     [ObservableProperty]
     private string _displayLabel = "";
 
+    [ObservableProperty]
+    private bool _isExpanded = true;
+
     public ObservableCollection<OperatorSurfaceNodeViewModel> Surfaces { get; } = new();
 }

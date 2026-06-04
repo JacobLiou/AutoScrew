@@ -195,8 +195,10 @@
     <system:String x:Key="S.Settings.Appearance">Appearance</system:String>
     <system:String x:Key="S.Settings.Theme">Application theme</system:String>
     <system:String x:Key="S.Settings.ThemeDesc">Choose light or dark theme</system:String>
+    <system:String x:Key="S.Settings.Language">Display language</system:String>
+    <system:String x:Key="S.Settings.LanguageDesc">Choose the interface language</system:String>
     <system:String x:Key="S.Settings.AboutTitle">Auto Screw automatic feeding</system:String>
-    <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com &amp; AutoScrew</system:String>
+    <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com</system:String>
     <system:String x:Key="S.Settings.TechStack">Technology</system:String>
     <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
     <system:String x:Key="S.Settings.BugReport">File a bug or request a sample</system:String>

@@ -284,6 +284,7 @@ public partial class MainViewModel : ObservableObject
         ProgressTreeRoot.DisplayLabel = string.IsNullOrWhiteSpace(_session.SerialNumber)
             ? Loc.Get("S.Operation.WaitScan")
             : Loc.Format("S.Operation.SnPnLabel", _session.SerialNumber!, _session.PartNumber!);
+        ProgressTreeRoot.IsExpanded = true;
 
         ProgressTreeRoot.Surfaces.Clear();
         ActiveSurfaceNode = null;

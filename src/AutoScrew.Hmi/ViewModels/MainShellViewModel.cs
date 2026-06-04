@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Dialog;
-using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,8 +51,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         _sessionCoordinator = sessionCoordinator;
         _localization = localization;
         _logger = logger;
-        _selectedCulture = _localization.CurrentCultureName;
-        _cultureOptions = new ObservableCollection<UiCultureOption>(UiCultureCatalog.CreateOptions());
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
         _localization.CultureChanged += OnCultureChanged;
@@ -65,15 +62,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         Breadcrumb = Loc.Get("S.Nav.BreadcrumbDefault");
     }
 
-    partial void OnSelectedCultureChanged(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value)
-            || string.Equals(_localization.CurrentCultureName, value, StringComparison.OrdinalIgnoreCase))
-            return;
-
-        _localization.SetCulture(value);
-    }
-
     public void Dispose()
     {
         _localization.CultureChanged -= OnCultureChanged;
@@ -81,18 +69,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             notify.PropertyChanged -= OnCurrentUserPropertyChanged;
     }
 
-    [ObservableProperty]
-    private string _selectedCulture;
-
-    [ObservableProperty]
-    private ObservableCollection<UiCultureOption> _cultureOptions;
-
     public string AppTitle => Loc.Get("S.App.TitleMain");
 
     private void OnCultureChanged(object? sender, EventArgs e)
     {
-        SelectedCulture = _localization.CurrentCultureName;
-        RefreshCultureOptions();
         RebuildMenuItems();
         RefreshUserBanner();
         OnPropertyChanged(nameof(SidebarToggleHint));
@@ -105,15 +85,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(AppTitle));
         OnPropertyChanged(nameof(SidebarToggleHint));
-    }
-
-    private void RefreshCultureOptions()
-    {
-        var current = SelectedCulture;
-        CultureOptions.Clear();
-        foreach (var option in UiCultureCatalog.CreateOptions())
-            CultureOptions.Add(option);
-        SelectedCulture = current;
     }
 
     [ObservableProperty]
