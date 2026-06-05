@@ -80,6 +80,7 @@
     <system:String x:Key="S.Operation.ResetSession">Reset session</system:String>
     <system:String x:Key="S.Operation.ProgressTree">Progress</system:String>
     <system:String x:Key="S.Operation.CurveTitle">Torque–angle (last step)</system:String>
+    <system:String x:Key="S.Operation.CurveUnavailable">Curve chart failed to initialize. Operation flow is unaffected.</system:String>
     <system:String x:Key="S.Operation.ActivityLog">Activity log</system:String>
     <system:String x:Key="S.Operation.WaitScan">Awaiting scan</system:String>
     <system:String x:Key="S.Operation.SnPnLabel">SN: {0}  PN: {1}</system:String>
@@ -282,8 +283,7 @@
     <system:String x:Key="S.Device.Apply">Apply and reconnect</system:String>
     <system:String x:Key="S.Device.StationTitle">Station devices</system:String>
     <system:String x:Key="S.Device.StationIdFormat">Station: {0}</system:String>
-    <system:String x:Key="S.Device.Enabled">Enable this device slot</system:String>
-    <system:String x:Key="S.Device.SetActive">Set as active station device</system:String>
+    <system:String x:Key="S.Device.Enabled">Enable device connection</system:String>
     <system:String x:Key="S.Device.Transport">Transport</system:String>
     <system:String x:Key="S.Device.TransportTcp">Network (Modbus TCP)</system:String>
     <system:String x:Key="S.Device.TransportSerial">Serial (Modbus RTU)</system:String>

@@ -84,9 +84,9 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         if (!_devices.IsRuntimeDeviceAvailable)
             throw new InvalidOperationException("IEMD-SD device is not available in the current configuration.");
 
-        await _devices.EnsureActiveClientAsync(cancellationToken).ConfigureAwait(false);
-        var client = _devices.GetActiveClient()
-                     ?? throw new InvalidOperationException("Active IEMD-SD device is not connected. Configure it on the Device Connection page.");
+        await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
+        var client = _devices.GetClient()
+                     ?? throw new InvalidOperationException("IEMD-SD device is not connected. Configure it on the Device Connection page.");
         return client;
     }
 }

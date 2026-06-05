@@ -12,7 +12,6 @@ public class IemdSdClientFactoryTests
     {
         var endpoint = new StationDeviceEndpoint
         {
-            SlotIndex = 1,
             Transport = ControllerTransport.ModbusRtu,
             SerialPortName = "COM3",
             BaudRate = 9600,

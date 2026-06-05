@@ -379,8 +379,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private static bool IsConfigurationSection(MainAppSection section) =>
         section is MainAppSection.Template
-            or MainAppSection.ControllerParameters
-            or MainAppSection.DeviceConnection;
+            or MainAppSection.ControllerParameters;
 
     private void RebuildMenuItems()
     {
@@ -430,16 +429,13 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             IsExpanded = true
         };
 
-        if (CanUseConfiguration)
+        systemGroup.MenuItems.Add(new NavigationViewItem
         {
-            systemGroup.MenuItems.Add(new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.DeviceConnection"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.PlugConnected24 },
-                TargetPageType = typeof(DeviceConnectionPage),
-                TargetPageTag = "device-connection"
-            });
-        }
+            Content = Loc.Get("S.Nav.DeviceConnection"),
+            Icon = new SymbolIcon { Symbol = SymbolRegular.PlugConnected24 },
+            TargetPageType = typeof(DeviceConnectionPage),
+            TargetPageTag = "device-connection"
+        });
 
         systemGroup.MenuItems.Add(new NavigationViewItem
         {

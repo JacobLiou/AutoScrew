@@ -14,6 +14,15 @@ public partial class DeviceConnectionPage : INavigableView<DeviceConnectionViewM
         InitializeComponent();
     }
 
-    private async void OnLoaded(object sender, System.Windows.RoutedEventArgs e) =>
-        await ViewModel.InitializeAsync().ConfigureAwait(true);
+    private async void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            await ViewModel.InitializeAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            ViewModel.StatusMessage = ex.Message;
+        }
+    }
 }

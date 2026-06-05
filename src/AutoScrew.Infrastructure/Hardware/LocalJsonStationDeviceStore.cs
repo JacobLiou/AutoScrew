@@ -35,12 +35,20 @@ public sealed class LocalJsonStationDeviceStore
             return CreateSeedConfiguration(stationId);
 
         cancellationToken.ThrowIfCancellationRequested();
-        await using var stream = File.OpenRead(path);
-        var config = await JsonSerializer.DeserializeAsync<StationDeviceConfiguration>(stream, JsonOptions, cancellationToken)
-            .ConfigureAwait(false)
-            ?? CreateSeedConfiguration(stationId);
+        var json = await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(json);
+
+        var migratedFromLegacy = document.RootElement.TryGetProperty("Devices", out _);
+        var config = migratedFromLegacy
+            ? TryParseLegacy(document, stationId) ?? CreateSeedConfiguration(stationId)
+            : JsonSerializer.Deserialize<StationDeviceConfiguration>(json, JsonOptions)
+              ?? CreateSeedConfiguration(stationId);
 
         Normalize(config, stationId);
+
+        if (migratedFromLegacy)
+            await SaveAsync(config, cancellationToken).ConfigureAwait(false);
+
         return config;
     }
 
@@ -60,49 +68,59 @@ public sealed class LocalJsonStationDeviceStore
     private StationDeviceConfiguration CreateSeedConfiguration(string stationId)
     {
         var legacy = _configuration.GetSection(IemdSdOptions.SectionName).Get<IemdSdOptions>() ?? new IemdSdOptions();
-        var devices = StationDeviceConfiguration.CreateDefaultDevices();
-        var slot0 = devices[0];
-        slot0.Enabled = legacy.Enabled;
-        slot0.Host = legacy.Host;
-        slot0.Port = legacy.Port;
-        slot0.ToolIndex = legacy.ToolIndex;
-        slot0.TriggerMode = legacy.TriggerMode;
-        slot0.AutoLockOnInit = legacy.AutoLockOnInit;
-        slot0.SendUnlockAfterCycle = legacy.SendUnlockAfterCycle;
-        slot0.UseLegacyFinishRegister = legacy.UseLegacyFinishRegister;
-        slot0.CommandTimeoutMs = legacy.CommandTimeoutMs;
-        slot0.DisplayName = "Device 1";
+        var device = StationDeviceConfiguration.CreateDefaultDevice();
+        device.Enabled = legacy.Enabled;
+        device.Host = legacy.Host;
+        device.Port = legacy.Port;
+        device.ToolIndex = legacy.ToolIndex;
+        device.TriggerMode = legacy.TriggerMode;
+        device.AutoLockOnInit = legacy.AutoLockOnInit;
+        device.SendUnlockAfterCycle = legacy.SendUnlockAfterCycle;
+        device.UseLegacyFinishRegister = legacy.UseLegacyFinishRegister;
+        device.CommandTimeoutMs = legacy.CommandTimeoutMs;
 
         return new StationDeviceConfiguration
         {
             StationId = stationId,
-            ActiveDeviceSlot = 0,
-            Devices = devices,
+            Device = device,
+        };
+    }
+
+    private static StationDeviceConfiguration? TryParseLegacy(JsonDocument document, string stationId)
+    {
+        var root = document.RootElement;
+        if (!root.TryGetProperty("Devices", out var devicesElement) || devicesElement.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var activeSlot = 0;
+        if (root.TryGetProperty("ActiveDeviceSlot", out var activeSlotElement) && activeSlotElement.TryGetInt32(out var parsed))
+            activeSlot = parsed;
+
+        var devices = new List<StationDeviceEndpoint>();
+        foreach (var item in devicesElement.EnumerateArray())
+        {
+            var endpoint = item.Deserialize<StationDeviceEndpoint>(JsonOptions);
+            if (endpoint is not null)
+                devices.Add(endpoint);
+        }
+
+        if (devices.Count == 0)
+            return null;
+
+        var selected = activeSlot >= 0 && activeSlot < devices.Count
+            ? devices[activeSlot]
+            : devices.FirstOrDefault(d => d.Enabled) ?? devices[0];
+
+        return new StationDeviceConfiguration
+        {
+            StationId = stationId,
+            Device = selected,
         };
     }
 
     private static void Normalize(StationDeviceConfiguration config, string stationId)
     {
         config.StationId = stationId;
-        if (config.Devices.Count != StationDeviceEndpoint.MaxSlots)
-        {
-            var defaults = StationDeviceConfiguration.CreateDefaultDevices();
-            for (var i = 0; i < StationDeviceEndpoint.MaxSlots; i++)
-            {
-                if (i < config.Devices.Count)
-                    config.Devices[i].SlotIndex = i;
-                else
-                    config.Devices.Add(defaults[i]);
-            }
-
-            if (config.Devices.Count > StationDeviceEndpoint.MaxSlots)
-                config.Devices = config.Devices.Take(StationDeviceEndpoint.MaxSlots).ToList();
-        }
-
-        for (var i = 0; i < config.Devices.Count; i++)
-            config.Devices[i].SlotIndex = i;
-
-        if (config.ActiveDeviceSlot < 0 || config.ActiveDeviceSlot >= StationDeviceEndpoint.MaxSlots)
-            config.ActiveDeviceSlot = 0;
+        config.Device ??= StationDeviceConfiguration.CreateDefaultDevice();
     }
 }

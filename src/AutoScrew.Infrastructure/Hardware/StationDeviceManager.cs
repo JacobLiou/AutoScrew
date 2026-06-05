@@ -14,8 +14,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
     private readonly bool _useSimulatedHardware;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private StationDeviceConfiguration? _cachedConfig;
-    private IIemdSdClient? _activeClient;
-    private int _activeClientSlot = -1;
+    private IIemdSdClient? _client;
 
     public StationDeviceManager(
         LocalJsonStationDeviceStore store,
@@ -41,8 +40,8 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
             if (_useSimulatedHardware)
                 return false;
 
-            var active = _cachedConfig?.GetActiveDevice();
-            return active is { Enabled: true };
+            var device = _cachedConfig?.GetDevice();
+            return device is { Enabled: true };
         }
     }
 
@@ -77,18 +76,15 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
     }
 
-    public async Task<TestConnectionResult> TestConnectionAsync(int slotIndex, CancellationToken cancellationToken = default)
+    public async Task<TestConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default)
     {
         if (_useSimulatedHardware)
             return new TestConnectionResult(false, "Simulation mode: set AutoScrew:UseSimulatedHardware=false to test devices.");
 
         var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
-        if (slotIndex < 0 || slotIndex >= config.Devices.Count)
-            return new TestConnectionResult(false, "Invalid device slot.");
-
-        var endpoint = config.Devices[slotIndex];
+        var endpoint = config.Device;
         if (!endpoint.Enabled)
-            return new TestConnectionResult(false, "Device slot is disabled.");
+            return new TestConnectionResult(false, "Device connection is disabled.");
 
         await using var client = _clientFactory.Create(endpoint);
         try
@@ -99,12 +95,12 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Test connection failed for slot {Slot}", slotIndex);
+            _logger.LogWarning(ex, "Test connection failed for station device");
             return new TestConnectionResult(false, ex.Message);
         }
     }
 
-    public async Task<TestConnectionResult> ApplyActiveDeviceAsync(CancellationToken cancellationToken = default)
+    public async Task<TestConnectionResult> ApplyDeviceAsync(CancellationToken cancellationToken = default)
     {
         if (_useSimulatedHardware)
             return new TestConnectionResult(false, "Simulation mode: set AutoScrew:UseSimulatedHardware=false to apply device.");
@@ -112,23 +108,22 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await DisposeActiveClientCoreAsync().ConfigureAwait(false);
+            await DisposeClientCoreAsync().ConfigureAwait(false);
             _cachedConfig ??= await _store.LoadAsync(StationId, cancellationToken).ConfigureAwait(false);
 
-            var active = _cachedConfig.GetActiveDevice();
-            if (active is null || !active.Enabled)
-                return new TestConnectionResult(false, "No enabled active device configured.");
+            var device = _cachedConfig.GetDevice();
+            if (device is null || !device.Enabled)
+                return new TestConnectionResult(false, "No enabled device configured.");
 
-            _activeClient = _clientFactory.Create(active);
-            _activeClientSlot = active.SlotIndex;
-            await _activeClient.ConnectAsync(cancellationToken).ConfigureAwait(false);
-            await _activeClient.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new TestConnectionResult(true, $"Applied {active.DisplayName} ({active.DescribeConnection()}).");
+            _client = _clientFactory.Create(device);
+            await _client.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            await _client.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new TestConnectionResult(true, $"Applied {device.DisplayName} ({device.DescribeConnection()}).");
         }
         catch (Exception ex)
         {
-            await DisposeActiveClientCoreAsync().ConfigureAwait(false);
-            _logger.LogWarning(ex, "Apply active device failed");
+            await DisposeClientCoreAsync().ConfigureAwait(false);
+            _logger.LogWarning(ex, "Apply device failed");
             return new TestConnectionResult(false, ex.Message);
         }
         finally
@@ -137,41 +132,40 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
     }
 
-    public ActiveDeviceSummary? GetActiveDeviceSummary()
+    public DeviceSummary? GetDeviceSummary()
     {
         var config = _cachedConfig;
         if (config is null)
             return null;
 
-        var active = config.GetActiveDevice();
-        if (active is null)
+        var device = config.GetDevice();
+        if (device is null)
             return null;
 
-        return new ActiveDeviceSummary(
+        return new DeviceSummary(
             config.StationId,
-            active.SlotIndex,
-            active.DisplayName,
-            active.DescribeConnection(),
-            active.Enabled);
+            device.DisplayName,
+            device.DescribeConnection(),
+            device.Enabled);
     }
 
-    public IIemdSdClient? GetActiveClient()
+    public IIemdSdClient? GetClient()
     {
         if (_useSimulatedHardware)
             return null;
 
-        return _activeClient;
+        return _client;
     }
 
-    public async Task EnsureActiveClientAsync(CancellationToken cancellationToken = default)
+    public async Task EnsureClientAsync(CancellationToken cancellationToken = default)
     {
         if (_useSimulatedHardware)
             return;
 
-        if (_activeClient is not null)
+        if (_client is not null)
             return;
 
-        await ApplyActiveDeviceAsync(cancellationToken).ConfigureAwait(false);
+        await ApplyDeviceAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
@@ -179,7 +173,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
-            await DisposeActiveClientCoreAsync().ConfigureAwait(false);
+            await DisposeClientCoreAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -188,14 +182,13 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
     }
 
-    private async Task DisposeActiveClientCoreAsync()
+    private async Task DisposeClientCoreAsync()
     {
-        if (_activeClient is null)
+        if (_client is null)
             return;
 
-        await _activeClient.DisposeAsync().ConfigureAwait(false);
-        _activeClient = null;
-        _activeClientSlot = -1;
+        await _client.DisposeAsync().ConfigureAwait(false);
+        _client = null;
     }
 
     private static StationDeviceConfiguration CloneConfiguration(StationDeviceConfiguration source)

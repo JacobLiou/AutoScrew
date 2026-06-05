@@ -87,6 +87,7 @@
     <system:String x:Key="S.Operation.ResetSession">复位会话</system:String>
     <system:String x:Key="S.Operation.ProgressTree">作业进度</system:String>
     <system:String x:Key="S.Operation.CurveTitle">扭矩–角度（最近一步）</system:String>
+    <system:String x:Key="S.Operation.CurveUnavailable">曲线控件初始化失败，作业流程不受影响。</system:String>
     <system:String x:Key="S.Operation.ActivityLog">作业日志</system:String>
     <system:String x:Key="S.Operation.WaitScan">等待扫码</system:String>
     <system:String x:Key="S.Operation.SnPnLabel">SN: {0}  PN: {1}</system:String>
@@ -296,8 +297,7 @@
     <system:String x:Key="S.Device.Apply">应用并重连</system:String>
     <system:String x:Key="S.Device.StationTitle">工位设备</system:String>
     <system:String x:Key="S.Device.StationIdFormat">当前工位：{0}</system:String>
-    <system:String x:Key="S.Device.Enabled">启用此设备槽位</system:String>
-    <system:String x:Key="S.Device.SetActive">设为当前工位激活设备</system:String>
+    <system:String x:Key="S.Device.Enabled">启用设备连接</system:String>
     <system:String x:Key="S.Device.Transport">连接方式</system:String>
     <system:String x:Key="S.Device.TransportTcp">网口 (Modbus TCP)</system:String>
     <system:String x:Key="S.Device.TransportSerial">串口 (Modbus RTU)</system:String>

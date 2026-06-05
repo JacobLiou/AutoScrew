@@ -4,29 +4,16 @@ using AutoScrew.Hmi.Services;
 using Microsoft.Extensions.Options;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
 using System.IO.Ports;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
 namespace AutoScrew.Hmi.ViewModels;
 
-public sealed partial class StationDeviceSlotEditor : ObservableObject
+public sealed partial class StationDeviceEditor : ObservableObject
 {
-    public StationDeviceSlotEditor(int slotIndex)
-    {
-        SlotIndex = slotIndex;
-        Title = $"Device {slotIndex + 1}";
-    }
-
-    public int SlotIndex { get; }
-    public string Title { get; }
-
     [ObservableProperty]
     private bool _enabled;
-
-    [ObservableProperty]
-    private bool _isActive;
 
     [ObservableProperty]
     private string _displayName = string.Empty;
@@ -74,10 +61,9 @@ public sealed partial class StationDeviceSlotEditor : ObservableObject
 
     partial void OnTransportIndexChanged(int value) => OnPropertyChanged(nameof(IsTcp));
 
-    public void LoadFrom(StationDeviceEndpoint endpoint, bool isActive)
+    public void LoadFrom(StationDeviceEndpoint endpoint)
     {
         Enabled = endpoint.Enabled;
-        IsActive = isActive;
         DisplayName = endpoint.DisplayName;
         TransportIndex = endpoint.Transport == ControllerTransport.ModbusRtu ? 1 : 0;
         Host = endpoint.Host;
@@ -108,7 +94,6 @@ public sealed partial class StationDeviceSlotEditor : ObservableObject
     {
         return new StationDeviceEndpoint
         {
-            SlotIndex = SlotIndex,
             Enabled = Enabled,
             DisplayName = DisplayName,
             Transport = TransportIndex == 1 ? ControllerTransport.ModbusRtu : ControllerTransport.ModbusTcp,
@@ -148,24 +133,15 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
         _audit = audit;
         _appOptions = appOptions;
         _user = user;
-        Slots =
-        [
-            new StationDeviceSlotEditor(0),
-            new StationDeviceSlotEditor(1),
-            new StationDeviceSlotEditor(2),
-        ];
-        RefreshSerialPorts();
+        Device = new StationDeviceEditor();
         StatusMessage = BuildStatusBanner();
     }
 
-    public ObservableCollection<StationDeviceSlotEditor> Slots { get; }
+    public StationDeviceEditor Device { get; }
 
     public IReadOnlyList<string> SerialPortOptions { get; private set; } = [];
 
     public bool CanUseRuntimeDevice => !_devices.IsSimulatedHardware;
-
-    [ObservableProperty]
-    private int _selectedSlotIndex;
 
     [ObservableProperty]
     private string _stationId = string.Empty;
@@ -175,45 +151,38 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
 
     public string StationIdDisplay => Loc.Format("S.Device.StationIdFormat", StationId);
 
-    public StationDeviceSlotEditor SelectedSlot => Slots[SelectedSlotIndex];
-
-    partial void OnSelectedSlotIndexChanged(int value) => OnPropertyChanged(nameof(SelectedSlot));
-
     partial void OnStationIdChanged(string value) => OnPropertyChanged(nameof(StationIdDisplay));
 
     public async Task InitializeAsync()
     {
         StationId = _devices.StationId;
+        RefreshSerialPorts();
         var config = await _devices.LoadAsync().ConfigureAwait(true);
-        for (var i = 0; i < Slots.Count; i++)
-            Slots[i].LoadFrom(config.Devices[i], config.ActiveDeviceSlot == i);
-        SelectedSlotIndex = Math.Clamp(config.ActiveDeviceSlot, 0, Slots.Count - 1);
+        Device.LoadFrom(config.Device);
         StatusMessage = BuildStatusBanner();
     }
 
     [RelayCommand]
-    private void RefreshSerialPorts()
+    private void RefreshSerialPorts() => RefreshSerialPortsCore();
+
+    private void RefreshSerialPortsCore()
     {
-        SerialPortOptions = SerialPort.GetPortNames().OrderBy(x => x).ToArray();
+        try
+        {
+            SerialPortOptions = SerialPort.GetPortNames().OrderBy(x => x).ToArray();
+        }
+        catch
+        {
+            SerialPortOptions = [];
+        }
+
         OnPropertyChanged(nameof(SerialPortOptions));
-    }
-
-    [RelayCommand]
-    private void SetActiveSlot(int slotIndex)
-    {
-        if (slotIndex < 0 || slotIndex >= Slots.Count)
-            return;
-
-        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceSetActive", detail: $"slot={slotIndex}");
-        for (var i = 0; i < Slots.Count; i++)
-            Slots[i].IsActive = i == slotIndex;
-        SelectedSlotIndex = slotIndex;
     }
 
     [RelayCommand]
     private async Task SaveAsync()
     {
-        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceSave", detail: $"activeSlot={SelectedSlotIndex}");
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceSave");
         try
         {
             var config = BuildConfiguration();
@@ -231,11 +200,11 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseRuntimeDevice))]
     private async Task TestConnectionAsync()
     {
-        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceTest", detail: $"slot={SelectedSlotIndex}");
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceTest");
         try
         {
             await _devices.SaveAsync(BuildConfiguration()).ConfigureAwait(true);
-            var result = await _devices.TestConnectionAsync(SelectedSlotIndex).ConfigureAwait(true);
+            var result = await _devices.TestConnectionAsync().ConfigureAwait(true);
             AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceTestResult", detail: result.Message, success: result.Success);
             StatusMessage = result.Message;
             ShowSnackbar(result.Message, result.Success ? ControlAppearance.Success : ControlAppearance.Danger);
@@ -254,7 +223,7 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
         try
         {
             await _devices.SaveAsync(BuildConfiguration()).ConfigureAwait(true);
-            var result = await _devices.ApplyActiveDeviceAsync().ConfigureAwait(true);
+            var result = await _devices.ApplyDeviceAsync().ConfigureAwait(true);
             AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceApplyResult", detail: result.Message, success: result.Success);
             StatusMessage = result.Message;
             ShowSnackbar(result.Message, result.Success ? ControlAppearance.Success : ControlAppearance.Danger);
@@ -266,23 +235,19 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
         }
     }
 
-    private StationDeviceConfiguration BuildConfiguration()
-    {
-        var active = Slots.FirstOrDefault(s => s.IsActive)?.SlotIndex ?? SelectedSlotIndex;
-        return new StationDeviceConfiguration
+    private StationDeviceConfiguration BuildConfiguration() =>
+        new()
         {
             StationId = _devices.StationId,
-            ActiveDeviceSlot = active,
-            Devices = Slots.Select(s => s.ToEndpoint()).ToList(),
+            Device = Device.ToEndpoint(),
         };
-    }
 
     private string BuildStatusBanner()
     {
         if (_devices.IsSimulatedHardware)
             return Loc.Get("S.Device.SimulationBanner");
 
-        var summary = _devices.GetActiveDeviceSummary();
+        var summary = _devices.GetDeviceSummary();
         return summary is null
             ? Loc.Get("S.Device.NoActiveDevice")
             : Loc.Format("S.Device.ActiveSummary", summary.StationId, summary.DisplayName, summary.ConnectionDescription);

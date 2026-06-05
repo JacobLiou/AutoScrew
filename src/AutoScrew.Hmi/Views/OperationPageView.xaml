@@ -6,7 +6,6 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              xmlns:op="clr-namespace:AutoScrew.Hmi.ViewModels.Operation"
-             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              mc:Ignorable="d"
              d:DesignHeight="720"
@@ -158,7 +157,7 @@
                         <RowDefinition Height="120"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="{DynamicResource S.Operation.CurveTitle}" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                    <sp:WpfPlot x:Name="CurvePlot" Grid.Row="1" MinHeight="180"/>
+                    <Grid x:Name="CurvePlotHost" Grid.Row="1" MinHeight="180" />
                     <TextBlock Grid.Row="2" Text="{DynamicResource S.Operation.ActivityLog}" FontWeight="SemiBold" Margin="0,12,0,4"/>
                     <ListBox Grid.Row="3"
                              ItemsSource="{Binding ActivityLog}"

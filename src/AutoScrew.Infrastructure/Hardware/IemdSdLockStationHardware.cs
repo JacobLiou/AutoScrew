@@ -38,9 +38,9 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
         TighteningContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await _devices.EnsureActiveClientAsync(cancellationToken).ConfigureAwait(false);
-        var client = _devices.GetActiveClient()
-                     ?? throw new InvalidOperationException("IEMD-SD active device is not connected.");
+        await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
+        var client = _devices.GetClient()
+                     ?? throw new InvalidOperationException("IEMD-SD device is not connected.");
 
         var paramId = context.ControllerParameterId;
         if (paramId <= 0 && _options.ParameterIdByPosition.TryGetValue(context.PositionIndex.ToString(), out var mapped))

@@ -402,7 +402,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (_devices.IsSimulatedHardware)
             return Loc.Get("S.ControllerParam.DeviceOffline");
 
-        var summary = _devices.GetActiveDeviceSummary();
+        var summary = _devices.GetDeviceSummary();
         return summary is null
             ? Loc.Format("S.ControllerParam.ConfigureDeviceFirst", _devices.StationId)
             : Loc.Format("S.ControllerParam.ActiveDeviceSummary", summary.StationId, summary.DisplayName, summary.ConnectionDescription);

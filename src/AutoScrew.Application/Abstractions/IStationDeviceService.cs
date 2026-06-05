@@ -10,10 +10,6 @@ public enum ControllerTransport
 
 public sealed class StationDeviceEndpoint
 {
-    public const int MaxSlots = 3;
-
-    public int SlotIndex { get; set; }
-
     public string DisplayName { get; set; } = string.Empty;
 
     public bool Enabled { get; set; }
@@ -56,33 +52,18 @@ public sealed class StationDeviceConfiguration
 {
     public string StationId { get; set; } = "STATION-01";
 
-    public int ActiveDeviceSlot { get; set; }
+    public StationDeviceEndpoint Device { get; set; } = CreateDefaultDevice();
 
-    public List<StationDeviceEndpoint> Devices { get; set; } = CreateDefaultDevices();
+    public static StationDeviceEndpoint CreateDefaultDevice() =>
+        new() { DisplayName = "IEMD-SD", Enabled = true };
 
-    public static List<StationDeviceEndpoint> CreateDefaultDevices()
-    {
-        return
-        [
-            new StationDeviceEndpoint { SlotIndex = 0, DisplayName = "Device 1", Enabled = true },
-            new StationDeviceEndpoint { SlotIndex = 1, DisplayName = "Device 2" },
-            new StationDeviceEndpoint { SlotIndex = 2, DisplayName = "Device 3" },
-        ];
-    }
-
-    public StationDeviceEndpoint? GetActiveDevice()
-    {
-        if (ActiveDeviceSlot < 0 || ActiveDeviceSlot >= Devices.Count)
-            return null;
-        return Devices[ActiveDeviceSlot];
-    }
+    public StationDeviceEndpoint? GetDevice() => Device;
 }
 
 public sealed record TestConnectionResult(bool Success, string Message);
 
-public sealed record ActiveDeviceSummary(
+public sealed record DeviceSummary(
     string StationId,
-    int SlotIndex,
     string DisplayName,
     string ConnectionDescription,
     bool IsEnabled);
@@ -99,13 +80,13 @@ public interface IStationDeviceService
 
     Task SaveAsync(StationDeviceConfiguration configuration, CancellationToken cancellationToken = default);
 
-    Task<TestConnectionResult> TestConnectionAsync(int slotIndex, CancellationToken cancellationToken = default);
+    Task<TestConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default);
 
-    Task<TestConnectionResult> ApplyActiveDeviceAsync(CancellationToken cancellationToken = default);
+    Task<TestConnectionResult> ApplyDeviceAsync(CancellationToken cancellationToken = default);
 
-    Task EnsureActiveClientAsync(CancellationToken cancellationToken = default);
+    Task EnsureClientAsync(CancellationToken cancellationToken = default);
 
-    ActiveDeviceSummary? GetActiveDeviceSummary();
+    DeviceSummary? GetDeviceSummary();
 
-    IIemdSdClient? GetActiveClient();
+    IIemdSdClient? GetClient();
 }
