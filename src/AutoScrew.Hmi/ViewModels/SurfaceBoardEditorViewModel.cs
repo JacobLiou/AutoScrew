@@ -3,9 +3,12 @@ using System.IO;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Options;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AutoScrew.Hmi.ViewModels;
@@ -18,6 +21,9 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     public IReadOnlyList<ScrewTypePreset> ScrewTypes => ScrewTypeCatalog.All;
 
     private readonly LocalizationService _localization;
+    private readonly IUserAuditService? _audit;
+    private readonly IOptions<AutoScrewAppOptions>? _appOptions;
+    private readonly ICurrentUser? _user;
     private string? _templateDirectory;
     private string? _productImageAbsolutePath;
     private string? _loadedSurfaceName;
@@ -55,9 +61,29 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     public event EventHandler? ContentChanged;
 
     public SurfaceBoardEditorViewModel(LocalizationService localization)
+        : this(localization, null, null, null)
+    {
+    }
+
+    public SurfaceBoardEditorViewModel(
+        LocalizationService localization,
+        IUserAuditService? audit,
+        IOptions<AutoScrewAppOptions>? appOptions,
+        ICurrentUser? user)
     {
         _localization = localization;
+        _audit = audit;
+        _appOptions = appOptions;
+        _user = user;
         _localization.CultureChanged += (_, _) => RefreshLocalizedMessages();
+    }
+
+    protected void AuditBoard(string action, string? detail = null)
+    {
+        if (_audit is null || _appOptions is null || _user is null)
+            return;
+
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, detail: detail);
     }
 
     public void LoadFrom(SurfaceLayoutDocument surface, string? templateDirectory)
@@ -133,6 +159,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     [RelayCommand]
     private void ApplyBoardSize()
     {
+        AuditBoard("Configuration.BoardApplySize", $"{BoardWidthInput}x{BoardHeightInput}");
         if (!double.TryParse(BoardWidthInput, out var w) || w <= 0 || w > 32_000)
         {
             StatusMessage = Loc.Get("S.Template.BoardWidthInvalid");
@@ -163,6 +190,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         if (dlg.ShowDialog() != true)
             return;
 
+        AuditBoard("Configuration.BoardLoadImage", dlg.FileName);
         try
         {
             LoadProductImageFromAbsolutePath(dlg.FileName);
@@ -177,6 +205,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanClearProductImage))]
     private void ClearProductImage()
     {
+        AuditBoard("Configuration.BoardClearImage");
         BoardImageSource = null;
         _productImageAbsolutePath = null;
         BoardImageOpacity = 1.0;
@@ -189,6 +218,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanMatchBoardToImage))]
     private void MatchBoardToImageSize()
     {
+        AuditBoard("Configuration.BoardMatchImageSize");
         if (BoardImageSource is not BitmapImage bmp)
             return;
 
@@ -264,6 +294,8 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         var toRemove = Markers.Where(m => m.IsSelected).ToList();
         if (toRemove.Count == 0)
             return;
+
+        AuditBoard("Configuration.BoardDeleteMarkers", $"count={toRemove.Count}");
 
         foreach (var m in toRemove)
             Markers.Remove(m);

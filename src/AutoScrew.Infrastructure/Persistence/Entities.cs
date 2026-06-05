@@ -82,3 +82,30 @@ public sealed class SessionCheckpointEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+public sealed class UserAuditLogEntity
+{
+    public long Id { get; set; }
+
+    public DateTimeOffset Timestamp { get; set; }
+
+    public string StationId { get; set; } = "";
+
+    public string UserId { get; set; } = "";
+
+    public string DisplayName { get; set; } = "";
+
+    public int Role { get; set; }
+
+    public int Category { get; set; }
+
+    public string Action { get; set; } = "";
+
+    public string? Target { get; set; }
+
+    public string? Detail { get; set; }
+
+    public bool Success { get; set; }
+
+    public string? SerialNumber { get; set; }
+}

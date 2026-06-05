@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="AutoScrew.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AutoScrew.Application\AutoScrew.Application.csproj" />
     <ProjectReference Include="..\AutoScrew.Domain\AutoScrew.Domain.csproj" />
     <ProjectReference Include="..\UDL.Delta.IemdSd\UDL.Delta.IemdSd.csproj" />

@@ -1,11 +1,14 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.BusinessDialog;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 
 namespace AutoScrew.Hmi.ViewModels;
@@ -20,13 +23,22 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private bool _suppressTreeSelectionHandling;
     private SurfaceListItemViewModel? _loadedSurface;
     private readonly LocalizationService _localization;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly ICurrentUser _user;
 
     public ProductTemplateEditorViewModel(
         SurfaceBoardEditorViewModel currentSurfaceEditor,
-        LocalizationService localization)
+        LocalizationService localization,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions,
+        ICurrentUser user)
     {
         CurrentSurfaceEditor = currentSurfaceEditor;
         _localization = localization;
+        _audit = audit;
+        _appOptions = appOptions;
+        _user = user;
         CurrentSurfaceEditor.ContentChanged += (_, _) => MarkDirty();
         _localization.CultureChanged += (_, _) => RefreshLocalizedUi();
         ProductTreeRoots = new ObservableCollection<ProductTemplateTreeRootViewModel>();
@@ -128,6 +140,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand]
     private void OpenProduct()
     {
+        AuditTemplate("Configuration.TemplateOpen");
         if (IsDirty && !ConfirmDiscardChanges())
             return;
 
@@ -160,6 +173,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand]
     private void SaveProduct()
     {
+        AuditTemplate("Configuration.TemplateSave", $"productId={ProductId};path={_filePath}");
         if (ProductRoot is null || string.IsNullOrWhiteSpace(ProductId))
         {
             StatusMessage = Loc.Get("S.Template.StatusNoProduct");
@@ -205,6 +219,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand]
     private void NewProduct()
     {
+        AuditTemplate("Configuration.TemplateNew");
         if (IsDirty && !ConfirmDiscardChanges())
             return;
 
@@ -221,6 +236,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand]
     private void AddSurface()
     {
+        AuditTemplate("Configuration.TemplateAddSurface", $"productId={ProductId}");
         if (!EnsureProductInfo())
             return;
 
@@ -256,6 +272,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanEditSelectedSurface))]
     private void EditSurface()
     {
+        AuditTemplate("Configuration.TemplateEditSurface", SelectedSurface?.SurfaceId);
         if (SelectedSurface is null)
             return;
 
@@ -291,6 +308,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanEditSelectedSurface))]
     private void DeleteSurface()
     {
+        AuditTemplate("Configuration.TemplateDeleteSurface", SelectedSurface?.SurfaceId);
         if (SelectedSurface is null || ProductRoot is null)
             return;
 
@@ -354,6 +372,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
     private void MoveSurface(int delta)
     {
+        AuditTemplate("Configuration.TemplateMoveSurface", $"surface={SelectedSurface?.SurfaceId};delta={delta}");
         if (SelectedSurface is null || ProductRoot is null)
             return;
 
@@ -637,6 +656,9 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         else if (ProductRoot is not null)
             StatusMessage = Loc.Format("S.Template.StatusSelectSurface", ProductRoot.TreeHeader, ProductRoot.Surfaces.Count);
     }
+
+    private void AuditTemplate(string action, string? detail = null) =>
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, detail: detail);
 
     private static bool ConfirmDiscardChanges() =>
         ConfirmTips.ShowDialog(Loc.Get("S.Template.ConfirmDiscard"));

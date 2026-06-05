@@ -1,3 +1,5 @@
+using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Application.Services;
 using AutoScrew.Domain.Models;
 using AutoScrew.Domain.Session;
@@ -6,6 +8,7 @@ using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels.Operation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Options;
 using System.Collections.ObjectModel;
 
 namespace AutoScrew.Hmi.ViewModels;
@@ -15,11 +18,22 @@ public partial class MainViewModel : ObservableObject
     private const int MaxLogEntries = 50;
     private readonly OperatorSessionController _session;
     private readonly LocalizationService _localization;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly ICurrentUser _user;
 
-    public MainViewModel(OperatorSessionController session, LocalizationService localization)
+    public MainViewModel(
+        OperatorSessionController session,
+        LocalizationService localization,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions,
+        ICurrentUser user)
     {
         _session = session;
         _localization = localization;
+        _audit = audit;
+        _appOptions = appOptions;
+        _user = user;
         _session.Changed += (_, _) =>
         {
             RefreshFromSession();
@@ -89,6 +103,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanOpenScan))]
     private void OpenScan()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.OpenScan");
         try
         {
             _session.RequestScanDialog();
@@ -104,6 +119,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSubmitSn))]
     private async Task SubmitSnAsync()
     {
+        AuditHelper.Log(
+            _audit,
+            _appOptions,
+            _user,
+            AuditCategory.Operation,
+            "Operation.SubmitSn",
+            detail: $"sn={SerialNumberInput.Trim()}");
         try
         {
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
@@ -131,6 +153,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanRunScrew))]
     private async Task RunCurrentScrewAsync()
     {
+        AuditHelper.Log(
+            _audit,
+            _appOptions,
+            _user,
+            AuditCategory.Operation,
+            "Operation.RunScrew",
+            detail: $"sn={_session.SerialNumber};screw={_session.CurrentScrewLocalIndex}",
+            serialNumber: _session.SerialNumber);
         try
         {
             var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
@@ -162,12 +192,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConfirmFlip))]
     private async Task ConfirmFlipAsync()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.ConfirmFlip", serialNumber: _session.SerialNumber);
         await PromptAndConfirmFlipAsync().ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanUnlockNg))]
     private void UnlockNg()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.UnlockNg", serialNumber: _session.SerialNumber);
         try
         {
             _session.UnlockNgContinue();
@@ -183,6 +215,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ResetSession()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.ResetSession", serialNumber: _session.SerialNumber);
         if (_session.Phase != JobSessionPhase.Idle
             && _session.Phase != JobSessionPhase.SnPending
             && !ConfirmTips.ShowDialog(Loc.Get("S.Dialog.AbortSession"), System.Windows.Application.Current.MainWindow))

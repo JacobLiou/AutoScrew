@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Infrastructure;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Options;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AutoScrew.Hmi.ViewModels;
@@ -16,6 +18,8 @@ public partial class LoginViewModel : ObservableObject
     private readonly IUserAuthenticationService _authentication;
     private readonly SessionCurrentUser _currentUser;
     private readonly LocalizationService _localization;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
 
     /// <summary>从本机凭据存储读出的口令，由 <see cref="LoginWindow"/> 在窗口就绪后写入密码框并清空。</summary>
     private string? _deferredRememberedPassword;
@@ -23,11 +27,15 @@ public partial class LoginViewModel : ObservableObject
     public LoginViewModel(
         IUserAuthenticationService authentication,
         SessionCurrentUser currentUser,
-        LocalizationService localization)
+        LocalizationService localization,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions)
     {
         _authentication = authentication;
         _currentUser = currentUser;
         _localization = localization;
+        _audit = audit;
+        _appOptions = appOptions;
         _selectedCulture = _localization.CurrentCultureName;
         _cultureOptions = new ObservableCollection<UiCultureOption>(UiCultureCatalog.CreateOptions());
         _localization.CultureChanged += OnLocalizationCultureChanged;
@@ -120,6 +128,15 @@ public partial class LoginViewModel : ObservableObject
         if (!result.Success)
         {
             ErrorMessage = result.ErrorMessage ?? Loc.Get("S.Login.Failed");
+            AuditHelper.LogAuth(
+                _audit,
+                _appOptions,
+                UserName.Trim(),
+                UserName.Trim(),
+                UserRole.Operator,
+                "Auth.LoginFailed",
+                ErrorMessage,
+                success: false);
             return;
         }
 
@@ -141,6 +158,14 @@ public partial class LoginViewModel : ObservableObject
             result.MimsPersonId,
             result.MimsRoleId,
             result.MimsRoleType);
+        AuditHelper.LogAuth(
+            _audit,
+            _appOptions,
+            result.UserId,
+            result.DisplayName,
+            result.Role,
+            "Auth.LoginSuccess",
+            $"role={result.Role}");
         CloseRequested?.Invoke(this, true);
     }
 

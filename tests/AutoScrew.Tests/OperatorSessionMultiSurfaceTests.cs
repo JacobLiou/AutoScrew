@@ -119,6 +119,7 @@ public sealed class OperatorSessionMultiSurfaceTests
                 outbox,
                 user,
                 options,
+                new NoOpUserAuditService(),
                 NullLogger<OperatorSessionController>.Instance);
 
             var fixture = new MultiSurfaceFixture(controller, tempDir);
@@ -201,5 +202,12 @@ public sealed class OperatorSessionMultiSurfaceTests
         public int? MimsPersonId => null;
         public int? MimsRoleId => null;
         public int? MimsRoleType => null;
+    }
+
+    private sealed class NoOpUserAuditService : IUserAuditService
+    {
+        public void Log(UserAuditEntry entry)
+        {
+        }
     }
 }

@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -37,6 +39,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
     private readonly LocalizationService _localization;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ILogger<MainShellViewModel> _logger;
 
     public MainShellViewModel(
@@ -44,12 +48,16 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         ICurrentUser currentUser,
         IAppSessionCoordinator sessionCoordinator,
         LocalizationService localization,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions,
         ILogger<MainShellViewModel> logger)
     {
         _navigationService = navigationService;
         _currentUser = currentUser;
         _sessionCoordinator = sessionCoordinator;
         _localization = localization;
+        _audit = audit;
+        _appOptions = appOptions;
         _logger = logger;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
@@ -61,6 +69,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         RefreshLocalizedChrome();
         Breadcrumb = GetDefaultBreadcrumb();
     }
+
+    public void AuditNavigation(string target, string? detail = null) =>
+        AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.Navigation, "Navigate.Page", target, detail);
 
     public Type GetDefaultPageType()
     {
@@ -84,6 +95,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             _ => MainAppSection.Mes
         };
         Breadcrumb = GetDefaultBreadcrumb();
+        AuditNavigation(pageType.Name);
     }
 
     private string GetDefaultBreadcrumb() =>
@@ -193,6 +205,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
             SelectedSection = MainAppSection.Settings;
+
+        if (pageType is not null)
+            AuditNavigation(pageType.Name, Breadcrumb);
     }
 
     private static string FormatNavigationItemTitle(INavigationViewItem item)
@@ -234,10 +249,18 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void OpenNotepad() => Process.Start("notepad.exe");
+    private void OpenNotepad()
+    {
+        AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.OpenNotepad");
+        Process.Start("notepad.exe");
+    }
 
     [RelayCommand]
-    private void OpenCalc() => Process.Start("calc.exe");
+    private void OpenCalc()
+    {
+        AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.OpenCalculator");
+        Process.Start("calc.exe");
+    }
 
     [RelayCommand]
     private async Task PrintScreenAsync()
@@ -276,10 +299,12 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             encoder.Frames.Add(BitmapFrame.Create(bitmap));
             await using var stream = File.Create(fileDialog.FileName);
             encoder.Save(stream);
+            AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.Screenshot", fileDialog.FileName);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "程序截屏失败");
+            AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.Screenshot", success: false, detail: ex.Message);
             MessageTips.ShowDialog(
                 Loc.Get("S.Shell.ScreenshotFailed"),
                 System.Windows.Application.Current.MainWindow,
@@ -290,6 +315,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ExplorerLogs()
     {
+        AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.OpenLogsFolder");
         try
         {
             Process.Start("explorer.exe", $"{AppContext.BaseDirectory}Logs");
@@ -303,6 +329,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenAppPath()
     {
+        AuditHelper.Log(_audit, _appOptions, _currentUser, AuditCategory.System, "System.OpenAppPath");
         try
         {
             Process.Start("explorer.exe", "\"" + AppDomain.CurrentDomain.BaseDirectory + "\"");

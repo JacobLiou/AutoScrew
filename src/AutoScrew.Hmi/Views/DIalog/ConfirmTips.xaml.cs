@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Input;
+using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
 
 namespace AutoScrew.Hmi.Dialog;
@@ -24,6 +25,19 @@ public partial class ConfirmTips
         tips.Owner = owner ?? System.Windows.Application.Current.MainWindow;
         tips.WindowStartupLocation = WindowStartupLocation.CenterOwner;
         tips.ShowDialog();
+        if (AuditContext.IsInitialized)
+        {
+            var summary = message.Length > 200 ? message[..200] + "…" : message;
+            AuditHelper.Log(
+                AuditContext.Audit,
+                AuditContext.Options,
+                AuditContext.User,
+                AuditCategory.Dialog,
+                "Dialog.Confirm",
+                title,
+                $"message={summary};result={tips.Result}");
+        }
+
         return tips.Result;
     }
 

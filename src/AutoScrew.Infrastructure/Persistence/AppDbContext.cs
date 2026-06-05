@@ -14,6 +14,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<SessionCheckpointEntity> SessionCheckpoints => Set<SessionCheckpointEntity>();
 
+    public DbSet<UserAuditLogEntity> UserAuditLogs => Set<UserAuditLogEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<LockRecordEntity>(e =>
@@ -43,5 +45,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         });
 
         modelBuilder.Entity<SessionCheckpointEntity>(e => { e.HasKey(x => x.Id); });
+
+        modelBuilder.Entity<UserAuditLogEntity>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Timestamp);
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.Category);
+            e.HasIndex(x => x.Action);
+        });
     }
 }

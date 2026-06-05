@@ -20,6 +20,16 @@
 - `lock_records` / `screw_details` / `error_logs`：表已建，完整写入路径可在后续迭代接 `OperatorSessionController`。
 - `session_checkpoints`：作业断电恢复 checkpoint（JSON）。
 - `outbox_uploads`：MES 上传重试队列。
+- `user_audit_logs`：用户操作审计（仅追加 INSERT，HMI 无删除 API）。
+
+## 用户操作审计（操作员 / 技术员）
+
+- **开关**：`AutoScrew:AuditLogEnabled`（默认 `true`）。
+- **JSONL**：`{AuditDirectory}/user-audit-{yyyy-MM-dd}.jsonl`；`AuditDirectory` 为空时使用 `{DataDirectory}/audit`。
+- **SQLite 表**：`user_audit_logs`（字段：`Timestamp`、`StationId`、`UserId`、`DisplayName`、`Role`、`Category`、`Action`、`Target`、`Detail`、`Success`、`SerialNumber`）。
+- **采集**：登录/登出、页面导航、全局按钮点击、确认框、设置变更、作业台业务动作、技术员配置（模板/设备/拧紧参数）。
+- **禁止写入**：口令明文、完整 Modbus 参数块。
+- **保留**：现场按 IT 策略备份 `audit` 目录与 `autoscrew.db`；HMI 不提供审计删除入口。
 
 ## 多面产品模板（草案）
 

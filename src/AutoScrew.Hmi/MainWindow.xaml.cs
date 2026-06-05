@@ -1,8 +1,15 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
+using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
+using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using AutoScrew.Hmi.Views.Pages;
 using Wpf.Ui;
+using Wpf.Ui.Abstractions.Controls;
 using Wpf.Ui.Controls;
 
 namespace AutoScrew.Hmi;
@@ -27,12 +34,67 @@ public partial class MainWindow : FluentWindow
         contentDialogService.SetDialogHost(RootContentDialog);
         _navigationService.SetNavigationControl(NavigationView);
         Loaded += OnMainWindowLoaded;
+        AddHandler(
+            System.Windows.Controls.Primitives.ButtonBase.ClickEvent,
+            new RoutedEventHandler(OnAuditedUiClick),
+            handledEventsToo: true);
+        AddHandler(
+            System.Windows.Controls.MenuItem.ClickEvent,
+            new RoutedEventHandler(OnAuditedMenuClick),
+            handledEventsToo: true);
     }
 
     private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnMainWindowLoaded;
         Dispatcher.BeginInvoke(NavigateToDefaultPageCore, DispatcherPriority.Loaded);
+    }
+
+    private void OnAuditedUiClick(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not System.Windows.Controls.Primitives.ButtonBase button || !AuditContext.IsInitialized)
+            return;
+
+        var label = ExtractControlLabel(button);
+        if (string.IsNullOrWhiteSpace(label))
+            return;
+
+        var page = (NavigationView.SelectedItem as INavigationViewItem)?.TargetPageType?.Name ?? "Unknown";
+        var hasCommand = button.Command is not null;
+        AuditHelper.Log(
+            AuditContext.Audit,
+            AuditContext.Options,
+            AuditContext.User,
+            AuditCategory.UiAction,
+            "UiAction.Click",
+            label,
+            $"page={page};hasCommand={hasCommand}");
+    }
+
+    private void OnAuditedMenuClick(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not System.Windows.Controls.MenuItem item || !AuditContext.IsInitialized)
+            return;
+
+        var label = item.Header?.ToString();
+        if (string.IsNullOrWhiteSpace(label))
+            return;
+
+        AuditHelper.Log(
+            AuditContext.Audit,
+            AuditContext.Options,
+            AuditContext.User,
+            AuditCategory.UiAction,
+            "UiAction.MenuClick",
+            label);
+    }
+
+    private static string? ExtractControlLabel(System.Windows.Controls.Primitives.ButtonBase button)
+    {
+        if (button.Content is string s)
+            return s;
+
+        return button.Content?.ToString();
     }
 
     private void NavigateToDefaultPageCore()

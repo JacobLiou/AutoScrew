@@ -1,5 +1,7 @@
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
+using Microsoft.Extensions.Options;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
@@ -130,11 +132,22 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
 {
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly ICurrentUser _user;
 
-    public DeviceConnectionViewModel(IStationDeviceService devices, ISnackbarService snackbarService)
+    public DeviceConnectionViewModel(
+        IStationDeviceService devices,
+        ISnackbarService snackbarService,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions,
+        ICurrentUser user)
     {
         _devices = devices;
         _snackbarService = snackbarService;
+        _audit = audit;
+        _appOptions = appOptions;
+        _user = user;
         Slots =
         [
             new StationDeviceSlotEditor(0),
@@ -191,6 +204,7 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
         if (slotIndex < 0 || slotIndex >= Slots.Count)
             return;
 
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceSetActive", detail: $"slot={slotIndex}");
         for (var i = 0; i < Slots.Count; i++)
             Slots[i].IsActive = i == slotIndex;
         SelectedSlotIndex = slotIndex;
@@ -199,6 +213,7 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAsync()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceSave", detail: $"activeSlot={SelectedSlotIndex}");
         try
         {
             var config = BuildConfiguration();
@@ -216,10 +231,12 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseRuntimeDevice))]
     private async Task TestConnectionAsync()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceTest", detail: $"slot={SelectedSlotIndex}");
         try
         {
             await _devices.SaveAsync(BuildConfiguration()).ConfigureAwait(true);
             var result = await _devices.TestConnectionAsync(SelectedSlotIndex).ConfigureAwait(true);
+            AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceTestResult", detail: result.Message, success: result.Success);
             StatusMessage = result.Message;
             ShowSnackbar(result.Message, result.Success ? ControlAppearance.Success : ControlAppearance.Danger);
         }
@@ -233,10 +250,12 @@ public sealed partial class DeviceConnectionViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseRuntimeDevice))]
     private async Task ApplyAsync()
     {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceApply");
         try
         {
             await _devices.SaveAsync(BuildConfiguration()).ConfigureAwait(true);
             var result = await _devices.ApplyActiveDeviceAsync().ConfigureAwait(true);
+            AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, "Configuration.DeviceApplyResult", detail: result.Message, success: result.Success);
             StatusMessage = result.Message;
             ShowSnackbar(result.Message, result.Success ? ControlAppearance.Success : ControlAppearance.Danger);
         }

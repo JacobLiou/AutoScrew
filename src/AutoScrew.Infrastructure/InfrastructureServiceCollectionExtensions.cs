@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Infrastructure.Audit;
 using AutoScrew.Infrastructure.Authentication;
 using AutoScrew.Infrastructure.Background;
 using AutoScrew.Infrastructure.Files;
@@ -30,6 +31,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ICurveArchive, LocalCurveArchive>();
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
+        services.AddSingleton<JsonlUserAuditStore>();
+        services.AddSingleton<UserAuditService>();
+        services.AddSingleton<IUserAuditService>(sp => sp.GetRequiredService<UserAuditService>());
+        services.AddHostedService<UserAuditBackgroundService>();
 
         var appOpts = configuration.GetSection(AutoScrewAppOptions.SectionName).Get<AutoScrewAppOptions>() ?? new AutoScrewAppOptions();
         services.AddStationDeviceServices(configuration);
@@ -88,6 +93,9 @@ public static class InfrastructureServiceCollectionExtensions
 
             if (!string.IsNullOrWhiteSpace(o.OptionalNetworkArchiveRoot) && !Path.IsPathRooted(o.OptionalNetworkArchiveRoot))
                 o.OptionalNetworkArchiveRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, o.OptionalNetworkArchiveRoot));
+
+            if (!string.IsNullOrWhiteSpace(o.AuditDirectory) && !Path.IsPathRooted(o.AuditDirectory))
+                o.AuditDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, o.AuditDirectory));
         });
 
         return services;

@@ -17,7 +17,9 @@
     "DataDirectory": "",
     "TemplateDirectory": "Samples",
     "StationId": "STATION-01",
-    "UiCulture": "zh-CN"
+    "UiCulture": "zh-CN",
+    "AuditLogEnabled": true,
+    "AuditDirectory": ""
   },
   "IemdSd": {
     "_comment": "Legacy seed for first-run migration to DataDirectory/stations/{StationId}/devices.json. Device connection is managed in HMI.",

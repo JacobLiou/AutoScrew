@@ -2,6 +2,7 @@ using System.Windows;
 using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Infrastructure;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Hmi.Views.Pages;
@@ -96,6 +97,11 @@ public partial class App : System.Windows.Application
         var appOptions = _host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AutoScrewAppOptions>>().Value;
         localization.Initialize(appOptions.UiCulture);
         Loc.Initialize(localization);
+
+        AuditContext.Initialize(
+            _host.Services.GetRequiredService<IUserAuditService>(),
+            _host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AutoScrewAppOptions>>(),
+            _host.Services.GetRequiredService<ICurrentUser>());
 
         var login = _host.Services.GetRequiredService<LoginWindow>();
         var loginOk = login.ShowDialog() == true;

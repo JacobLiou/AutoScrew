@@ -24,6 +24,7 @@ public sealed class OperatorSessionController
     private readonly IOutboundMesQueue _outbox;
     private readonly ICurrentUser _currentUser;
     private readonly IOptions<AutoScrewAppOptions> _options;
+    private readonly IUserAuditService _audit;
     private readonly ILogger<OperatorSessionController> _logger;
 
     private JobSessionPhase _phase = JobSessionPhase.Idle;
@@ -55,6 +56,7 @@ public sealed class OperatorSessionController
         IOutboundMesQueue outbox,
         ICurrentUser currentUser,
         IOptions<AutoScrewAppOptions> options,
+        IUserAuditService audit,
         ILogger<OperatorSessionController> logger)
     {
         _mesClient = mesClient;
@@ -65,6 +67,7 @@ public sealed class OperatorSessionController
         _outbox = outbox;
         _currentUser = currentUser;
         _options = options;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -143,6 +146,7 @@ public sealed class OperatorSessionController
             _serialNumber = serialNumber.Trim();
             TryApply(JobSessionTrigger.SnRejected);
             _lastErrorMessage = validation.Message ?? "SN invalid.";
+            AuditOperation("Operation.SnRejected", $"sn={_serialNumber}", success: false, _serialNumber);
             NotifyChanged();
             return;
         }
@@ -152,6 +156,7 @@ public sealed class OperatorSessionController
         if (!TryApply(JobSessionTrigger.SnValidated))
             throw new InvalidOperationException("State error after SN validation.");
 
+        AuditOperation("Operation.SnAccepted", $"sn={_serialNumber};pn={_partNumber}");
         await LoadRecipeAndTemplateAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -270,6 +275,9 @@ public sealed class OperatorSessionController
         if (!TryApply(JobSessionTrigger.SurfaceAdvanceConfirmed))
             throw new InvalidOperationException("State machine rejected SurfaceAdvanceConfirmed.");
 
+        AuditOperation(
+            "Operation.SurfaceFlip",
+            $"surface={_activeSurfaceId};ordinal={_activeSurfaceOrdinal}");
         NotifyChanged();
     }
 
@@ -450,6 +458,11 @@ public sealed class OperatorSessionController
             await LogErrorAsync(idx, eval, device, cancellationToken).ConfigureAwait(false);
         }
 
+        AuditOperation(
+            combinedOk ? "Operation.ScrewOk" : "Operation.ScrewNg",
+            $"surface={_activeSurfaceId};screw={localIndex};global={globalIndex};error={errorCode}",
+            success: combinedOk);
+
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
         NotifyChanged();
     }
@@ -563,6 +576,7 @@ public sealed class OperatorSessionController
         if (_activeSurfaceOrdinal < _surfaces.Count)
             _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
 
+        AuditOperation("Operation.UnlockNg", $"sn={_serialNumber}");
         NotifyChanged();
     }
 
@@ -571,6 +585,7 @@ public sealed class OperatorSessionController
         if (!TryApply(JobSessionTrigger.ResetToIdle))
             TryApply(JobSessionTrigger.Abort);
 
+        AuditOperation("Operation.ResetSession", $"sn={_serialNumber}");
         ClearSession();
         NotifyChanged();
     }
@@ -654,6 +669,20 @@ public sealed class OperatorSessionController
 
         await _checkpointStore.SaveCheckpointAsync(data, cancellationToken).ConfigureAwait(false);
     }
+
+    private void AuditOperation(string action, string? detail, bool success = true, string? serialNumber = null) =>
+        _audit.Log(new UserAuditEntry(
+            DateTimeOffset.Now,
+            _options.Value.StationId,
+            _currentUser.UserId,
+            _currentUser.DisplayName,
+            _currentUser.Role,
+            AuditCategory.Operation,
+            action,
+            null,
+            detail,
+            success,
+            serialNumber ?? _serialNumber));
 
     private sealed class OrderedSurfaceRuntime
     {

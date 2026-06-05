@@ -1,7 +1,9 @@
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -45,16 +47,25 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private readonly IControllerParameterPresetService _presetService;
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
+    private readonly IUserAuditService _audit;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly ICurrentUser _user;
     private TighteningParameterTemplate _working = new();
 
     public ControllerParameterViewModel(
         IControllerParameterPresetService presetService,
         IStationDeviceService devices,
-        ISnackbarService snackbarService)
+        ISnackbarService snackbarService,
+        IUserAuditService audit,
+        IOptions<AutoScrewAppOptions> appOptions,
+        ICurrentUser user)
     {
         _presetService = presetService;
         _devices = devices;
         _snackbarService = snackbarService;
+        _audit = audit;
+        _appOptions = appOptions;
+        _user = user;
         Presets = new ObservableCollection<ControllerParameterListItem>();
         StageItems = new ObservableCollection<ControllerParameterStageItem>();
         RebuildStageItems();
@@ -133,6 +144,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [RelayCommand]
     private void NewPreset()
     {
+        AuditConfig("Configuration.ParamNew");
         StartNewPreset();
         StatusMessage = Loc.Get("S.ControllerParam.StatusNew");
     }
@@ -140,6 +152,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveLocalAsync()
     {
+        AuditConfig("Configuration.ParamSaveLocal", $"paramId={ParameterId};name={Name}");
         try
         {
             var template = BuildWorkingTemplate();
@@ -162,6 +175,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (ParameterId <= 0)
             return;
 
+        AuditConfig("Configuration.ParamDeleteLocal", $"paramId={ParameterId}");
         try
         {
             await _presetService.DeleteLocalPresetAsync(ParameterId).ConfigureAwait(true);
@@ -182,6 +196,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseDevice))]
     private async Task ReadFromDeviceAsync()
     {
+        AuditConfig("Configuration.ParamReadDevice", $"paramId={ParameterId}");
         try
         {
             var template = await _presetService.ReadFromDeviceAsync(ParameterId).ConfigureAwait(true);
@@ -207,6 +222,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseDevice))]
     private async Task WriteToDeviceAsync()
     {
+        AuditConfig("Configuration.ParamWriteDevice", $"paramId={ParameterId};name={Name}");
         try
         {
             var template = BuildWorkingTemplate();
@@ -234,6 +250,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUseDevice))]
     private async Task ActivateOnDeviceAsync()
     {
+        AuditConfig("Configuration.ParamActivate", $"paramId={ParameterId}");
         try
         {
             await _presetService.ActivateOnDeviceAsync(ParameterId).ConfigureAwait(true);
@@ -266,6 +283,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (dialog.ShowDialog() != true)
             return;
 
+        AuditConfig("Configuration.ParamImport", dialog.FileName);
         try
         {
             var template = await _presetService.ImportFromFileAsync(dialog.FileName).ConfigureAwait(true);
@@ -291,6 +309,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (dialog.ShowDialog() != true)
             return;
 
+        AuditConfig("Configuration.ParamExport", $"paramId={ParameterId};file={dialog.FileName}");
         try
         {
             await _presetService.ExportToFileAsync(BuildWorkingTemplate(), dialog.FileName).ConfigureAwait(true);
@@ -374,6 +393,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _working.ApplyCoreToRaw();
         return _working;
     }
+
+    private void AuditConfig(string action, string? detail = null) =>
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, detail: detail);
 
     private string BuildDeviceStatusText()
     {
