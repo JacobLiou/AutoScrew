@@ -41,7 +41,10 @@ public partial class MainWindow : FluentWindow
             return;
 
         _defaultPageNavigated = true;
-        _navigationService.Navigate(typeof(OperationNavPage));
+        if (DataContext is MainShellViewModel shell)
+            shell.NavigateToDefaultPage();
+        else
+            _navigationService.Navigate(typeof(OperationNavPage));
     }
 
     private void RootNavigationView_OnSelectionChanged(NavigationView sender, RoutedEventArgs e)

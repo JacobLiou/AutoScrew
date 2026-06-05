@@ -40,6 +40,7 @@
     <system:String x:Key="S.Nav.DeviceConnection">Device Connection</system:String>
     <system:String x:Key="S.Nav.Settings">Settings</system:String>
     <system:String x:Key="S.Nav.BreadcrumbDefault">Workstation</system:String>
+    <system:String x:Key="S.Nav.BreadcrumbConfigurationDefault">Configuration</system:String>
 
     <system:String x:Key="S.Shell.Notepad">Notepad</system:String>
     <system:String x:Key="S.Shell.Calculator">Calculator</system:String>

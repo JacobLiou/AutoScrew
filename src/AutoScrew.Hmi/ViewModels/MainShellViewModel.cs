@@ -59,8 +59,37 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         RefreshUserBanner();
         UpdateSidebarSymbol();
         RefreshLocalizedChrome();
-        Breadcrumb = Loc.Get("S.Nav.BreadcrumbDefault");
+        Breadcrumb = GetDefaultBreadcrumb();
     }
+
+    public Type GetDefaultPageType()
+    {
+        if (CanUseOperation)
+            return typeof(OperationNavPage);
+
+        if (CanUseConfiguration)
+            return typeof(TemplateNavPage);
+
+        return typeof(MesPage);
+    }
+
+    public void NavigateToDefaultPage()
+    {
+        var pageType = GetDefaultPageType();
+        _navigationService.Navigate(pageType);
+        SelectedSection = pageType switch
+        {
+            var t when t == typeof(OperationNavPage) => MainAppSection.Operation,
+            var t when t == typeof(TemplateNavPage) => MainAppSection.Template,
+            _ => MainAppSection.Mes
+        };
+        Breadcrumb = GetDefaultBreadcrumb();
+    }
+
+    private string GetDefaultBreadcrumb() =>
+        CanUseOperation
+            ? Loc.Get("S.Nav.BreadcrumbDefault")
+            : Loc.Get("S.Nav.BreadcrumbConfigurationDefault");
 
     public void Dispose()
     {
@@ -77,7 +106,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         RefreshUserBanner();
         OnPropertyChanged(nameof(SidebarToggleHint));
         OnPropertyChanged(nameof(AppTitle));
-        Breadcrumb = Loc.Get("S.Nav.BreadcrumbDefault");
+        Breadcrumb = GetDefaultBreadcrumb();
         EnsureRoleAllowedSection();
     }
 
@@ -117,7 +146,13 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private MainAppSection _selectedSection = MainAppSection.Operation;
 
-    public bool CanUseTemplateBoard => _currentUser.Role >= UserRole.Technician;
+    public bool CanUseConfiguration => _currentUser.Role >= UserRole.Technician;
+
+    public bool CanUseOperation =>
+        _currentUser.Role == UserRole.Operator || _currentUser.Role == UserRole.Administrator;
+
+    /// <summary>螺钉模板等配置页（技术员及以上）。</summary>
+    public bool CanUseTemplateBoard => CanUseConfiguration;
 
     [ObservableProperty]
     private string _breadcrumb = "";
@@ -173,7 +208,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ToggleSidebar() => IsSidebarVisible = !IsSidebarVisible;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanUseOperation))]
     private void NavigateOperation() => NavigateToSection(MainAppSection.Operation);
 
     [RelayCommand(CanExecute = nameof(CanNavigateTemplate))]
@@ -289,8 +324,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             or nameof(ICurrentUser.UserId))
         {
             RefreshUserBanner();
+            OnPropertyChanged(nameof(CanUseConfiguration));
+            OnPropertyChanged(nameof(CanUseOperation));
             OnPropertyChanged(nameof(CanUseTemplateBoard));
             NavigateTemplateCommand.NotifyCanExecuteChanged();
+            NavigateOperationCommand.NotifyCanExecuteChanged();
             RebuildMenuItems();
             EnsureRoleAllowedSection();
         }
@@ -306,28 +344,34 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void EnsureRoleAllowedSection()
     {
-        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
-            NavigateToSection(MainAppSection.Operation);
-        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.ControllerParameters)
-            NavigateToSection(MainAppSection.Operation);
-        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.DeviceConnection)
-            NavigateToSection(MainAppSection.Operation);
+        if (!CanUseConfiguration && IsConfigurationSection(SelectedSection))
+            NavigateToDefaultPage();
+        else if (!CanUseOperation && SelectedSection == MainAppSection.Operation)
+            NavigateToDefaultPage();
     }
+
+    private static bool IsConfigurationSection(MainAppSection section) =>
+        section is MainAppSection.Template
+            or MainAppSection.ControllerParameters
+            or MainAppSection.DeviceConnection;
 
     private void RebuildMenuItems()
     {
-        var operationItem = new NavigationViewItem
-        {
-            Content = Loc.Get("S.Nav.Operation"),
-            Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
-            TargetPageType = typeof(OperationNavPage),
-            TargetPageTag = "operation"
-        };
+        var items = new ObservableCollection<object>();
 
-        var items = new ObservableCollection<object> { operationItem };
+        if (CanUseOperation)
+        {
+            items.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.Operation"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
+                TargetPageType = typeof(OperationNavPage),
+                TargetPageTag = "operation"
+            });
+        }
 
         NavigationViewItem? configurationGroup = null;
-        if (CanUseTemplateBoard)
+        if (CanUseConfiguration)
         {
             configurationGroup = new NavigationViewItem
             {
@@ -359,7 +403,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             IsExpanded = true
         };
 
-        if (CanUseTemplateBoard)
+        if (CanUseConfiguration)
         {
             systemGroup.MenuItems.Add(new NavigationViewItem
             {
