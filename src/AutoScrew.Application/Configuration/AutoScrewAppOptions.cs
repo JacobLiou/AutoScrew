@@ -28,4 +28,13 @@ public sealed class AutoScrewAppOptions
 
     /// <summary>审计 JSONL 目录；空则使用 {DataDirectory}/audit。</summary>
     public string AuditDirectory { get; set; } = "";
+
+    /// <summary>Running 阶段对待打 Pending 钉自动进入取钉+拧紧周期（Manual 扳机仍由电批完成）。</summary>
+    public bool AutoRunScrewCycle { get; set; } = true;
+
+    /// <summary>上一钉 OK 后是否立即自动进入下一 Pending 钉（false 时放钉后需技术员按钮或再次调度）。</summary>
+    public bool AutoChainNextScrew { get; set; }
+
+    /// <summary>作业台显示「当前螺钉：取钉+拧紧」维护按钮（技术员及以上始终可见）。</summary>
+    public bool ShowManualRunScrewButton { get; set; } = true;
 }

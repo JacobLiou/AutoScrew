@@ -11,6 +11,7 @@ internal sealed class ModbusRtuTransport : IModbusTransport
     private readonly ILogger _logger;
     private readonly IemdSdClientOptions _options;
     private readonly int _readWindowSize;
+    private readonly int _interFrameDelayMs;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private SerialPort? _serialPort;
     private IModbusMaster? _master;
@@ -20,6 +21,7 @@ internal sealed class ModbusRtuTransport : IModbusTransport
         _options = options;
         _logger = logger;
         _readWindowSize = options.ReadWindowSize;
+        _interFrameDelayMs = Math.Max(0, options.RtuInterFrameDelayMs);
     }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
@@ -90,6 +92,7 @@ internal sealed class ModbusRtuTransport : IModbusTransport
             EnsureMaster();
             await _master!.WriteSingleRegisterAsync(_options.ModbusSlaveId, (ushort)address, (ushort)value)
                 .ConfigureAwait(false);
+            await ApplyInterFrameDelayAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (IemdSdCommunicationException)
         {
@@ -158,8 +161,14 @@ internal sealed class ModbusRtuTransport : IModbusTransport
                 slice[i] = (ushort)values[offset + i];
             await _master!.WriteMultipleRegistersAsync(_options.ModbusSlaveId, (ushort)(address + offset), slice)
                 .ConfigureAwait(false);
+            await ApplyInterFrameDelayAsync(cancellationToken).ConfigureAwait(false);
         }
     }
+
+    private Task ApplyInterFrameDelayAsync(CancellationToken cancellationToken) =>
+        _interFrameDelayMs > 0
+            ? Task.Delay(_interFrameDelayMs, cancellationToken)
+            : Task.CompletedTask;
 
     private void EnsureMaster()
     {

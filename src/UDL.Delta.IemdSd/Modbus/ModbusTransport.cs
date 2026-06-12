@@ -9,18 +9,19 @@ internal sealed class ModbusTransport : IModbusTransport
 {
     private readonly string _host;
     private readonly int _port;
+    private readonly byte _slaveId;
     private readonly ILogger _logger;
     private readonly int _readWindowSize;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private TcpClient? _tcpClient;
     private IModbusMaster? _master;
-    private const byte SlaveId = 1;
 
     public ModbusTransport(IemdSdClientOptions options, ILogger logger)
     {
         _logger = logger;
         _host = options.Host;
         _port = options.Port;
+        _slaveId = options.ModbusSlaveId;
         _readWindowSize = options.ReadWindowSize;
     }
 
@@ -94,7 +95,7 @@ internal sealed class ModbusTransport : IModbusTransport
         try
         {
             EnsureMaster();
-            await _master!.WriteSingleRegisterAsync(SlaveId, (ushort)address, (ushort)value).ConfigureAwait(false);
+            await _master!.WriteSingleRegisterAsync(_slaveId, (ushort)address, (ushort)value).ConfigureAwait(false);
         }
         catch (IemdSdCommunicationException)
         {
@@ -139,7 +140,7 @@ internal sealed class ModbusTransport : IModbusTransport
         {
             cancellationToken.ThrowIfCancellationRequested();
             var chunk = (ushort)Math.Min(_readWindowSize, count - offset);
-            var data = await _master!.ReadHoldingRegistersAsync(SlaveId, (ushort)(address + offset), chunk).ConfigureAwait(false);
+            var data = await _master!.ReadHoldingRegistersAsync(_slaveId, (ushort)(address + offset), chunk).ConfigureAwait(false);
             for (var i = 0; i < chunk; i++)
                 result[offset + i] = data[i];
         }
@@ -156,7 +157,7 @@ internal sealed class ModbusTransport : IModbusTransport
             var slice = new ushort[chunk];
             for (var i = 0; i < chunk; i++)
                 slice[i] = (ushort)values[offset + i];
-            await _master!.WriteMultipleRegistersAsync(SlaveId, (ushort)(address + offset), slice).ConfigureAwait(false);
+            await _master!.WriteMultipleRegistersAsync(_slaveId, (ushort)(address + offset), slice).ConfigureAwait(false);
         }
     }
 

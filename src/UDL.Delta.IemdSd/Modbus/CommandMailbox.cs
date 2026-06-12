@@ -3,7 +3,7 @@ using UDL.Delta.IemdSd.Exceptions;
 
 namespace UDL.Delta.IemdSd.Modbus;
 
-internal sealed class CommandMailbox
+internal sealed class CommandMailbox : ICommandMailbox
 {
     private readonly IModbusTransport _transport;
     private readonly ILogger _logger;
@@ -52,6 +52,8 @@ internal sealed class CommandMailbox
             CommandCode = commandCode,
         };
     }
+
+    public static int[] CreateEmptyRequest() => new int[10];
 
     public static int[] CreateRequest(
         int commandCode,

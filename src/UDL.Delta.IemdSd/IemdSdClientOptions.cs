@@ -41,6 +41,9 @@ public sealed class IemdSdClientOptions
     public int TighteningPollIntervalMs { get; set; } = 100;
 
     public int ReadWindowSize { get; set; } = 120;
+
+    /// <summary>RTU inter-frame delay after each write (manual Appendix B, default 10 ms).</summary>
+    public int RtuInterFrameDelayMs { get; set; } = 10;
 }
 
 public sealed class IemdSdInitOptions

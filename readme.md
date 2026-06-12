@@ -89,6 +89,8 @@ flowchart LR
 | [doc/MULTI_SURFACE_TEMPLATE.md](doc/MULTI_SURFACE_TEMPLATE.md) | 多面产品模板 JSON 契约（草案） |
 | [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | 多面模板 / 作业 HMI 线框（草案） |
 | [doc/driverAnaC.md](doc/driverAnaC.md) | 智能电批 Modbus/FTP 通信与厂商 Demo 梳理 |
+| [doc/IEMD_SD_MODBUS_COMMANDS.md](doc/IEMD_SD_MODBUS_COMMANDS.md) | IEMD-SD 附录功能码目录（TCP/RTU 通用） |
+| `src/UDL.Delta.IemdSd` | 台达 IEMD-SD 驱动：`ExecuteModbusCommandAsync` + 产线强类型 API |
 | [doc/智能锁附系统开发 (V1).xls](<doc/智能锁附系统开发 (V1).xls>) | 原始需求与验收表（含图） |
 | `src/` | 应用软件代码（待建） |
 

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace UDL.Delta.IemdSd.Protocol;
 
 public sealed class TighteningStageCore
@@ -29,6 +31,7 @@ public sealed class TighteningStageCore
     public int FinalSpeedRpm { get; set; }
     public int DecelTimeMs { get; set; }
 
+    [JsonIgnore]
     public int ControlModeValue
     {
         get => (int)ControlMode;

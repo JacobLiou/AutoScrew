@@ -34,6 +34,16 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
     public Task PickScrewAsync(CancellationToken cancellationToken = default) =>
         _feederSim.PickScrewAsync(cancellationToken);
 
+    public async Task PrepareForJobAsync(CancellationToken cancellationToken = default)
+    {
+        await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
+        var client = _devices.GetClient();
+        if (client is null)
+            return;
+
+        await IemdSdProductionSetup.EnsureManualSourceAsync(client, _logger, cancellationToken).ConfigureAwait(false);
+    }
+
     public async IAsyncEnumerable<TorqueAngleSample> RunTighteningAsync(
         TighteningContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

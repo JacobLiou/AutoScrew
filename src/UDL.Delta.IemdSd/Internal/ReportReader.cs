@@ -5,23 +5,21 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class ReportReader
 {
-    private readonly IModbusTransport _transport;
-    private readonly CommandMailbox _mailbox;
+    private readonly IIemdSdCommandExecutor _executor;
 
-    public ReportReader(IModbusTransport transport, CommandMailbox mailbox)
+    public ReportReader(IIemdSdCommandExecutor executor)
     {
-        _transport = transport;
-        _mailbox = mailbox;
+        _executor = executor;
     }
 
     public async Task<ProductionReport> ReadAsync(uint reportId, CancellationToken cancellationToken)
     {
-        var req = CommandMailbox.CreateRequest(ModbusFunctionCodes.ReadReport);
-        CommandMailbox.SetReportId(req, reportId);
-        await _mailbox.SendCommandAsync(ModbusFunctionCodes.ReadReport, req, cancellationToken).ConfigureAwait(false);
+        var result = await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithReportId(ModbusFunctionCodes.ReadReport, reportId, 253),
+            cancellationToken).ConfigureAwait(false);
 
-        var words = await _transport.ReadHoldingAsync(ModbusRegisterMap.CommandData, 253, cancellationToken)
-            .ConfigureAwait(false);
+        var words = result.ReadPayload
+                      ?? throw new InvalidOperationException("Report read returned no payload.");
 
         return Parse(reportId, words);
     }

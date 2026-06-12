@@ -22,7 +22,9 @@
 | **产线适配** | [../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs) | 实现 `ILockStationHardware`，供钉仍仿真 |
 | Bin 字表 | 同目录 `BinFile Explain.xlsx`、`Bin檔解譯.xlsx` | Word 偏移与字段名（与 Demo `ParseFileBin` 交叉校验） |
 | 厂商幻灯片 | 各 Demo 下 `電鎖通訊應用*.pptx` | 联调图示（未全文抽取） |
-| 控制器手册 | [../src/IEMD-SD系列10.1寸控制器(1).pdf](../src/IEMD-SD系列10.1寸控制器(1).pdf) | 台达 **SD3 系列**操作手册（528 页）；硬件/HMI/附录 Modbus·TCP |
+| 控制器手册（英文，权威） | [DELTA_IA-DCSS_SD3_UM_EN_20260310.pdf](DELTA_IA-DCSS_SD3_UM_EN_20260310.pdf) | SD3 系列操作手册；附录 A/B Modbus TCP/RTU 功能码 |
+| 功能码索引 | [IEMD_SD_MODBUS_COMMANDS.md](IEMD_SD_MODBUS_COMMANDS.md) | 由英文手册生成的 149 条唯一功能码目录 |
+| 控制器手册（中文，旧） | [../src/IEMD-SD系列10.1寸控制器(1).pdf](../src/IEMD-SD系列10.1寸控制器(1).pdf) | 台达 **SD3 系列**操作手册（528 页）；硬件/HMI/附录 Modbus·TCP |
 
 ```mermaid
 flowchart TB
@@ -398,13 +400,13 @@ ParamConvertNmThenConvertUserUnitCoef =
 
 | 组件 | 路径 | 说明 |
 |------|------|------|
-| 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Connect / Initialize / `#100`/`#150` / `#302` / 拧紧周期 / `#750` / `#751` |
+| 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Modbus TCP/RTU；`ExecuteModbusCommandAsync` 覆盖全部附录功能码；强类型 API（条码/来源/履历/参数/顺序/系统/工具）；`#100`/`#150`/`#302`/`#517`/`#750`/`#751` 等 |
 | 参数预设 | `IControllerParameterPresetService` | 本地 JSON + 设备读写；HMI **拧紧参数** |
 | 工位设备 | `IStationDeviceService` | 每工位最多 3 设备槽；TCP/RTU；HMI **设备连接** |
 | 硬件适配 | `AutoScrew.Infrastructure` → `IemdSdLockStationHardware` | 实现 `ILockStationHardware`；使用激活工位设备 |
 | 配置 | `appsettings.json` | `AutoScrew:StationId` + `UseSimulatedHardware=false` 接真机；设备地址在 HMI 保存 |
 | 判定 | `OperatorSessionController` | **曲线规则 NG 或设备 Status NG 则螺钉 NG** |
-| 单元测试 | `tests/UDL.Delta.IemdSd.Tests` | 邮箱请求、`ReportReader`、参数 Codec、扭矩单位换算 |
+| 单元测试 | `tests/UDL.Delta.IemdSd.Tests` | 功能码目录、命令执行器、`ReportReader`、参数 Codec、邮箱布局 |
 
 **联机步骤（FAT）**：
 
@@ -413,14 +415,14 @@ ParamConvertNmThenConvertUserUnitCoef =
 3. **拧紧参数**：#150 回读 → 修改 → #100 写入 → #302 激活。
 4. 操作员流程：扫码 → `#302` ParamID → 拧紧 → `#750`/`#751` 曲线。
 
-**二期**：FTP Bin（`#517`）→ 可扩展 `UDL.Delta.IemdSd.Ftp` 或独立包。
+**FTP Bin**：`#517` 已在驱动中提供 `SetPerScrewExportAsync`；FTP 拉取可扩展 `UDL.Delta.IemdSd.Ftp` 或独立包。
 
 ### 8.1 分层（历史示意）
 
 驱动端口已落地为 `UDL.Delta.IemdSd.IIemdSdClient`；Application 仍通过 `ILockStationHardware` 抽象，不直接引用 Modbus。
 
-- **α（当前）**：GetResultStatus + `#750`/`#751` + `#302` + `#100`/`#150` 参数模板。  
-- **β**：FTP Bin、拧紧顺序 `#200`/`#250` 等。  
+- **α（当前）**：GetResultStatus + `#750`/`#751` + `#302` + `#100`/`#150` 参数模板 + 通用 `ExecuteModbusCommandAsync`。  
+- **β**：FTP Bin 文件拉取、多面引导 HMI（驱动已含 `#200`/`#250` 顺序读写 API）。  
 - **工艺切换**：`ScrewRecipeDto.ControllerParameterId` 或 `IemdSd:ParameterIdByPosition`。  
 
 ### 8.2 禁止与改进项

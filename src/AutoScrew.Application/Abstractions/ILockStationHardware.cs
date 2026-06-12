@@ -12,4 +12,7 @@ public interface ILockStationHardware
         CancellationToken cancellationToken = default);
 
     Task PickScrewAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>作业开始前写入控制器产线模式（如 #300 手动来源）；仿真可为空操作。</summary>
+    Task PrepareForJobAsync(CancellationToken cancellationToken = default);
 }

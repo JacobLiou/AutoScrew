@@ -43,6 +43,8 @@ public sealed class OperatorSessionController
     private double _boardHeight;
     private bool _isRework;
     private string? _lastErrorMessage;
+    private string? _lastErrorCode;
+    private int _cycleInProgress;
     private int _templateSurfaceCount = 1;
     private string? _activeSurfaceId;
     private string? _activeSurfaceName;
@@ -80,6 +82,10 @@ public sealed class OperatorSessionController
     public string? PartNumber => _partNumber;
 
     public string? LastErrorMessage => _lastErrorMessage;
+
+    public string? LastErrorCode => _lastErrorCode;
+
+    public bool IsCycleInProgress => _cycleInProgress > 0;
 
     public int TemplateSurfaceCount => _templateSurfaceCount;
 
@@ -228,6 +234,7 @@ public sealed class OperatorSessionController
             }
 
             _currentIndex = NextPendingIndex(0);
+            await _hardware.PrepareForJobAsync(cancellationToken).ConfigureAwait(false);
             await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
             NotifyChanged();
         }
@@ -391,6 +398,21 @@ public sealed class OperatorSessionController
         if (_currentIndex < 0 || _currentIndex >= _positions.Length)
             throw new InvalidOperationException("No active screw index.");
 
+        if (Interlocked.CompareExchange(ref _cycleInProgress, 1, 0) != 0)
+            throw new InvalidOperationException("Screw cycle already in progress.");
+
+        try
+        {
+            await RunCurrentScrewCycleCoreAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _cycleInProgress, 0);
+        }
+    }
+
+    private async Task RunCurrentScrewCycleCoreAsync(CancellationToken cancellationToken)
+    {
         var idx = _currentIndex;
         var localIndex = _positions[idx].Index;
         var globalIndex = ComputeGlobalIndex(_activeSurfaceOrdinal, idx);
@@ -426,10 +448,15 @@ public sealed class OperatorSessionController
         var finalAngle = device?.FinalAngleDeg ?? (samples.Count > 0 ? samples[^1].AngleDeg : (double?)null);
         string? errorCode = null;
         if (!combinedOk)
+        {
             errorCode = !deviceOk
-                ? device?.DeviceErrorCode?.ToString() ?? "DEVICE_NG"
+                ? device?.DeviceErrorCode is ushort dc
+                    ? $"DEVICE_{dc}"
+                    : "DEVICE_NG"
                 : eval.ErrorCode;
+        }
 
+        _lastErrorCode = combinedOk ? null : errorCode;
         _screwRecords.Add(new ScrewCycleRecord(
             _activeSurfaceId!,
             localIndex,

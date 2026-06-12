@@ -91,6 +91,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         {
             await client.ConnectAsync(cancellationToken).ConfigureAwait(false);
             await client.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            await IemdSdProductionSetup.EnsureManualSourceAsync(client, _logger, cancellationToken).ConfigureAwait(false);
             return new TestConnectionResult(true, $"Connected to {endpoint.DisplayName} ({endpoint.DescribeConnection()}).");
         }
         catch (Exception ex)
@@ -118,6 +119,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
             _client = _clientFactory.Create(device);
             await _client.ConnectAsync(cancellationToken).ConfigureAwait(false);
             await _client.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            await IemdSdProductionSetup.EnsureManualSourceAsync(_client, _logger, cancellationToken).ConfigureAwait(false);
             return new TestConnectionResult(true, $"Applied {device.DisplayName} ({device.DescribeConnection()}).");
         }
         catch (Exception ex)

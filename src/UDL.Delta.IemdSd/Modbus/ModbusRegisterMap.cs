@@ -21,6 +21,10 @@ public static class ModbusRegisterMap
     public const int TighteningFinish = 0x1F5D;
     public const int FinalTorqueLow = 0x1F46;
     public const int FinalTorqueHigh = 0x1F47;
+
+    /// <summary>Appendix A.2 operating status window (0x24 ~ 0x2D subset).</summary>
+    public const int OperatingStatusStart = 0x24;
+    public const int OperatingStatusWordCount = 0x2D - 0x24 + 1;
 }
 
 public static class ModbusFunctionCodes

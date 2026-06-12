@@ -11,6 +11,8 @@ public sealed class IemdSdClient : IIemdSdClient
     private readonly ILogger _logger;
     private readonly IModbusTransport _transport;
     private readonly CommandMailbox _mailbox;
+    private readonly IIemdSdCommandExecutor _executor;
+    private readonly IemdSdTypedCommands _typed;
     private readonly ReportReader _reportReader;
     private readonly CurveReader _curveReader;
     private readonly TighteningCycleRunner _cycleRunner;
@@ -23,11 +25,13 @@ public sealed class IemdSdClient : IIemdSdClient
         _logger = logger ?? NullLogger<IemdSdClient>.Instance;
         _transport = ModbusTransportFactory.Create(options, _logger);
         _mailbox = new CommandMailbox(_transport, options, _logger);
-        _reportReader = new ReportReader(_transport, _mailbox);
-        _curveReader = new CurveReader(_transport, _mailbox);
+        _executor = new IemdSdCommandExecutor(_transport, _mailbox);
+        _typed = new IemdSdTypedCommands(_executor, _transport, options.ToolIndex);
+        _reportReader = new ReportReader(_executor);
+        _curveReader = new CurveReader(_executor);
         _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options);
-        _parameterReader = new ParameterBlockReader(_transport, _mailbox, options.ToolIndex);
-        _parameterWriter = new ParameterBlockWriter(_transport, _mailbox, options.ToolIndex);
+        _parameterReader = new ParameterBlockReader(_executor, options.ToolIndex);
+        _parameterWriter = new ParameterBlockWriter(_executor, options.ToolIndex);
     }
 
     public IemdSdClientOptions Options { get; }
@@ -48,31 +52,14 @@ public sealed class IemdSdClient : IIemdSdClient
         if (!Options.UseLegacyFinishRegister)
             await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningFinish, 0, cancellationToken).ConfigureAwait(false);
 
-        if (Options.AutoLockOnInit)
-        {
-            var autoLock = CommandMailbox.CreateRequest(ModbusFunctionCodes.AutoLock, word1: 1);
-            await _mailbox.SendCommandAsync(ModbusFunctionCodes.AutoLock, autoLock, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            var autoLockOff = CommandMailbox.CreateRequest(ModbusFunctionCodes.AutoLock, word1: 0);
-            await _mailbox.SendCommandAsync(ModbusFunctionCodes.AutoLock, autoLockOff, cancellationToken).ConfigureAwait(false);
-        }
+        await _typed.SetAutoLockAsync(Options.AutoLockOnInit, cancellationToken).ConfigureAwait(false);
 
         if (Options.SendUnlockAfterCycle)
-        {
-            var unlock = CommandMailbox.CreateRequest(ModbusFunctionCodes.LimitTightening);
-            await _mailbox.SendCommandAsync(ModbusFunctionCodes.LimitTightening, unlock, cancellationToken)
-                .ConfigureAwait(false);
-        }
+            await _typed.LimitTighteningAsync(cancellationToken).ConfigureAwait(false);
 
         if (initOptions.ReadCurveVersion)
         {
-            var verReq = CommandMailbox.CreateRequest(ModbusFunctionCodes.CurveSampleRate);
-            await _mailbox.SendCommandAsync(ModbusFunctionCodes.CurveSampleRate, verReq, cancellationToken)
-                .ConfigureAwait(false);
-            CurveVersion = await _transport.ReadSingleAsync(ModbusRegisterMap.CommandRequest, cancellationToken)
-                .ConfigureAwait(false);
+            CurveVersion = await _typed.ReadCurveSampleRateAsync(cancellationToken).ConfigureAwait(false);
             ReportIdMax = CurveVersion switch
             {
                 0 or 1 => 200_000,
@@ -87,17 +74,13 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task<uint> GetCurrentReportIdAsync(CancellationToken cancellationToken = default) =>
         _cycleRunner.ReadReportIdAsync(cancellationToken);
 
-    public async Task SwitchParameterAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default)
-    {
-        var req = CommandMailbox.CreateRequest(
-            ModbusFunctionCodes.SwitchParameter,
-            word2: Options.ToolIndex,
-            word3: parameterId,
-            word4: (int)(screwCount % 65536),
-            word5: (int)(screwCount / 65536));
-        await _mailbox.SendCommandAsync(ModbusFunctionCodes.SwitchParameter, req, cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation("Switched parameter ID {ParamId} screwCount={Count}", parameterId, screwCount);
-    }
+    public Task<ModbusCommandResult> ExecuteModbusCommandAsync(
+        ModbusCommandInvocation invocation,
+        CancellationToken cancellationToken = default) =>
+        _typed.ExecuteAsync(invocation, cancellationToken);
+
+    public Task SwitchParameterAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default) =>
+        _typed.SwitchParameterAsync(parameterId, screwCount, cancellationToken);
 
     public Task<TighteningParameterTemplate> ReadParameterAsync(int parameterId, CancellationToken cancellationToken = default) =>
         _parameterReader.ReadAsync(parameterId, cancellationToken);
@@ -120,6 +103,114 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public Task<CurveSnapshot> ReadCurveAsync(uint reportId, CancellationToken cancellationToken = default) =>
         _curveReader.ReadAsync(reportId, cancellationToken);
+
+    public Task WriteBarcodeAsync(string barcode, CancellationToken cancellationToken = default) =>
+        _typed.WriteBarcodeAsync(barcode, cancellationToken);
+
+    public Task<string> ReadBarcodeAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadBarcodeAsync(cancellationToken);
+
+    public Task ClearErrorsAsync(CancellationToken cancellationToken = default) =>
+        _typed.ClearErrorsAsync(cancellationToken);
+
+    public Task ResetOperationProgressAsync(CancellationToken cancellationToken = default) =>
+        _typed.ResetOperationProgressAsync(cancellationToken);
+
+    public Task ForcePreviousStepAsync(CancellationToken cancellationToken = default) =>
+        _typed.ForcePreviousStepAsync(cancellationToken);
+
+    public Task ForceNextStepAsync(CancellationToken cancellationToken = default) =>
+        _typed.ForceNextStepAsync(cancellationToken);
+
+    public Task RestrictLooseningAsync(CancellationToken cancellationToken = default) =>
+        _typed.RestrictLooseningAsync(cancellationToken);
+
+    public Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) =>
+        _typed.WriteSourceModeAsync(operatingMode, switchingMethod, cancellationToken);
+
+    public Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadSourceModeAsync(cancellationToken);
+
+    public Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default) =>
+        _typed.WriteSourceContentAsync(sourceId, parameterId, sequenceId, screwCount, cancellationToken);
+
+    public Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken cancellationToken = default) =>
+        _typed.ReadSourceContentAsync(sourceId, cancellationToken);
+
+    public Task SwitchSequenceUnderManualAsync(int sequenceId, CancellationToken cancellationToken = default) =>
+        _typed.SwitchSequenceUnderManualAsync(sequenceId, cancellationToken);
+
+    public Task<TighteningIndicatorStatus> ReadIndicatorStatusAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadIndicatorStatusAsync(cancellationToken);
+
+    public Task SetPerScrewExportAsync(PerScrewExportMode mode, CancellationToken cancellationToken = default) =>
+        _typed.SetPerScrewExportAsync(mode, cancellationToken);
+
+    public Task<PerScrewExportMode> ReadPerScrewExportAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadPerScrewExportAsync(cancellationToken);
+
+    public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+        _typed.ReadErrorReportAsync(reportId, wordCount, cancellationToken);
+
+    public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+        _typed.ReadWarningReportAsync(reportId, wordCount, cancellationToken);
+
+    public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+        _typed.ReadButtonReportAsync(reportId, wordCount, cancellationToken);
+
+    public Task<int[]> ReadSortedProductionReportsAsync(uint wordCount = 100, CancellationToken cancellationToken = default) =>
+        _typed.ReadSortedProductionReportsAsync(wordCount, cancellationToken);
+
+    public Task DeleteParameterAsync(int parameterId, CancellationToken cancellationToken = default) =>
+        _typed.DeleteParameterAsync(parameterId, cancellationToken);
+
+    public Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default) =>
+        _typed.QuickSetParameterAsync(parameterId, payload, cancellationToken);
+
+    public Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
+        _typed.ListParametersAsync(wordCount, cancellationToken);
+
+    public Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken cancellationToken = default) =>
+        _typed.WriteSequenceAsync(template, cancellationToken);
+
+    public Task<TighteningSequenceTemplate> ReadSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) =>
+        _typed.ReadSequenceAsync(sequenceId, cancellationToken);
+
+    public Task DeleteSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) =>
+        _typed.DeleteSequenceAsync(sequenceId, cancellationToken);
+
+    public Task<int[]> ListSequencesAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
+        _typed.ListSequencesAsync(wordCount, cancellationToken);
+
+    public Task<FirmwareVersionInfo> ReadFirmwareVersionAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadFirmwareVersionAsync(cancellationToken);
+
+    public Task<ToolInformationSnapshot> ReadToolInformationAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadToolInformationAsync(cancellationToken);
+
+    public Task ActivateToolAsync(bool enabled, CancellationToken cancellationToken = default) =>
+        _typed.ActivateToolAsync(enabled, cancellationToken);
+
+    public Task CalibrateToolAsync(CancellationToken cancellationToken = default) =>
+        _typed.CalibrateToolAsync(cancellationToken);
+
+    public Task ClearProductionReportsAsync(CancellationToken cancellationToken = default) =>
+        _typed.ClearProductionReportsAsync(cancellationToken);
+
+    public Task ClearErrorWarningReportsAsync(CancellationToken cancellationToken = default) =>
+        _typed.ClearErrorWarningReportsAsync(cancellationToken);
+
+    public Task ClearProductionReportFilesAsync(CancellationToken cancellationToken = default) =>
+        _typed.ClearProductionReportFilesAsync(cancellationToken);
+
+    public Task<OperatingStatusSnapshot> ReadOperatingStatusAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadOperatingStatusAsync(cancellationToken);
+
+    public Task LoginAsync(int role, int passwordHash, CancellationToken cancellationToken = default) =>
+        _typed.LoginAsync(role, passwordHash, cancellationToken);
+
+    public Task LogoutAsync(CancellationToken cancellationToken = default) =>
+        _typed.LogoutAsync(cancellationToken);
 
     public async ValueTask DisposeAsync()
     {

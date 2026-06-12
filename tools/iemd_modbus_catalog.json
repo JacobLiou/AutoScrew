@@ -1,0 +1,598 @@
+[
+  {
+    "code": 100,
+    "name": "Write the parameter"
+  },
+  {
+    "code": 101,
+    "name": "Write to set the tightening parameter through quick setting"
+  },
+  {
+    "code": 110,
+    "name": "Write to delete the parameter"
+  },
+  {
+    "code": 150,
+    "name": "Read the parameter"
+  },
+  {
+    "code": 160,
+    "name": "Read the created sets of tightening parameters"
+  },
+  {
+    "code": 200,
+    "name": "Write the sequence"
+  },
+  {
+    "code": 201,
+    "name": "Write the navigator coordinates"
+  },
+  {
+    "code": 202,
+    "name": "Write the navigator image codes"
+  },
+  {
+    "code": 203,
+    "name": "Write the coordinates of positioning arm"
+  },
+  {
+    "code": 210,
+    "name": "Write to delete the sequence"
+  },
+  {
+    "code": 250,
+    "name": "Read the sequence"
+  },
+  {
+    "code": 251,
+    "name": "Read the navigator coordinates"
+  },
+  {
+    "code": 252,
+    "name": "Read the navigator image codes"
+  },
+  {
+    "code": 253,
+    "name": "Read the coordinates of positioning arm"
+  },
+  {
+    "code": 260,
+    "name": "Read the created sets of tightening sequences"
+  },
+  {
+    "code": 300,
+    "name": "Write the operating mode and switching method of source"
+  },
+  {
+    "code": 301,
+    "name": "Write the contents of a single source"
+  },
+  {
+    "code": 302,
+    "name": "Write to switch parameter under manual setting"
+  },
+  {
+    "code": 303,
+    "name": "Write to switch sequence under manual setting"
+  },
+  {
+    "code": 310,
+    "name": "Write to delete the source"
+  },
+  {
+    "code": 350,
+    "name": "Read the operating mode and switching method of source"
+  },
+  {
+    "code": 351,
+    "name": "Read the contents of a single source"
+  },
+  {
+    "code": 400,
+    "name": "Write the switching method of source"
+  },
+  {
+    "code": 401,
+    "name": "Write the barcode string"
+  },
+  {
+    "code": 402,
+    "name": "Write to clear all errors"
+  },
+  {
+    "code": 403,
+    "name": "Write to reset the operation progress"
+  },
+  {
+    "code": 404,
+    "name": "Write to force execute the previous step"
+  },
+  {
+    "code": 405,
+    "name": "Write to force execute the next step"
+  },
+  {
+    "code": 406,
+    "name": "Write to restrict tightening operation"
+  },
+  {
+    "code": 407,
+    "name": "Write to restrict loosening operation"
+  },
+  {
+    "code": 408,
+    "name": "Write the scanner advanced settings"
+  },
+  {
+    "code": 409,
+    "name": "Write to clear the single screw tightening NOK count"
+  },
+  {
+    "code": 410,
+    "name": "Write to clear the single screw loosening NOK count"
+  },
+  {
+    "code": 411,
+    "name": "Write to reset the operation time"
+  },
+  {
+    "code": 412,
+    "name": "Write to reset the operation status"
+  },
+  {
+    "code": 450,
+    "name": "Read the switching method of source"
+  },
+  {
+    "code": 451,
+    "name": "Read the barcode string"
+  },
+  {
+    "code": 452,
+    "name": "Read the scanner advanced settings"
+  },
+  {
+    "code": 453,
+    "name": "Read the tightening status indicator"
+  },
+  {
+    "code": 500,
+    "name": "Write the request for permissions login"
+  },
+  {
+    "code": 501,
+    "name": "Write the request for password change"
+  },
+  {
+    "code": 502,
+    "name": "Write the request for permissions logout"
+  },
+  {
+    "code": 503,
+    "name": "Write the page permissions"
+  },
+  {
+    "code": 504,
+    "name": "Write the Ethernet settings"
+  },
+  {
+    "code": 505,
+    "name": "Write the request for factory reset"
+  },
+  {
+    "code": 506,
+    "name": "Write the buzzer sound pattern"
+  },
+  {
+    "code": 507,
+    "name": "Write the DI/DO functions"
+  },
+  {
+    "code": 508,
+    "name": "Write the DI/DO conversion table"
+  },
+  {
+    "code": 509,
+    "name": "Write the default torque unit"
+  },
+  {
+    "code": 510,
+    "name": "Write the default tool start condition"
+  },
+  {
+    "code": 511,
+    "name": "Write NO / NC contact setting for a single DI/DO"
+  },
+  {
+    "code": 512,
+    "name": "Write to export all system data"
+  },
+  {
+    "code": 513,
+    "name": "Write to import all system data"
+  },
+  {
+    "code": 514,
+    "name": "Write the default two-stage mode under self-defined torque control"
+  },
+  {
+    "code": 515,
+    "name": "Write the display of upper limit for each stage of curves"
+  },
+  {
+    "code": 516,
+    "name": "Write the display of operation warning window"
+  },
+  {
+    "code": 517,
+    "name": "Write file format of the exported result for each screw"
+  },
+  {
+    "code": 518,
+    "name": "Write the sampling rate for curves"
+  },
+  {
+    "code": 519,
+    "name": "Write the function of always monitoring the current"
+  },
+  {
+    "code": 520,
+    "name": "Write the compensation for tool temperature rise"
+  },
+  {
+    "code": 521,
+    "name": "Write the peripheral device settings"
+  },
+  {
+    "code": 522,
+    "name": "Write the TCP data content of the result for each screw"
+  },
+  {
+    "code": 523,
+    "name": "Write the monitor function when parameters do not match the tool"
+  },
+  {
+    "code": 524,
+    "name": "Write the default angle unit"
+  },
+  {
+    "code": 525,
+    "name": "Write the volume of buzzer and operation screen buttons"
+  },
+  {
+    "code": 526,
+    "name": "Write the display orientation of external screen"
+  },
+  {
+    "code": 527,
+    "name": "Write the home screen"
+  },
+  {
+    "code": 528,
+    "name": "Write the RS-485 settings"
+  },
+  {
+    "code": 529,
+    "name": "Write the function of converting curve data to positive values"
+  },
+  {
+    "code": 530,
+    "name": "Write the default loosening second stage speed"
+  },
+  {
+    "code": 531,
+    "name": "Write the keyboard cursor blink in Results page"
+  },
+  {
+    "code": 532,
+    "name": "Write to replace torque rate curve with speed curve"
+  },
+  {
+    "code": 533,
+    "name": "Write to prohibit tool operation after each tightening or loosening"
+  },
+  {
+    "code": 534,
+    "name": "Write the DI response filter time"
+  },
+  {
+    "code": 535,
+    "name": "Write the model number"
+  },
+  {
+    "code": 536,
+    "name": "Write to reset the torque curve coordinates to zero"
+  },
+  {
+    "code": 537,
+    "name": "Write to check parameter ranges when tool is powered on"
+  },
+  {
+    "code": 538,
+    "name": "Write the DO timer"
+  },
+  {
+    "code": 539,
+    "name": "Write the popup error message type for tightening signal that ends too"
+  },
+  {
+    "code": 540,
+    "name": "Write the curve cutoff point recording mode"
+  },
+  {
+    "code": 541,
+    "name": "Write to enable the notification for abnormal tool temperature"
+  },
+  {
+    "code": 542,
+    "name": "Write to limit tool operation restoration after NOK tightening to alarm reset"
+  },
+  {
+    "code": 550,
+    "name": "Read the Ethernet settings"
+  },
+  {
+    "code": 551,
+    "name": "Read the page permissions"
+  },
+  {
+    "code": 552,
+    "name": "Read the firmware version"
+  },
+  {
+    "code": 553,
+    "name": "Read the DI/DO functions"
+  },
+  {
+    "code": 554,
+    "name": "Read the DI/DO conversion table"
+  },
+  {
+    "code": 555,
+    "name": "Read the default torque unit"
+  },
+  {
+    "code": 556,
+    "name": "Read the default tool start condition"
+  },
+  {
+    "code": 557,
+    "name": "Read NO / NC contact setting for a single DI/DO"
+  },
+  {
+    "code": 558,
+    "name": "Read the default two-stage mode under self-defined torque control"
+  },
+  {
+    "code": 559,
+    "name": "Read the display of upper limit for each stage of curves"
+  },
+  {
+    "code": 560,
+    "name": "Read the display of operation warning window"
+  },
+  {
+    "code": 561,
+    "name": "Read file format of the exported result for each screw"
+  },
+  {
+    "code": 562,
+    "name": "Read the sampling rate for curves"
+  },
+  {
+    "code": 563,
+    "name": "Read the function of always monitoring the current"
+  },
+  {
+    "code": 564,
+    "name": "Read the compensation for tool temperature rise"
+  },
+  {
+    "code": 565,
+    "name": "Read the peripheral device settings"
+  },
+  {
+    "code": 566,
+    "name": "Read the TCP data content of the result for each screw"
+  },
+  {
+    "code": 567,
+    "name": "Read the monitor function when parameters do not match the tool"
+  },
+  {
+    "code": 568,
+    "name": "Read the default angle unit"
+  },
+  {
+    "code": 569,
+    "name": "Read the volume of buzzer and operation screen buttons"
+  },
+  {
+    "code": 570,
+    "name": "Read the display orientation of external screen"
+  },
+  {
+    "code": 571,
+    "name": "Read the home screen"
+  },
+  {
+    "code": 572,
+    "name": "Read the RS-485 settings"
+  },
+  {
+    "code": 573,
+    "name": "Read the function of converting curve data to positive values"
+  },
+  {
+    "code": 574,
+    "name": "Read the second stage default loosening speed"
+  },
+  {
+    "code": 575,
+    "name": "Read the keyboard cursor blink in Results page"
+  },
+  {
+    "code": 576,
+    "name": "Read whether the torque rate curve is replaced by the speed curve"
+  },
+  {
+    "code": 577,
+    "name": "Read whether tool operation is prohibited after each tightening or"
+  },
+  {
+    "code": 578,
+    "name": "Read the DI response filter time"
+  },
+  {
+    "code": 579,
+    "name": "Read the MAC information"
+  },
+  {
+    "code": 580,
+    "name": "Read the model number"
+  },
+  {
+    "code": 581,
+    "name": "Read whether the torque curve coordinates are reset to zero"
+  },
+  {
+    "code": 582,
+    "name": "Read whether parameter range check at tool power-on is enabled"
+  },
+  {
+    "code": 583,
+    "name": "Read the DO timer"
+  },
+  {
+    "code": 584,
+    "name": "Read the popup error message type for tightening signal that ends too early"
+  },
+  {
+    "code": 585,
+    "name": "Read the buzzer sound pattern"
+  },
+  {
+    "code": 586,
+    "name": "Read the curve cutoff point recording mode"
+  },
+  {
+    "code": 587,
+    "name": "Read the notification setting for abnormal tool temperature"
+  },
+  {
+    "code": 588,
+    "name": "Read whether tool operation restoration after NOK tightening is limited to"
+  },
+  {
+    "code": 600,
+    "name": "Write to activate the tool"
+  },
+  {
+    "code": 601,
+    "name": "Write to enable service reminder"
+  },
+  {
+    "code": 602,
+    "name": "Write the lever start level"
+  },
+  {
+    "code": 603,
+    "name": "Write the push start level"
+  },
+  {
+    "code": 604,
+    "name": "Write the work light brightness"
+  },
+  {
+    "code": 606,
+    "name": "Write the LED light settings"
+  },
+  {
+    "code": 607,
+    "name": "Write to calibrate the tool"
+  },
+  {
+    "code": 608,
+    "name": "Write the service reminder threshold"
+  },
+  {
+    "code": 650,
+    "name": "Read the tool information"
+  },
+  {
+    "code": 651,
+    "name": "Read the lever start level"
+  },
+  {
+    "code": 652,
+    "name": "Read the push start level"
+  },
+  {
+    "code": 653,
+    "name": "Read the work light brightness"
+  },
+  {
+    "code": 655,
+    "name": "Read the LED light settings"
+  },
+  {
+    "code": 656,
+    "name": "Read the tool calibration setting"
+  },
+  {
+    "code": 657,
+    "name": "Read the tool firmware version"
+  },
+  {
+    "code": 658,
+    "name": "Read the status of service reminder"
+  },
+  {
+    "code": 659,
+    "name": "Read the status of tool activation"
+  },
+  {
+    "code": 660,
+    "name": "Read the service reminder threshold"
+  },
+  {
+    "code": 661,
+    "name": "Read the tool calibration reports"
+  },
+  {
+    "code": 700,
+    "name": "Clear the production report entries"
+  },
+  {
+    "code": 701,
+    "name": "Clear the error and warning report entries"
+  },
+  {
+    "code": 702,
+    "name": "Clear the production report files"
+  },
+  {
+    "code": 750,
+    "name": "Find and read the production report entries"
+  },
+  {
+    "code": 751,
+    "name": "Add the function codes: #21, #101, #160,"
+  },
+  {
+    "code": 752,
+    "name": "Find and read the error report entries"
+  },
+  {
+    "code": 753,
+    "name": "Find and read the warning report entries"
+  },
+  {
+    "code": 754,
+    "name": "Find and read the button report entries"
+  },
+  {
+    "code": 760,
+    "name": "Read the sorted production reports"
+  }
+]

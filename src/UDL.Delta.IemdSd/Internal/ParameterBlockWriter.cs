@@ -5,14 +5,12 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class ParameterBlockWriter
 {
-    private readonly IModbusTransport _transport;
-    private readonly CommandMailbox _mailbox;
+    private readonly IIemdSdCommandExecutor _executor;
     private readonly int _toolIndex;
 
-    public ParameterBlockWriter(IModbusTransport transport, CommandMailbox mailbox, int toolIndex)
+    public ParameterBlockWriter(IIemdSdCommandExecutor executor, int toolIndex)
     {
-        _transport = transport;
-        _mailbox = mailbox;
+        _executor = executor;
         _toolIndex = toolIndex;
     }
 
@@ -26,17 +24,12 @@ internal sealed class ParameterBlockWriter
 
         template.ApplyCoreToRaw();
 
-        await _transport.WriteMultipleAsync(
-                ModbusRegisterMap.CommandData,
+        await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithWritePayload(
+                ModbusFunctionCodes.WriteParameter,
                 template.RawBlock,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        var req = CommandMailbox.CreateRequest(
-            ModbusFunctionCodes.WriteParameter,
-            word2: _toolIndex,
-            word3: template.ParameterId);
-        await _mailbox.SendCommandAsync(ModbusFunctionCodes.WriteParameter, req, cancellationToken)
-            .ConfigureAwait(false);
+                word2: _toolIndex,
+                word3: template.ParameterId),
+            cancellationToken).ConfigureAwait(false);
     }
 }

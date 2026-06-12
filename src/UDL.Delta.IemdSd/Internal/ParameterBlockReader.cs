@@ -5,14 +5,12 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class ParameterBlockReader
 {
-    private readonly IModbusTransport _transport;
-    private readonly CommandMailbox _mailbox;
+    private readonly IIemdSdCommandExecutor _executor;
     private readonly int _toolIndex;
 
-    public ParameterBlockReader(IModbusTransport transport, CommandMailbox mailbox, int toolIndex)
+    public ParameterBlockReader(IIemdSdCommandExecutor executor, int toolIndex)
     {
-        _transport = transport;
-        _mailbox = mailbox;
+        _executor = executor;
         _toolIndex = toolIndex;
     }
 
@@ -20,18 +18,16 @@ internal sealed class ParameterBlockReader
     {
         ValidateParameterId(parameterId);
 
-        var req = CommandMailbox.CreateRequest(
-            ModbusFunctionCodes.ReadParameter,
-            word2: _toolIndex,
-            word3: parameterId);
-        await _mailbox.SendCommandAsync(ModbusFunctionCodes.ReadParameter, req, cancellationToken)
-            .ConfigureAwait(false);
-
-        var words = await _transport.ReadHoldingAsync(
-                ModbusRegisterMap.CommandData,
+        var result = await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithReadPayload(
+                ModbusFunctionCodes.ReadParameter,
                 ModbusRegisterMap.ParameterBlockWordCount,
-                cancellationToken)
-            .ConfigureAwait(false);
+                word2: _toolIndex,
+                word3: parameterId),
+            cancellationToken).ConfigureAwait(false);
+
+        var words = result.ReadPayload
+                      ?? throw new InvalidOperationException("Parameter read returned no payload.");
 
         var template = new TighteningParameterTemplate
         {

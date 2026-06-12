@@ -5,13 +5,11 @@ namespace UDL.Delta.IemdSd.Internal;
 
 internal sealed class CurveReader
 {
-    private readonly IModbusTransport _transport;
-    private readonly CommandMailbox _mailbox;
+    private readonly IIemdSdCommandExecutor _executor;
 
-    public CurveReader(IModbusTransport transport, CommandMailbox mailbox)
+    public CurveReader(IIemdSdCommandExecutor executor)
     {
-        _transport = transport;
-        _mailbox = mailbox;
+        _executor = executor;
     }
 
     public async Task<CurveSnapshot> ReadAsync(uint reportId, CancellationToken cancellationToken)
@@ -76,11 +74,11 @@ internal sealed class CurveReader
 
     private async Task<int[]> ReadBlockAsync(uint reportId, int mode, int wordCount, CancellationToken cancellationToken)
     {
-        var req = CommandMailbox.CreateRequest(ModbusFunctionCodes.ReadCurve, word4: mode);
-        CommandMailbox.SetReportId(req, reportId);
-        await _mailbox.SendCommandAsync(ModbusFunctionCodes.ReadCurve, req, cancellationToken).ConfigureAwait(false);
-        return await _transport.ReadHoldingAsync(ModbusRegisterMap.CommandData, wordCount, cancellationToken)
-            .ConfigureAwait(false);
+        var result = await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithReportId(ModbusFunctionCodes.ReadCurve, reportId, (uint)wordCount, mode),
+            cancellationToken).ConfigureAwait(false);
+        return result.ReadPayload
+               ?? throw new InvalidOperationException("Curve read returned no payload.");
     }
 
     private static CurveScaleInfo ParseScale(int[] s) => new()

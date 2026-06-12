@@ -14,6 +14,9 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
     public Task PickScrewAsync(CancellationToken cancellationToken = default) =>
         Task.Delay(80, cancellationToken);
 
+    public Task PrepareForJobAsync(CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+
     public async IAsyncEnumerable<TorqueAngleSample> RunTighteningAsync(
         TighteningContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
