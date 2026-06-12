@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Input;
 using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Protocol;
 using Wpf.Ui;
@@ -155,6 +156,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         AuditConfig("Configuration.ParamSaveLocal", $"paramId={ParameterId};name={Name}");
         try
         {
+            CommitPendingEdits();
             var template = BuildWorkingTemplate();
             await _presetService.SaveLocalPresetAsync(template).ConfigureAwait(true);
             await RefreshPresetListAsync().ConfigureAwait(true);
@@ -225,6 +227,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         AuditConfig("Configuration.ParamWriteDevice", $"paramId={ParameterId};name={Name}");
         try
         {
+            CommitPendingEdits();
             var template = BuildWorkingTemplate();
             await _presetService.WriteToDeviceAsync(template).ConfigureAwait(true);
             await _presetService.SaveLocalPresetAsync(template).ConfigureAwait(true);
@@ -312,6 +315,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         AuditConfig("Configuration.ParamExport", $"paramId={ParameterId};file={dialog.FileName}");
         try
         {
+            CommitPendingEdits();
             await _presetService.ExportToFileAsync(BuildWorkingTemplate(), dialog.FileName).ConfigureAwait(true);
             StatusMessage = Loc.Get("S.ControllerParam.StatusExported");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
@@ -369,9 +373,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         MaxAngleDeg = template.Core.MaxAngleDeg;
         MaxTighteningTimeTenthSec = template.Core.MaxTighteningTimeTenthSec;
         Loosen = template.Core.Loosen;
+        SelectedStageIndex = 0;
         RebuildStageItems();
         OnPropertyChanged(nameof(Loosen));
-        OnPropertyChanged(nameof(CurrentStage));
     }
 
     private void RebuildStageItems()
@@ -380,6 +384,11 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         var stages = _working.Core.Stages;
         for (var i = 0; i < stages.Count; i++)
             StageItems.Add(new ControllerParameterStageItem(i, stages[i]));
+
+        if (SelectedStageIndex < 0 || SelectedStageIndex >= StageItems.Count)
+            SelectedStageIndex = 0;
+
+        OnPropertyChanged(nameof(CurrentStage));
     }
 
     private TighteningParameterTemplate BuildWorkingTemplate()
@@ -410,4 +419,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     private void ShowSnackbar(string message, ControlAppearance appearance) =>
         _snackbarService.Show(Loc.Get("S.ControllerParam.Title"), message, appearance, null, TimeSpan.FromSeconds(4));
+
+    private static void CommitPendingEdits()
+    {
+        if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == true)
+            Keyboard.ClearFocus();
+    }
 }

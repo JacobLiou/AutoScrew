@@ -195,7 +195,7 @@
                            Height="38"
                            Width="128"
                            HorizontalAlignment="Center" />
-                    <TextBlock Text="AutoScrew"
+                    <TextBlock Text="{DynamicResource S.App.TitleLogin}"
                                FontSize="15"
                                FontWeight="SemiBold"
                                Foreground="#99FFFFFF"

@@ -143,80 +143,79 @@
                                   Text="{DynamicResource S.ControllerParam.Stages}" />
                     <TabControl ItemsSource="{Binding ViewModel.StageItems}"
                                 SelectedIndex="{Binding ViewModel.SelectedStageIndex, Mode=TwoWay}">
+                        <TabControl.Template>
+                            <ControlTemplate TargetType="TabControl">
+                                <TabPanel IsItemsHost="True" />
+                            </ControlTemplate>
+                        </TabControl.Template>
                         <TabControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
                                 <TextBlock Text="{Binding Title}" />
                             </DataTemplate>
                         </TabControl.ItemTemplate>
-                        <TabControl.ContentTemplate>
-                            <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
-                                <StackPanel Margin="0,8,0,0"
-                                            DataContext="{Binding Stage}">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="160" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="160" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0"
-                                                   Grid.Column="0"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.ControlMode}" />
-                                        <ui:NumberBox Grid.Row="0"
-                                                      Grid.Column="1"
-                                                      Margin="0,0,12,8"
-                                                      Maximum="4"
-                                                      Minimum="0"
-                                                      Value="{Binding ControlModeValue, Mode=TwoWay}" />
-                                        <TextBlock Grid.Row="0"
-                                                   Grid.Column="2"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.SpeedRpm}" />
-                                        <ui:NumberBox Grid.Row="0"
-                                                      Grid.Column="3"
-                                                      Margin="0,0,0,8"
-                                                      Value="{Binding SpeedRpm, Mode=TwoWay}" />
-                                        <TextBlock Grid.Row="1"
-                                                   Grid.Column="0"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.TargetTorque}" />
-                                        <ui:NumberBox Grid.Row="1"
-                                                      Grid.Column="1"
-                                                      Margin="0,0,12,8"
-                                                      Value="{Binding TargetTorqueMilliNm, Mode=TwoWay}" />
-                                        <TextBlock Grid.Row="1"
-                                                   Grid.Column="2"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.TargetAngle}" />
-                                        <ui:NumberBox Grid.Row="1"
-                                                      Grid.Column="3"
-                                                      Margin="0,0,0,8"
-                                                      Value="{Binding TargetAngleDeg, Mode=TwoWay}" />
-                                        <TextBlock Grid.Row="2"
-                                                   Grid.Column="0"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.MaxTorque}" />
-                                        <ui:NumberBox Grid.Row="2"
-                                                      Grid.Column="1"
-                                                      Value="{Binding MaxTorqueMilliNm, Mode=TwoWay}" />
-                                        <TextBlock Grid.Row="2"
-                                                   Grid.Column="2"
-                                                   VerticalAlignment="Center"
-                                                   Text="{DynamicResource S.ControllerParam.MinTorque}" />
-                                        <ui:NumberBox Grid.Row="2"
-                                                      Grid.Column="3"
-                                                      Value="{Binding MinTorqueMilliNm, Mode=TwoWay}" />
-                                    </Grid>
-                                </StackPanel>
-                            </DataTemplate>
-                        </TabControl.ContentTemplate>
                     </TabControl>
+                    <Grid Margin="0,8,0,0"
+                          DataContext="{Binding ViewModel.CurrentStage}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.ControlMode}" />
+                        <ui:NumberBox Grid.Row="0"
+                                      Grid.Column="1"
+                                      Margin="0,0,12,8"
+                                      Maximum="4"
+                                      Minimum="0"
+                                      Value="{Binding ControlModeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.SpeedRpm}" />
+                        <ui:NumberBox Grid.Row="0"
+                                      Grid.Column="3"
+                                      Margin="0,0,0,8"
+                                      Value="{Binding SpeedRpm, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.TargetTorque}" />
+                        <ui:NumberBox Grid.Row="1"
+                                      Grid.Column="1"
+                                      Margin="0,0,12,8"
+                                      Value="{Binding TargetTorqueMilliNm, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.TargetAngle}" />
+                        <ui:NumberBox Grid.Row="1"
+                                      Grid.Column="3"
+                                      Margin="0,0,0,8"
+                                      Value="{Binding TargetAngleDeg, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.MaxTorque}" />
+                        <ui:NumberBox Grid.Row="2"
+                                      Grid.Column="1"
+                                      Value="{Binding MaxTorqueMilliNm, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   Text="{DynamicResource S.ControllerParam.MinTorque}" />
+                        <ui:NumberBox Grid.Row="2"
+                                      Grid.Column="3"
+                                      Value="{Binding MinTorqueMilliNm, Mode=TwoWay}" />
+                    </Grid>
 
                     <ui:TextBlock Margin="0,16,0,8"
                                   FontTypography="BodyStrong"
