@@ -109,9 +109,15 @@
     <system:String x:Key="S.Operation.StatusValidating">Validating SN…</system:String>
     <system:String x:Key="S.Operation.StatusRecipeLoaded">Recipe loaded.</system:String>
     <system:String x:Key="S.Operation.StatusPickTighten">Pick + tighten (simulated)…</system:String>
+    <system:String x:Key="S.Operation.StatusWaitTrigger">Screw picked; pull the driver trigger to tighten…</system:String>
     <system:String x:Key="S.Operation.StatusStepDone">Step done.</system:String>
     <system:String x:Key="S.Operation.StatusUnlocked">Unlocked; continue.</system:String>
     <system:String x:Key="S.Operation.StatusReset">Session reset.</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTitle">Tightening NG — job paused</system:String>
+    <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
+    <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
+    <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">Contact a technician to unlock. Operators cannot dismiss this dialog.</system:String>
 
     <system:String x:Key="S.Template.Title">Screw template</system:String>
     <system:String x:Key="S.Template.TitleWithProduct">Screw template · {0}{1}</system:String>

@@ -43,6 +43,12 @@
   - 曲线文件仍用 `torque_curve_{globalPositionIndex}_{timestamp}.csv`（global 按 `surfaceOrderThenLocalIndex`）。
   - **MES 待定稿**：`ScrewResultDto` 暂不增加 `surface_id` / `local_index` 上报字段；本地 checkpoint 与 `_screwRecords` 已按 `surfaceId` + `localIndex` 区分。
 
+## 程控供料（PRD V1.1 — 占位）
+
+- 契约草案：[FEEDER_CONTROL.md](FEEDER_CONTROL.md)
+- 实现前不在 MES 载荷中上报供料字段；本地 `_screwRecords` / 审计可先记录 `Operation.Feed*` 动作
+- 定稿后在本节增补：`ScrewResultDto.feed_*`、供料失败 `error_code` 枚举（如 `FEED_001`）
+
 ## HTTPS
 
 - 生产环境 MES 基址使用 HTTPS（TLS 1.2+），见 `MesHttpClient` 与现场证书策略。

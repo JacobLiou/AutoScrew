@@ -11,13 +11,15 @@
 
 ## 范围
 
-**本期包含**：气吸取钉、智能电批控制、曲线采集与判定、任务与 SN/PN 配置、操作界面与报警、数据存储与 MES 接口（开放端口配合整合）。
+**本期包含**：**程控自动供料/上料**、智能电批控制、曲线采集与判定、任务与 SN/PN 配置、操作界面与报警、数据存储与 MES 接口（开放端口配合整合）。
 
 **不在本期或单独约定**：视觉防错/识别（V1 讨论中为**二期**）、具体 MES 报文与服务器拓扑（依公司 IT 规范）、非本工位的整线节拍平衡。
 
 详细条目、验收数值与阶段计划见 [doc/SPEC.md](doc/SPEC.md)（对齐 [doc/智能锁附系统开发 (V1).xls](<doc/智能锁附系统开发 (V1).xls>)）。
 
-## 系统架构（逻辑）
+## 系统架构（逻辑 — PRD V1.1）
+
+单工位由上位机统一编排 **供料器 + 电批** 双设备：
 
 ```mermaid
 flowchart LR
@@ -26,27 +28,28 @@ flowchart LR
     HMI[HMI]
   end
   Controller[LockController]
-  Feeder[Feeder]
-  SmartDriver[SmartDriver]
+  FeederCtrl[ProgrammableFeeder]
+  SmartDriver[IEMD-SD_Driver]
   Vision[Vision_optional]
   MES[MES_or_Server]
   Operator --> HMI
   HMI --> Controller
-  Controller --> Feeder
-  Controller --> SmartDriver
+  Controller -->|"每钉 FeedAsync"| FeederCtrl
+  Controller -->|"换参/拧紧/曲线"| SmartDriver
   Controller -.-> Vision
   Controller --> MES
 ```
 
 - **HMI**：扫 SN、显示 PN 示意图与螺钉位状态（黄闪/绿/红）、曲线与报警。
-- **LockController**：任务调度、工艺参数、判定逻辑、与供料/电批驱动交互。
+- **LockController**：任务调度、**供料→拧紧**编排、判定逻辑、与供料器/电批驱动交互。
+- **ProgrammableFeeder**：程控上料设备；协议见 [doc/FEEDER_CONTROL.md](doc/FEEDER_CONTROL.md)（草案）。
 - **MES_or_Server**：模板与结果回传；互锁与工艺下发策略由项目约定。
 
 ## 需求摘要
 
 | 维度 | 要点 |
 |------|------|
-| 功能 | 气吸取钉、预锁附/锁附/紧固、多吸头/力矩头快换、50 组任务、SN→PN 图片引导 |
+| 功能 | **程控供料上料**、预锁附/锁附/紧固、多吸头/力矩头快换、50 组任务、SN→PN 图片引导 |
 | 工艺与判定 | 扭矩分段、转速/角度/时间可配；扭矩–角度曲线；歪斜 **>3°**、吸头外径相对螺钉头 **+0.6 mm** 等规则 |
 | 追溯与防错 | SN/位号/结果/曲线存档；漏装、错料、未打紧、入牙异常报警；MES 对接 |
 | 可靠性与维护 | 主轴寿命等见 SPEC 验收表；PRD 约定约 **300 万次**后传感器校正 |
@@ -90,6 +93,8 @@ flowchart LR
 | [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | 多面模板 / 作业 HMI 线框（草案） |
 | [doc/driverAnaC.md](doc/driverAnaC.md) | 智能电批 Modbus/FTP 通信与厂商 Demo 梳理 |
 | [doc/IEMD_SD_MODBUS_COMMANDS.md](doc/IEMD_SD_MODBUS_COMMANDS.md) | IEMD-SD 附录功能码目录（TCP/RTU 通用） |
+| [doc/FEEDER_CONTROL.md](doc/FEEDER_CONTROL.md) | **程控供料器**控制契约草案（PRD V1.1） |
+| [doc/TODO.md](doc/TODO.md) | α→β 缺口清单与实施顺序 |
 | `src/UDL.Delta.IemdSd` | 台达 IEMD-SD 驱动：`ExecuteModbusCommandAsync` + 产线强类型 API |
 | [doc/智能锁附系统开发 (V1).xls](<doc/智能锁附系统开发 (V1).xls>) | 原始需求与验收表（含图） |
 | `src/` | 应用软件代码（待建） |

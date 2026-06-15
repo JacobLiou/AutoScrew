@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Threading;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Application.Templates;
@@ -602,6 +603,16 @@ public sealed class OperatorSessionController
 
         if (_activeSurfaceOrdinal < _surfaces.Count)
             _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
+
+        if (_currentIndex >= 0
+            && _currentIndex < _states.Length
+            && _states[_currentIndex] == StationScrewState.Ng)
+        {
+            SetState(_currentIndex, StationScrewState.Pending);
+        }
+
+        _lastErrorMessage = null;
+        _lastErrorCode = null;
 
         AuditOperation("Operation.UnlockNg", $"sn={_serialNumber}");
         NotifyChanged();

@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 
 namespace AutoScrew.Hmi.ViewModels;
 
@@ -21,6 +22,9 @@ public partial class MainViewModel : ObservableObject
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
+    private readonly SemaphoreSlim _autoRunGate = new(1, 1);
+    private bool _localCycleInProgress;
+    private JobSessionPhase _previousPhase = JobSessionPhase.Idle;
 
     public MainViewModel(
         OperatorSessionController session,
@@ -34,11 +38,7 @@ public partial class MainViewModel : ObservableObject
         _audit = audit;
         _appOptions = appOptions;
         _user = user;
-        _session.Changed += (_, _) =>
-        {
-            RefreshFromSession();
-            NotifyCommandStates();
-        };
+        _session.Changed += OnSessionChanged;
         _localization.CultureChanged += (_, _) => RefreshFromSession();
         ProgressTreeRoot = new OperatorProgressRootViewModel();
         ProgressTreeRoots.Add(ProgressTreeRoot);
@@ -79,26 +79,67 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSnInputEnabled = true;
 
+    [ObservableProperty]
+    private bool _isNgOverlayVisible;
+
+    [ObservableProperty]
+    private string _ngErrorCode = "";
+
+    [ObservableProperty]
+    private string _ngErrorMessage = "";
+
+    [ObservableProperty]
+    private string _ngErrorAdvice = "";
+
+    [ObservableProperty]
+    private bool _isOperationLocked;
+
+    public bool ShowRunScrewButton =>
+        !_appOptions.Value.AutoRunScrewCycle
+        || (_appOptions.Value.ShowManualRunScrewButton && _user.Role >= UserRole.Technician);
+
+    public bool CanUnlockNgOverlay =>
+        _session.Phase == JobSessionPhase.NgLocked && _user.CanUnlockNg;
+
     public ObservableCollection<ScrewMarkerVm> Markers { get; } = new();
 
     public ObservableCollection<string> ActivityLog { get; } = new();
 
     public OperatorSurfaceNodeViewModel? ActiveSurfaceNode { get; private set; }
 
+    private void OnSessionChanged(object? sender, EventArgs e)
+    {
+        RefreshFromSession();
+        NotifyCommandStates();
+        OnPropertyChanged(nameof(ShowRunScrewButton));
+        OnPropertyChanged(nameof(CanUnlockNgOverlay));
+
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            _ = TryAutoRunScrewCycleAsync();
+        else
+            dispatcher.BeginInvoke(DispatcherPriority.Background, () => _ = TryAutoRunScrewCycleAsync());
+    }
+
     private bool CanOpenScan() =>
-        _session.Phase is JobSessionPhase.Idle or JobSessionPhase.SnRejected;
+        !IsOperationLocked
+        && _session.Phase is JobSessionPhase.Idle or JobSessionPhase.SnRejected;
 
     private bool CanSubmitSn() =>
-        _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected
+        !IsOperationLocked
+        && _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected
         && !string.IsNullOrWhiteSpace(SerialNumberInput);
 
     private bool CanRunScrew() =>
-        _session.Phase == JobSessionPhase.Running
+        ShowRunScrewButton
+        && !_localCycleInProgress
+        && !_session.IsCycleInProgress
+        && _session.Phase == JobSessionPhase.Running
         && _session.CurrentScrewIndex >= 0;
 
-    private bool CanConfirmFlip() => _session.Phase == JobSessionPhase.AwaitFlip;
+    private bool CanConfirmFlip() => !IsOperationLocked && _session.Phase == JobSessionPhase.AwaitFlip;
 
-    private bool CanUnlockNg() => _session.Phase == JobSessionPhase.NgLocked;
+    private bool CanUnlockNg() => _session.Phase == JobSessionPhase.NgLocked && _user.CanUnlockNg;
 
     [RelayCommand(CanExecute = nameof(CanOpenScan))]
     private void OpenScan()
@@ -153,40 +194,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanRunScrew))]
     private async Task RunCurrentScrewAsync()
     {
-        AuditHelper.Log(
-            _audit,
-            _appOptions,
-            _user,
-            AuditCategory.Operation,
-            "Operation.RunScrew",
-            detail: $"sn={_session.SerialNumber};screw={_session.CurrentScrewLocalIndex}",
-            serialNumber: _session.SerialNumber);
-        try
-        {
-            var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
-            var screwNo = _session.CurrentScrewLocalIndex;
-            StatusMessage = Loc.Get("S.Operation.StatusPickTighten");
-            await _session.RunCurrentScrewCycleAsync().ConfigureAwait(true);
-
-            if (_session.LastErrorMessage is not null)
-            {
-                StatusMessage = _session.LastErrorMessage;
-                AddLog(Loc.Format("S.Operation.LogNg", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo, _session.LastErrorMessage));
-            }
-            else
-            {
-                StatusMessage = Loc.Get("S.Operation.StatusStepDone");
-                AddLog(Loc.Format("S.Operation.LogOk", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo));
-                CurveChanged?.Invoke(this, EventArgs.Empty);
-            }
-
-            if (_session.Phase == JobSessionPhase.AwaitFlip)
-                await PromptAndConfirmFlipAsync().ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = ex.Message;
-        }
+        await ExecuteScrewCycleAsync(manualTrigger: true).ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanConfirmFlip))]
@@ -203,8 +211,11 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _session.UnlockNgContinue();
+            IsNgOverlayVisible = false;
+            IsOperationLocked = false;
             StatusMessage = Loc.Get("S.Operation.StatusUnlocked");
             AddLog($"{DateTime.Now:HH:mm:ss} {Loc.Get("S.Operation.LogUnlock")}");
+            OnPropertyChanged(nameof(CanUnlockNgOverlay));
         }
         catch (Exception ex)
         {
@@ -225,6 +236,8 @@ public partial class MainViewModel : ObservableObject
         SerialNumberInput = "";
         ActivityLog.Clear();
         IsSnInputEnabled = true;
+        IsNgOverlayVisible = false;
+        IsOperationLocked = false;
         StatusMessage = Loc.Get("S.Operation.StatusReset");
         try
         {
@@ -262,6 +275,19 @@ public partial class MainViewModel : ObservableObject
         BoardHeight = _session.BoardHeight;
         IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected or JobSessionPhase.Idle;
 
+        var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
+        if (ngLocked && _previousPhase != JobSessionPhase.NgLocked)
+        {
+            NgErrorCode = _session.LastErrorCode ?? "";
+            NgErrorMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked");
+            NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode);
+        }
+
+        IsNgOverlayVisible = ngLocked;
+        IsOperationLocked = ngLocked;
+        _previousPhase = _session.Phase;
+        OnPropertyChanged(nameof(CanUnlockNgOverlay));
+
         Markers.Clear();
         var positions = _session.Positions;
         var states = _session.ScrewStates;
@@ -274,6 +300,102 @@ public partial class MainViewModel : ObservableObject
         }
 
         RefreshProgressTree();
+    }
+
+    private async Task TryAutoRunScrewCycleAsync()
+    {
+        if (!_appOptions.Value.AutoRunScrewCycle || _localCycleInProgress || _session.IsCycleInProgress)
+            return;
+
+        if (_session.Phase != JobSessionPhase.Running || _session.CurrentScrewIndex < 0)
+            return;
+
+        var idx = _session.CurrentScrewIndex;
+        if (idx >= _session.ScrewStates.Count)
+            return;
+
+        if (_session.ScrewStates[idx] != StationScrewState.Pending)
+            return;
+
+        await _autoRunGate.WaitAsync().ConfigureAwait(true);
+        try
+        {
+            if (!_appOptions.Value.AutoRunScrewCycle || _localCycleInProgress || _session.IsCycleInProgress)
+                return;
+            if (_session.Phase != JobSessionPhase.Running || _session.CurrentScrewIndex < 0)
+                return;
+            idx = _session.CurrentScrewIndex;
+            if (idx >= _session.ScrewStates.Count || _session.ScrewStates[idx] != StationScrewState.Pending)
+                return;
+
+            await ExecuteScrewCycleAsync(manualTrigger: false).ConfigureAwait(true);
+        }
+        finally
+        {
+            _autoRunGate.Release();
+        }
+    }
+
+    private async Task ExecuteScrewCycleAsync(bool manualTrigger)
+    {
+        if (_localCycleInProgress || _session.IsCycleInProgress)
+            return;
+
+        _localCycleInProgress = true;
+        NotifyCommandStates();
+
+        AuditHelper.Log(
+            _audit,
+            _appOptions,
+            _user,
+            AuditCategory.Operation,
+            manualTrigger ? "Operation.RunScrew" : "Operation.AutoRunScrew",
+            detail: $"sn={_session.SerialNumber};screw={_session.CurrentScrewLocalIndex}",
+            serialNumber: _session.SerialNumber);
+
+        try
+        {
+            var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
+            var screwNo = _session.CurrentScrewLocalIndex;
+            StatusMessage = _appOptions.Value.UseSimulatedHardware
+                ? Loc.Get("S.Operation.StatusPickTighten")
+                : Loc.Get("S.Operation.StatusWaitTrigger");
+
+            await _session.RunCurrentScrewCycleAsync().ConfigureAwait(true);
+
+            if (_session.LastErrorMessage is not null)
+            {
+                StatusMessage = _session.LastErrorMessage;
+                AddLog(Loc.Format("S.Operation.LogNg", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo, _session.LastErrorMessage));
+            }
+            else
+            {
+                StatusMessage = Loc.Get("S.Operation.StatusStepDone");
+                AddLog(Loc.Format("S.Operation.LogOk", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo));
+                CurveChanged?.Invoke(this, EventArgs.Empty);
+
+                if (_appOptions.Value.AutoChainNextScrew
+                    && _session.Phase == JobSessionPhase.Running
+                    && _session.CurrentScrewIndex >= 0
+                    && _session.CurrentScrewIndex < _session.ScrewStates.Count
+                    && _session.ScrewStates[_session.CurrentScrewIndex] == StationScrewState.Pending)
+                {
+                    await TryAutoRunScrewCycleAsync().ConfigureAwait(true);
+                }
+            }
+
+            if (_session.Phase == JobSessionPhase.AwaitFlip)
+                await PromptAndConfirmFlipAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+        finally
+        {
+            _localCycleInProgress = false;
+            NotifyCommandStates();
+        }
     }
 
     private string BuildGuideHint()

@@ -5,6 +5,7 @@
 | 版本 | 日期 | 作者 | 说明 |
 |------|------|------|------|
 | 0.1 | 2026-05-11 | — | 初稿：对齐当前技术选型与分层方案 |
+| 0.2 | 2026-06-11 | — | PRD V1.1：双设备编排（程控供料器 + IEMD-SD）；`IFeeder` 与电批驱动解耦 |
 
 ---
 
@@ -13,13 +14,13 @@
 ### 1.1 产品定位
 
 - **形态**：单工位 Windows 桌面程序（对外可称「作业台工具」），部署于产线 PC。
-- **职责**：扫码校验 SN、从 MES/服务器拉取 PN 与工艺模板、产品图螺钉位引导、与智能电批/供料设备协同、扭矩–角度曲线采集与规则判定、结果与曲线本地归档及上传、权限与审计。
+- **职责**：扫码校验 SN、从 MES/服务器拉取 PN 与工艺模板、产品图螺钉位引导、与**程控供料器及智能电批**协同、扭矩–角度曲线采集与规则判定、结果与曲线本地归档及上传、权限与审计。
 
 ### 1.2 与 PRD 的对应关系（摘要）
 
 | PRD 能力域 | 设计侧落点 |
 |------------|------------|
-| 手持电批 + 气吸供料 + 快换 | 设备驱动适配层（协议/SDK 待定），上位机不绑定具体型号 |
+| 手持电批 + **程控供料** + 快换 | **双驱动适配**：`IFeeder` + `IIemdSdClient`（或 `ILockStationHardware` 编排）；协议见 [FEEDER_CONTROL.md](FEEDER_CONTROL.md) |
 | 分段扭矩/转速/角度、曲线判定 | Domain 规则与曲线管线；与 UI 线程解耦 |
 | HMI：黄闪/黄常/绿/红、1Hz 闪烁、大图打点 | WPF 视图 + VM 状态；Storyboard / VisualState |
 | ≥50 组任务、SN→PN、返修标记 | Application 用例 + 本地/远端配置模型 |
@@ -107,7 +108,7 @@ flowchart TB
   Ports --> Files
   Ports --> Devices
   Mes --> MES[MES_or_Server]
-  Devices --> HW[Smart_driver_Feeder]
+  Devices --> HW[Feeder_and_IEMD-SD]
 ```
 
 ---
@@ -122,8 +123,8 @@ flowchart TB
 2. **SnPending**：弹窗等待 SN；校验中。
 3. **SnRejected**：无效 SN，提示重扫。
 4. **LoadingRecipe**：拉取 PN、模板、产品图与螺钉位列表。
-5. **Running**：按序引导螺钉位；每钉含取钉/锁附/曲线判定子状态（可内嵌子 FSM）。
-6. **NgLocked**：NG 后界面锁定，仅技术员/管理员可解锁或进入返修流程。
+5. **Running**：按序引导螺钉位；每钉子状态机：**供料（Feed）→ 换参 → 锁附 → 曲线判定**（见 [PRD.md](PRD.md) §3.2.1a）。
+6. **NgLocked**：NG 或供料失败（策略待定）后界面锁定，仅技术员/管理员可解锁或进入返修流程。
 7. **Completed**：生成日志包、触发上传、可复位到 Idle。
 
 **断电恢复**：在 `Running` / `NgLocked` 等关键迁移点写入 SQLite checkpoint（当前 SN、PN、当前螺钉索引、各位置结果摘要）；启动时检测未完成会话并提示恢复或作废（策略与 PRD/EHS 评审一致）。
@@ -154,8 +155,10 @@ flowchart TB
 
 ### 6.4 设备适配（Infrastructure）
 
-- 定义 **`ISmartDriver`**、**`IFeeder`**（或合并为 `ILockStationHardware`）等端口，方法粒度与供应商 SDK 对齐后再固化。
-- **仿真实现**：无硬件时返回合成曲线与状态，供 UI 与规则单测。
+- **供料器**：独立 **`IFeeder`**（或 `FeedAsync(FeedContext)`），与电批解耦；契约草案 [FEEDER_CONTROL.md](FEEDER_CONTROL.md)。
+- **电批**：**`IIemdSdClient`** / [`UDL.Delta.IemdSd`](../src/UDL.Delta.IemdSd)；产线接线见 [driverAnaC.md](driverAnaC.md)、[TODO.md](TODO.md)。
+- **工位编排**：**`ILockStationHardware`** 组合 `IFeeder` + 电批；当前 [`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs) 仍用 `_feederSim`，待 T-06 替换。
+- **仿真实现**：无硬件时供料 Delay + 合成曲线，供 UI 与规则单测。
 - **禁止**：在未确认的安全策略下绕过扭矩保护、互锁或急停相关逻辑（见仓库 `CLAUDE.md`）。
 
 ### 6.5 文件与路径
@@ -169,7 +172,7 @@ flowchart TB
 与 PRD 3.3.2 建议表一致，实施时以迁移脚本为准。
 
 - **lock_record**：`sn`, `pn`, `station`, `operator`, `start_time`, `end_time`, `result`, …
-- **screw_detail**：`record_id`, `position`, `part_no`, `torque_final`, `angle_final`, `curve_path`, …
+- **screw_detail**：`record_id`, `position`, `part_no`, `torque_final`, `angle_final`, `curve_path`, …；**V1.1 待定** `feed_ok`, `feed_error_code`
 - **error_log**：`record_id`, `error_code`, `error_msg`, `resolve_by`, `resolve_time`, …
 - **outbox_upload**（建议增）：`payload_json`, `created_at`, `sent_at`, `retry_count`, `last_error`, …
 

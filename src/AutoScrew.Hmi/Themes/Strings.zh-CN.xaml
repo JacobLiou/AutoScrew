@@ -116,9 +116,15 @@
     <system:String x:Key="S.Operation.StatusValidating">正在校验 SN…</system:String>
     <system:String x:Key="S.Operation.StatusRecipeLoaded">配方已加载。</system:String>
     <system:String x:Key="S.Operation.StatusPickTighten">取钉 + 拧紧（模拟）…</system:String>
+    <system:String x:Key="S.Operation.StatusWaitTrigger">取钉完成，请按电批扳机拧紧…</system:String>
     <system:String x:Key="S.Operation.StatusStepDone">本步完成。</system:String>
     <system:String x:Key="S.Operation.StatusUnlocked">已解锁，请继续。</system:String>
     <system:String x:Key="S.Operation.StatusReset">会话已复位。</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTitle">拧紧 NG — 作业已暂停</system:String>
+    <system:String x:Key="S.Operation.NgOverlayCodeLabel">错误码</system:String>
+    <system:String x:Key="S.Operation.NgOverlayMessageLabel">说明</system:String>
+    <system:String x:Key="S.Operation.NgOverlayAdviceLabel">处理建议</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">请联系技术员解锁后继续；操作员不可关闭此对话框。</system:String>
 
     <!-- Template -->
     <system:String x:Key="S.Template.Title">螺钉模板</system:String>

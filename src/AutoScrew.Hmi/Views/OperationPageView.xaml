@@ -13,7 +13,9 @@
              d:DataContext="{d:DesignInstance vm:MainViewModel, IsDesignTimeCreatable=False}">
     <UserControl.Resources>
         <conv:PathToImageConverter x:Key="PathToImageConverter"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
+    <Grid>
     <DockPanel Margin="0">
         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
             <ui:TextBox x:Name="SnInputBox"
@@ -31,7 +33,8 @@
             <ui:Button Content="{DynamicResource S.Operation.RunScrew}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding RunCurrentScrewCommand}"/>
+                       Command="{Binding RunCurrentScrewCommand}"
+                       Visibility="{Binding ShowRunScrewButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <ui:Button Content="{DynamicResource S.Operation.ConfirmFlip}"
                        Margin="0,0,8,8"
                        Style="{StaticResource ShellSecondaryButtonStyle}"
@@ -62,12 +65,13 @@
             </StackPanel>
         </Border>
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" MinWidth="180"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" MinWidth="180"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
             <Border Grid.Column="0"
                     Background="{DynamicResource ShellCardBrush}"
                     BorderBrush="{DynamicResource ShellBorderBrush}"
@@ -173,6 +177,51 @@
                     </ListBox>
                 </Grid>
             </ui:Card>
+            </Grid>
         </Grid>
     </DockPanel>
+    <Border Background="#CC000000"
+            Visibility="{Binding IsNgOverlayVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+            Panel.ZIndex="100">
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MaxWidth="480"
+                Padding="24"
+                Background="{DynamicResource ShellCardBrush}"
+                BorderBrush="{DynamicResource BrushNg}"
+                BorderThickness="2"
+                CornerRadius="8">
+            <StackPanel>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayTitle}"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource BrushNg}"
+                           Margin="0,0,0,12"/>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayCodeLabel}"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding NgErrorCode}"
+                           FontFamily="Consolas"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayMessageLabel}"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding NgErrorMessage}"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayAdviceLabel}"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding NgErrorAdvice}"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,16"/>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayOperatorHint}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                           Margin="0,0,0,12"/>
+                <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
+                           HorizontalAlignment="Center"
+                           Command="{Binding UnlockNgCommand}"
+                           Visibility="{Binding CanUnlockNgOverlay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+        </Border>
+    </Border>
+    </Grid>
 </UserControl>
