@@ -20,13 +20,14 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
 
     public IemdSdLockStationHardware(
         IStationDeviceService devices,
+        SimulatedLockStationHardware feederSim,
         IOptions<IemdSdOptions> options,
         ILogger<IemdSdLockStationHardware> logger)
     {
         _devices = devices;
+        _feederSim = feederSim;
         _options = options.Value;
         _logger = logger;
-        _feederSim = new SimulatedLockStationHardware();
     }
 
     public LockHardwareOutcome? LastOutcome { get; private set; }

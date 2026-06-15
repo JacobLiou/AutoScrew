@@ -39,6 +39,7 @@ public partial class MainViewModel : ObservableObject
         _appOptions = appOptions;
         _user = user;
         _session.Changed += OnSessionChanged;
+        _session.TighteningProgress += OnTighteningProgress;
         _localization.CultureChanged += (_, _) => RefreshFromSession();
         ProgressTreeRoot = new OperatorProgressRootViewModel();
         ProgressTreeRoots.Add(ProgressTreeRoot);
@@ -92,6 +93,9 @@ public partial class MainViewModel : ObservableObject
     private string _ngErrorAdvice = "";
 
     [ObservableProperty]
+    private string _ngOverlayTitle = "";
+
+    [ObservableProperty]
     private bool _isOperationLocked;
 
     public bool ShowRunScrewButton =>
@@ -106,6 +110,9 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<string> ActivityLog { get; } = new();
 
     public OperatorSurfaceNodeViewModel? ActiveSurfaceNode { get; private set; }
+
+    private void OnTighteningProgress(object? sender, EventArgs e) =>
+        CurveChanged?.Invoke(this, EventArgs.Empty);
 
     private void OnSessionChanged(object? sender, EventArgs e)
     {
@@ -251,6 +258,39 @@ public partial class MainViewModel : ObservableObject
         CurveChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public async Task TryRestoreCheckpointOnStartupAsync()
+    {
+        var offer = await _session.GetCheckpointRestoreOfferAsync().ConfigureAwait(true);
+        if (offer is null)
+        {
+            EnsureScanReady();
+            return;
+        }
+
+        var message = Loc.Format("S.Operation.RestoreCheckpointPrompt", offer.SerialNumber, offer.PartNumber, offer.Phase);
+        if (ConfirmTips.ShowDialog(message, System.Windows.Application.Current.MainWindow, Loc.Get("S.Operation.RestoreCheckpointTitle")))
+        {
+            StatusMessage = Loc.Get("S.Operation.StatusRestoring");
+            var ok = await _session.RestoreFromCheckpointAsync().ConfigureAwait(true);
+            if (ok)
+            {
+                SerialNumberInput = _session.SerialNumber ?? "";
+                StatusMessage = Loc.Format("S.Operation.StatusRestored", _session.SerialNumber!);
+                AddLog(Loc.Format("S.Operation.LogRestored", _session.SerialNumber!));
+                RefreshFromSession();
+                return;
+            }
+
+            StatusMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.RestoreFailed");
+        }
+        else
+        {
+            await _session.DiscardCheckpointAsync().ConfigureAwait(true);
+        }
+
+        EnsureScanReady();
+    }
+
     public void EnsureScanReady()
     {
         try
@@ -276,11 +316,18 @@ public partial class MainViewModel : ObservableObject
         IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected or JobSessionPhase.Idle;
 
         var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
-        if (ngLocked && _previousPhase != JobSessionPhase.NgLocked)
+        if (ngLocked)
         {
-            NgErrorCode = _session.LastErrorCode ?? "";
-            NgErrorMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked");
-            NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode);
+            if (_previousPhase != JobSessionPhase.NgLocked)
+            {
+                NgErrorCode = _session.LastErrorCode ?? "";
+                NgErrorMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked");
+                NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode);
+            }
+
+            NgOverlayTitle = ScrewNgAdvisor.IsFeedError(_session.LastErrorCode)
+                ? Loc.Get("S.Operation.NgFeedTitle")
+                : Loc.Get("S.Operation.NgScrewTitle");
         }
 
         IsNgOverlayVisible = ngLocked;
@@ -367,6 +414,8 @@ public partial class MainViewModel : ObservableObject
             {
                 StatusMessage = _session.LastErrorMessage;
                 AddLog(Loc.Format("S.Operation.LogNg", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo, _session.LastErrorMessage));
+                if (_session.Phase != JobSessionPhase.NgLocked)
+                    CurveChanged?.Invoke(this, EventArgs.Empty);
             }
             else
             {

@@ -37,4 +37,10 @@ public sealed class AutoScrewAppOptions
 
     /// <summary>作业台显示「当前螺钉：取钉+拧紧」维护按钮（技术员及以上始终可见）。</summary>
     public bool ShowManualRunScrewButton { get; set; } = true;
+
+    /// <summary>SN 校验成功后写入 IEMD-SD 控制器条码 (#401)。</summary>
+    public bool WriteSnToController { get; set; } = true;
+
+    /// <summary>写条码失败时阻断配方加载；false 时仅记录警告。</summary>
+    public bool StrictSnToController { get; set; }
 }

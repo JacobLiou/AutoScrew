@@ -68,4 +68,42 @@ public sealed class EfLockSessionRepository(IDbContextFactory<AppDbContext> fact
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
+
+    public async Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        await using var db = await factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+        var record = new LockRecordEntity
+        {
+            SerialNumber = payload.SerialNumber,
+            PartNumber = payload.PartNumber,
+            StationId = payload.StationId,
+            OperatorId = payload.OperatorId,
+            StartedAt = payload.StartedAt,
+            EndedAt = payload.CompletedAt,
+            Result = payload.OverallResult,
+            IsRework = payload.IsRework,
+        };
+
+        db.LockRecords.Add(record);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        foreach (var screw in payload.Screws)
+        {
+            db.ScrewDetails.Add(new ScrewDetailEntity
+            {
+                LockRecordId = record.Id,
+                PositionIndex = screw.PositionIndex,
+                PartNo = null,
+                FinalTorqueNm = screw.FinalTorqueNm,
+                FinalAngleDeg = screw.FinalAngleDeg,
+                CurvePath = screw.CurveRelativePath,
+                Result = screw.Result,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return record.Id;
+    }
 }

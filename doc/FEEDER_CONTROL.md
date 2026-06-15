@@ -58,6 +58,16 @@ sequenceDiagram
 | 完成条件 | 到位传感器、真空 OK、设备状态字某位 |
 | 超时 | 默认 ms；重试次数 |
 | 故障码 | 缺料、卡料、真空不足、通信断等 → 映射 `FEED_xxx` |
+
+**仿真占位（T-06b 已实现，真机待定稿）**：
+
+| 错误码 | 场景 |
+|--------|------|
+| `FEED_TIMEOUT` | 供料超时 |
+| `FEED_EMPTY` | 缺料 |
+| `FEED_JAM` | 卡料 |
+
+配置：`AutoScrew:Simulation:FeedFailureMode` + `FeedFailureOnScrewIndex`（Development / FAT 无真供料器时验收）。
 | 安全 | 与急停/互锁关系；供料中是否禁止拧紧 |
 
 ---

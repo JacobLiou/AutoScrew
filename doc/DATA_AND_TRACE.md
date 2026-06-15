@@ -17,8 +17,8 @@
 
 ## SQLite 实体（Infrastructure）
 
-- `lock_records` / `screw_details` / `error_logs`：表已建，完整写入路径可在后续迭代接 `OperatorSessionController`。
-- `session_checkpoints`：作业断电恢复 checkpoint（JSON）。
+- `lock_records` / `screw_details` / `error_logs`：表已建；**T-08**：作业完成时 [`SaveLockRecordAsync`](../src/AutoScrew.Application/Abstractions/ILockSessionRepository.cs) 写入 `lock_records` + `screw_details`（`PositionIndex` = 全局位号）。
+- `session_checkpoints`：作业断电恢复 checkpoint（JSON）；**T-07** 启动时 HMI 提示恢复，重载模板并合并螺钉状态（不含 `_screwRecords` 扭矩/曲线路径）。
 - `outbox_uploads`：MES 上传重试队列。
 - `user_audit_logs`：用户操作审计（仅追加 INSERT，HMI 无删除 API）。
 
@@ -52,6 +52,56 @@
 ## HTTPS
 
 - 生产环境 MES 基址使用 HTTPS（TLS 1.2+），见 `MesHttpClient` 与现场证书策略。
+
+## MES HTTP v1（占位）
+
+> **说明**：正式 MES 规范未定稿；下列路径与 JSON 形状与 [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs) 一致，供 FAT 与 `tools/MesMockServer` 联调。IT 定稿后先改本节再改实现。
+
+### 运行时配置
+
+- 持久化文件：`{DataDirectory}/mes-settings.json`（HMI Mes 页 **保存**）。
+- 字段：`UseMockMes`（`true` = 内存 Mock，不发 HTTP）、`BaseUrl`（须以 `/` 结尾）、`ApiKey`（可选）、`TimeoutSeconds`。
+- 首次无文件时从 `appsettings` 的 `AutoScrew:UseMockMes`、`AutoScrew:MesBaseUrl` 种子。
+- HMI **应用** 刷新内存快照，无需重启；出站与扫码走 `ConfigurableMesClient` → `MockMesClient` 或 `MesHttpClient`。
+- 所有请求 query 带 `stationId`（`AutoScrew:StationId`）；`ApiKey` 非空时 Header `X-Api-Key`。
+
+### 端点
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `api/health` | 连通测试（可选）；200 = OK |
+| GET | `api/sn/validate?sn=&stationId=` | 响应 `{ valid, partNumber, message }` |
+| GET | `api/recipe?sn=&pn=&stationId=` | 响应 `{ templateJsonPath, productImageUrl, screws[] }`；`screws[].index` 映射 `ScrewRecipeDto.PositionIndex` |
+| POST | `api/results` | Body = [`LockJobResultPayload`](../src/AutoScrew.Application/Abstractions/IMesClient.cs)；成功 2xx |
+
+### 本地 Mock
+
+```bash
+dotnet run --project tools/MesMockServer
+```
+
+默认 `http://localhost:5080/`；Mes 页关 Mock 并填该基址即可测试连接与扫码流程。
+
+## 控制器条码（T-03）
+
+- SN MES 校验成功后，若 `AutoScrew:WriteSnToController=true` 且非仿真硬件，经 [`IemdSdControllerTraceService`](../src/AutoScrew.Infrastructure/Hardware/IemdSdControllerTraceService.cs) 写 IEMD-SD `#401`（`WriteBarcodeAsync`）。
+- `StrictSnToController=false`（默认）：写失败仅日志，不阻断配方加载；`true` 时抛错拒绝作业。
+
+## 供料失败码（T-06b · 仿真已用）
+
+| 错误码 | 含义 | 解锁 |
+|--------|------|------|
+| `FEED_TIMEOUT` | 供料超时 | 技术员 `UnlockNgContinue` |
+| `FEED_EMPTY` | 缺料 | 同上 |
+| `FEED_JAM` | 卡料 | 同上 |
+
+- 作业流：`PickScrewAsync` 抛 [`FeedFaultException`](../src/AutoScrew.Application/Abstractions/FeedFaultException.cs) → `NgLocked` + 审计 `Operation.FeedNg`。
+- 无真机验收：Development 下 `AutoScrew:Simulation:FeedFailureMode` / `FeedFailureOnScrewIndex`（见 [DVT_GUI_TEST_BASIS.md](DVT_GUI_TEST_BASIS.md)）。
+
+## 无真机仿真（Development）
+
+- `AutoScrew:UseSimulatedHardware=true` + `UseMockMes=true`：完整操作员流程（扫码 → 自动取钉拧紧 → 曲线）。
+- `AutoScrew:Simulation`：`FeedFailureMode`（`None|Timeout|Empty|Jam`）、`FeedFailureOnScrewIndex`（1-based，0=关，-1=每颗）、`TighteningProfile`（`Ok|FloatLock|OverTorque`）。
 
 ## MIMS MySQL 登录（只读）
 

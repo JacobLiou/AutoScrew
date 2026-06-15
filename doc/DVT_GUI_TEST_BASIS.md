@@ -147,6 +147,24 @@
 - tech / demo
 - admin / demo
 
+### 仿真场景（`AutoScrew:Simulation`）
+
+| 键 | 值 | 效果 |
+|----|-----|------|
+| `FeedFailureMode` | `None` / `Timeout` / `Empty` / `Jam` | 第 N 次取钉失败 → `FEED_xxx` + NG 遮罩 |
+| `FeedFailureOnScrewIndex` | `1` | 仅第 1 颗；`0`=关；`-1`=每颗 |
+| `TighteningProfile` | `Ok` / `FloatLock` / `OverTorque` | 合成曲线 OK 或规则 NG |
+
+示例（`appsettings.Development.json`）：
+
+```json
+"Simulation": {
+  "FeedFailureMode": "Empty",
+  "FeedFailureOnScrewIndex": 2,
+  "TighteningProfile": "Ok"
+}
+```
+
 适用文件：[src/AutoScrew.Hmi/appsettings.Development.json](../src/AutoScrew.Hmi/appsettings.Development.json)
 
 ## 6.2 生产联调环境（条件执行）

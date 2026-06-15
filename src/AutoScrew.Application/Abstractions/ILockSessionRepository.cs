@@ -11,6 +11,8 @@ public interface ILockSessionRepository
     Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default);
 
     Task ClearCheckpointAsync(CancellationToken cancellationToken = default);
+
+    Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default);
 }
 
 public sealed record SessionCheckpointData(

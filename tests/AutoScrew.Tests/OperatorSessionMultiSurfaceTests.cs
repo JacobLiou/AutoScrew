@@ -104,7 +104,7 @@ public sealed class OperatorSessionMultiSurfaceTests
 
             var mes = new TestMesClient(templatePath);
             var loader = new TemplateLayoutJsonLoader(NullLogger<TemplateLayoutJsonLoader>.Instance);
-            var hardware = new SimulatedLockStationHardware();
+            var hardware = new SimulatedLockStationHardware(Options.Create(new SimulationOptions()));
             var archive = new TestCurveArchive();
             var checkpoint = new TestCheckpointStore();
             var outbox = new TestOutbox();
@@ -112,6 +112,7 @@ public sealed class OperatorSessionMultiSurfaceTests
             var options = Options.Create(new AutoScrewAppOptions { TemplateDirectory = tempDir, StationId = "T-01" });
             var controller = new OperatorSessionController(
                 mes,
+                new NoOpControllerTraceService(),
                 loader,
                 hardware,
                 archive,
@@ -184,6 +185,9 @@ public sealed class OperatorSessionMultiSurfaceTests
             Last = null;
             return Task.CompletedTask;
         }
+
+        public Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default) =>
+            Task.FromResult(1L);
     }
 
     private sealed class TestOutbox : IOutboundMesQueue
@@ -209,5 +213,11 @@ public sealed class OperatorSessionMultiSurfaceTests
         public void Log(UserAuditEntry entry)
         {
         }
+    }
+
+    private sealed class NoOpControllerTraceService : IControllerTraceService
+    {
+        public Task WriteSerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 }

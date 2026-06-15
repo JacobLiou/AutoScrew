@@ -48,13 +48,13 @@ public partial class OperationPageView : UserControl
         vm.RequestSelectActiveSurface -= OnRequestSelectActiveSurface;
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel vm)
             return;
 
         EnsureCurvePlot();
-        vm.EnsureScanReady();
+        await vm.TryRestoreCheckpointOnStartupAsync().ConfigureAwait(true);
         vm.RefreshFromSession();
         RefreshPlot();
         SnInputBox.Focus();

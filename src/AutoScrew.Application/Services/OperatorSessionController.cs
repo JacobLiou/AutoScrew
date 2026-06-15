@@ -18,6 +18,7 @@ namespace AutoScrew.Application.Services;
 public sealed class OperatorSessionController
 {
     private readonly IMesClient _mesClient;
+    private readonly IControllerTraceService _controllerTrace;
     private readonly ITemplateLayoutLoader _templateLoader;
     private readonly ILockStationHardware _hardware;
     private readonly ICurveArchive _curveArchive;
@@ -49,9 +50,11 @@ public sealed class OperatorSessionController
     private int _templateSurfaceCount = 1;
     private string? _activeSurfaceId;
     private string? _activeSurfaceName;
+    private DateTimeOffset _sessionStartedAt;
 
     public OperatorSessionController(
         IMesClient mesClient,
+        IControllerTraceService controllerTrace,
         ITemplateLayoutLoader templateLoader,
         ILockStationHardware hardware,
         ICurveArchive curveArchive,
@@ -63,6 +66,7 @@ public sealed class OperatorSessionController
         ILogger<OperatorSessionController> logger)
     {
         _mesClient = mesClient;
+        _controllerTrace = controllerTrace;
         _templateLoader = templateLoader;
         _hardware = hardware;
         _curveArchive = curveArchive;
@@ -75,6 +79,8 @@ public sealed class OperatorSessionController
     }
 
     public event EventHandler? Changed;
+
+    public event EventHandler? TighteningProgress;
 
     public JobSessionPhase Phase => _phase;
 
@@ -124,6 +130,57 @@ public sealed class OperatorSessionController
 
     public IReadOnlyList<TorqueAngleSample> LastTighteningSamples { get; private set; } = Array.Empty<TorqueAngleSample>();
 
+    public sealed record CheckpointRestoreOffer(string SerialNumber, string PartNumber, JobSessionPhase Phase);
+
+    public async Task<CheckpointRestoreOffer?> GetCheckpointRestoreOfferAsync(CancellationToken cancellationToken = default)
+    {
+        var data = await _checkpointStore.LoadLatestCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        if (data is null || !IsRestorablePhase(data.Phase))
+            return null;
+
+        return new CheckpointRestoreOffer(data.SerialNumber, data.PartNumber, data.Phase);
+    }
+
+    public async Task<bool> RestoreFromCheckpointAsync(CancellationToken cancellationToken = default)
+    {
+        var data = await _checkpointStore.LoadLatestCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        if (data is null || !IsRestorablePhase(data.Phase))
+            return false;
+
+        try
+        {
+            _serialNumber = data.SerialNumber;
+            _partNumber = data.PartNumber;
+            _phase = data.Phase;
+            _activeSurfaceOrdinal = data.ActiveSurfaceOrdinal;
+            _currentIndex = data.CurrentScrewIndex;
+            _sessionStartedAt = data.UpdatedAt;
+
+            await ReloadTemplateForRestoreAsync(cancellationToken).ConfigureAwait(false);
+            MergeCheckpointSurfaceStates(data);
+
+            if (_phase == JobSessionPhase.Running && _currentIndex < 0)
+                _currentIndex = NextPendingIndex(0);
+
+            AuditOperation("Operation.RestoreCheckpoint", $"sn={_serialNumber};phase={_phase}");
+            await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to restore checkpoint for SN={SerialNumber}", data.SerialNumber);
+            _lastErrorMessage = ex.Message;
+            ClearSession();
+            await _checkpointStore.ClearCheckpointAsync(cancellationToken).ConfigureAwait(false);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    public Task DiscardCheckpointAsync(CancellationToken cancellationToken = default) =>
+        _checkpointStore.ClearCheckpointAsync(cancellationToken);
+
     public void RequestScanDialog()
     {
         _lastErrorMessage = null;
@@ -164,6 +221,21 @@ public sealed class OperatorSessionController
             throw new InvalidOperationException("State error after SN validation.");
 
         AuditOperation("Operation.SnAccepted", $"sn={_serialNumber};pn={_partNumber}");
+        try
+        {
+            await _controllerTrace.WriteSerialNumberAsync(_serialNumber!, cancellationToken).ConfigureAwait(false);
+            AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber}", serialNumber: _serialNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Write barcode to controller failed for SN={SerialNumber}", _serialNumber);
+            AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber};error={ex.Message}", success: false, _serialNumber);
+            _lastErrorMessage = ex.Message;
+            TryApply(JobSessionTrigger.SnRejected);
+            NotifyChanged();
+            return;
+        }
+
         await LoadRecipeAndTemplateAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -235,6 +307,7 @@ public sealed class OperatorSessionController
             }
 
             _currentIndex = NextPendingIndex(0);
+            _sessionStartedAt = DateTimeOffset.UtcNow;
             await _hardware.PrepareForJobAsync(cancellationToken).ConfigureAwait(false);
             await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
             NotifyChanged();
@@ -274,6 +347,9 @@ public sealed class OperatorSessionController
 
         if (_activeSurfaceOrdinal >= _surfaces.Count - 1)
             throw new InvalidOperationException("No next surface to advance to.");
+
+        if (!ValidateSurfaceAllOk(_activeSurfaceOrdinal, out var missingMessage))
+            throw new InvalidOperationException(missingMessage);
 
         _activeSurfaceOrdinal++;
         _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
@@ -421,7 +497,15 @@ public sealed class OperatorSessionController
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
         NotifyChanged();
 
-        await _hardware.PickScrewAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _hardware.PickScrewAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (FeedFaultException ex)
+        {
+            await HandleFeedFailureAsync(idx, ex, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == localIndex)
                   ?? _recipeScrews.FirstOrDefault(s => s.PositionIndex == globalIndex)
@@ -430,10 +514,23 @@ public sealed class OperatorSessionController
         var tighteningContext = new TighteningContext(globalIndex, paramId);
 
         var samples = new List<TorqueAngleSample>();
-        await foreach (var sample in _hardware.RunTighteningAsync(tighteningContext, cancellationToken).ConfigureAwait(false))
-            samples.Add(sample);
+        LastTighteningSamples = Array.Empty<TorqueAngleSample>();
+        NotifyTighteningProgress();
 
-        LastTighteningSamples = samples;
+        var progressCounter = 0;
+        await foreach (var sample in _hardware.RunTighteningAsync(tighteningContext, cancellationToken).ConfigureAwait(false))
+        {
+            samples.Add(sample);
+            progressCounter++;
+            if (progressCounter % 3 == 0 || progressCounter == 1)
+            {
+                LastTighteningSamples = samples.ToArray();
+                NotifyTighteningProgress();
+            }
+        }
+
+        LastTighteningSamples = samples.ToArray();
+        NotifyTighteningProgress();
 
         var program = _programs[idx];
         var eval = LockCurveEvaluator.Evaluate(samples.ToArray(), program);
@@ -497,11 +594,29 @@ public sealed class OperatorSessionController
 
     private async Task OnActiveSurfaceCompleteAsync(CancellationToken cancellationToken)
     {
+        if (!ValidateSurfaceAllOk(_activeSurfaceOrdinal, out var surfaceMessage))
+        {
+            _lastErrorCode = "MISSING_SCREW_001";
+            _lastErrorMessage = surfaceMessage;
+            AuditOperation("Operation.MissingScrew", surfaceMessage, success: false);
+            NotifyChanged();
+            return;
+        }
+
         _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Complete;
 
         if (_activeSurfaceOrdinal < _surfaces.Count - 1)
         {
             TryApply(JobSessionTrigger.SurfaceComplete);
+            return;
+        }
+
+        if (!ValidateAllScrewsOk(out var jobMessage))
+        {
+            _lastErrorCode = "MISSING_SCREW_001";
+            _lastErrorMessage = jobMessage;
+            AuditOperation("Operation.MissingScrew", jobMessage, success: false);
+            NotifyChanged();
             return;
         }
 
@@ -543,7 +658,8 @@ public sealed class OperatorSessionController
             }
         }
 
-        var started = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var started = _sessionStartedAt == default ? DateTimeOffset.UtcNow.AddMinutes(-5) : _sessionStartedAt;
+        var overallOk = screws.All(s => s.Result == "OK");
         var payload = new LockJobResultPayload
         {
             SerialNumber = _serialNumber!,
@@ -553,13 +669,22 @@ public sealed class OperatorSessionController
             IsRework = _isRework,
             StartedAt = started,
             CompletedAt = DateTimeOffset.UtcNow,
-            OverallResult = "OK",
+            OverallResult = overallOk ? "OK" : "NG",
             Screws = screws,
             LockLogJson = JsonSerializer.Serialize(new { note = "minimal lock log v0", surfaceCount = _surfaces.Count })
         };
 
         var logJson = JsonSerializer.Serialize(payload);
         await _curveArchive.SaveLockLogJsonAsync(_serialNumber!, logJson, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            await _checkpointStore.SaveLockRecordAsync(payload, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to persist lock record for SN={SerialNumber}", _serialNumber);
+        }
 
         var upload = await _mesClient.UploadResultAsync(payload, cancellationToken).ConfigureAwait(false);
         if (!upload.Accepted)
@@ -655,6 +780,124 @@ public sealed class OperatorSessionController
         _activeSurfaceName = null;
         _lastErrorMessage = null;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
+    }
+
+    private async Task HandleFeedFailureAsync(int idx, FeedFaultException ex, CancellationToken cancellationToken)
+    {
+        SetState(idx, StationScrewState.Pending);
+        _lastErrorCode = ex.ErrorCode;
+        _lastErrorMessage = ex.Message;
+        _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.NgLocked;
+        TryApply(JobSessionTrigger.ScrewNg);
+        AuditOperation("Operation.FeedNg", $"surface={_activeSurfaceId};screw={_positions[idx].Index};error={ex.ErrorCode}", success: false);
+        await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        NotifyChanged();
+    }
+
+    private void NotifyTighteningProgress() => TighteningProgress?.Invoke(this, EventArgs.Empty);
+
+    private static bool IsRestorablePhase(JobSessionPhase phase) =>
+        phase is JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked;
+
+    private async Task ReloadTemplateForRestoreAsync(CancellationToken cancellationToken)
+    {
+        var recipe = await _mesClient
+            .GetRecipeAsync(_serialNumber!, _partNumber!, cancellationToken)
+            .ConfigureAwait(false);
+
+        var templatePath = ResolveTemplatePath(recipe.TemplateJsonPath);
+        if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
+            throw new InvalidOperationException("Template file not found for checkpoint restore.");
+
+        var productLoad = await _templateLoader.LoadProductAsync(templatePath, cancellationToken).ConfigureAwait(false);
+        var ordered = productLoad.Product.Surfaces
+            .Where(s => s.Enabled)
+            .OrderBy(s => s.Order)
+            .ThenBy(s => s.SurfaceId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (ordered.Count == 0)
+            throw new InvalidOperationException("Product template has no enabled surfaces.");
+
+        _surfaces.Clear();
+        foreach (var surface in ordered)
+        {
+            var positions = BuildPositions(surface);
+            var states = Enumerable.Repeat(StationScrewState.Pending, positions.Count).ToArray();
+            var imagePath = ResolveImagePath(productLoad.BaseDirectory, surface);
+            _surfaces.Add(new OrderedSurfaceRuntime(
+                surface.SurfaceId,
+                surface.Name,
+                surface.Order,
+                surface.BoardWidth,
+                surface.BoardHeight,
+                imagePath,
+                positions,
+                states,
+                SurfaceProgressState.Locked));
+        }
+
+        _templateSurfaceCount = _surfaces.Count;
+        _recipeScrews = recipe.Screws.ToImmutableArray();
+        _screwRecords.Clear();
+        ApplyActiveSurfaceToBoard(recipe);
+    }
+
+    private void MergeCheckpointSurfaceStates(SessionCheckpointData data)
+    {
+        for (var i = 0; i < data.Surfaces.Count && i < _surfaces.Count; i++)
+        {
+            var cp = data.Surfaces[i];
+            var runtime = _surfaces[i];
+            if (!string.Equals(cp.SurfaceId, runtime.SurfaceId, StringComparison.OrdinalIgnoreCase))
+                _logger.LogWarning("Checkpoint surface {CheckpointId} mismatch template {TemplateId}", cp.SurfaceId, runtime.SurfaceId);
+
+            var states = cp.ScrewStates.ToArray();
+            if (states.Length == runtime.States.Length)
+                runtime.States = states;
+
+            runtime.ProgressState = cp.ProgressState;
+        }
+
+        ApplyActiveSurfaceToBoard(null);
+    }
+
+    private bool ValidateSurfaceAllOk(int surfaceOrdinal, out string message)
+    {
+        message = "";
+        if (surfaceOrdinal < 0 || surfaceOrdinal >= _surfaces.Count)
+            return true;
+
+        var surface = _surfaces[surfaceOrdinal];
+        for (var i = 0; i < surface.States.Length; i++)
+        {
+            var st = surface.States[i];
+            if (st == StationScrewState.Pending)
+            {
+                message = $"Surface {surface.Name}: screw {surface.Positions[i].Index} not completed (missing screw).";
+                return false;
+            }
+
+            if (st == StationScrewState.Ng)
+            {
+                message = $"Surface {surface.Name}: screw {surface.Positions[i].Index} is NG.";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool ValidateAllScrewsOk(out string message)
+    {
+        for (var s = 0; s < _surfaces.Count; s++)
+        {
+            if (!ValidateSurfaceAllOk(s, out message))
+                return false;
+        }
+
+        message = "";
+        return true;
     }
 
     private void NotifyChanged() => Changed?.Invoke(this, EventArgs.Empty);

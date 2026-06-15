@@ -9,7 +9,8 @@
              d:DesignHeight="450"
              d:DesignWidth="800"
              d:Background="White"
-             mc:Ignorable="d">
+             mc:Ignorable="d"
+             Loaded="OnLoaded">
     <StackPanel Margin="0,0,0,24">
         <ui:CardControl Margin="0,0,0,12"
                         Icon="{ui:SymbolIcon CloudSync24}">
@@ -21,16 +22,16 @@
                     </Grid.RowDefinitions>
                     <ui:TextBlock Grid.Row="0"
                                   FontTypography="Body"
-                                  Text="{DynamicResource S.Mes.Enable}" />
+                                  Text="{DynamicResource S.Mes.UseMock}" />
                     <ui:TextBlock Grid.Row="1"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.Mes.EnableDesc}" />
+                                  Text="{DynamicResource S.Mes.UseMockDesc}" />
                 </Grid>
             </ui:CardControl.Header>
             <ui:ToggleSwitch HorizontalAlignment="Right"
                              OnContent="{DynamicResource S.Common.On}"
                              OffContent="{DynamicResource S.Common.Off}"
-                             IsChecked="{Binding ViewModel.IsEnabled, Mode=TwoWay}" />
+                             IsChecked="{Binding ViewModel.UseMockMes, Mode=TwoWay}" />
         </ui:CardControl>
         <ui:CardControl Margin="0,0,0,12"
                         Icon="{ui:SymbolIcon Link24}">
@@ -52,9 +53,49 @@
                         PlaceholderText="{DynamicResource S.Mes.UrlPlaceholder}"
                         Text="{Binding ViewModel.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         </ui:CardControl>
-        <ui:Button Appearance="Primary"
-                   HorizontalAlignment="Left"
-                   Command="{Binding ViewModel.TestConnectionCommand}"
-                   Content="{DynamicResource S.Mes.TestConnection}" />
+        <ui:CardControl Margin="0,0,0,12"
+                        Icon="{ui:SymbolIcon Key24}">
+            <ui:CardControl.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock Grid.Row="0"
+                                  FontTypography="Body"
+                                  Text="{DynamicResource S.Mes.ApiKey}" />
+                    <ui:TextBlock Grid.Row="1"
+                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                  Text="{DynamicResource S.Mes.ApiKeyDesc}" />
+                </Grid>
+            </ui:CardControl.Header>
+            <ui:TextBox MinWidth="360"
+                        PlaceholderText="{DynamicResource S.Mes.ApiKeyPlaceholder}"
+                        Text="{Binding ViewModel.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </ui:CardControl>
+        <ui:CardControl Margin="0,0,0,12"
+                        Icon="{ui:SymbolIcon Timer24}">
+            <ui:CardControl.Header>
+                <ui:TextBlock FontTypography="Body"
+                              Text="{DynamicResource S.Mes.Timeout}" />
+            </ui:CardControl.Header>
+            <ui:TextBox MinWidth="120"
+                        Text="{Binding ViewModel.TimeoutSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </ui:CardControl>
+        <WrapPanel Margin="0,0,0,8">
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Primary"
+                       Command="{Binding ViewModel.SaveCommand}"
+                       Content="{DynamicResource S.Mes.Save}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ViewModel.ApplyCommand}"
+                       Content="{DynamicResource S.Mes.Apply}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ViewModel.TestConnectionCommand}"
+                       Content="{DynamicResource S.Mes.TestConnection}" />
+        </WrapPanel>
+        <TextBlock Text="{Binding ViewModel.StatusMessage}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource ShellMutedForegroundBrush}" />
     </StackPanel>
 </UserControl>

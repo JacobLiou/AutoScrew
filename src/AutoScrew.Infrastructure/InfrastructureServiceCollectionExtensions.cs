@@ -37,14 +37,17 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddHostedService<UserAuditBackgroundService>();
 
         var appOpts = configuration.GetSection(AutoScrewAppOptions.SectionName).Get<AutoScrewAppOptions>() ?? new AutoScrewAppOptions();
+        services.Configure<SimulationOptions>(configuration.GetSection(SimulationOptions.SectionName));
         services.AddStationDeviceServices(configuration);
         services.AddSingleton<LocalJsonControllerParameterPresetStore>();
         services.AddSingleton<IControllerParameterPresetService, ControllerParameterPresetService>();
+        services.AddSingleton<IControllerTraceService, IemdSdControllerTraceService>();
 
+        services.AddSingleton<SimulatedLockStationHardware>();
         if (!appOpts.UseSimulatedHardware)
             services.AddSingleton<ILockStationHardware, IemdSdLockStationHardware>();
         else
-            services.AddSingleton<ILockStationHardware, SimulatedLockStationHardware>();
+            services.AddSingleton<ILockStationHardware>(sp => sp.GetRequiredService<SimulatedLockStationHardware>());
 
         services.AddDbContextFactory<AppDbContext>((sp, builder) =>
         {
@@ -57,29 +60,15 @@ public static class InfrastructureServiceCollectionExtensions
             builder.UseSqlite($"Data Source={dbPath}");
         });
 
-        services.AddHttpClient("mes", (sp, client) =>
-            {
-                var baseUrl = sp.GetRequiredService<IOptions<AutoScrewAppOptions>>().Value.MesBaseUrl.Trim();
-                if (!baseUrl.EndsWith('/'))
-                    baseUrl += "/";
-                client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromSeconds(15);
-            })
+        services.AddHttpClient("mes")
             .AddPolicyHandler(HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(200 * attempt)));
 
-        services.AddSingleton<IMesClient>(sp =>
-        {
-            var opt = sp.GetRequiredService<IOptions<AutoScrewAppOptions>>().Value;
-            if (opt.UseMockMes)
-                return new MockMesClient();
-
-            var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient("mes");
-            return new MesHttpClient(
-                http,
-                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MesHttpClient>>());
-        });
+        services.AddSingleton<LocalJsonMesSettingsStore>();
+        services.AddSingleton<IMesSettingsService, MesSettingsService>();
+        services.AddSingleton<ConfigurableMesClient>();
+        services.AddSingleton<IMesClient>(sp => sp.GetRequiredService<ConfigurableMesClient>());
 
         services.AddHostedService<OutboxMesRetryHostedService>();
 

@@ -45,7 +45,7 @@
 | 硬件适配 `IemdSdLockStationHardware` | ~55% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；**取钉仍走 `_feederSim`** |
 | 业务 `OperatorSessionController` | ~75% | SN→Recipe→自动拧紧调度→判定→归档；**供料仍为仿真**；无 checkpoint 恢复加载、漏锁 |
 | HMI | ~70% | 作业台/模板/参数/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
-| MES | ~30% | 默认 Mock；HTTP 占位；Outbox 重传骨架已有 |
+| MES | ~70% | 占位 HTTP v1 + `mes-settings.json` 持久化；Mock 可热切换；Outbox 重传已有 |
 
 ```mermaid
 flowchart LR
@@ -120,22 +120,22 @@ flowchart LR
 |----|------|------|------|-----|----------|
 | T-01 | [x] | **拧紧触发与当前螺钉绑定**：AutoDi 或电批完成事件自动 `RunCurrentScrewCycleAsync`；维护模式保留手动按钮 | 业务+HMI | §2.2 | `AutoRunScrewCycle` / `MainViewModel` 自动调度；`ShowManualRunScrewButton` 技术员按钮 |
 | T-02 | [x] | **控制器来源模式**：连接或作业开始时 `#300` 写「手动设定」（`#302` 前置） | 业务+驱动接线 | driverAnaC §5.6 | `IemdSdProductionSetup` + `StationDeviceManager` / `PrepareForJobAsync` |
-| T-03 | [ ] | **SN 写控制器 `#401`**（现场若要求控制器侧条码追溯） | 业务 | §3.3 | `SubmitSerialNumberAsync` 成功后 [`WriteBarcodeAsync`](../src/UDL.Delta.IemdSd/IIemdSdClient.cs) |
-| T-04 | [ ] | **真 MES 联调**：关 `UseMockMes`、IT 定稿字段、[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml) 持久化 + 连通测试 | 业务+Infra | §3.3、§5.1 | [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs)、[`MesViewModel`](../src/AutoScrew.Hmi/ViewModels/MesViewModel.cs) |
+| T-03 | [x] | **SN 写控制器 `#401`**（现场若要求控制器侧条码追溯） | 业务 | §3.3 | `SubmitSerialNumberAsync` 成功后 [`WriteBarcodeAsync`](../src/UDL.Delta.IemdSd/IIemdSdClient.cs) |
+| T-04 | [x] | **真 MES 联调**：关 `UseMockMes`、占位 REST、[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml) 持久化 + 连通测试 | 业务+Infra | §3.3、§5.1 | [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs)、[`MesViewModel`](../src/AutoScrew.Hmi/ViewModels/MesViewModel.cs)、`tools/MesMockServer` |
 | T-05 | [x] | **NG 模态锁定**：NG 时弹窗 + 错误码/处理建议，仅技术员可解锁 | HMI | §3.2.2 | `OperationPageView` 全屏遮罩 + `ScrewNgAdvisor` |
 | T-06 | [ ] | **程控供料器驱动与接线**：实现 `IFeeder`（或等效端口），替换 `_feederSim`；每钉 `PickScrewAsync` 触发真上料/供料指令 | 硬件+Infra | PRD §3.2.1a | 新驱动项目 + [`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)；HMI 供料器连接页 |
 | T-06a | [ ] | **供料协议定稿文档**：寄存器/程序号、完成信号、超时与 error_code 枚举（**先文档后代码**） | 文档 | PRD V1.1 | [FEEDER_CONTROL.md](FEEDER_CONTROL.md)（待厂商资料回填） |
-| T-06b | [ ] | **供料失败处理**：超时/缺料/卡料 → 暂停 + 错误码 + 技术员解锁（与 NG 或独立 FEED 态） | 业务+HMI | PRD 验收供料场景 | `OperatorSessionController`、`ScrewNgAdvisor` |
+| T-06b | [x] | **供料失败处理**：超时/缺料/卡料 → 暂停 + 错误码 + 技术员解锁（复用 NgLocked） | 业务+HMI | PRD 验收供料场景 | `FeedFaultException`、`ScrewNgAdvisor` FEED_xxx；仿真 `AutoScrew:Simulation` |
 
 ### P1 — 品质 / 追溯 / 恢复
 
 | ID | 状态 | 任务 | 层级 | 依据 |
 |----|------|------|------|------|
-| T-07 | [ ] | 启动时 **加载 checkpoint** 恢复未完成作业 | 业务 | PRD 断电保护；[`LoadLatestCheckpointAsync`](../src/AutoScrew.Application/Abstractions/ILockSessionRepository.cs) 已有，**未被 Session 调用** |
-| T-08 | [ ] | `lock_records` / `screw_details` 写入 SQLite | Infra | [DATA_AND_TRACE.md](DATA_AND_TRACE.md) |
+| T-07 | [x] | 启动时 **加载 checkpoint** 恢复未完成作业 | 业务 | PRD 断电保护 | `RestoreFromCheckpointAsync` + HMI 恢复对话框 |
+| T-08 | [x] | `lock_records` / `screw_details` 写入 SQLite | Infra | [DATA_AND_TRACE.md](DATA_AND_TRACE.md) | `SaveLockRecordAsync` @ `CompleteSessionAsync` |
 | T-09 | [ ] | MES 上报 **面号/位号**（`surface_id`、`local_index`） | 契约+业务 | DATA_AND_TRACE §多面 Phase 2 待定稿 |
-| T-10 | [ ] | **漏锁**规则：全部螺钉位完成校验 | 业务 | PRD §3.2.1 |
-| T-11 | [ ] | 拧紧过程 **实时曲线**刷新（非仅周期结束后） | HMI+业务 | PRD §3.2.1 |
+| T-10 | [x] | **漏锁**规则：全部螺钉位完成校验 | 业务 | PRD §3.2.1 | `ValidateSurfaceAllOk` / 翻面与完成前校验 |
+| T-11 | [x] | 拧紧过程 **实时曲线**刷新（非仅周期结束后） | HMI+业务 | PRD §3.2.1 | `TighteningProgress` + ScottPlot 增量刷新 |
 | T-12 | [ ] | 设备 NG 时 `ClearErrorsAsync`；返修 `REWORK` UI | 业务+HMI | PRD §3.2.3；[`SetReworkMode`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) 无 HMI |
 | T-13 | [ ] | 歪斜/斜锁：曲线或设备字段提供 `AxisSkewDeg` | 判定+驱动 | PRD §3.2.1、验收 SKEW_003 |
 
@@ -208,8 +208,8 @@ flowchart LR
 | 阶段 | 任务 ID | 目标 |
 |------|---------|------|
 | Week 1 | T-01、T-02、T-05 | 真机拧紧半自动闭环 + NG 体验（**已完成**） |
-| Week 2 | **T-06、T-06a**、T-04、T-03 | **程控供料 FAT** + 真 MES、条码 |
-| Week 3 | T-07、T-08、T-06b、T-10、T-11 | 供料异常、追溯、漏锁、实时曲线 |
+| Week 2 | T-04、T-03（**T-06/T-06a 跳过**） | 真 MES 占位 REST、控制器条码 #401 |
+| Week 3 | T-07、T-08、T-06b、T-10、T-11（**已完成**） | 供料异常、追溯、漏锁、实时曲线 + 仿真增强 |
 | Week 4 | T-14、T-15/T-16 | 权限、任务/MES 模板（视 IT 就绪） |
 
 **联机最小路径**（见 [driverAnaC.md](driverAnaC.md) §8 + PRD §3.2.1a）：

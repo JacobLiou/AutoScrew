@@ -192,7 +192,7 @@
                 BorderThickness="2"
                 CornerRadius="8">
             <StackPanel>
-                <TextBlock Text="{DynamicResource S.Operation.NgOverlayTitle}"
+                <TextBlock Text="{Binding NgOverlayTitle}"
                            FontSize="18"
                            FontWeight="Bold"
                            Foreground="{DynamicResource BrushNg}"

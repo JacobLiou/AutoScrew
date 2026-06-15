@@ -14,12 +14,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AutoScrew.Application\AutoScrew.Application.csproj" />
     <ProjectReference Include="..\..\src\AutoScrew.Domain\AutoScrew.Domain.csproj" />
     <ProjectReference Include="..\..\src\AutoScrew.Infrastructure\AutoScrew.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\UDL.Delta.IemdSd\UDL.Delta.IemdSd.csproj" />
   </ItemGroup>
 
   <ItemGroup>

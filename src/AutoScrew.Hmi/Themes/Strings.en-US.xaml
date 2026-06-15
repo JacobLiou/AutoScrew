@@ -114,6 +114,14 @@
     <system:String x:Key="S.Operation.StatusUnlocked">Unlocked; continue.</system:String>
     <system:String x:Key="S.Operation.StatusReset">Session reset.</system:String>
     <system:String x:Key="S.Operation.NgOverlayTitle">Tightening NG — job paused</system:String>
+    <system:String x:Key="S.Operation.NgScrewTitle">Tightening NG — job paused</system:String>
+    <system:String x:Key="S.Operation.NgFeedTitle">Feed fault — job paused</system:String>
+    <system:String x:Key="S.Operation.RestoreCheckpointTitle">Resume unfinished job</system:String>
+    <system:String x:Key="S.Operation.RestoreCheckpointPrompt">Unfinished job found: SN={0}, PN={1}, phase={2}. Resume?</system:String>
+    <system:String x:Key="S.Operation.StatusRestoring">Restoring job…</system:String>
+    <system:String x:Key="S.Operation.StatusRestored">Job restored: {0}</system:String>
+    <system:String x:Key="S.Operation.RestoreFailed">Failed to restore job.</system:String>
+    <system:String x:Key="S.Operation.LogRestored">Restored checkpoint job {0}</system:String>
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
@@ -192,13 +200,22 @@
     <system:String x:Key="S.Template.ImageLoaded">Loaded image: {0}.</system:String>
     <system:String x:Key="S.Template.MarkersOutOfBounds">{0} marker(s) outside board.</system:String>
 
+    <system:String x:Key="S.Mes.UseMock">Use Mock MES</system:String>
+    <system:String x:Key="S.Mes.UseMockDesc">When on, no HTTP calls (offline debug)</system:String>
     <system:String x:Key="S.Mes.Enable">Enable MES</system:String>
-    <system:String x:Key="S.Mes.EnableDesc">Upload fastening results and trace data when enabled</system:String>
-    <system:String x:Key="S.Mes.Address">MES URL</system:String>
-    <system:String x:Key="S.Mes.AddressDesc">Mes:BaseUrl in appsettings</system:String>
-    <system:String x:Key="S.Mes.UrlPlaceholder">https://mes.example.com/api</system:String>
+    <system:String x:Key="S.Mes.EnableDesc">When Mock is off, use the URL below</system:String>
+    <system:String x:Key="S.Mes.Address">MES base URL</system:String>
+    <system:String x:Key="S.Mes.AddressDesc">e.g. http://localhost:5080/ (saved to mes-settings.json)</system:String>
+    <system:String x:Key="S.Mes.ApiKey">API key (optional)</system:String>
+    <system:String x:Key="S.Mes.ApiKeyDesc">Sent as header X-Api-Key when set</system:String>
+    <system:String x:Key="S.Mes.ApiKeyPlaceholder">Optional</system:String>
+    <system:String x:Key="S.Mes.Timeout">Timeout (seconds)</system:String>
+    <system:String x:Key="S.Mes.UrlPlaceholder">http://localhost:5080/</system:String>
+    <system:String x:Key="S.Mes.Save">Save</system:String>
+    <system:String x:Key="S.Mes.Apply">Apply</system:String>
     <system:String x:Key="S.Mes.TestConnection">Test connection</system:String>
-    <system:String x:Key="S.Mes.PlaceholderNote">MES integration will be wired when the protocol is finalized.</system:String>
+    <system:String x:Key="S.Mes.StatusSaved">MES settings saved.</system:String>
+    <system:String x:Key="S.Mes.StatusApplied">MES settings applied.</system:String>
 
     <system:String x:Key="S.Settings.Appearance">Appearance</system:String>
     <system:String x:Key="S.Settings.Theme">Application theme</system:String>
