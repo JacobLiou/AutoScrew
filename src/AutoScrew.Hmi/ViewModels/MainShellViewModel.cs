@@ -64,6 +64,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         _localization.CultureChanged += OnCultureChanged;
 
         RebuildMenuItems();
+        ApplyRoleBasedNavigationLayout();
         RefreshUserBanner();
         UpdateSidebarSymbol();
         RefreshLocalizedChrome();
@@ -160,8 +161,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     public bool CanUseConfiguration => _currentUser.Role >= UserRole.Technician;
 
+    public bool CanUseSystemMenu => _currentUser.Role >= UserRole.Technician;
+
+    public bool CanUseSettings => _currentUser.Role >= UserRole.Technician;
+
+    public bool IsOperatorRole => _currentUser.Role == UserRole.Operator;
+
     public bool CanUseOperation =>
-        _currentUser.Role == UserRole.Operator || _currentUser.Role == UserRole.Administrator;
+        _currentUser.Role is UserRole.Operator or UserRole.Technician or UserRole.Administrator;
 
     /// <summary>螺钉模板等配置页（技术员及以上）。</summary>
     public bool CanUseTemplateBoard => CanUseConfiguration;
@@ -352,11 +359,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         {
             RefreshUserBanner();
             OnPropertyChanged(nameof(CanUseConfiguration));
+            OnPropertyChanged(nameof(CanUseSystemMenu));
+            OnPropertyChanged(nameof(CanUseSettings));
+            OnPropertyChanged(nameof(IsOperatorRole));
             OnPropertyChanged(nameof(CanUseOperation));
             OnPropertyChanged(nameof(CanUseTemplateBoard));
             NavigateTemplateCommand.NotifyCanExecuteChanged();
             NavigateOperationCommand.NotifyCanExecuteChanged();
             RebuildMenuItems();
+            ApplyRoleBasedNavigationLayout();
             EnsureRoleAllowedSection();
         }
     }
@@ -375,7 +386,16 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             NavigateToDefaultPage();
         else if (!CanUseOperation && SelectedSection == MainAppSection.Operation)
             NavigateToDefaultPage();
+        else if (!CanUseSystemMenu && IsSystemSection(SelectedSection))
+            NavigateToDefaultPage();
+        else if (!CanUseSettings && SelectedSection == MainAppSection.Settings)
+            NavigateToDefaultPage();
     }
+
+    private static bool IsSystemSection(MainAppSection section) =>
+        section is MainAppSection.Mes
+            or MainAppSection.DeviceConnection
+            or MainAppSection.Logs;
 
     private static bool IsConfigurationSection(MainAppSection section) =>
         section is MainAppSection.Template
@@ -429,46 +449,54 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             IsExpanded = true
         };
 
-        systemGroup.MenuItems.Add(new NavigationViewItem
+        if (CanUseSystemMenu)
         {
-            Content = Loc.Get("S.Nav.DeviceConnection"),
-            Icon = new SymbolIcon { Symbol = SymbolRegular.PlugConnected24 },
-            TargetPageType = typeof(DeviceConnectionPage),
-            TargetPageTag = "device-connection"
-        });
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceConnection"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.PlugConnected24 },
+                TargetPageType = typeof(DeviceConnectionPage),
+                TargetPageTag = "device-connection"
+            });
 
-        systemGroup.MenuItems.Add(new NavigationViewItem
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.MesConnection"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
+                TargetPageType = typeof(MesPage),
+                TargetPageTag = "mes"
+            });
+
+            // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）
+            // systemGroup.MenuItems.Add(new NavigationViewItem { ... });
+
+            if (configurationGroup is not null)
+                items.Add(configurationGroup);
+            items.Add(systemGroup);
+        }
+        else if (configurationGroup is not null)
         {
-            Content = Loc.Get("S.Nav.MesConnection"),
-            Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
-            TargetPageType = typeof(MesPage),
-            TargetPageTag = "mes"
-        });
-
-        // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）
-        // systemGroup.MenuItems.Add(new NavigationViewItem
-        // {
-        //     Content = Loc.Get("S.Nav.Logs"),
-        //     Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
-        //     TargetPageType = typeof(LogsPage),
-        //     TargetPageTag = "logs"
-        // });
-
-        if (configurationGroup is not null)
             items.Add(configurationGroup);
-        items.Add(systemGroup);
+        }
 
         MenuItems = items;
-        FooterMenuItems =
-        [
-            new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.Settings"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
-                TargetPageType = typeof(SettingsPage),
-                TargetPageTag = "settings"
-            }
-        ];
+        FooterMenuItems = CanUseSettings
+            ?
+            [
+                new NavigationViewItem
+                {
+                    Content = Loc.Get("S.Nav.Settings"),
+                    Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
+                    TargetPageType = typeof(SettingsPage),
+                    TargetPageTag = "settings"
+                }
+            ]
+            : [];
+    }
+
+    private void ApplyRoleBasedNavigationLayout()
+    {
+        IsSidebarVisible = !IsOperatorRole;
     }
 
     private void UpdateSidebarSymbol() => OnPropertyChanged(nameof(SidebarSymbol));

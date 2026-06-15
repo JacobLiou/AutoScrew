@@ -58,4 +58,12 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <Style x:Key="ShellTreeViewItemStyle"
+           TargetType="TreeViewItem"
+           BasedOn="{StaticResource {x:Type TreeViewItem}}">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="2,1" />
+    </Style>
+
 </ResourceDictionary>

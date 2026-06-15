@@ -65,6 +65,8 @@ public static class InfrastructureServiceCollectionExtensions
                 .HandleTransientHttpError()
                 .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(200 * attempt)));
 
+        services.AddSingleton<LocalJsonRecipeStore>();
+        services.AddSingleton<LocalRecipeMesClient>();
         services.AddSingleton<LocalJsonMesSettingsStore>();
         services.AddSingleton<IMesSettingsService, MesSettingsService>();
         services.AddSingleton<ConfigurableMesClient>();

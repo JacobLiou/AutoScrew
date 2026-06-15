@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -16,6 +17,7 @@ namespace AutoScrew.Hmi;
 
 public partial class MainWindow : FluentWindow
 {
+    private readonly MainShellViewModel _shellViewModel;
     private readonly INavigationService _navigationService;
     private bool _defaultPageNavigated;
     private bool _isUserClosedPane;
@@ -27,12 +29,14 @@ public partial class MainWindow : FluentWindow
         ISnackbarService snackbarService,
         IContentDialogService contentDialogService)
     {
+        _shellViewModel = shellViewModel;
         _navigationService = navigationService;
         InitializeComponent();
         DataContext = shellViewModel;
         snackbarService.SetSnackbarPresenter(SnackbarPresenter);
         contentDialogService.SetDialogHost(RootContentDialog);
         _navigationService.SetNavigationControl(NavigationView);
+        _shellViewModel.PropertyChanged += OnShellPropertyChanged;
         Loaded += OnMainWindowLoaded;
         AddHandler(
             System.Windows.Controls.Primitives.ButtonBase.ClickEvent,
@@ -47,7 +51,19 @@ public partial class MainWindow : FluentWindow
     private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnMainWindowLoaded;
+        SyncPaneUserPreferenceFromShell();
         Dispatcher.BeginInvoke(NavigateToDefaultPageCore, DispatcherPriority.Loaded);
+    }
+
+    private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainShellViewModel.IsSidebarVisible))
+            SyncPaneUserPreferenceFromShell();
+    }
+
+    private void SyncPaneUserPreferenceFromShell()
+    {
+        _isUserClosedPane = !_shellViewModel.IsSidebarVisible;
     }
 
     private void OnAuditedUiClick(object sender, RoutedEventArgs e)
@@ -124,7 +140,7 @@ public partial class MainWindow : FluentWindow
 
     private void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (_isUserClosedPane)
+        if (_isUserClosedPane || _shellViewModel.IsOperatorRole)
             return;
 
         _isPaneOpenedOrClosedFromCode = true;
@@ -150,6 +166,7 @@ public partial class MainWindow : FluentWindow
 
     protected override void OnClosed(EventArgs e)
     {
+        _shellViewModel.PropertyChanged -= OnShellPropertyChanged;
         if (DataContext is IDisposable d)
             d.Dispose();
         base.OnClosed(e);

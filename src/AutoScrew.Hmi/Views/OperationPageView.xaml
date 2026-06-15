@@ -67,7 +67,7 @@
         <Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="220" MinWidth="180"/>
+                    <ColumnDefinition Width="240" MinWidth="180"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
@@ -86,7 +86,7 @@
                               IsHitTestVisible="False"
                               ItemsSource="{Binding ProgressTreeRoots}">
                         <TreeView.ItemContainerStyle>
-                            <Style TargetType="TreeViewItem">
+                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource ShellTreeViewItemStyle}">
                                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                             </Style>
                         </TreeView.ItemContainerStyle>

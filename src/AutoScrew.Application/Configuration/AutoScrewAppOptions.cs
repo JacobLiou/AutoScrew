@@ -43,4 +43,7 @@ public sealed class AutoScrewAppOptions
 
     /// <summary>写条码失败时阻断配方加载；false 时仅记录警告。</summary>
     public bool StrictSnToController { get; set; }
+
+    /// <summary>Mock MES 使用本地 local-recipes.json（见 doc/LOCAL_RECIPES.md）。</summary>
+    public bool UseLocalRecipes { get; set; } = true;
 }

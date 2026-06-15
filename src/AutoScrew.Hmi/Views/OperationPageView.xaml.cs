@@ -101,11 +101,25 @@ public partial class OperationPageView : UserControl
 
     private void SyncTreeSelectionToActiveSurface()
     {
+        ProgressTree.UpdateLayout();
+        ExpandAllTreeViewItems(ProgressTree);
+
         if (_viewModel?.ActiveSurfaceNode is null)
             return;
 
-        ProgressTree.UpdateLayout();
         TrySelectTreeViewItem(ProgressTree, _viewModel.ActiveSurfaceNode);
+    }
+
+    private static void ExpandAllTreeViewItems(ItemsControl parent)
+    {
+        foreach (var child in parent.Items)
+        {
+            if (parent.ItemContainerGenerator.ContainerFromItem(child) is not TreeViewItem item)
+                continue;
+
+            item.IsExpanded = true;
+            ExpandAllTreeViewItems(item);
+        }
     }
 
     private static bool TrySelectTreeViewItem(ItemsControl parent, object item)

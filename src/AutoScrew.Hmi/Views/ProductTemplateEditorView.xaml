@@ -94,7 +94,7 @@
                               ItemsSource="{Binding ProductTreeRoots}"
                               SelectedItemChanged="SurfaceTree_OnSelectedItemChanged">
                         <TreeView.ItemContainerStyle>
-                            <Style TargetType="TreeViewItem">
+                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource ShellTreeViewItemStyle}">
                                 <Setter Property="IsExpanded" Value="True" />
                             </Style>
                         </TreeView.ItemContainerStyle>

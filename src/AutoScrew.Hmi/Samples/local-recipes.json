@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "partNumber": "PN-DEMO",
+      "templateFile": "demo-product-multisurface.product-template.json",
+      "serialNumbers": [
+        "SN001",
+        "SN002",
+        "SN-DEMO-A",
+        "SN-DEMO-B"
+      ]
+    }
+  ]
+}

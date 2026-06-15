@@ -57,6 +57,11 @@ public partial class MainViewModel : ObservableObject
     public event EventHandler? RequestSelectActiveSurface;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(
+        nameof(SubmitSnCommand),
+        nameof(OpenScanCommand),
+        nameof(ConfirmFlipCommand),
+        nameof(RunCurrentScrewCommand))]
     private string _serialNumberInput = "";
 
     [ObservableProperty]
@@ -96,11 +101,17 @@ public partial class MainViewModel : ObservableObject
     private string _ngOverlayTitle = "";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(
+        nameof(SubmitSnCommand),
+        nameof(OpenScanCommand),
+        nameof(ConfirmFlipCommand),
+        nameof(RunCurrentScrewCommand))]
     private bool _isOperationLocked;
 
     public bool ShowRunScrewButton =>
         !_appOptions.Value.AutoRunScrewCycle
-        || (_appOptions.Value.ShowManualRunScrewButton && _user.Role >= UserRole.Technician);
+        || (_appOptions.Value.ShowManualRunScrewButton && _user.Role >= UserRole.Technician)
+        || (_appOptions.Value.UseSimulatedHardware && _session.Phase == JobSessionPhase.Running);
 
     public bool CanUnlockNgOverlay =>
         _session.Phase == JobSessionPhase.NgLocked && _user.CanUnlockNg;
@@ -114,18 +125,25 @@ public partial class MainViewModel : ObservableObject
     private void OnTighteningProgress(object? sender, EventArgs e) =>
         CurveChanged?.Invoke(this, EventArgs.Empty);
 
-    private void OnSessionChanged(object? sender, EventArgs e)
+    private void OnSessionChanged(object? sender, EventArgs e) =>
+        RunOnUiThread(ApplySessionChanged);
+
+    private void ApplySessionChanged()
     {
         RefreshFromSession();
         NotifyCommandStates();
         OnPropertyChanged(nameof(ShowRunScrewButton));
         OnPropertyChanged(nameof(CanUnlockNgOverlay));
+        _ = TryAutoRunScrewCycleAsync();
+    }
 
+    private static void RunOnUiThread(Action action)
+    {
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess())
-            _ = TryAutoRunScrewCycleAsync();
+            action();
         else
-            dispatcher.BeginInvoke(DispatcherPriority.Background, () => _ = TryAutoRunScrewCycleAsync());
+            dispatcher.BeginInvoke(DispatcherPriority.Normal, action);
     }
 
     private bool CanOpenScan() =>
@@ -134,7 +152,10 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanSubmitSn() =>
         !IsOperationLocked
-        && _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected
+        && _session.Phase is JobSessionPhase.Idle
+            or JobSessionPhase.SnPending
+            or JobSessionPhase.SnRejected
+            or JobSessionPhase.Completed
         && !string.IsNullOrWhiteSpace(SerialNumberInput);
 
     private bool CanRunScrew() =>
@@ -176,6 +197,7 @@ public partial class MainViewModel : ObservableObject
             detail: $"sn={SerialNumberInput.Trim()}");
         try
         {
+            EnsureAwaitingSn();
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
             await _session.SubmitSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
             if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage))
@@ -190,11 +212,32 @@ public partial class MainViewModel : ObservableObject
                     _session.TemplateSurfaceCount));
             }
 
-            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected;
+            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
+                or JobSessionPhase.SnRejected
+                or JobSessionPhase.Idle
+                or JobSessionPhase.Completed;
         }
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
+        }
+        finally
+        {
+            NotifyCommandStates();
+        }
+    }
+
+    private void EnsureAwaitingSn()
+    {
+        switch (_session.Phase)
+        {
+            case JobSessionPhase.Idle:
+                _session.RequestScanDialog();
+                break;
+            case JobSessionPhase.Completed:
+                _session.ResetToIdle();
+                _session.RequestScanDialog();
+                break;
         }
     }
 
@@ -297,7 +340,10 @@ public partial class MainViewModel : ObservableObject
         {
             if (_session.Phase == JobSessionPhase.Idle)
                 _session.RequestScanDialog();
-            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected;
+            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
+                or JobSessionPhase.SnRejected
+                or JobSessionPhase.Idle
+                or JobSessionPhase.Completed;
             StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
         }
         catch
@@ -313,7 +359,10 @@ public partial class MainViewModel : ObservableObject
         ProductImagePath = _session.ResolvedProductImagePath;
         BoardWidth = _session.BoardWidth;
         BoardHeight = _session.BoardHeight;
-        IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending or JobSessionPhase.SnRejected or JobSessionPhase.Idle;
+        IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
+            or JobSessionPhase.SnRejected
+            or JobSessionPhase.Idle
+            or JobSessionPhase.Completed;
 
         var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
         if (ngLocked)
@@ -351,36 +400,36 @@ public partial class MainViewModel : ObservableObject
 
     private async Task TryAutoRunScrewCycleAsync()
     {
-        if (!_appOptions.Value.AutoRunScrewCycle || _localCycleInProgress || _session.IsCycleInProgress)
-            return;
-
-        if (_session.Phase != JobSessionPhase.Running || _session.CurrentScrewIndex < 0)
-            return;
-
-        var idx = _session.CurrentScrewIndex;
-        if (idx >= _session.ScrewStates.Count)
-            return;
-
-        if (_session.ScrewStates[idx] != StationScrewState.Pending)
+        if (!_appOptions.Value.AutoRunScrewCycle || !CanAutoRunCurrentPendingScrew())
             return;
 
         await _autoRunGate.WaitAsync().ConfigureAwait(true);
         try
         {
-            if (!_appOptions.Value.AutoRunScrewCycle || _localCycleInProgress || _session.IsCycleInProgress)
-                return;
-            if (_session.Phase != JobSessionPhase.Running || _session.CurrentScrewIndex < 0)
-                return;
-            idx = _session.CurrentScrewIndex;
-            if (idx >= _session.ScrewStates.Count || _session.ScrewStates[idx] != StationScrewState.Pending)
-                return;
+            while (CanAutoRunCurrentPendingScrew())
+            {
+                await ExecuteScrewCycleAsync(manualTrigger: false).ConfigureAwait(true);
 
-            await ExecuteScrewCycleAsync(manualTrigger: false).ConfigureAwait(true);
+                if (!ShouldAutoChainNextScrew() || !CanAutoRunCurrentPendingScrew())
+                    break;
+            }
         }
         finally
         {
             _autoRunGate.Release();
         }
+    }
+
+    private bool CanAutoRunCurrentPendingScrew()
+    {
+        if (!_appOptions.Value.AutoRunScrewCycle || _localCycleInProgress || _session.IsCycleInProgress)
+            return false;
+
+        if (_session.Phase != JobSessionPhase.Running || _session.CurrentScrewIndex < 0)
+            return false;
+
+        var idx = _session.CurrentScrewIndex;
+        return idx < _session.ScrewStates.Count && _session.ScrewStates[idx] == StationScrewState.Pending;
     }
 
     private async Task ExecuteScrewCycleAsync(bool manualTrigger)
@@ -422,15 +471,6 @@ public partial class MainViewModel : ObservableObject
                 StatusMessage = Loc.Get("S.Operation.StatusStepDone");
                 AddLog(Loc.Format("S.Operation.LogOk", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo));
                 CurveChanged?.Invoke(this, EventArgs.Empty);
-
-                if (_appOptions.Value.AutoChainNextScrew
-                    && _session.Phase == JobSessionPhase.Running
-                    && _session.CurrentScrewIndex >= 0
-                    && _session.CurrentScrewIndex < _session.ScrewStates.Count
-                    && _session.ScrewStates[_session.CurrentScrewIndex] == StationScrewState.Pending)
-                {
-                    await TryAutoRunScrewCycleAsync().ConfigureAwait(true);
-                }
             }
 
             if (_session.Phase == JobSessionPhase.AwaitFlip)
@@ -446,6 +486,9 @@ public partial class MainViewModel : ObservableObject
             NotifyCommandStates();
         }
     }
+
+    private bool ShouldAutoChainNextScrew() =>
+        _appOptions.Value.AutoChainNextScrew || _appOptions.Value.UseSimulatedHardware;
 
     private string BuildGuideHint()
     {
@@ -504,7 +547,7 @@ public partial class MainViewModel : ObservableObject
                 snapshot.Order,
                 snapshot.ProgressState)
             {
-                IsExpanded = isActive,
+                IsExpanded = true,
                 IsActive = isActive
             };
 
@@ -526,8 +569,7 @@ public partial class MainViewModel : ObservableObject
             ordinal++;
         }
 
-        if (ActiveSurfaceNode is not null)
-            RequestSelectActiveSurface?.Invoke(this, EventArgs.Empty);
+        RequestSelectActiveSurface?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task PromptAndConfirmFlipAsync()

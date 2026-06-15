@@ -11,17 +11,20 @@ public sealed class ConfigurableMesClient : IMesClient
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ILogger<MesHttpClient> _logger;
-    private readonly MockMesClient _mock = new();
+    private readonly LocalRecipeMesClient _localMock;
+    private readonly MockMesClient _legacyMock = new();
 
     public ConfigurableMesClient(
         IMesSettingsService settings,
         IHttpClientFactory httpClientFactory,
         IOptions<AutoScrewAppOptions> appOptions,
+        LocalRecipeMesClient localMock,
         ILogger<MesHttpClient> logger)
     {
         _settings = settings;
         _httpClientFactory = httpClientFactory;
         _appOptions = appOptions;
+        _localMock = localMock;
         _logger = logger;
     }
 
@@ -49,7 +52,7 @@ public sealed class ConfigurableMesClient : IMesClient
     {
         var snapshot = _settings.GetSnapshot();
         if (snapshot.UseMockMes)
-            return _mock;
+            return _appOptions.Value.UseLocalRecipes ? _localMock : _legacyMock;
 
         var http = CreateHttpClient(snapshot);
         var inner = new MesHttpClient(http, snapshot, _appOptions.Value.StationId, _logger);
