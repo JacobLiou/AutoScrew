@@ -29,6 +29,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private readonly ICurrentUser _user;
     private readonly IProductTemplateLocalStore _templateStore;
     private readonly IProductTemplateSyncRepository _syncRepository;
+    private bool _suppressLocalTemplateSelection;
 
     public ProductTemplateEditorViewModel(
         SurfaceBoardEditorViewModel currentSurfaceEditor,
@@ -49,8 +50,13 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         CurrentSurfaceEditor.ContentChanged += (_, _) => MarkDirty();
         _localization.CultureChanged += (_, _) => RefreshLocalizedUi();
         ProductTreeRoots = new ObservableCollection<ProductTemplateTreeRootViewModel>();
+        LocalTemplates = new ObservableCollection<LocalTemplateListItem>();
         StatusMessage = Loc.Get("S.Template.StatusInitial");
     }
+
+    public ObservableCollection<LocalTemplateListItem> LocalTemplates { get; }
+
+    public async Task InitializeAsync() => await RefreshLocalTemplatesAsync().ConfigureAwait(true);
 
     public SurfaceBoardEditorViewModel CurrentSurfaceEditor { get; }
 
@@ -84,6 +90,9 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "";
 
+    [ObservableProperty]
+    private LocalTemplateListItem? _selectedLocalTemplate;
+
     public bool HasProduct => ProductRoot is not null;
 
     public bool IsSurfaceSelected => SelectedSurface is not null;
@@ -92,6 +101,19 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         string.IsNullOrWhiteSpace(ProductId)
             ? Loc.Get("S.Template.Title")
             : Loc.Format("S.Template.TitleWithProduct", ProductId, IsDirty ? " *" : "");
+
+    partial void OnSelectedLocalTemplateChanged(LocalTemplateListItem? value)
+    {
+        if (_suppressLocalTemplateSelection || value is null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(_filePath)
+            && string.Equals(_filePath, value.FilePath, StringComparison.OrdinalIgnoreCase)
+            && !IsDirty)
+            return;
+
+        OpenTemplateFromPath(value.FilePath);
+    }
 
     partial void OnSelectedSurfaceChanged(SurfaceListItemViewModel? value)
     {
@@ -145,9 +167,33 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RefreshLocalTemplatesAsync()
+    {
+        LocalTemplates.Clear();
+        foreach (var partNumber in _templateStore.ListLocalPartNumbers())
+        {
+            var path = _templateStore.TryResolveLocalTemplate(partNumber)
+                       ?? _templateStore.GetDefaultTemplatePath(partNumber);
+            if (!File.Exists(path))
+                continue;
+
+            var surfaceCount = TryReadSurfaceCount(path);
+            var displayText = surfaceCount > 0
+                ? Loc.Format("S.Template.LocalTemplateItem", partNumber, surfaceCount)
+                : partNumber;
+            LocalTemplates.Add(new LocalTemplateListItem(partNumber, path, displayText));
+        }
+
+        SyncLocalTemplateSelection(_filePath);
+        if (LocalTemplates.Count == 0 && !HasProduct)
+            StatusMessage = Loc.Get("S.Template.StatusLocalTemplatesEmpty");
+
+        await Task.CompletedTask;
+    }
+
+    [RelayCommand]
     private void OpenProduct()
     {
-        AuditTemplate("Configuration.TemplateOpen");
         if (IsDirty && !ConfirmDiscardChanges())
             return;
 
@@ -160,21 +206,35 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (dlg.ShowDialog() != true)
             return;
 
+        OpenTemplateFromPath(dlg.FileName);
+    }
+
+    private void OpenTemplateFromPath(string path)
+    {
+        AuditTemplate("Configuration.TemplateOpen", $"path={path}");
+        if (IsDirty && !ConfirmDiscardChanges())
+        {
+            RestoreLocalTemplateSelection();
+            return;
+        }
+
         try
         {
             RunWithTreeSelectionSuppressed(() =>
             {
-                var doc = ProductTemplateJsonSerializer.Load(dlg.FileName);
-                _filePath = dlg.FileName;
-                _templateDirectory = Path.GetDirectoryName(dlg.FileName);
+                var doc = ProductTemplateJsonSerializer.Load(path);
+                _filePath = path;
+                _templateDirectory = Path.GetDirectoryName(path);
                 LoadProductDocument(doc);
                 IsDirty = false;
-                StatusMessage = Loc.Format("S.Template.StatusOpened", dlg.FileName, doc.Surfaces.Count);
+                StatusMessage = Loc.Format("S.Template.StatusOpened", path, doc.Surfaces.Count);
+                SyncLocalTemplateSelection(path);
             });
         }
         catch (Exception ex)
         {
             StatusMessage = Loc.Format("S.Template.StatusOpenFailed", ex.Message);
+            RestoreLocalTemplateSelection();
         }
     }
 
@@ -214,6 +274,8 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 StatusMessage = Loc.Format("S.Template.StatusSaveFailed", ex.Message);
             }
         });
+
+        _ = RefreshLocalTemplatesAsync();
     }
 
     [RelayCommand]
@@ -678,6 +740,30 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             // Sync record is best-effort; save already succeeded.
         }
     }
+
+    private static int TryReadSurfaceCount(string path)
+    {
+        try
+        {
+            return ProductTemplateJsonSerializer.Load(path).Surfaces.Count;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private void SyncLocalTemplateSelection(string? path)
+    {
+        _suppressLocalTemplateSelection = true;
+        SelectedLocalTemplate = string.IsNullOrWhiteSpace(path)
+            ? null
+            : LocalTemplates.FirstOrDefault(t =>
+                string.Equals(t.FilePath, path, StringComparison.OrdinalIgnoreCase));
+        _suppressLocalTemplateSelection = false;
+    }
+
+    private void RestoreLocalTemplateSelection() => SyncLocalTemplateSelection(_filePath);
 
     private void AuditTemplate(string action, string? detail = null) =>
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, detail: detail);

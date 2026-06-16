@@ -134,6 +134,10 @@
     <system:String x:Key="S.Template.AddSurface">Add surface</system:String>
     <system:String x:Key="S.Template.Delete">Delete</system:String>
     <system:String x:Key="S.Template.TreeHeader">Product / surfaces</system:String>
+    <system:String x:Key="S.Template.LocalTemplates">Browse local templates</system:String>
+    <system:String x:Key="S.Template.LocalTemplatesRefresh">Refresh list</system:String>
+    <system:String x:Key="S.Template.LocalTemplateItem">{0} · {1} surface(s)</system:String>
+    <system:String x:Key="S.Template.StatusLocalTemplatesEmpty">No product templates in Templates folder.</system:String>
     <system:String x:Key="S.Template.SelectSurfaceHint">Select a surface in the tree</system:String>
     <system:String x:Key="S.Template.SelectSurfaceDetail">Create a product or add surfaces, then edit the board.</system:String>
     <system:String x:Key="S.Template.ApplySize">Apply size</system:String>

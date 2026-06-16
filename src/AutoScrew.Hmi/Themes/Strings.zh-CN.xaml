@@ -142,6 +142,10 @@
     <system:String x:Key="S.Template.AddSurface">添加面</system:String>
     <system:String x:Key="S.Template.Delete">删除</system:String>
     <system:String x:Key="S.Template.TreeHeader">产品 / 面</system:String>
+    <system:String x:Key="S.Template.LocalTemplates">预览所有本地模板</system:String>
+    <system:String x:Key="S.Template.LocalTemplatesRefresh">刷新列表</system:String>
+    <system:String x:Key="S.Template.LocalTemplateItem">{0} · {1} 面</system:String>
+    <system:String x:Key="S.Template.StatusLocalTemplatesEmpty">Templates 目录下暂无产品模板。</system:String>
     <system:String x:Key="S.Template.SelectSurfaceHint">请在左侧树中选择一个面</system:String>
     <system:String x:Key="S.Template.SelectSurfaceDetail">使用「新建产品」创建模板，或「添加面」录入面参数后开始编辑画板。</system:String>
     <system:String x:Key="S.Template.ApplySize">应用尺寸</system:String>

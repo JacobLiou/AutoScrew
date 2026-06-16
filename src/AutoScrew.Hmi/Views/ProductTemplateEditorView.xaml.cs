@@ -16,6 +16,12 @@ public partial class ProductTemplateEditorView
         DataContextChanged += OnDataContextChanged;
     }
 
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProductTemplateEditorViewModel vm)
+            await vm.InitializeAsync().ConfigureAwait(true);
+    }
+
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (_viewModel is not null)

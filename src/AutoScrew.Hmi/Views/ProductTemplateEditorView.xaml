@@ -9,7 +9,8 @@
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              mc:Ignorable="d"
              d:DesignHeight="720"
-             d:DesignWidth="1200">
+             d:DesignWidth="1200"
+             Loaded="OnLoaded">
     <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
@@ -90,30 +91,61 @@
                                Text="{DynamicResource S.Template.TreeHeader}"
                                FontWeight="SemiBold"
                                Margin="4,0,0,8" />
-                    <TreeView x:Name="SurfaceTree"
-                              ItemsSource="{Binding ProductTreeRoots}"
-                              SelectedItemChanged="SurfaceTree_OnSelectedItemChanged">
-                        <TreeView.ItemContainerStyle>
-                            <Style TargetType="TreeViewItem" BasedOn="{StaticResource ShellTreeViewItemStyle}">
-                                <Setter Property="IsExpanded" Value="True" />
-                            </Style>
-                        </TreeView.ItemContainerStyle>
-                        <TreeView.ItemTemplate>
-                            <HierarchicalDataTemplate ItemsSource="{Binding Surfaces}">
-                                <TextBlock Text="{Binding TreeHeader}" FontWeight="SemiBold" />
-                                <HierarchicalDataTemplate.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:SurfaceListItemViewModel}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding StateGlyph}"
-                                                       Width="16"
-                                                       Foreground="{DynamicResource ShellMutedForegroundBrush}" />
-                                            <TextBlock Text="{Binding DisplayLabel}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </HierarchicalDataTemplate.ItemTemplate>
-                            </HierarchicalDataTemplate>
-                        </TreeView.ItemTemplate>
-                    </TreeView>
+                    <Border DockPanel.Dock="Bottom"
+                            BorderBrush="{DynamicResource ShellBorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,8,0,0"
+                            Padding="0,8,0,0">
+                        <DockPanel LastChildFill="True">
+                            <Grid DockPanel.Dock="Top" Margin="4,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{DynamicResource S.Template.LocalTemplates}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                                <ui:Button Grid.Column="1"
+                                           Padding="6,2"
+                                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                                           ToolTip="{DynamicResource S.Template.LocalTemplatesRefresh}"
+                                           Command="{Binding RefreshLocalTemplatesCommand}">
+                                    <ui:SymbolIcon Symbol="ArrowClockwise24" />
+                                </ui:Button>
+                            </Grid>
+                            <ListBox ItemsSource="{Binding LocalTemplates}"
+                                     SelectedItem="{Binding SelectedLocalTemplate, Mode=TwoWay}"
+                                     DisplayMemberPath="DisplayText"
+                                     MinHeight="120"
+                                     MaxHeight="220" />
+                        </DockPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TreeView x:Name="SurfaceTree"
+                                  ItemsSource="{Binding ProductTreeRoots}"
+                                  SelectedItemChanged="SurfaceTree_OnSelectedItemChanged">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource ShellTreeViewItemStyle}">
+                                    <Setter Property="IsExpanded" Value="True" />
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Surfaces}">
+                                    <TextBlock Text="{Binding TreeHeader}" FontWeight="SemiBold" />
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SurfaceListItemViewModel}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding StateGlyph}"
+                                                           Width="16"
+                                                           Foreground="{DynamicResource ShellMutedForegroundBrush}" />
+                                                <TextBlock Text="{Binding DisplayLabel}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
                 </DockPanel>
             </Border>
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent" />
