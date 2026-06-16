@@ -390,7 +390,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void EnsureRoleAllowedSection()
     {
-        if (!CanUseConfiguration && IsConfigurationSection(SelectedSection))
+        if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
+            NavigateToDefaultPage();
+        else if (!CanUseConfiguration && IsDeviceConfigurationSection(SelectedSection))
             NavigateToDefaultPage();
         else if (!CanUseOperation && SelectedSection == MainAppSection.Operation)
             NavigateToDefaultPage();
@@ -405,9 +407,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             or MainAppSection.DeviceConnection
             or MainAppSection.Logs;
 
-    private static bool IsConfigurationSection(MainAppSection section) =>
-        section is MainAppSection.Template
-            or MainAppSection.ControllerParameters
+    private static bool IsDeviceConfigurationSection(MainAppSection section) =>
+        section is MainAppSection.ControllerParameters
             or MainAppSection.ControllerSequence
             or MainAppSection.ControllerSource;
 
@@ -426,41 +427,45 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
-        NavigationViewItem? configurationGroup = null;
-        if (CanUseConfiguration)
+        if (CanUseTemplateBoard)
         {
-            configurationGroup = new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.Configuration"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
-                IsExpanded = true
-            };
-
-            configurationGroup.MenuItems.Add(new NavigationViewItem
+            items.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.Template"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.DesignIdeas24 },
                 TargetPageType = typeof(TemplateNavPage),
                 TargetPageTag = "template"
             });
-            configurationGroup.MenuItems.Add(new NavigationViewItem
+        }
+
+        NavigationViewItem? deviceConfigurationGroup = null;
+        if (CanUseConfiguration)
+        {
+            deviceConfigurationGroup = new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceConfiguration"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.WrenchScrewdriver24 },
+                IsExpanded = true
+            };
+
+            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerParams"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Wrench24 },
                 TargetPageType = typeof(ControllerParameterPage),
                 TargetPageTag = "controller-params"
             });
-            configurationGroup.MenuItems.Add(new NavigationViewItem
+            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerSequence"),
                 Icon = new SymbolIcon { Symbol = SymbolRegular.List24 },
                 TargetPageType = typeof(ControllerSequencePage),
                 TargetPageTag = "controller-sequence"
             });
-            configurationGroup.MenuItems.Add(new NavigationViewItem
+            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerSource"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Flow24 },
+                Icon = new SymbolIcon { Symbol = SymbolRegular.SoundSource24 },
                 TargetPageType = typeof(ControllerSourcePage),
                 TargetPageTag = "controller-source"
             });
@@ -494,13 +499,13 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）
             // systemGroup.MenuItems.Add(new NavigationViewItem { ... });
 
-            if (configurationGroup is not null)
-                items.Add(configurationGroup);
+            if (deviceConfigurationGroup is not null)
+                items.Add(deviceConfigurationGroup);
             items.Add(systemGroup);
         }
-        else if (configurationGroup is not null)
+        else if (deviceConfigurationGroup is not null)
         {
-            items.Add(configurationGroup);
+            items.Add(deviceConfigurationGroup);
         }
 
         MenuItems = items;
