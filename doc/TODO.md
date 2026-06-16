@@ -44,7 +44,7 @@
 | 驱动 **程控供料器** | ~0% | **新增设备**；协议/寄存器待厂商定稿；需 `IFeeder` + Infrastructure 适配 |
 | 硬件适配 `IemdSdLockStationHardware` | ~55% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；**取钉仍走 `_feederSim`** |
 | 业务 `OperatorSessionController` | ~75% | SN→Recipe→自动拧紧调度→判定→归档；**供料仍为仿真**；无 checkpoint 恢复加载、漏锁 |
-| HMI | ~70% | 作业台/模板/参数/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
+| HMI | ~75% | 作业台/模板/参数/顺序/来源/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
 | MES | ~70% | 占位 HTTP v1 + `mes-settings.json` 持久化；Mock 可热切换；Outbox 重传已有 |
 
 ```mermaid
@@ -85,6 +85,7 @@ flowchart LR
 
 - [x] 真机拧紧适配：[`IemdSdLockStationHardware.cs`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)（`SwitchParameterAsync` → `ExecuteTighteningCycleAsync` → `ReadReportAsync`/`ReadCurveAsync`）
 - [x] 参数预设：[`ControllerParameterPresetService`](../src/AutoScrew.Infrastructure/Hardware/ControllerParameterPresetService.cs) + HMI [`ControllerParameterPage`](../src/AutoScrew.Hmi/Views/Pages/ControllerParameterPage.xaml)
+- [x] 顺序/来源预设：`ControllerSequencePresetService` / `ControllerSourceConfigService` + HMI 顺序/来源页（`#200`–`#253`、`#300`/`#301`）
 - [x] 单工位单设备：[`StationDeviceManager`](../src/AutoScrew.Infrastructure/Hardware/StationDeviceManager.cs) + [`DeviceConnectionPage`](../src/AutoScrew.Hmi/Views/Pages/DeviceConnectionPage.xaml)
 - [x] 仿真切换：`AutoScrew:UseSimulatedHardware` → [`SimulatedLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/SimulatedLockStationHardware.cs) / `IemdSdLockStationHardware`
 - [x] MES Outbox 重传：[`OutboxMesRetryHostedService`](../src/AutoScrew.Infrastructure/Mes/OutboxMesRetryHostedService.cs)
@@ -119,7 +120,7 @@ flowchart LR
 | ID | 状态 | 任务 | 层级 | PRD | 主要改动 |
 |----|------|------|------|-----|----------|
 | T-01 | [x] | **拧紧触发与当前螺钉绑定**：AutoDi 或电批完成事件自动 `RunCurrentScrewCycleAsync`；维护模式保留手动按钮 | 业务+HMI | §2.2 | `AutoRunScrewCycle` / `MainViewModel` 自动调度；`ShowManualRunScrewButton` 技术员按钮 |
-| T-02 | [x] | **控制器来源模式**：连接或作业开始时 `#300` 写「手动设定」（`#302` 前置） | 业务+驱动接线 | driverAnaC §5.6 | `IemdSdProductionSetup` + `StationDeviceManager` / `PrepareForJobAsync` |
+| T-02 | [x] | **控制器来源模式**：连接或作业开始时 `#300` 写「手动设定」（`#302` 前置）；扩展 DeviceProgram `#301`+#303 | 业务+驱动接线 | driverAnaC §5.6/§5.9 | `IemdSdProductionSetup` + `controller-source.json` + 双模式 `IemdSdLockStationHardware` |
 | T-03 | [x] | **SN 写控制器 `#401`**（现场若要求控制器侧条码追溯） | 业务 | §3.3 | `SubmitSerialNumberAsync` 成功后 [`WriteBarcodeAsync`](../src/UDL.Delta.IemdSd/IIemdSdClient.cs) |
 | T-04 | [x] | **真 MES 联调**：关 `UseMockMes`、占位 REST、[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml) 持久化 + 连通测试 | 业务+Infra | §3.3、§5.1 | [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs)、[`MesViewModel`](../src/AutoScrew.Hmi/ViewModels/MesViewModel.cs)、`tools/MesMockServer` |
 | T-05 | [x] | **NG 模态锁定**：NG 时弹窗 + 错误码/处理建议，仅技术员可解锁 | HMI | §3.2.2 | `OperationPageView` 全屏遮罩 + `ScrewNgAdvisor` |
@@ -184,7 +185,9 @@ flowchart LR
 | 清错 / 运行状态 | `ClearErrorsAsync` / `ReadOperatingStatusAsync` | 未接线 |
 | 取钉/供料 | `IFeeder.FeedAsync` / `PickScrewAsync` | **仿真**（待 T-06 程控供料器） |
 
-**α 半自动不必做**：顺序/导航 `#200`–`#253` 的 HMI、系统设置 `#500+` 全套界面。
+**顺序/来源 HMI**：`#200`–`#253`、`#300`/`#301` 已实现（见 PRD V1.3）；**系统设置 `#500+` 全套界面** α 不必做。
+
+**FAT（三步配置）**：① 三页分别读写真机 ② DeviceProgram 跑 3 钉顺序 ③ 切回 HostGuided 验证 `#302`。
 
 ---
 

@@ -294,6 +294,54 @@ AutoScrew 扫码换 PN 工艺时，应在 α 联调阶段单独验证此命令�
 - 真机：`AutoScrew:UseSimulatedHardware=false` 后在设备连接页 **应用并重连**；`IemdSd` 节仅作首次迁移种子。
 - 联调：控制器拧紧来源须 **手动设定**；参数 ID **1~500**。
 
+- 联调：控制器拧紧来源须 **手动设定**；参数 ID **1~500**。
+
+### 5.8 #200 / #250 拧紧顺序块（手册 A.3.2，已实现）
+
+手册 **附录 A.3.2**：单条顺序占用 **0xD2 ~ 0x2E3**（**530 word**）。
+
+| 相对偏移 | 内容 |
+|----------|------|
+| 0xD2–0xE5 | 名称 ASCII（20 word） |
+| 0xE6 | General(0) / Navigator(1) |
+| 0xE7 | 定位臂开关 0/1 |
+| 0xF0–0x153 | Set 1–100 Tool ID |
+| 0x154–0x217 | Set 1–100 Parameter ID（1–500） |
+
+附属块（按顺序 ID 读写）：
+
+| 功能码 | 范围 | 内容 |
+|--------|------|------|
+| #201/#251 | 0xD2–0x199 | 100 钉导航坐标 (X,Y) |
+| #202/#252 | 0xD2–0x135 | 100 钉图像码 0–21 |
+| #203/#253 | 0xD2–0x329 | 100 钉定位臂 (XL,XH,YL,YH,ZL,ZH) mm |
+
+**AutoScrew 落地**：`TighteningSequenceCodec` + `controller-sequences/{id}.json`；HMI **配置 → 拧紧顺序**；激活 `#303`。
+
+### 5.9 #300 / #301 拧紧来源（手册 A.3.3，已实现）
+
+**#300 运行模式**（邮箱 word2=Tool, word3=Operating, word4=Switching）：
+
+| word | 含义 |
+|------|------|
+| Tool | 0/1 |
+| Operating | 0 单工具 / 1 双工具交替 / 2 双工具同步 |
+| Switching | 0 手动 / 1 螺丝刀选择器 / 2 条码扫描 |
+
+**#301 单来源内容**（0xD2–0x14A）：
+
+| 偏移 | 内容 |
+|------|------|
+| 0xD2–0x135 | 条码 ASCII（100 word，条码模式） |
+| 0x136 | 来源类型 0=参数 / 1=顺序 |
+| 0x137 | Parameter/Sequence ID |
+| 0x138–0x139 | 螺钉总数 L/H |
+| 0x13A | Bit ID |
+
+条码运行时写入 `#401`；扫码器高级 `#408`/`#452` 为来源子能力。
+
+**AutoScrew 落地**：`controller-source.json` + HMI **配置 → 拧紧来源**；产线 `HostGuided`（`#300`+#302）或 `DeviceProgram`（`#301`+#303）。
+
 ### 5.7 #406 / #533 与手册名称差异
 
 | Demo 用法 | 手册正式名称（摘录） |
@@ -402,6 +450,8 @@ ParamConvertNmThenConvertUserUnitCoef =
 |------|------|------|
 | 驱动库 | `src/UDL.Delta.IemdSd` | `IIemdSdClient`：Modbus TCP/RTU；`ExecuteModbusCommandAsync` 覆盖全部附录功能码；强类型 API（条码/来源/履历/参数/顺序/系统/工具）；`#100`/`#150`/`#302`/`#517`/`#750`/`#751` 等 |
 | 参数预设 | `IControllerParameterPresetService` | 本地 JSON + 设备读写；HMI **拧紧参数** |
+| 顺序/来源预设 | `IControllerSequencePresetService` / `IControllerSourceConfigService` | `controller-sequences/` + `controller-source.json`；HMI **拧紧顺序** / **拧紧来源** |
+| 产线双模式 | `ProductionTighteningMode` + `IemdSdLockStationHardware` | HostGuided（#302）/ DeviceProgram（#301+#303） |
 | 工位设备 | `IStationDeviceService` | 每工位最多 3 设备槽；TCP/RTU；HMI **设备连接** |
 | 硬件适配 | `AutoScrew.Infrastructure` → `IemdSdLockStationHardware` | 实现 `ILockStationHardware`；使用激活工位设备 |
 | 配置 | `appsettings.json` | `AutoScrew:StationId` + `UseSimulatedHardware=false` 接真机；设备地址在 HMI 保存 |

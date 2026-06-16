@@ -52,6 +52,8 @@ public interface IIemdSdClient : IAsyncDisposable
 
     Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken cancellationToken = default);
 
+    Task WriteSourceModeAsync(int toolIndex, int operatingMode, int switchingMethod, CancellationToken cancellationToken = default);
+
     Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default);
 
     Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default);
@@ -88,6 +90,18 @@ public interface IIemdSdClient : IAsyncDisposable
     Task DeleteSequenceAsync(int sequenceId, CancellationToken cancellationToken = default);
 
     Task<int[]> ListSequencesAsync(uint wordCount = 500, CancellationToken cancellationToken = default);
+
+    Task WriteNavigatorCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default);
+
+    Task<int[]> ReadNavigatorCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default);
+
+    Task WriteNavigatorImageCodesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default);
+
+    Task<int[]> ReadNavigatorImageCodesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default);
+
+    Task WritePositioningArmCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default);
+
+    Task<int[]> ReadPositioningArmCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default);
 
     // Phase C/D
     Task<FirmwareVersionInfo> ReadFirmwareVersionAsync(CancellationToken cancellationToken = default);

@@ -65,11 +65,15 @@ internal sealed class IemdSdTypedCommands
         ExecuteMailbox((int)ModbusFunctionCode.Write_reset_operation_status, ct);
 
     public Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken ct) =>
+        WriteSourceModeAsync(_toolIndex, operatingMode, switchingMethod, ct);
+
+    public Task WriteSourceModeAsync(int toolIndex, int operatingMode, int switchingMethod, CancellationToken ct) =>
         _executor.ExecuteAsync(
             ModbusCommandInvocation.MailboxOnly(
                 (int)ModbusFunctionCode.Write_operating_mode_switching_method_source,
-                word2: operatingMode,
-                word3: switchingMethod),
+                word2: toolIndex,
+                word3: operatingMode,
+                word4: switchingMethod),
             ct);
 
     public async Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken ct)
@@ -80,8 +84,9 @@ internal sealed class IemdSdTypedCommands
         var w = result.ReadPayload ?? [];
         return new TighteningSourceSnapshot
         {
-            OperatingMode = w.ElementAtOrDefault(0),
-            SwitchingMethod = w.ElementAtOrDefault(1),
+            ToolIndex = w.ElementAtOrDefault(0),
+            OperatingMode = w.ElementAtOrDefault(1),
+            SwitchingMethod = w.ElementAtOrDefault(2),
         };
     }
 

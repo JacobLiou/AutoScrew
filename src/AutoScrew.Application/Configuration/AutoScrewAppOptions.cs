@@ -46,4 +46,7 @@ public sealed class AutoScrewAppOptions
 
     /// <summary>Mock MES 使用本地 local-recipes.json（见 doc/LOCAL_RECIPES.md）。</summary>
     public bool UseLocalRecipes { get; set; } = true;
+
+    /// <summary>产线拧紧控制：HostGuided=模板引导+#302；DeviceProgram=来源绑定+#303。</summary>
+    public ProductionTighteningMode TighteningControlMode { get; set; } = ProductionTighteningMode.HostGuided;
 }

@@ -145,6 +145,7 @@ public sealed class ControllerTraceServiceTests
         public Task ForceNextStepAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task RestrictLooseningAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task WriteSourceModeAsync(int toolIndex, int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -163,6 +164,12 @@ public sealed class ControllerTraceServiceTests
         public Task<TighteningSequenceTemplate> ReadSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int[]> ListSequencesAsync(uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task WriteNavigatorCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadNavigatorCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task WriteNavigatorImageCodesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadNavigatorImageCodesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task WritePositioningArmCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadPositioningArmCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<FirmwareVersionInfo> ReadFirmwareVersionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ToolInformationSnapshot> ReadToolInformationAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task ActivateToolAsync(bool enabled, CancellationToken cancellationToken = default) => throw new NotImplementedException();

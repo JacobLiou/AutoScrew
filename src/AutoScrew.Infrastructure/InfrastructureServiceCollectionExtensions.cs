@@ -41,6 +41,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddStationDeviceServices(configuration);
         services.AddSingleton<LocalJsonControllerParameterPresetStore>();
         services.AddSingleton<IControllerParameterPresetService, ControllerParameterPresetService>();
+        services.AddSingleton<LocalJsonControllerSequencePresetStore>();
+        services.AddSingleton<IControllerSequencePresetService, ControllerSequencePresetService>();
+        services.AddSingleton<LocalJsonControllerSourceConfigStore>();
+        services.AddSingleton<IControllerSourceConfigService, ControllerSourceConfigService>();
         services.AddSingleton<IControllerTraceService, IemdSdControllerTraceService>();
 
         services.AddSingleton<SimulatedLockStationHardware>();

@@ -37,7 +37,7 @@ public static class IemdSdProductionSetup
         }
 
         await client
-            .WriteSourceModeAsync(OperatingModeManualSet, SwitchingMethodManualSet, cancellationToken)
+            .WriteSourceModeAsync(0, OperatingModeManualSet, SwitchingMethodManualSet, cancellationToken)
             .ConfigureAwait(false);
         logger.LogInformation(
             "IEMD-SD #300 manual source applied (operatingMode={Mode}, switchingMethod={Switch}).",

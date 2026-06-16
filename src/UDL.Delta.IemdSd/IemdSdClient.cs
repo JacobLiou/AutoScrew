@@ -128,6 +128,9 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) =>
         _typed.WriteSourceModeAsync(operatingMode, switchingMethod, cancellationToken);
 
+    public Task WriteSourceModeAsync(int toolIndex, int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) =>
+        _typed.WriteSourceModeAsync(toolIndex, operatingMode, switchingMethod, cancellationToken);
+
     public Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default) =>
         _typed.ReadSourceModeAsync(cancellationToken);
 
@@ -181,6 +184,24 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public Task<int[]> ListSequencesAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
         _typed.ListSequencesAsync(wordCount, cancellationToken);
+
+    public Task WriteNavigatorCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) =>
+        _typed.WriteNavigatorCoordinatesAsync(sequenceId, payload, cancellationToken);
+
+    public Task<int[]> ReadNavigatorCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) =>
+        _typed.ReadNavigatorCoordinatesAsync(sequenceId, wordCount, cancellationToken);
+
+    public Task WriteNavigatorImageCodesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) =>
+        _typed.WriteNavigatorImageCodesAsync(sequenceId, payload, cancellationToken);
+
+    public Task<int[]> ReadNavigatorImageCodesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) =>
+        _typed.ReadNavigatorImageCodesAsync(sequenceId, wordCount, cancellationToken);
+
+    public Task WritePositioningArmCoordinatesAsync(int sequenceId, int[] payload, CancellationToken cancellationToken = default) =>
+        _typed.WritePositioningArmCoordinatesAsync(sequenceId, payload, cancellationToken);
+
+    public Task<int[]> ReadPositioningArmCoordinatesAsync(int sequenceId, uint wordCount, CancellationToken cancellationToken = default) =>
+        _typed.ReadPositioningArmCoordinatesAsync(sequenceId, wordCount, cancellationToken);
 
     public Task<FirmwareVersionInfo> ReadFirmwareVersionAsync(CancellationToken cancellationToken = default) =>
         _typed.ReadFirmwareVersionAsync(cancellationToken);

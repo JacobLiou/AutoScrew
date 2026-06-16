@@ -28,6 +28,8 @@ public enum MainAppSection
     Mes,
     Logs,
     ControllerParameters,
+    ControllerSequence,
+    ControllerSource,
     DeviceConnection,
     Settings
 }
@@ -208,6 +210,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Logs;
         else if (pageType == typeof(ControllerParameterPage))
             SelectedSection = MainAppSection.ControllerParameters;
+        else if (pageType == typeof(ControllerSequencePage))
+            SelectedSection = MainAppSection.ControllerSequence;
+        else if (pageType == typeof(ControllerSourcePage))
+            SelectedSection = MainAppSection.ControllerSource;
         else if (pageType == typeof(DeviceConnectionPage))
             SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
@@ -247,6 +253,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.Mes => typeof(MesPage),
             MainAppSection.Logs => typeof(LogsPage),
             MainAppSection.ControllerParameters => typeof(ControllerParameterPage),
+            MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
+            MainAppSection.ControllerSource => typeof(ControllerSourcePage),
             MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
@@ -399,7 +407,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private static bool IsConfigurationSection(MainAppSection section) =>
         section is MainAppSection.Template
-            or MainAppSection.ControllerParameters;
+            or MainAppSection.ControllerParameters
+            or MainAppSection.ControllerSequence
+            or MainAppSection.ControllerSource;
 
     private void RebuildMenuItems()
     {
@@ -439,6 +449,20 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Wrench24 },
                 TargetPageType = typeof(ControllerParameterPage),
                 TargetPageTag = "controller-params"
+            });
+            configurationGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.ControllerSequence"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.List24 },
+                TargetPageType = typeof(ControllerSequencePage),
+                TargetPageTag = "controller-sequence"
+            });
+            configurationGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.ControllerSource"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Flow24 },
+                TargetPageType = typeof(ControllerSourcePage),
+                TargetPageTag = "controller-source"
             });
         }
 
