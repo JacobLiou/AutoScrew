@@ -72,6 +72,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ConfigurableMesClient>();
         services.AddSingleton<IMesClient>(sp => sp.GetRequiredService<ConfigurableMesClient>());
 
+        services.AddSingleton<ProductTemplateLocalStore>();
+        services.AddSingleton<IProductTemplateLocalStore>(sp => sp.GetRequiredService<ProductTemplateLocalStore>());
+        services.AddSingleton<IProductTemplateSyncRepository, EfProductTemplateSyncRepository>();
+        services.AddSingleton<IMesTemplatePackageClient, MesTemplatePackageClient>();
+        services.AddSingleton<IMesTemplateUploadService, MesTemplateUploadService>();
+
         services.AddHostedService<OutboxMesRetryHostedService>();
 
         services.PostConfigure<AutoScrewAppOptions>(o =>
@@ -95,8 +101,11 @@ public static class InfrastructureServiceCollectionExtensions
     public static void InitializeAutoScrewDatabase(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
-        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var sp = scope.ServiceProvider;
+        var factory = sp.GetRequiredService<IDbContextFactory<AppDbContext>>();
         using var db = factory.CreateDbContext();
         db.Database.Migrate();
+
+        sp.GetRequiredService<ProductTemplateLocalStore>().SeedFromSamplesIfEmpty();
     }
 }

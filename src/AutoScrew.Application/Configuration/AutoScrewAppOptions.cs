@@ -14,7 +14,7 @@ public sealed class AutoScrewAppOptions
     public string DataDirectory { get; set; } = "";
 
     /// <summary>Optional folder scanned for PN templates when MES returns only a file name.</summary>
-    public string TemplateDirectory { get; set; } = "";
+    public string TemplateDirectory { get; set; } = "Templates";
 
     public string? OptionalNetworkArchiveRoot { get; set; }
 

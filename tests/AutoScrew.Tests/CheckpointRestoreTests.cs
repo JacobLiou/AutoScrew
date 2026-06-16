@@ -84,6 +84,7 @@ public sealed class CheckpointRestoreTests
             SimulatedLockStationHardware hardware) =>
             new(
                 new RestoreMesClient(templateFileName),
+                new StubRecipeProvisioningService(Path.Combine(tempDir, templateFileName)),
                 new NoOpControllerTraceService(),
                 new TemplateLayoutJsonLoader(NullLogger<TemplateLayoutJsonLoader>.Instance),
                 hardware,

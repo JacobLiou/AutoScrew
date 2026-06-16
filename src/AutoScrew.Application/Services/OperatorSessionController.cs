@@ -18,6 +18,7 @@ namespace AutoScrew.Application.Services;
 public sealed class OperatorSessionController
 {
     private readonly IMesClient _mesClient;
+    private readonly IRecipeProvisioningService _recipeProvisioning;
     private readonly IControllerTraceService _controllerTrace;
     private readonly ITemplateLayoutLoader _templateLoader;
     private readonly ILockStationHardware _hardware;
@@ -54,6 +55,7 @@ public sealed class OperatorSessionController
 
     public OperatorSessionController(
         IMesClient mesClient,
+        IRecipeProvisioningService recipeProvisioning,
         IControllerTraceService controllerTrace,
         ITemplateLayoutLoader templateLoader,
         ILockStationHardware hardware,
@@ -66,6 +68,7 @@ public sealed class OperatorSessionController
         ILogger<OperatorSessionController> logger)
     {
         _mesClient = mesClient;
+        _recipeProvisioning = recipeProvisioning;
         _controllerTrace = controllerTrace;
         _templateLoader = templateLoader;
         _hardware = hardware;
@@ -243,11 +246,18 @@ public sealed class OperatorSessionController
     {
         try
         {
-            var recipe = await _mesClient
-                .GetRecipeAsync(_serialNumber!, _partNumber!, cancellationToken)
+            var provisioned = await _recipeProvisioning
+                .GetProvisionedRecipeAsync(_serialNumber!, _partNumber!, cancellationToken)
                 .ConfigureAwait(false);
 
-            var templatePath = ResolveTemplatePath(recipe.TemplateJsonPath);
+            var recipe = provisioned.Recipe;
+            var templatePath = provisioned.ResolvedTemplatePath;
+            if (!string.IsNullOrWhiteSpace(provisioned.InfoMessage))
+            {
+                _logger.LogInformation("Template provisioning info: {Message}", provisioned.InfoMessage);
+                _lastErrorMessage = provisioned.InfoMessage;
+            }
+
             if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
             {
                 _lastErrorMessage = "Template file not found for PN.";
@@ -439,25 +449,6 @@ public sealed class OperatorSessionController
             return surface.ProductImageAbsolutePath;
 
         return null;
-    }
-
-    private string? ResolveTemplatePath(string? templateJsonPathFromMes)
-    {
-        if (string.IsNullOrWhiteSpace(templateJsonPathFromMes))
-            return null;
-
-        if (File.Exists(templateJsonPathFromMes))
-            return templateJsonPathFromMes;
-
-        var dir = _options.Value.TemplateDirectory;
-        if (!string.IsNullOrWhiteSpace(dir))
-        {
-            var combined = Path.Combine(dir, templateJsonPathFromMes);
-            if (File.Exists(combined))
-                return combined;
-        }
-
-        return templateJsonPathFromMes;
     }
 
     public void SetReworkMode(bool enabled)
@@ -801,11 +792,12 @@ public sealed class OperatorSessionController
 
     private async Task ReloadTemplateForRestoreAsync(CancellationToken cancellationToken)
     {
-        var recipe = await _mesClient
-            .GetRecipeAsync(_serialNumber!, _partNumber!, cancellationToken)
+        var provisioned = await _recipeProvisioning
+            .GetProvisionedRecipeAsync(_serialNumber!, _partNumber!, cancellationToken)
             .ConfigureAwait(false);
 
-        var templatePath = ResolveTemplatePath(recipe.TemplateJsonPath);
+        var recipe = provisioned.Recipe;
+        var templatePath = provisioned.ResolvedTemplatePath;
         if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
             throw new InvalidOperationException("Template file not found for checkpoint restore.");
 

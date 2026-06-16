@@ -76,7 +76,7 @@ public sealed class MesHttpClient
             s.AngleLimitDeg,
             s.ControllerParameterId)).ToList() ?? new List<ScrewRecipeDto>();
 
-        return new RecipeBundle(partNumber, dto.TemplateJsonPath, dto.ProductImageUrl, screws);
+        return new RecipeBundle(partNumber, dto.TemplateJsonPath, dto.ProductImageUrl, screws, dto.TemplatePackageUrl);
     }
 
     public async Task<MesUploadResult> UploadResultAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default)
@@ -160,6 +160,8 @@ public sealed class MesHttpClient
     private sealed class RecipeDto
     {
         public string? TemplateJsonPath { get; set; }
+
+        public string? TemplatePackageUrl { get; set; }
 
         public string? ProductImageUrl { get; set; }
 

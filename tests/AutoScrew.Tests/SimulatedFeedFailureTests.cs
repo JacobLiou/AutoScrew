@@ -48,6 +48,7 @@ public sealed class SimulatedFeedFailureTests
             var mes = new SimpleMesClient(templatePath);
             var controller = new OperatorSessionController(
                 mes,
+                new StubRecipeProvisioningService(templatePath),
                 new NoOpControllerTraceService(),
                 new TemplateLayoutJsonLoader(NullLogger<TemplateLayoutJsonLoader>.Instance),
                 new SimulatedLockStationHardware(Options.Create(simulation)),

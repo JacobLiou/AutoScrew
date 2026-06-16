@@ -16,6 +16,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<UserAuditLogEntity> UserAuditLogs => Set<UserAuditLogEntity>();
 
+    public DbSet<ProductTemplateSyncEntity> ProductTemplateSyncs => Set<ProductTemplateSyncEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<LockRecordEntity>(e =>
@@ -53,6 +55,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasIndex(x => x.UserId);
             e.HasIndex(x => x.Category);
             e.HasIndex(x => x.Action);
+        });
+
+        modelBuilder.Entity<ProductTemplateSyncEntity>(e =>
+        {
+            e.HasKey(x => x.PartNumber);
+            e.HasIndex(x => x.SyncState);
         });
     }
 }

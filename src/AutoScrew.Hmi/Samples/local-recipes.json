@@ -3,7 +3,7 @@
   "products": [
     {
       "partNumber": "PN-DEMO",
-      "templateFile": "demo-product-multisurface.product-template.json",
+      "templateFile": "PN-DEMO/PN-DEMO.product-template.json",
       "serialNumbers": [
         "SN001",
         "SN002",

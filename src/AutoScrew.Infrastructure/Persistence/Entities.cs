@@ -109,3 +109,24 @@ public sealed class UserAuditLogEntity
 
     public string? SerialNumber { get; set; }
 }
+
+public sealed class ProductTemplateSyncEntity
+{
+    public string PartNumber { get; set; } = "";
+
+    public string LocalRelativePath { get; set; } = "";
+
+    public int SyncState { get; set; }
+
+    public string? LocalFileHash { get; set; }
+
+    public DateTimeOffset? LocalModifiedUtc { get; set; }
+
+    public DateTimeOffset? LastMesPullUtc { get; set; }
+
+    public DateTimeOffset? LastMesPushUtc { get; set; }
+
+    public string? MesRevision { get; set; }
+
+    public string? LastError { get; set; }
+}

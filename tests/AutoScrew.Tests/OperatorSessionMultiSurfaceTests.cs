@@ -112,6 +112,7 @@ public sealed class OperatorSessionMultiSurfaceTests
             var options = Options.Create(new AutoScrewAppOptions { TemplateDirectory = tempDir, StationId = "T-01" });
             var controller = new OperatorSessionController(
                 mes,
+                new StubRecipeProvisioningService(templatePath),
                 new NoOpControllerTraceService(),
                 loader,
                 hardware,

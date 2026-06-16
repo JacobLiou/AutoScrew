@@ -37,6 +37,7 @@ public sealed class MesHttpClientTests
             """
             {
               "templateJsonPath": "demo.json",
+              "templatePackageUrl": "api/templates/PN-1/package",
               "productImageUrl": "img.png",
               "screws": [
                 { "index": 2, "partNo": "S2", "targetTorqueNm": 1.0, "torqueLowerNm": 0.9, "torqueUpperNm": 1.1, "angleLimitDeg": 180, "controllerParameterId": 3 }
@@ -49,6 +50,7 @@ public sealed class MesHttpClientTests
 
         Assert.Equal("PN-1", recipe.PartNumber);
         Assert.Equal("demo.json", recipe.TemplateJsonPath);
+        Assert.Equal("api/templates/PN-1/package", recipe.TemplatePackageUrl);
         Assert.Single(recipe.Screws);
         Assert.Equal(2, recipe.Screws[0].PositionIndex);
         Assert.Equal(3, recipe.Screws[0].ControllerParameterId);

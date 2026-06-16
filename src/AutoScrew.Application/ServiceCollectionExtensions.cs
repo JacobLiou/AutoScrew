@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAutoScrewApplication(this IServiceCollection services)
     {
         services.AddOptions<AutoScrewAppOptions>().BindConfiguration(AutoScrewAppOptions.SectionName);
+        services.AddSingleton<IRecipeProvisioningService, RecipeProvisioningService>();
         services.AddSingleton<OperatorSessionController>();
         return services;
     }

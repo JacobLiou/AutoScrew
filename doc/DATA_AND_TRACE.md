@@ -14,6 +14,7 @@
 - 曲线文件：`torque_curve_{positionIndex}_{timestamp}.csv`
 - 锁附日志：`lock_log_{timestamp}.json`
 - 可选网络镜像：`AutoScrew:OptionalNetworkArchiveRoot`（复制失败不阻塞产线）。
+- **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。
 
 ## SQLite 实体（Infrastructure）
 
@@ -21,6 +22,7 @@
 - `session_checkpoints`：作业断电恢复 checkpoint（JSON）；**T-07** 启动时 HMI 提示恢复，重载模板并合并螺钉状态（不含 `_screwRecords` 扭矩/曲线路径）。
 - `outbox_uploads`：MES 上传重试队列。
 - `user_audit_logs`：用户操作审计（仅追加 INSERT，HMI 无删除 API）。
+- **`product_template_sync`（V1.2）**：PN、`LocalRelativePath`、`SyncState`（`LocalOnly` / `DownloadedFromMes` / `PendingUpload` / `Synced` / `Failed`）、`LocalFileHash`、`LastMesPullUtc` / `LastMesPushUtc`、`LastError`。
 
 ## 用户操作审计（操作员 / 技术员）
 
@@ -42,6 +44,10 @@
   - `session_checkpoints` JSON 含 `activeSurfaceOrdinal` + 每面 `surfaceId` / `progressState` / `screwStates`。
   - 曲线文件仍用 `torque_curve_{globalPositionIndex}_{timestamp}.csv`（global 按 `surfaceOrderThenLocalIndex`）。
   - **MES 待定稿**：`ScrewResultDto` 暂不增加 `surface_id` / `local_index` 上报字段；本地 checkpoint 与 `_screwRecords` 已按 `surfaceId` + `localIndex` 区分。
+- **Phase 3（V1.2 · 已实现）**：
+  - 本地库：`IProductTemplateLocalStore` → `{TemplateDirectory}/{PN}/{PN}.product-template.json`。
+  - 扫码：`IRecipeProvisioningService` — MES recipe + `templatePackageUrl` 下载 zip → 失败则本地 fallback。
+  - 技术员保存 → `product_template_sync.PendingUpload`；MES 下载成功 → `DownloadedFromMes`。
 
 ## 程控供料（PRD V1.1 — 占位）
 
@@ -71,7 +77,8 @@
 |------|------|------|
 | GET | `api/health` | 连通测试（可选）；200 = OK |
 | GET | `api/sn/validate?sn=&stationId=` | 响应 `{ valid, partNumber, message }` |
-| GET | `api/recipe?sn=&pn=&stationId=` | 响应 `{ templateJsonPath, productImageUrl, screws[] }`；`screws[].index` 映射 `ScrewRecipeDto.PositionIndex` |
+| GET | `api/recipe?sn=&pn=&stationId=` | 响应 `{ templateJsonPath, templatePackageUrl, productImageUrl, screws[] }`；`templatePackageUrl` 相对 MES 基址，GET 返回 zip（含 JSON + images/）；`screws[].index` 映射 `ScrewRecipeDto.PositionIndex` |
+| GET | `api/templates/{pn}/package` | 模板包 zip（FAT / MesMockServer） |
 | POST | `api/results` | Body = [`LockJobResultPayload`](../src/AutoScrew.Application/Abstractions/IMesClient.cs)；成功 2xx |
 
 ### 本地 Mock

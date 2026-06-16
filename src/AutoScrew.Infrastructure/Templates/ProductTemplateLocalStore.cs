@@ -1,0 +1,126 @@
+using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
+using Microsoft.Extensions.Options;
+
+namespace AutoScrew.Infrastructure.Templates;
+
+public sealed class ProductTemplateLocalStore : IProductTemplateLocalStore
+{
+    private readonly IOptions<AutoScrewAppOptions> _options;
+
+    public ProductTemplateLocalStore(IOptions<AutoScrewAppOptions> options) => _options = options;
+
+    public string GetTemplateDirectory()
+    {
+        var dir = _options.Value.TemplateDirectory;
+        if (string.IsNullOrWhiteSpace(dir))
+            dir = Path.Combine(AppContext.BaseDirectory, "Templates");
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    public string GetProductFolder(string partNumber)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(partNumber);
+        return Path.Combine(GetTemplateDirectory(), SanitizePartNumber(partNumber));
+    }
+
+    public string GetDefaultTemplatePath(string partNumber)
+    {
+        var pn = SanitizePartNumber(partNumber);
+        return Path.Combine(GetProductFolder(partNumber), $"{pn}.product-template.json");
+    }
+
+    public void EnsureProductFolder(string partNumber) =>
+        Directory.CreateDirectory(GetProductFolder(partNumber));
+
+    public IReadOnlyList<string> ListLocalPartNumbers()
+    {
+        var root = GetTemplateDirectory();
+        if (!Directory.Exists(root))
+            return Array.Empty<string>();
+
+        var list = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(root, "*.product-template.json", SearchOption.AllDirectories))
+        {
+            var name = Path.GetFileNameWithoutExtension(file);
+            if (name.EndsWith(".product-template", StringComparison.OrdinalIgnoreCase))
+                name = name[..^".product-template".Length];
+            if (!string.IsNullOrWhiteSpace(name))
+                list.Add(name);
+        }
+
+        return list.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    public string? TryResolveLocalTemplate(string partNumber)
+    {
+        var path = GetDefaultTemplatePath(partNumber);
+        return File.Exists(path) ? path : null;
+    }
+
+    public string? TryResolveTemplatePath(string? templateJsonPath)
+    {
+        if (string.IsNullOrWhiteSpace(templateJsonPath))
+            return null;
+
+        if (Path.IsPathRooted(templateJsonPath) && File.Exists(templateJsonPath))
+            return templateJsonPath;
+
+        var root = GetTemplateDirectory();
+        var combined = Path.Combine(root, templateJsonPath.Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(combined))
+            return combined;
+
+        return File.Exists(templateJsonPath) ? templateJsonPath : null;
+    }
+
+    public string ToRelativePath(string absolutePath)
+    {
+        var root = GetTemplateDirectory().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var full = Path.GetFullPath(absolutePath);
+        if (full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        {
+            var rel = full[root.Length..].TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return rel.Replace('\\', '/');
+        }
+
+        return full;
+    }
+
+    public void SeedFromSamplesIfEmpty()
+    {
+        var target = GetTemplateDirectory();
+        if (Directory.EnumerateFileSystemEntries(target).Any())
+            return;
+
+        var samples = Path.Combine(AppContext.BaseDirectory, "Samples");
+        if (!Directory.Exists(samples))
+            return;
+
+        CopyDirectory(samples, target);
+
+        var demoJson = Path.Combine(target, "demo-product-multisurface.product-template.json");
+        if (File.Exists(demoJson))
+        {
+            var pnFolder = Path.Combine(target, "PN-DEMO");
+            Directory.CreateDirectory(pnFolder);
+            var dest = Path.Combine(pnFolder, "PN-DEMO.product-template.json");
+            if (!File.Exists(dest))
+                File.Copy(demoJson, dest);
+        }
+    }
+
+    private static string SanitizePartNumber(string partNumber) =>
+        partNumber.Trim();
+
+    private static void CopyDirectory(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            var name = Path.GetFileName(file);
+            File.Copy(file, Path.Combine(destination, name), overwrite: false);
+        }
+    }
+}

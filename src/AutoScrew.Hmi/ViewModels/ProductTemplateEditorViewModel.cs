@@ -6,6 +6,7 @@ using AutoScrew.Hmi.BusinessDialog;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
+using AutoScrew.Application.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -26,19 +27,25 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
+    private readonly IProductTemplateLocalStore _templateStore;
+    private readonly IProductTemplateSyncRepository _syncRepository;
 
     public ProductTemplateEditorViewModel(
         SurfaceBoardEditorViewModel currentSurfaceEditor,
         LocalizationService localization,
         IUserAuditService audit,
         IOptions<AutoScrewAppOptions> appOptions,
-        ICurrentUser user)
+        ICurrentUser user,
+        IProductTemplateLocalStore templateStore,
+        IProductTemplateSyncRepository syncRepository)
     {
         CurrentSurfaceEditor = currentSurfaceEditor;
         _localization = localization;
         _audit = audit;
         _appOptions = appOptions;
         _user = user;
+        _templateStore = templateStore;
+        _syncRepository = syncRepository;
         CurrentSurfaceEditor.ContentChanged += (_, _) => MarkDirty();
         _localization.CultureChanged += (_, _) => RefreshLocalizedUi();
         ProductTreeRoots = new ObservableCollection<ProductTemplateTreeRootViewModel>();
@@ -147,6 +154,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         var dlg = new OpenFileDialog
         {
             Filter = Loc.Get("S.Template.OpenFilter"),
+            InitialDirectory = _templateStore.GetTemplateDirectory(),
         };
 
         if (dlg.ShowDialog() != true)
@@ -187,18 +195,9 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
             if (string.IsNullOrWhiteSpace(_filePath))
             {
-                var dlg = new SaveFileDialog
-                {
-                    Filter = Loc.Get("S.Template.SaveFilter"),
-                    DefaultExt = ".product-template.json",
-                    FileName = $"{ProductId}.product-template.json",
-                };
-
-                if (dlg.ShowDialog() != true)
-                    return;
-
-                _filePath = dlg.FileName;
-                _templateDirectory = Path.GetDirectoryName(dlg.FileName);
+                _templateStore.EnsureProductFolder(ProductId);
+                _filePath = _templateStore.GetDefaultTemplatePath(ProductId);
+                _templateDirectory = _templateStore.GetProductFolder(ProductId);
             }
 
             try
@@ -208,6 +207,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
                 IsDirty = false;
                 RefreshTreeEditStates();
                 StatusMessage = Loc.Format("S.Template.StatusSaved", _filePath);
+                _ = UpsertPendingUploadAsync(ProductId.Trim(), _filePath!);
             }
             catch (Exception ex)
             {
@@ -229,6 +229,9 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
         ResetSession();
         ApplyProductInfo(info!);
+        _templateStore.EnsureProductFolder(ProductId);
+        _filePath = _templateStore.GetDefaultTemplatePath(ProductId);
+        _templateDirectory = _templateStore.GetProductFolder(ProductId);
         IsDirty = true;
         StatusMessage = Loc.Get("S.Template.StatusCreated");
     }
@@ -655,6 +658,25 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             StatusMessage = Loc.Format("S.Template.StatusEditing", _loadedSurface.Name, _loadedSurface.MarkerCount);
         else if (ProductRoot is not null)
             StatusMessage = Loc.Format("S.Template.StatusSelectSurface", ProductRoot.TreeHeader, ProductRoot.Surfaces.Count);
+    }
+
+    private async Task UpsertPendingUploadAsync(string partNumber, string absolutePath)
+    {
+        try
+        {
+            await ProductTemplateSyncOperations.UpsertFromFileAsync(
+                _syncRepository,
+                _templateStore,
+                partNumber,
+                ProductTemplateSyncState.PendingUpload,
+                null,
+                null,
+                CancellationToken.None).ConfigureAwait(true);
+        }
+        catch
+        {
+            // Sync record is best-effort; save already succeeded.
+        }
     }
 
     private void AuditTemplate(string action, string? detail = null) =>

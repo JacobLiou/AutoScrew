@@ -15,7 +15,8 @@ public sealed record RecipeBundle(
     string PartNumber,
     string? TemplateJsonPath,
     string? ProductImageUrl,
-    IReadOnlyList<ScrewRecipeDto> Screws);
+    IReadOnlyList<ScrewRecipeDto> Screws,
+    string? TemplatePackageUrl = null);
 
 public sealed record ScrewRecipeDto(
     int PositionIndex,

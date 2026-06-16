@@ -15,7 +15,7 @@
     "UseSimulatedHardware": true,
     "MesBaseUrl": "https://localhost/",
     "DataDirectory": "",
-    "TemplateDirectory": "Samples",
+    "TemplateDirectory": "Templates",
     "StationId": "STATION-01",
     "UiCulture": "zh-CN",
     "AuditLogEnabled": true,

@@ -85,6 +85,7 @@ public sealed class MissingScrewValidationTests
             SimulationOptions simulation) =>
             new(
                 new SimpleMesClient(templateFileName),
+                new StubRecipeProvisioningService(Path.Combine(tempDir, templateFileName)),
                 new NoOpControllerTraceService(),
                 new TemplateLayoutJsonLoader(NullLogger<TemplateLayoutJsonLoader>.Instance),
                 new SimulatedLockStationHardware(Options.Create(simulation)),
