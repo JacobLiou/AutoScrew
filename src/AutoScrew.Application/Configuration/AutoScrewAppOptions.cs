@@ -29,6 +29,12 @@ public sealed class AutoScrewAppOptions
     /// <summary>审计 JSONL 目录；空则使用 {DataDirectory}/audit。</summary>
     public string AuditDirectory { get; set; } = "";
 
+    /// <summary>作业活动日志 UI/内存缓冲上限（超出移除最旧项）。</summary>
+    public int OperationActivityLogMaxInMemory { get; set; } = 200;
+
+    /// <summary>作业活动日志 JSONL 目录；空则使用 {DataDirectory}/activity。</summary>
+    public string OperationActivityDirectory { get; set; } = "";
+
     /// <summary>Running 阶段对待打 Pending 钉自动进入取钉+拧紧周期（Manual 扳机仍由电批完成）。</summary>
     public bool AutoRunScrewCycle { get; set; } = true;
 

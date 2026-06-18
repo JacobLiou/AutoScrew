@@ -13,6 +13,7 @@
                 <ResourceDictionary Source="/Themes/ShellResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <SolidColorBrush x:Key="BrushPending" Color="#FFD54F"/>
+            <SolidColorBrush x:Key="BrushPendingWaiting" Color="#FFF59D"/>
             <SolidColorBrush x:Key="BrushInProgress" Color="#FFC107"/>
             <SolidColorBrush x:Key="BrushOk" Color="#43A047"/>
             <SolidColorBrush x:Key="BrushNg" Color="#E53935"/>
@@ -21,18 +22,13 @@
                 <Setter Property="StrokeThickness" Value="2"/>
                 <Setter Property="Width" Value="{Binding DiameterPx}"/>
                 <Setter Property="Height" Value="{Binding DiameterPx}"/>
-                <Setter Property="Fill" Value="{StaticResource BrushPending}"/>
+                <Setter Property="Fill" Value="{StaticResource BrushPendingWaiting}"/>
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
-                        <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
-                        <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
-                        <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
-                    </DataTrigger>
                     <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}">
+                        <Setter Property="Fill" Value="{StaticResource BrushPendingWaiting}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsNextTarget}" Value="True">
+                        <Setter Property="Fill" Value="{StaticResource BrushPending}"/>
                         <DataTrigger.EnterActions>
                             <BeginStoryboard>
                                 <Storyboard RepeatBehavior="Forever">
@@ -41,6 +37,15 @@
                                 </Storyboard>
                             </BeginStoryboard>
                         </DataTrigger.EnterActions>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
+                        <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
+                        <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
+                        <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>

@@ -16,10 +16,10 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private const int MaxLogEntries = 50;
     private readonly OperatorSessionController _session;
     private readonly LocalizationService _localization;
     private readonly IUserAuditService _audit;
+    private readonly IOperationActivityLogService _activityLog;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly IOptions<SimulationOptions> _simulationOptions;
     private readonly ICurrentUser _user;
@@ -31,6 +31,7 @@ public partial class MainViewModel : ObservableObject
         OperatorSessionController session,
         LocalizationService localization,
         IUserAuditService audit,
+        IOperationActivityLogService activityLog,
         IOptions<AutoScrewAppOptions> appOptions,
         IOptions<SimulationOptions> simulationOptions,
         ICurrentUser user)
@@ -38,6 +39,7 @@ public partial class MainViewModel : ObservableObject
         _session = session;
         _localization = localization;
         _audit = audit;
+        _activityLog = activityLog;
         _appOptions = appOptions;
         _simulationOptions = simulationOptions;
         _user = user;
@@ -121,7 +123,7 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<ScrewMarkerVm> Markers { get; } = new();
 
-    public ObservableCollection<string> ActivityLog { get; } = new();
+    public ReadOnlyObservableCollection<OperationActivityLogEntry> ActivityLog => _activityLog.Entries;
 
     public OperatorSurfaceNodeViewModel? ActiveSurfaceNode { get; private set; }
 
@@ -287,7 +289,7 @@ public partial class MainViewModel : ObservableObject
 
         _session.ResetToIdle();
         SerialNumberInput = "";
-        ActivityLog.Clear();
+        _activityLog.ClearRecent();
         IsSnInputEnabled = true;
         IsNgOverlayVisible = false;
         IsOperationLocked = false;
@@ -390,12 +392,14 @@ public partial class MainViewModel : ObservableObject
         Markers.Clear();
         var positions = _session.Positions;
         var states = _session.ScrewStates;
+        var nextIndex = _session.Phase == JobSessionPhase.Running ? _session.CurrentScrewIndex : -1;
         for (var i = 0; i < positions.Count; i++)
         {
             var p = positions[i];
             var diameter = p.CircleDiameterPx ?? 26;
             var st = i < states.Count ? states[i] : StationScrewState.Pending;
-            Markers.Add(new ScrewMarkerVm(p.Index, p.CenterX, p.CenterY, diameter, st));
+            var isNextTarget = nextIndex >= 0 && i == nextIndex && st == StationScrewState.Pending;
+            Markers.Add(new ScrewMarkerVm(p.Index, p.CenterX, p.CenterY, diameter, st, isNextTarget));
         }
 
         RefreshProgressTree();
@@ -614,12 +618,8 @@ public partial class MainViewModel : ObservableObject
         await Task.CompletedTask;
     }
 
-    private void AddLog(string line)
-    {
-        ActivityLog.Insert(0, line);
-        while (ActivityLog.Count > MaxLogEntries)
-            ActivityLog.RemoveAt(ActivityLog.Count - 1);
-    }
+    private void AddLog(string line) =>
+        _activityLog.Append(line, _session.SerialNumber);
 
     private void NotifyCommandStates()
     {
@@ -633,13 +633,20 @@ public partial class MainViewModel : ObservableObject
 
 public sealed partial class ScrewMarkerVm : ObservableObject
 {
-    public ScrewMarkerVm(int index, double centerX, double centerY, double diameterPx, StationScrewState state)
+    public ScrewMarkerVm(
+        int index,
+        double centerX,
+        double centerY,
+        double diameterPx,
+        StationScrewState state,
+        bool isNextTarget = false)
     {
         Index = index;
         CenterX = centerX;
         CenterY = centerY;
         DiameterPx = diameterPx;
         _state = state;
+        _isNextTarget = isNextTarget;
     }
 
     public int Index { get; }
@@ -656,4 +663,7 @@ public sealed partial class ScrewMarkerVm : ObservableObject
 
     [ObservableProperty]
     private StationScrewState _state;
+
+    [ObservableProperty]
+    private bool _isNextTarget;
 }

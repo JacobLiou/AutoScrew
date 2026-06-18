@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Infrastructure.Activity;
 using AutoScrew.Infrastructure.Audit;
 using AutoScrew.Infrastructure.Authentication;
 using AutoScrew.Infrastructure.Background;
@@ -36,6 +37,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
         services.AddSingleton<JsonlUserAuditStore>();
+        services.AddSingleton<IOperationActivityLogService, OperationActivityLogService>();
         services.AddSingleton<UserAuditService>();
         services.AddSingleton<IUserAuditService>(sp => sp.GetRequiredService<UserAuditService>());
         services.AddHostedService<UserAuditBackgroundService>();

@@ -33,6 +33,13 @@
 - **禁止写入**：口令明文、完整 Modbus 参数块。
 - **保留**：现场按 IT 策略备份 `audit` 目录与 `autoscrew.db`；HMI 不提供审计删除入口。
 
+## 作业活动日志（作业台）
+
+- **用途**：作业台右侧「作业日志」——SN 加载、拧紧 OK/NG、翻面、解锁等**操作员可见**流水；与用户审计（`user-audit-*.jsonl`）分离。
+- **内存/UI**：`AutoScrew:OperationActivityLogMaxInMemory`（默认 `200`）；新条目插入顶部，超出移除最旧项；`ListBox` 虚拟化渲染。
+- **JSONL 全量落盘**：`{OperationActivityDirectory}/operation-activity-{yyyy-MM-dd}.jsonl`；`OperationActivityDirectory` 为空时使用 `{DataDirectory}/activity`。每行字段：`timestamp`、`stationId`、`serialNumber`、`message`。**落盘不受 200 条上限影响**。
+- **会话复位**：`ClearRecent` 仅清空 UI 缓冲，已写入 JSONL 的条目保留可追溯。
+
 ## 多面产品模板（草案）
 
 - **契约**：[MULTI_SURFACE_TEMPLATE.md](MULTI_SURFACE_TEMPLATE.md)（`schemaVersion: 2`、面 ID、全局/面内位号）。

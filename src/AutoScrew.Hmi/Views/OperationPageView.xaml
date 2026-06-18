@@ -67,10 +67,10 @@
         <Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="240" MinWidth="180"/>
+                    <ColumnDefinition Width="168" MinWidth="130"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="4*"/>
+                    <ColumnDefinition Width="1.5*"/>
                 </Grid.ColumnDefinitions>
             <Border Grid.Column="0"
                     Background="{DynamicResource ShellCardBrush}"
@@ -120,8 +120,7 @@
             </Border>
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
             <ui:Card Grid.Column="2" Style="{StaticResource ShellCardStyle}" Margin="0,0,12,0">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900" MaxHeight="560">
+                <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <Grid Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
                             <Rectangle Fill="#F0F0F0"/>
                             <Image Stretch="Fill"
@@ -149,32 +148,58 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Grid>
-                    </Viewbox>
-                </ScrollViewer>
+                </Viewbox>
             </ui:Card>
             <ui:Card Grid.Column="3" Style="{StaticResource ShellCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1.6*"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="120"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="{DynamicResource S.Operation.CurveTitle}" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                    <Grid x:Name="CurvePlotHost" Grid.Row="1" MinHeight="180" />
-                    <TextBlock Grid.Row="2" Text="{DynamicResource S.Operation.ActivityLog}" FontWeight="SemiBold" Margin="0,12,0,4"/>
-                    <ListBox Grid.Row="3"
-                             ItemsSource="{Binding ActivityLog}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12"
-                                           Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Border Grid.Row="0"
+                            BorderBrush="Black"
+                            BorderThickness="1"
+                            Padding="8">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="{DynamicResource S.Operation.CurveTitle}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"/>
+                            <Grid x:Name="CurvePlotHost" MinHeight="140"/>
+                        </DockPanel>
+                    </Border>
+                    <Border Grid.Row="1"
+                            BorderBrush="Black"
+                            BorderThickness="1"
+                            Padding="8"
+                            Margin="0,8,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="{DynamicResource S.Operation.ActivityLog}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+                            <ListBox MinHeight="180"
+                                     ItemsSource="{Binding ActivityLog}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VirtualizingPanel.IsVirtualizing="True"
+                                     VirtualizingPanel.VirtualizationMode="Recycling"
+                                     ScrollViewer.CanContentScroll="True"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayLine}" TextWrapping="Wrap" FontSize="12"
+                                                   Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
                 </Grid>
             </ui:Card>
             </Grid>
