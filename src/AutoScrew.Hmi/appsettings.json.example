@@ -38,6 +38,12 @@
     }
   },
   "Authentication": {
-    "Mode": "Development"
+    "Mode": "MimsMySql",
+    "Mims": {
+      "ConnectionString": "",
+      "ConnectionStringDpapiBase64": "aes256:用 tools/EncryptMimsConnectionString 生成，见 doc/CONNECTION_STRING_ENCRYPTION.md",
+      "DpapiScope": "LocalMachine",
+      "CommandTimeoutSeconds": 15
+    }
   }
 }

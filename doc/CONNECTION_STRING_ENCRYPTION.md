@@ -25,6 +25,16 @@ Server=192.168.1.100;Database=mims;User ID=operator;Password=MySecurePassword;Ch
 > - 必须包含 `Charset=utf8mb4`（AutoScrew 强制要求）
 > - 密码中若含特殊字符，需按 MySQL 连接串规则转义
 
+### 步骤 2b：从旧 DPAPI 密文迁移（换机部署）
+
+若现有 `appsettings.json` 中为旧版 `AQAAANCMnd8...` 格式（绑定本机），在**生成旧密文的同一台电脑**上运行：
+
+```bash
+dotnet run --project tools/EncryptMimsConnectionString -- --migrate-dpapi "<旧密文>" LocalMachine
+```
+
+输出 `aes256:...` 替换 `ConnectionStringDpapiBase64` 后即可拷贝到任意 Windows PC。
+
 ### 步骤 2：运行加密工具
 
 从仓库目录运行：
