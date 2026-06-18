@@ -341,15 +341,16 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (SelectedSurface is null)
             return;
 
-        var index = GetSurfaceIndex(SelectedSurface);
+        var item = SelectedSurface;
+        var index = GetSurfaceIndex(item);
         if (index < 0)
             return;
 
         var doc = _surfaceDocuments[index];
         var initial = new SurfaceParamsResult(
-            SelectedSurface.SurfaceId,
-            SelectedSurface.Name,
-            SelectedSurface.Order,
+            item.SurfaceId,
+            item.Name,
+            item.Order,
             doc.BoardWidth > 0 ? doc.BoardWidth : 800,
             doc.BoardHeight > 0 ? doc.BoardHeight : 600);
 
@@ -357,17 +358,17 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (!RunWithTreeSelectionSuppressed(() => SurfaceParamsDialog.TryShow(
                 initial,
                 GetExistingSurfaceIds(),
-                excludeId: SelectedSurface.SurfaceId,
+                excludeId: item.SurfaceId,
                 title: Loc.Get("S.Template.EditSurfaceDialog"),
                 out result)))
             return;
 
-        ApplySurfaceParams(index, SelectedSurface, result!);
-        if (ReferenceEquals(_loadedSurface, SelectedSurface))
-            LoadSurfaceIntoEditor(SelectedSurface);
+        ApplySurfaceParams(index, item, result!);
+        if (ReferenceEquals(_loadedSurface, item))
+            LoadSurfaceIntoEditor(item);
 
         IsDirty = true;
-        StatusMessage = Loc.Format("S.Template.StatusSurfaceUpdated", SelectedSurface.Name);
+        StatusMessage = Loc.Format("S.Template.StatusSurfaceUpdated", result!.Name);
     }
 
     [RelayCommand(CanExecute = nameof(CanEditSelectedSurface))]
@@ -441,8 +442,9 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (SelectedSurface is null || ProductRoot is null)
             return;
 
+        var item = SelectedSurface;
         var surfaces = ProductRoot.Surfaces;
-        var index = surfaces.IndexOf(SelectedSurface);
+        var index = surfaces.IndexOf(item);
         var otherIndex = index + delta;
         if (index < 0 || otherIndex < 0 || otherIndex >= surfaces.Count)
             return;
@@ -460,7 +462,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         (_surfaceDocuments[index], _surfaceDocuments[otherIndex]) = (_surfaceDocuments[otherIndex], _surfaceDocuments[index]);
 
         IsDirty = true;
-        StatusMessage = Loc.Format("S.Template.StatusOrderChanged", SelectedSurface.Name, SelectedSurface.Order);
+        StatusMessage = Loc.Format("S.Template.StatusOrderChanged", item.Name, item.Order);
         MoveSurfaceUpCommand.NotifyCanExecuteChanged();
         MoveSurfaceDownCommand.NotifyCanExecuteChanged();
     }
@@ -590,7 +592,21 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         item.Order = result.Order;
 
         if (ProductRoot is not null)
-            ReorderSurfacesCollection(ProductRoot.Surfaces);
+        {
+            RunWithTreeSelectionSuppressed(() =>
+            {
+                _suppressSelectionRevert = true;
+                try
+                {
+                    ReorderSurfacesCollection(ProductRoot.Surfaces);
+                    SelectedSurface = item;
+                }
+                finally
+                {
+                    _suppressSelectionRevert = false;
+                }
+            });
+        }
     }
 
     private static SurfaceLayoutDocument CreateSurfaceDocument(SurfaceParamsResult result) =>
