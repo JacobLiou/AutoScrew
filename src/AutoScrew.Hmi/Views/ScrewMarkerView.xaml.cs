@@ -10,7 +10,11 @@ namespace AutoScrew.Hmi.Views;
 
 public partial class ScrewMarkerView
 {
+    private const double DragThresholdPx = 3;
+
     private ScrewMarkerViewModel? _vm;
+    private Point _pressCanvasPoint;
+    private bool _isDragging;
 
     public ScrewMarkerView()
     {
@@ -18,6 +22,9 @@ public partial class ScrewMarkerView
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         DataContextChanged += OnDataContextChanged;
+        MouseMove += OnMouseMove;
+        MouseLeftButtonUp += OnMouseLeftButtonUp;
+        LostMouseCapture += OnLostMouseCapture;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -34,6 +41,7 @@ public partial class ScrewMarkerView
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         DetachVm();
+        EndDrag();
     }
 
     private void AttachVm()
@@ -47,6 +55,7 @@ public partial class ScrewMarkerView
         DetachVm();
         _vm = vm;
         vm.PropertyChanged += OnVmPropertyChanged;
+        UpdateCursor(vm.IsSelected);
     }
 
     private void DetachVm()
@@ -60,15 +69,23 @@ public partial class ScrewMarkerView
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(ScrewMarkerViewModel.IsSelected) || _vm is null)
+        if (_vm is null)
             return;
 
-        if (!_vm.IsSelected)
+        if (e.PropertyName == nameof(ScrewMarkerViewModel.IsSelected))
         {
-            Circle.BeginAnimation(UIElement.OpacityProperty, null);
-            Circle.Opacity = 1;
+            if (!_vm.IsSelected)
+            {
+                Circle.BeginAnimation(UIElement.OpacityProperty, null);
+                Circle.Opacity = 1;
+            }
+
+            UpdateCursor(_vm.IsSelected);
         }
     }
+
+    private void UpdateCursor(bool isSelected) =>
+        Cursor = isSelected ? Cursors.SizeAll : Cursors.Hand;
 
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -78,6 +95,63 @@ public partial class ScrewMarkerView
 
         if (FindBoardEditorViewModel(this) is { } board)
             board.SelectMarkerCommand.Execute(vm);
+
+        if (FindTemplateBoardView(this) is not { } templateBoard)
+            return;
+
+        templateBoard.Focus();
+        _pressCanvasPoint = e.GetPosition(templateBoard.BoardCanvasElement);
+        _isDragging = false;
+        CaptureMouse();
+    }
+
+    private void OnMouseMove(object sender, MouseEventArgs e)
+    {
+        if (!IsMouseCaptured || e.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        if (DataContext is not ScrewMarkerViewModel vm)
+            return;
+
+        if (FindBoardEditorViewModel(this) is not { } board)
+            return;
+
+        if (FindTemplateBoardView(this) is not { } templateBoard)
+            return;
+
+        var current = e.GetPosition(templateBoard.BoardCanvasElement);
+        if (!_isDragging)
+        {
+            var dx = current.X - _pressCanvasPoint.X;
+            var dy = current.Y - _pressCanvasPoint.Y;
+            if (dx * dx + dy * dy < DragThresholdPx * DragThresholdPx)
+                return;
+
+            _isDragging = true;
+        }
+
+        e.Handled = true;
+        board.SetAnchorMarkerCenter(current.X, current.Y, vm);
+    }
+
+    private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsMouseCaptured)
+            return;
+
+        e.Handled = true;
+        EndDrag();
+    }
+
+    private void OnLostMouseCapture(object sender, MouseEventArgs e) => EndDrag();
+
+    private void EndDrag()
+    {
+        if (!IsMouseCaptured)
+            return;
+
+        ReleaseMouseCapture();
+        _isDragging = false;
     }
 
     private void OnScrewTypeMenuClick(object sender, RoutedEventArgs e)
@@ -102,6 +176,9 @@ public partial class ScrewMarkerView
         var view = FindAncestor<TemplateBoardView>(from);
         return view?.DataContext as SurfaceBoardEditorViewModel;
     }
+
+    private static TemplateBoardView? FindTemplateBoardView(DependencyObject from) =>
+        FindAncestor<TemplateBoardView>(from);
 
     private static T? FindAncestor<T>(DependencyObject? child) where T : DependencyObject
     {

@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using AutoScrew.Application.Editing;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Models;
@@ -256,6 +257,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
             m.IsSelected = ReferenceEquals(m, marker);
 
         DeleteSelectedCommand.NotifyCanExecuteChanged();
+        NudgeSelectedMarkersCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -274,6 +276,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         }
 
         DeleteSelectedCommand.NotifyCanExecuteChanged();
+        NudgeSelectedMarkersCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -283,6 +286,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
             m.IsSelected = true;
 
         DeleteSelectedCommand.NotifyCanExecuteChanged();
+        NudgeSelectedMarkersCommand.NotifyCanExecuteChanged();
         StatusMessage = Markers.Count == 0
             ? Loc.Get("S.Template.NoMarkers")
             : Loc.Format("S.Template.AllSelected", Markers.Count);
@@ -304,6 +308,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         StatusMessage = Loc.Format("S.Template.MarkersDeleted", toRemove.Count);
         RefreshOutOfBoundsWarning();
         DeleteSelectedCommand.NotifyCanExecuteChanged();
+        NudgeSelectedMarkersCommand.NotifyCanExecuteChanged();
         RaiseContentChanged();
     }
 
@@ -316,7 +321,77 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
             m.IsSelected = false;
 
         DeleteSelectedCommand.NotifyCanExecuteChanged();
+        NudgeSelectedMarkersCommand.NotifyCanExecuteChanged();
     }
+
+    public void MoveSelectedMarkersBy(double deltaX, double deltaY)
+    {
+        var selected = Markers.Where(m => m.IsSelected).ToList();
+        if (selected.Count == 0)
+            return;
+
+        foreach (var marker in selected)
+        {
+            var (x, y) = BoardMarkerMovement.ApplyDelta(
+                marker.CenterX,
+                marker.CenterY,
+                deltaX,
+                deltaY,
+                BoardWidth,
+                BoardHeight);
+            marker.CenterX = x;
+            marker.CenterY = y;
+        }
+
+        RefreshOutOfBoundsWarning();
+        RaiseContentChanged();
+    }
+
+    public void SetAnchorMarkerCenter(double centerX, double centerY, ScrewMarkerViewModel anchor)
+    {
+        var deltaX = centerX - anchor.CenterX;
+        var deltaY = centerY - anchor.CenterY;
+        if (Math.Abs(deltaX) < double.Epsilon && Math.Abs(deltaY) < double.Epsilon)
+            return;
+
+        var targets = anchor.IsSelected
+            ? Markers.Where(m => m.IsSelected).ToList()
+            : [anchor];
+
+        foreach (var marker in targets)
+        {
+            var (x, y) = BoardMarkerMovement.ApplyDelta(
+                marker.CenterX,
+                marker.CenterY,
+                deltaX,
+                deltaY,
+                BoardWidth,
+                BoardHeight);
+            marker.CenterX = x;
+            marker.CenterY = y;
+        }
+
+        RefreshOutOfBoundsWarning();
+        RaiseContentChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanNudgeSelected))]
+    private void NudgeSelectedMarkers(NudgeDirection direction)
+    {
+        var step = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? 10.0 : 1.0;
+        var (dx, dy) = direction switch
+        {
+            NudgeDirection.Left => (-step, 0.0),
+            NudgeDirection.Right => (step, 0.0),
+            NudgeDirection.Up => (0.0, -step),
+            NudgeDirection.Down => (0.0, step),
+            _ => (0.0, 0.0),
+        };
+
+        MoveSelectedMarkersBy(dx, dy);
+    }
+
+    private bool CanNudgeSelected() => Markers.Any(m => m.IsSelected);
 
     public void NotifyDeleteCommandCanExecute() => DeleteSelectedCommand.NotifyCanExecuteChanged();
 

@@ -8,6 +8,7 @@
     <Border x:Name="Chrome"
             CornerRadius="2"
             Background="Transparent"
+            Cursor="Hand"
             MouseLeftButtonDown="OnMouseLeftButtonDown">
         <Border.ContextMenu>
             <ContextMenu>

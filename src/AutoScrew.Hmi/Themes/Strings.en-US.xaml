@@ -153,7 +153,7 @@
     <system:String x:Key="S.Template.SelectAll">Select all</system:String>
     <system:String x:Key="S.Template.DeleteSelected">Delete selected</system:String>
     <system:String x:Key="S.Template.ClearSelection">Clear selection</system:String>
-    <system:String x:Key="S.Template.BoardHint">Image fills board · Match pixels first · Ctrl+click multi-select</system:String>
+    <system:String x:Key="S.Template.BoardHint">Image fills board · Match pixels first · Ctrl+click multi-select · drag to move · Arrow keys nudge (Shift=10px)</system:String>
     <system:String x:Key="S.Template.SurfaceId">surfaceId</system:String>
     <system:String x:Key="S.Template.Order">Assembly order</system:String>
     <system:String x:Key="S.Template.BoardWidthPx">Board width (px)</system:String>

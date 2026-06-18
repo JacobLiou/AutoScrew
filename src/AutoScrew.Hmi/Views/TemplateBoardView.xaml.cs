@@ -24,10 +24,39 @@ public partial class TemplateBoardView : UserControl
     public TemplateBoardView()
     {
         InitializeComponent();
+        Loaded += (_, _) => Focus();
+    }
+
+    internal Canvas BoardCanvasElement => BoardCanvas;
+
+    private void TemplateBoardView_OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not SurfaceBoardEditorViewModel vm)
+            return;
+
+        var direction = e.Key switch
+        {
+            Key.Left => NudgeDirection.Left,
+            Key.Right => NudgeDirection.Right,
+            Key.Up => NudgeDirection.Up,
+            Key.Down => NudgeDirection.Down,
+            _ => (NudgeDirection?)null,
+        };
+
+        if (direction is null)
+            return;
+
+        if (!vm.NudgeSelectedMarkersCommand.CanExecute(direction.Value))
+            return;
+
+        vm.NudgeSelectedMarkersCommand.Execute(direction.Value);
+        e.Handled = true;
     }
 
     private void BoardCanvas_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        Focus();
+
         if (DataContext is not SurfaceBoardEditorViewModel vm)
             return;
 

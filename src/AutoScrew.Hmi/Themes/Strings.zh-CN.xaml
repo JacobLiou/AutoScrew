@@ -161,7 +161,7 @@
     <system:String x:Key="S.Template.SelectAll">全选</system:String>
     <system:String x:Key="S.Template.DeleteSelected">删除选中</system:String>
     <system:String x:Key="S.Template.ClearSelection">取消选中</system:String>
-    <system:String x:Key="S.Template.BoardHint">底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选</system:String>
+    <system:String x:Key="S.Template.BoardHint">底图铺满画板 · 建议先「画板=底图像素」再打点 · Ctrl+单击多选 · 按住拖动移动 · 方向键微调（Shift=10px）</system:String>
     <system:String x:Key="S.Template.SurfaceId">surfaceId</system:String>
     <system:String x:Key="S.Template.Order">作业顺序 order</system:String>
     <system:String x:Key="S.Template.BoardWidthPx">画板宽 (px)</system:String>

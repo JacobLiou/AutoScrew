@@ -83,7 +83,10 @@
                                FontWeight="SemiBold"
                                Margin="4,0,0,8"/>
                     <TreeView x:Name="ProgressTree"
-                              IsHitTestVisible="False"
+                              Focusable="False"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              PreviewMouseLeftButtonDown="ProgressTree_OnPreviewMouseLeftButtonDown"
                               ItemsSource="{Binding ProgressTreeRoots}">
                         <TreeView.ItemContainerStyle>
                             <Style TargetType="TreeViewItem" BasedOn="{StaticResource ShellTreeViewItemStyle}">
@@ -99,7 +102,7 @@
                                             <TextBlock Text="{Binding StateGlyph}"
                                                        Width="16"
                                                        Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
-                                            <TextBlock Text="{Binding DisplayLabel}"/>
+                                            <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <HierarchicalDataTemplate.ItemTemplate>
                                             <DataTemplate DataType="{x:Type op:OperatorScrewNodeViewModel}">
@@ -107,7 +110,7 @@
                                                     <TextBlock Text="{Binding StateGlyph}"
                                                                Width="16"
                                                                Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
-                                                    <TextBlock Text="{Binding DisplayLabel}"/>
+                                                    <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </HierarchicalDataTemplate.ItemTemplate>

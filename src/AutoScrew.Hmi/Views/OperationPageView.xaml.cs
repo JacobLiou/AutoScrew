@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
@@ -92,6 +94,31 @@ public partial class OperationPageView : UserControl
             vm.SubmitSnCommand.Execute(null);
             e.Handled = true;
         }
+    }
+
+    private void ProgressTree_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source)
+            return;
+
+        if (FindAncestor<ScrollBar>(source) is not null)
+            return;
+
+        if (FindAncestor<TreeViewItem>(source) is not null)
+            e.Handled = true;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+    {
+        while (current is not null)
+        {
+            if (current is T match)
+                return match;
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     private void OnRequestSelectActiveSurface(object? sender, EventArgs e)
