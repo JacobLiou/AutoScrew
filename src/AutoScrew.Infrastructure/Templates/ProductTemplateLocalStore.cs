@@ -88,6 +88,32 @@ public sealed class ProductTemplateLocalStore : IProductTemplateLocalStore
         return full;
     }
 
+    public string ToDisplayPath(string absolutePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(absolutePath);
+
+        var full = Path.GetFullPath(absolutePath);
+        var templateRoot = Path.GetFullPath(GetTemplateDirectory());
+        if (full.StartsWith(templateRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            var underTemplates = ToRelativePath(absolutePath);
+            var appBase = Path.GetFullPath(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (templateRoot.StartsWith(appBase, StringComparison.OrdinalIgnoreCase))
+            {
+                var templatesSegment = Path.GetRelativePath(appBase, templateRoot).Replace('\\', '/');
+                return $"{templatesSegment}/{underTemplates}";
+            }
+
+            return underTemplates;
+        }
+
+        var baseDir = Path.GetFullPath(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (full.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
+            return Path.GetRelativePath(baseDir, full).Replace('\\', '/');
+
+        return full;
+    }
+
     public void SeedFromSamplesIfEmpty()
     {
         var target = GetTemplateDirectory();

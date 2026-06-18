@@ -184,6 +184,11 @@
     <system:String x:Key="S.Template.ConfirmDeleteSurface">Delete surface 「{0}」?</system:String>
     <system:String x:Key="S.Template.ConfirmDiscard">Discard unsaved changes?</system:String>
     <system:String x:Key="S.Template.OpenFilter">Product templates (*.product-template.json;*.json)|*.product-template.json;*.json|All files (*.*)|*.*</system:String>
+    <system:String x:Key="S.Template.MesSync">MES sync</system:String>
+    <system:String x:Key="S.Template.MesSyncResult">MES sync done: uploaded {0}, downloaded {1}, skipped {2}, errors {3}.</system:String>
+    <system:String x:Key="S.Template.MesSyncNotMock">Production MES template sync is not available yet. Enable Mock MES in settings or wait for IT integration.</system:String>
+    <system:String x:Key="S.Template.MesSyncFailed">MES sync failed: {0}</system:String>
+    <system:String x:Key="S.Template.MesSyncReloadHint">Template {0} was updated from MES (including images). Re-open to load the latest content.</system:String>
     <system:String x:Key="S.Template.SaveFilter">Product templates (*.product-template.json)|*.product-template.json|JSON (*.json)|*.json</system:String>
     <system:String x:Key="S.Template.ErrSurfaceIdEmpty">surfaceId is required.</system:String>
     <system:String x:Key="S.Template.ErrOrder">order must be an integer ≥ 1.</system:String>

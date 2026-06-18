@@ -81,6 +81,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IProductTemplateSyncRepository, EfProductTemplateSyncRepository>();
         services.AddSingleton<IMesTemplatePackageClient, MesTemplatePackageClient>();
         services.AddSingleton<IMesTemplateUploadService, MesTemplateUploadService>();
+        services.AddSingleton<IMesTemplateCatalogClient, MesTemplateCatalogClient>();
 
         services.AddHostedService<OutboxMesRetryHostedService>();
 

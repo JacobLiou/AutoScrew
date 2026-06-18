@@ -8,7 +8,12 @@ public interface IMesTemplatePackageClient
         CancellationToken cancellationToken = default);
 }
 
+public sealed record MesTemplateUploadResult(string ContentHash, string? Revision);
+
 public interface IMesTemplateUploadService
 {
-    Task UploadTemplateAsync(string partNumber, string localProductFolder, CancellationToken cancellationToken = default);
+    Task<MesTemplateUploadResult?> UploadTemplateAsync(
+        string partNumber,
+        string localProductFolder,
+        CancellationToken cancellationToken = default);
 }

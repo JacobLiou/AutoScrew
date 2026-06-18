@@ -18,5 +18,7 @@ public interface IProductTemplateLocalStore
 
     string ToRelativePath(string absolutePath);
 
+    string ToDisplayPath(string absolutePath);
+
     void SeedFromSamplesIfEmpty();
 }

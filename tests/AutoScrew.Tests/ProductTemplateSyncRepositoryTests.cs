@@ -43,6 +43,41 @@ public sealed class ProductTemplateSyncRepositoryTests
         }
     }
 
+    [Fact]
+    public async Task ListAllAsync_ReturnsAllRecords()
+    {
+        var (factory, connection) = await CreateFactoryAsync();
+        await using (connection)
+        {
+            var repo = new EfProductTemplateSyncRepository(factory);
+            await repo.UpsertAsync(new ProductTemplateSyncRecord(
+                "PN-A",
+                "PN-A/PN-A.product-template.json",
+                ProductTemplateSyncState.PendingUpload,
+                "H1",
+                DateTimeOffset.UtcNow,
+                null,
+                null,
+                null,
+                null));
+            await repo.UpsertAsync(new ProductTemplateSyncRecord(
+                "PN-B",
+                "PN-B/PN-B.product-template.json",
+                ProductTemplateSyncState.Synced,
+                "H2",
+                DateTimeOffset.UtcNow,
+                null,
+                null,
+                null,
+                null));
+
+            var all = await repo.ListAllAsync();
+            Assert.Equal(2, all.Count);
+            Assert.Contains(all, x => x.PartNumber == "PN-A");
+            Assert.Contains(all, x => x.PartNumber == "PN-B");
+        }
+    }
+
     private static async Task<(IDbContextFactory<AppDbContext> Factory, SqliteConnection Connection)> CreateFactoryAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");

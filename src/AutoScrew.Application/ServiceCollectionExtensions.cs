@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddOptions<AutoScrewAppOptions>().BindConfiguration(AutoScrewAppOptions.SectionName);
         services.AddSingleton<IRecipeProvisioningService, RecipeProvisioningService>();
+        services.AddSingleton<IProductTemplateMesSyncService, ProductTemplateMesSyncService>();
         services.AddSingleton<OperatorSessionController>();
         return services;
     }

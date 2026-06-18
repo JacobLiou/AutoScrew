@@ -166,6 +166,9 @@ public sealed class RecipeProvisioningServiceTests
         public Task<ProductTemplateSyncRecord?> GetAsync(string partNumber, CancellationToken cancellationToken = default) =>
             Task.FromResult(_records.TryGetValue(partNumber, out var r) ? r : null);
 
+        public Task<IReadOnlyList<ProductTemplateSyncRecord>> ListAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ProductTemplateSyncRecord>>(_records.Values.ToList());
+
         public Task UpsertAsync(ProductTemplateSyncRecord record, CancellationToken cancellationToken = default)
         {
             _records[record.PartNumber] = record;

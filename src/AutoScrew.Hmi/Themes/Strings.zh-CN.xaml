@@ -192,6 +192,11 @@
     <system:String x:Key="S.Template.ConfirmDeleteSurface">确定删除面「{0}」？</system:String>
     <system:String x:Key="S.Template.ConfirmDiscard">有未保存的更改，是否放弃？</system:String>
     <system:String x:Key="S.Template.OpenFilter">产品模板 (*.product-template.json;*.json)|*.product-template.json;*.json|所有文件 (*.*)|*.*</system:String>
+    <system:String x:Key="S.Template.MesSync">MES 同步</system:String>
+    <system:String x:Key="S.Template.MesSyncResult">MES 同步完成：上传 {0}，下载 {1}，跳过 {2}，错误 {3}。</system:String>
+    <system:String x:Key="S.Template.MesSyncNotMock">生产 MES 模板同步尚未对接，请在 MES 设置中启用 Mock 或等待 IT 接口就绪。</system:String>
+    <system:String x:Key="S.Template.MesSyncFailed">MES 同步失败：{0}</system:String>
+    <system:String x:Key="S.Template.MesSyncReloadHint">已从 MES 更新模板 {0}（含底图），请重新打开以加载最新内容。</system:String>
     <system:String x:Key="S.Template.SaveFilter">产品模板 (*.product-template.json)|*.product-template.json|JSON (*.json)|*.json</system:String>
     <system:String x:Key="S.Template.ErrSurfaceIdEmpty">surfaceId 不能为空。</system:String>
     <system:String x:Key="S.Template.ErrOrder">order 须为 ≥1 的整数。</system:String>

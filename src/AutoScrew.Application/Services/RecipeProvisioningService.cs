@@ -70,6 +70,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
                     ProductTemplateSyncState.DownloadedFromMes,
                     null,
                     DateTimeOffset.UtcNow,
+                    null,
+                    null,
                     cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -97,8 +99,10 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
                 _syncRepository,
                 _localStore,
                 partNumber,
-                snapshot.UseMockMes ? ProductTemplateSyncState.LocalOnly : ProductTemplateSyncState.LocalOnly,
+                ProductTemplateSyncState.LocalOnly,
                 infoMessage,
+                null,
+                null,
                 null,
                 cancellationToken).ConfigureAwait(false);
         }
@@ -122,6 +126,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
             partNumber,
             ProductTemplateSyncState.LocalOnly,
             infoMessage,
+            null,
+            null,
             null,
             cancellationToken).ConfigureAwait(false);
 

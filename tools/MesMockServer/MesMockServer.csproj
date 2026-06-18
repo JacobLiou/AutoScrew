@@ -5,4 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>AutoScrew.Tools.MesMockServer</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoScrew.Application\AutoScrew.Application.csproj" />
+  </ItemGroup>
 </Project>

@@ -38,6 +38,11 @@
                                Appearance="Primary"
                                Margin="8,0,0,0"
                                Command="{Binding SaveProductCommand}" />
+                    <ui:Button Content="{DynamicResource S.Template.MesSync}"
+                               Style="{StaticResource ShellSecondaryButtonStyle}"
+                               Margin="8,0,0,0"
+                               Command="{Binding SyncWithMesCommand}"
+                               IsEnabled="{Binding IsMesSyncEnabled}" />
                     <TextBlock Text="{Binding WindowTitle}"
                                Margin="16,0,0,0"
                                VerticalAlignment="Center"

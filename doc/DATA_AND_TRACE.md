@@ -78,7 +78,9 @@
 | GET | `api/health` | 连通测试（可选）；200 = OK |
 | GET | `api/sn/validate?sn=&stationId=` | 响应 `{ valid, partNumber, message }` |
 | GET | `api/recipe?sn=&pn=&stationId=` | 响应 `{ templateJsonPath, templatePackageUrl, productImageUrl, screws[] }`；`templatePackageUrl` 相对 MES 基址，GET 返回 zip（含 JSON + images/）；`screws[].index` 映射 `ScrewRecipeDto.PositionIndex` |
-| GET | `api/templates/{pn}/package` | 模板包 zip（FAT / MesMockServer） |
+| GET | `api/templates/{pn}/package` | 模板工程整包 zip（含 `{PN}.product-template.json` 与 `images/` 等；FAT / MesMockServer） |
+| GET | `api/templates?stationId=` | 远端模板目录：`[{ partNumber, contentHash, modifiedUtc, packageUrl }]`；`contentHash` 为 PN 文件夹整包指纹 |
+| POST | `api/templates/{pn}/package` | Body = `application/zip`（整包上传）；响应 `{ accepted, revision, contentHash }` |
 | POST | `api/results` | Body = [`LockJobResultPayload`](../src/AutoScrew.Application/Abstractions/IMesClient.cs)；成功 2xx |
 
 ### 本地 Mock

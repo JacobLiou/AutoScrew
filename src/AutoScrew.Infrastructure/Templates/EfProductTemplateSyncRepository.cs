@@ -17,6 +17,17 @@ public sealed class EfProductTemplateSyncRepository(IDbContextFactory<AppDbConte
         return entity is null ? null : Map(entity);
     }
 
+    public async Task<IReadOnlyList<ProductTemplateSyncRecord>> ListAllAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var entities = await db.ProductTemplateSyncs
+            .AsNoTracking()
+            .OrderBy(x => x.PartNumber)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return entities.Select(Map).ToList();
+    }
+
     public async Task UpsertAsync(ProductTemplateSyncRecord record, CancellationToken cancellationToken = default)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
