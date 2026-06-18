@@ -119,3 +119,4 @@ dotnet run --project tools/MesMockServer
   - `Authentication:Mims:ConnectionString`：明文连接串（User Secrets / 环境变量；开发仅用）。
   - `Authentication:Mims:ConnectionStringDpapiBase64`：加密连接串（推荐生产环境使用）。
 - 角色映射（二元）：[`MimsRoleMapper`](../src/AutoScrew.Infrastructure/Authentication/MimsRoleMapper.cs) 读取 `mims_role.name`——名称**含「操作员」**（如 `操作员`、`七分厂操作员`、`单步权限操作员`）→ `Operator`（仅作业）；**其余**（技术员、工程师、Super Admin、生产管理员等）→ `Technician`（模板配置、解锁 NG）。现场 `mims_role.type` 常为 0，**不可**用于授权。`Authentication:Mims:RoleMap` / `UnmappedRoleBehavior` 已废弃，仅保留配置键兼容。
+- **连接失败回退（演示/FAT）**：`Authentication:FallbackToMockAccountsOnMimsFailure`（默认 `false`）。为 `true` 且已配置 MIMS 连接时，优先连真库；仅 **Open 失败/超时/未配置连接** 时回退 `Authentication:Accounts` 演示账号。**用户名/口令错误不回退**（避免绕过真实认证）。回退成功审计 `Auth.LoginMockFallback`；`LoginResult.UsedMockAccountFallback=true`。生产默认关闭；演示机可临时打开并配置 `Accounts`（如 `operator/demo`）。

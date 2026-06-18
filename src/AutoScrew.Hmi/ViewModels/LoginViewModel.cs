@@ -6,6 +6,7 @@ using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Infrastructure;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using CommunityToolkit.Mvvm.Input;
 
@@ -20,6 +21,7 @@ public partial class LoginViewModel : ObservableObject
     private readonly LocalizationService _localization;
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly bool _showMockFallbackHint;
 
     /// <summary>从本机凭据存储读出的口令，由 <see cref="LoginWindow"/> 在窗口就绪后写入密码框并清空。</summary>
     private string? _deferredRememberedPassword;
@@ -29,13 +31,15 @@ public partial class LoginViewModel : ObservableObject
         SessionCurrentUser currentUser,
         LocalizationService localization,
         IUserAuditService audit,
-        IOptions<AutoScrewAppOptions> appOptions)
+        IOptions<AutoScrewAppOptions> appOptions,
+        IConfiguration configuration)
     {
         _authentication = authentication;
         _currentUser = currentUser;
         _localization = localization;
         _audit = audit;
         _appOptions = appOptions;
+        _showMockFallbackHint = IsMockFallbackHintEnabled(configuration);
         _selectedCulture = _localization.CurrentCultureName;
         _cultureOptions = new ObservableCollection<UiCultureOption>(UiCultureCatalog.CreateOptions());
         _localization.CultureChanged += OnLocalizationCultureChanged;
@@ -91,12 +95,31 @@ public partial class LoginViewModel : ObservableObject
 
     public string ForgotPasswordLabel => Loc.Get("S.Login.ForgotPassword");
 
+    public bool ShowMockFallbackHint => _showMockFallbackHint;
+
+    public string MockFallbackHintText => Loc.Get("S.Login.MockFallbackHint");
+
+    private static bool IsMockFallbackHintEnabled(IConfiguration configuration)
+    {
+        if (!configuration.GetValue<bool>($"{AuthenticationOptions.SectionName}:FallbackToMockAccountsOnMimsFailure"))
+            return false;
+
+        var mode = configuration[$"{AuthenticationOptions.SectionName}:Mode"] ?? "Development";
+        if (string.Equals(mode, "MimsMySql", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var mims = configuration.GetSection($"{AuthenticationOptions.SectionName}:Mims");
+        return !string.IsNullOrWhiteSpace(mims["ConnectionString"])
+               || !string.IsNullOrWhiteSpace(mims["ConnectionStringDpapiBase64"]);
+    }
+
     private void OnLocalizationCultureChanged(object? sender, EventArgs e)
     {
         SelectedCulture = _localization.CurrentCultureName;
         RefreshCultureOptions();
         OnPropertyChanged(nameof(WindowTitle));
         OnPropertyChanged(nameof(ForgotPasswordLabel));
+        OnPropertyChanged(nameof(MockFallbackHintText));
     }
 
     partial void OnSelectedCultureChanged(string value)
@@ -164,8 +187,10 @@ public partial class LoginViewModel : ObservableObject
             result.UserId,
             result.DisplayName,
             result.Role,
-            "Auth.LoginSuccess",
-            $"role={result.Role}");
+            result.UsedMockAccountFallback ? "Auth.LoginMockFallback" : "Auth.LoginSuccess",
+            result.UsedMockAccountFallback
+                ? "mock account fallback (MIMS unavailable)"
+                : $"role={result.Role}");
         CloseRequested?.Invoke(this, true);
     }
 

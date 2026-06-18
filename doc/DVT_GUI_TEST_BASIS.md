@@ -147,6 +147,8 @@
 - tech / demo
 - admin / demo
 
+可选：`Authentication:FallbackToMockAccountsOnMimsFailure=true` 且保留 MIMS 连接串 + `Accounts` 时，演示前可故意断开 MIMS 网络，验证 `operator/demo` 回退登录仍能进入主界面；MIMS 恢复后自动恢复真库认证。
+
 ### 仿真场景（`AutoScrew:Simulation`）
 
 | 键 | 值 | 效果 |

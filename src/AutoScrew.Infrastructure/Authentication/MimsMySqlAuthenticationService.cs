@@ -10,7 +10,7 @@ namespace AutoScrew.Infrastructure.Authentication;
 /// </summary>
 public sealed class MimsMySqlAuthenticationService(
     IOptions<MimsAuthenticationOptions> options,
-    ILogger<MimsMySqlAuthenticationService> logger) : IUserAuthenticationService
+    ILogger<MimsMySqlAuthenticationService> logger) : IUserAuthenticationService, IMimsAuthenticationService
 {
     private const string SelectSql = """
         SELECT p.id AS PersonId, p.login_name AS LoginName, p.name AS DisplayName,
@@ -21,14 +21,33 @@ public sealed class MimsMySqlAuthenticationService(
         LIMIT 1
         """;
 
-    public async Task<LoginResult> SignInAsync(string userName, string password, CancellationToken cancellationToken = default)
+    public Task<MimsSignInOutcome> SignInAsync(string userName, string password, CancellationToken cancellationToken = default) =>
+        SignInInternalAsync(userName, password, cancellationToken);
+
+    async Task<LoginResult> IUserAuthenticationService.SignInAsync(
+        string userName,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await SignInInternalAsync(userName, password, cancellationToken).ConfigureAwait(false);
+        return outcome.Result ?? LoginResult.Failed(outcome.ErrorMessage ?? "登录失败。");
+    }
+
+    private async Task<MimsSignInOutcome> SignInInternalAsync(
+        string userName,
+        string password,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(userName) || password is null)
-            return LoginResult.Failed("请输入用户名和密码。");
+            return MimsSignInOutcome.Failed(MimsSignInFailureKind.InvalidInput, "请输入用户名和密码。");
 
         var opt = options.Value;
         if (string.IsNullOrWhiteSpace(opt.ConnectionString))
-            return LoginResult.Failed("未配置 MIMS 数据库连接（Authentication:Mims:ConnectionString 或 ConnectionStringDpapiBase64）。");
+        {
+            return MimsSignInOutcome.Failed(
+                MimsSignInFailureKind.NotConfigured,
+                "未配置 MIMS 数据库连接（Authentication:Mims:ConnectionString 或 ConnectionStringDpapiBase64）。");
+        }
 
         var hash = MimsPasswordHasher.Hash(password);
 
@@ -41,7 +60,9 @@ public sealed class MimsMySqlAuthenticationService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "MySQL connection failed for login.");
-            return LoginResult.Failed("无法连接用户数据库，请稍后重试或联系管理员。");
+            return MimsSignInOutcome.Failed(
+                MimsSignInFailureKind.ConnectionFailed,
+                "无法连接用户数据库，请稍后重试或联系管理员。");
         }
 
         await using var cmd = new MySqlCommand(SelectSql, conn);
@@ -53,7 +74,7 @@ public sealed class MimsMySqlAuthenticationService(
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             logger.LogWarning("MIMS login failed for user {User}", userName);
-            return LoginResult.Failed("用户名或密码错误。");
+            return MimsSignInOutcome.Failed(MimsSignInFailureKind.InvalidCredentials, "用户名或密码错误。");
         }
 
         var personId = reader.GetInt32(reader.GetOrdinal("PersonId"));
@@ -76,6 +97,8 @@ public sealed class MimsMySqlAuthenticationService(
             roleId,
             roleName,
             userRole);
-        return LoginResult.Ok(loginName, displayName, userRole, personId, roleId, roleType);
+
+        return MimsSignInOutcome.Succeeded(
+            LoginResult.Ok(loginName, displayName, userRole, personId, roleId, roleType));
     }
 }

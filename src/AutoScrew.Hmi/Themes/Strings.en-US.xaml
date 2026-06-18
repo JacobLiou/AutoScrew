@@ -68,6 +68,7 @@
     <system:String x:Key="S.Login.RememberMe">Remember password</system:String>
     <system:String x:Key="S.Login.ForgotPassword">Forgot password</system:String>
     <system:String x:Key="S.Login.Failed">Sign-in failed.</system:String>
+    <system:String x:Key="S.Login.MockFallbackHint">When MIMS is unavailable, demo accounts apply (operator/demo, tech/demo).</system:String>
     <system:String x:Key="S.Login.CreateAccountTitle">Create account</system:String>
     <system:String x:Key="S.Login.CreateAccountBody">New accounts are created by a MIMS administrator. Contact IT or line admin.</system:String>
     <system:String x:Key="S.Login.ForgotPasswordTitle">Forgot password</system:String>

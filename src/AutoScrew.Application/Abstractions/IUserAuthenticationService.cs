@@ -26,6 +26,8 @@ public sealed class LoginResult
 
     public int? MimsRoleType { get; private init; }
 
+    public bool UsedMockAccountFallback { get; private init; }
+
     public static LoginResult Failed(string message) =>
         new() { Success = false, ErrorMessage = message };
 
@@ -35,7 +37,8 @@ public sealed class LoginResult
         UserRole role,
         int? mimsPersonId = null,
         int? mimsRoleId = null,
-        int? mimsRoleType = null) =>
+        int? mimsRoleType = null,
+        bool usedMockAccountFallback = false) =>
         new()
         {
             Success = true,
@@ -44,6 +47,21 @@ public sealed class LoginResult
             Role = role,
             MimsPersonId = mimsPersonId,
             MimsRoleId = mimsRoleId,
-            MimsRoleType = mimsRoleType
+            MimsRoleType = mimsRoleType,
+            UsedMockAccountFallback = usedMockAccountFallback,
+        };
+
+    public LoginResult WithMockAccountFallback() =>
+        new()
+        {
+            Success = Success,
+            ErrorMessage = ErrorMessage,
+            UserId = UserId,
+            DisplayName = DisplayName,
+            Role = Role,
+            MimsPersonId = MimsPersonId,
+            MimsRoleId = MimsRoleId,
+            MimsRoleType = MimsRoleType,
+            UsedMockAccountFallback = true,
         };
 }

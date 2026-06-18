@@ -81,15 +81,20 @@ public partial class App : System.Windows.Application
         builder.Services.AddSerilog((_, cfg) => cfg.ReadFrom.Configuration(builder.Configuration));
 
         builder.Services.Configure<AutoScrewAppOptions>(builder.Configuration.GetSection(AutoScrewAppOptions.SectionName));
+        builder.Services.Configure<AuthenticationOptions>(builder.Configuration.GetSection(AuthenticationOptions.SectionName));
         builder.Services.AddAutoScrewApplication();
         builder.Services.AddAutoScrewInfrastructure(builder.Configuration);
         builder.Services.AddSingleton<AppAuthenticationService>();
         builder.Services.AddSingleton<IUserAuthenticationService>(sp =>
         {
             var cfg = sp.GetRequiredService<IConfiguration>();
-            return UseMimsMySqlAuthentication(cfg)
-                ? sp.GetRequiredService<MimsMySqlAuthenticationService>()
-                : sp.GetRequiredService<AppAuthenticationService>();
+            if (!UseMimsMySqlAuthentication(cfg))
+                return sp.GetRequiredService<AppAuthenticationService>();
+
+            if (cfg.GetValue<bool>("Authentication:FallbackToMockAccountsOnMimsFailure"))
+                return sp.GetRequiredService<FallbackMimsAuthenticationService>();
+
+            return sp.GetRequiredService<MimsMySqlAuthenticationService>();
         });
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<LoginWindow>();

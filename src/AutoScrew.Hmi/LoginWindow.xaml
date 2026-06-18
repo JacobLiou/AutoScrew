@@ -240,6 +240,22 @@
                                TextWrapping="Wrap"
                                MinHeight="22"
                                Margin="4,0,4,10" />
+                    <TextBlock Text="{Binding MockFallbackHintText}"
+                               Foreground="#99FFFFFF"
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               Margin="4,0,4,10">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowMockFallbackHint}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <ui:Button Content="{DynamicResource S.Login.SignIn}"
                                Height="38"
                                FontSize="13"

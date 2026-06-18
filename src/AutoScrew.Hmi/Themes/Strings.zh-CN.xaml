@@ -74,6 +74,7 @@
     <system:String x:Key="S.Login.RememberMe">记住密码</system:String>
     <system:String x:Key="S.Login.ForgotPassword">忘记密码</system:String>
     <system:String x:Key="S.Login.Failed">登录失败。</system:String>
+    <system:String x:Key="S.Login.MockFallbackHint">MIMS 不可用时可用演示账号（operator/demo、tech/demo）。</system:String>
     <system:String x:Key="S.Login.CreateAccountTitle">创建账号</system:String>
     <system:String x:Key="S.Login.CreateAccountBody">新账号由 MIMS 管理员在系统中创建；本机无法自助注册。请联系信息化或产线管理员。</system:String>
     <system:String x:Key="S.Login.ForgotPasswordTitle">忘记密码</system:String>
