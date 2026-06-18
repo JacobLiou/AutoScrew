@@ -10,6 +10,18 @@ public sealed class SimulationOptions
     public int FeedFailureOnScrewIndex { get; set; }
 
     public SimulatedTighteningProfile TighteningProfile { get; set; } = SimulatedTighteningProfile.Ok;
+
+    /// <summary>仿真取钉耗时（毫秒）。</summary>
+    public int PickDelayMs { get; set; } = 80;
+
+    /// <summary>仿真取钉完成到开始拧紧的间隔（毫秒）。</summary>
+    public int PickToTightenDelayMs { get; set; }
+
+    /// <summary>仿真拧紧曲线每步间隔（毫秒）。</summary>
+    public int TighteningStepDelayMs { get; set; } = 4;
+
+    /// <summary>自动连打时上一钉 OK 到下一钉开始的间隔（毫秒）。</summary>
+    public int BetweenScrewDelayMs { get; set; }
 }
 
 public enum SimulatedFeedFailureMode

@@ -21,6 +21,7 @@ public partial class MainViewModel : ObservableObject
     private readonly LocalizationService _localization;
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly IOptions<SimulationOptions> _simulationOptions;
     private readonly ICurrentUser _user;
     private readonly SemaphoreSlim _autoRunGate = new(1, 1);
     private bool _localCycleInProgress;
@@ -31,12 +32,14 @@ public partial class MainViewModel : ObservableObject
         LocalizationService localization,
         IUserAuditService audit,
         IOptions<AutoScrewAppOptions> appOptions,
+        IOptions<SimulationOptions> simulationOptions,
         ICurrentUser user)
     {
         _session = session;
         _localization = localization;
         _audit = audit;
         _appOptions = appOptions;
+        _simulationOptions = simulationOptions;
         _user = user;
         _session.Changed += OnSessionChanged;
         _session.TighteningProgress += OnTighteningProgress;
@@ -412,6 +415,10 @@ public partial class MainViewModel : ObservableObject
 
                 if (!ShouldAutoChainNextScrew() || !CanAutoRunCurrentPendingScrew())
                     break;
+
+                var betweenDelay = Math.Max(0, _simulationOptions.Value.BetweenScrewDelayMs);
+                if (betweenDelay > 0)
+                    await Task.Delay(betweenDelay).ConfigureAwait(true);
             }
         }
         finally
@@ -556,10 +563,16 @@ public partial class MainViewModel : ObservableObject
                 var localIndex = i < snapshot.ScrewLocalIndices.Count
                     ? snapshot.ScrewLocalIndices[i]
                     : i + 1;
+                string? partNo = null;
+                if (isActive)
+                    partNo = _session.Positions.FirstOrDefault(p => p.Index == localIndex)?.PartNumber;
+                var label = string.IsNullOrWhiteSpace(partNo)
+                    ? Loc.Format("S.Operation.ScrewNode", localIndex)
+                    : Loc.Format("S.Operation.ScrewNodeWithPart", localIndex, partNo);
                 node.Screws.Add(new OperatorScrewNodeViewModel(
                     localIndex,
                     snapshot.ScrewStates[i],
-                    Loc.Format("S.Operation.ScrewNode", localIndex)));
+                    label));
             }
 
             if (isActive)

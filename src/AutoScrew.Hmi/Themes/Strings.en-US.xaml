@@ -88,6 +88,7 @@
     <system:String x:Key="S.Operation.WaitScan">Awaiting scan</system:String>
     <system:String x:Key="S.Operation.SnPnLabel">SN: {0}  PN: {1}</system:String>
     <system:String x:Key="S.Operation.ScrewNode">Screw {0}</system:String>
+    <system:String x:Key="S.Operation.ScrewNodeWithPart">Screw {0} · {1}</system:String>
     <system:String x:Key="S.Operation.GuideIdle">Scan or enter SN to start.</system:String>
     <system:String x:Key="S.Operation.GuideSnPending">Enter or scan SN, then press Enter or Submit.</system:String>
     <system:String x:Key="S.Operation.GuideSnRejected">Invalid SN. Scan again.</system:String>

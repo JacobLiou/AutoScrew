@@ -121,6 +121,7 @@ public sealed class OperatorSessionMultiSurfaceTests
                 outbox,
                 user,
                 options,
+                Options.Create(new SimulationOptions()),
                 new NoOpUserAuditService(),
                 NullLogger<OperatorSessionController>.Instance);
 

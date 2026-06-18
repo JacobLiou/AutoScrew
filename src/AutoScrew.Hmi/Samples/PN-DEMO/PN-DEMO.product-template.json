@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "productId": "PN-DEMO",
+  "displayName": "演示产品（PCBA 顶面）",
+  "revision": "2026-06-11",
+  "surfaceCount": 1,
+  "assemblySequence": "surfaceOrderThenLocalIndex",
+  "surfaces": [
+    {
+      "surfaceId": "TOP",
+      "name": "顶面",
+      "order": 1,
+      "enabled": true,
+      "boardWidth": 477,
+      "boardHeight": 289,
+      "circleDiameter": 26,
+      "productImageRelativePath": "images/board.png",
+      "markers": [
+        { "index": 1, "centerX": 20, "centerY": 20, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 2, "centerX": 457, "centerY": 20, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 3, "centerX": 20, "centerY": 269, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 4, "centerX": 457, "centerY": 269, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 5, "centerX": 238, "centerY": 10, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 6, "centerX": 350, "centerY": 10, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 7, "centerX": 238, "centerY": 279, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 8, "centerX": 350, "centerY": 279, "screwTypeId": 5, "partNo": "SCR-M3-8" },
+        { "index": 9, "centerX": 295, "centerY": 88, "screwTypeId": 4, "partNo": "SCR-M2.5-6" },
+        { "index": 10, "centerX": 182, "centerY": 201, "screwTypeId": 4, "partNo": "SCR-M2.5-6" },
+        { "index": 11, "centerX": 182, "centerY": 88, "screwTypeId": 6, "partNo": "SCR-M4-10" },
+        { "index": 12, "centerX": 295, "centerY": 201, "screwTypeId": 6, "partNo": "SCR-M4-10" }
+      ]
+    }
+  ]
+}

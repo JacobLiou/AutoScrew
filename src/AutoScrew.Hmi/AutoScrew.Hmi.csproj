@@ -58,6 +58,9 @@
     <None Update="Samples\local-recipes.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Samples\PN-DEMO\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Resource Include="Assets\login-bg.png" />
 	<Resource Include="Assets\logo_new.png" />
   </ItemGroup>

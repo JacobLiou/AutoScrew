@@ -24,7 +24,9 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
     public async Task PickScrewAsync(CancellationToken cancellationToken = default)
     {
         _pickCount++;
-        await Task.Delay(80, cancellationToken).ConfigureAwait(false);
+        var pickDelay = Math.Max(0, _simulation.PickDelayMs);
+        if (pickDelay > 0)
+            await Task.Delay(pickDelay, cancellationToken).ConfigureAwait(false);
 
         if (!ShouldFailFeed(_pickCount))
             return;
@@ -66,7 +68,9 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
             var angle = 520 * t;
             var rpm = 220 * (1 - 0.15 * t);
             yield return new TorqueAngleSample(i * 3.0, torque, angle, rpm, null);
-            await Task.Delay(4, cancellationToken).ConfigureAwait(false);
+            var stepDelay = Math.Max(0, _simulation.TighteningStepDelayMs);
+            if (stepDelay > 0)
+                await Task.Delay(stepDelay, cancellationToken).ConfigureAwait(false);
         }
     }
 

@@ -57,6 +57,7 @@ public sealed class SimulatedFeedFailureTests
                 new NoOpOutbox(),
                 new SimpleUser(),
                 Options.Create(new AutoScrewAppOptions { TemplateDirectory = tempDir, StationId = "T-01" }),
+                Options.Create(new SimulationOptions()),
                 new NoOpUserAuditService(),
                 NullLogger<OperatorSessionController>.Instance);
 

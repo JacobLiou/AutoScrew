@@ -9,6 +9,20 @@
         "SN002",
         "SN-DEMO-A",
         "SN-DEMO-B"
+      ],
+      "screws": [
+        { "positionIndex": 1, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 2, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 3, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 4, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 5, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 6, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 7, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 8, "partNo": "SCR-M3-8", "targetTorqueNm": 0.42, "torqueLowerNm": 0.38, "torqueUpperNm": 0.46, "angleLimitDeg": 720, "controllerParameterId": 1 },
+        { "positionIndex": 9, "partNo": "SCR-M2.5-6", "targetTorqueNm": 0.32, "torqueLowerNm": 0.28, "torqueUpperNm": 0.36, "angleLimitDeg": 540, "controllerParameterId": 2 },
+        { "positionIndex": 10, "partNo": "SCR-M2.5-6", "targetTorqueNm": 0.32, "torqueLowerNm": 0.28, "torqueUpperNm": 0.36, "angleLimitDeg": 540, "controllerParameterId": 2 },
+        { "positionIndex": 11, "partNo": "SCR-M4-10", "targetTorqueNm": 0.55, "torqueLowerNm": 0.50, "torqueUpperNm": 0.60, "angleLimitDeg": 900, "controllerParameterId": 3 },
+        { "positionIndex": 12, "partNo": "SCR-M4-10", "targetTorqueNm": 0.55, "torqueLowerNm": 0.50, "torqueUpperNm": 0.60, "angleLimitDeg": 900, "controllerParameterId": 3 }
       ]
     }
   ]

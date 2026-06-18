@@ -95,6 +95,7 @@
     <system:String x:Key="S.Operation.WaitScan">等待扫码</system:String>
     <system:String x:Key="S.Operation.SnPnLabel">SN: {0}  PN: {1}</system:String>
     <system:String x:Key="S.Operation.ScrewNode">钉 {0}</system:String>
+    <system:String x:Key="S.Operation.ScrewNodeWithPart">钉 {0} · {1}</system:String>
     <system:String x:Key="S.Operation.GuideIdle">请点击或扫描 SN 开始作业。</system:String>
     <system:String x:Key="S.Operation.GuideSnPending">请输入或扫描 SN，按 Enter 或点击提交。</system:String>
     <system:String x:Key="S.Operation.GuideSnRejected">SN 无效，请重新扫描。</system:String>

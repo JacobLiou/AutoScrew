@@ -124,23 +124,20 @@ public sealed class ProductTemplateLocalStore : IProductTemplateLocalStore
         if (!Directory.Exists(samples))
             return;
 
-        CopyDirectory(samples, target);
-
-        var demoJson = Path.Combine(target, "demo-product-multisurface.product-template.json");
-        if (File.Exists(demoJson))
+        foreach (var file in Directory.EnumerateFiles(samples))
         {
-            var pnFolder = Path.Combine(target, "PN-DEMO");
-            Directory.CreateDirectory(pnFolder);
-            var dest = Path.Combine(pnFolder, "PN-DEMO.product-template.json");
-            if (!File.Exists(dest))
-                File.Copy(demoJson, dest);
+            var name = Path.GetFileName(file);
+            File.Copy(file, Path.Combine(target, name), overwrite: false);
+        }
+
+        foreach (var dir in Directory.EnumerateDirectories(samples))
+        {
+            var name = Path.GetFileName(dir);
+            CopyDirectoryRecursive(dir, Path.Combine(target, name));
         }
     }
 
-    private static string SanitizePartNumber(string partNumber) =>
-        partNumber.Trim();
-
-    private static void CopyDirectory(string source, string destination)
+    private static void CopyDirectoryRecursive(string source, string destination)
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.EnumerateFiles(source))
@@ -148,5 +145,14 @@ public sealed class ProductTemplateLocalStore : IProductTemplateLocalStore
             var name = Path.GetFileName(file);
             File.Copy(file, Path.Combine(destination, name), overwrite: false);
         }
+
+        foreach (var dir in Directory.EnumerateDirectories(source))
+        {
+            var name = Path.GetFileName(dir);
+            CopyDirectoryRecursive(dir, Path.Combine(destination, name));
+        }
     }
+
+    private static string SanitizePartNumber(string partNumber) =>
+        partNumber.Trim();
 }

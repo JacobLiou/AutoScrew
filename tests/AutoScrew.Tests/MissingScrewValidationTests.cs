@@ -94,6 +94,7 @@ public sealed class MissingScrewValidationTests
                 new NoOpOutbox(),
                 new SimpleUser(),
                 Options.Create(new AutoScrewAppOptions { TemplateDirectory = tempDir, StationId = "T-01" }),
+                Options.Create(simulation),
                 new NoOpUserAuditService(),
                 NullLogger<OperatorSessionController>.Instance);
 

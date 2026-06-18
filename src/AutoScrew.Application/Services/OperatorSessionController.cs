@@ -27,6 +27,7 @@ public sealed class OperatorSessionController
     private readonly IOutboundMesQueue _outbox;
     private readonly ICurrentUser _currentUser;
     private readonly IOptions<AutoScrewAppOptions> _options;
+    private readonly IOptions<SimulationOptions> _simulation;
     private readonly IUserAuditService _audit;
     private readonly ILogger<OperatorSessionController> _logger;
 
@@ -64,6 +65,7 @@ public sealed class OperatorSessionController
         IOutboundMesQueue outbox,
         ICurrentUser currentUser,
         IOptions<AutoScrewAppOptions> options,
+        IOptions<SimulationOptions> simulation,
         IUserAuditService audit,
         ILogger<OperatorSessionController> logger)
     {
@@ -77,6 +79,7 @@ public sealed class OperatorSessionController
         _outbox = outbox;
         _currentUser = currentUser;
         _options = options;
+        _simulation = simulation;
         _audit = audit;
         _logger = logger;
     }
@@ -496,6 +499,13 @@ public sealed class OperatorSessionController
         {
             await HandleFeedFailureAsync(idx, ex, cancellationToken).ConfigureAwait(false);
             return;
+        }
+
+        if (_options.Value.UseSimulatedHardware)
+        {
+            var pickToTightenDelay = Math.Max(0, _simulation.Value.PickToTightenDelayMs);
+            if (pickToTightenDelay > 0)
+                await Task.Delay(pickToTightenDelay, cancellationToken).ConfigureAwait(false);
         }
 
         var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == localIndex)
