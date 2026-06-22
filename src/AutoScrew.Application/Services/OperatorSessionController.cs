@@ -88,6 +88,8 @@ public sealed class OperatorSessionController
 
     public event EventHandler? TighteningProgress;
 
+    public event EventHandler<ScrewCycleProgressEventArgs>? ScrewCycleProgress;
+
     public JobSessionPhase Phase => _phase;
 
     public string? SerialNumber => _serialNumber;
@@ -487,16 +489,26 @@ public sealed class OperatorSessionController
         var idx = _currentIndex;
         var localIndex = _positions[idx].Index;
         var globalIndex = ComputeGlobalIndex(_activeSurfaceOrdinal, idx);
+        var surfaceName = _activeSurfaceName ?? _activeSurfaceId ?? "";
         SetState(idx, StationScrewState.InProgress);
         await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
         NotifyChanged();
 
+        NotifyScrewCycleProgress(ScrewCycleProgressStep.Started, surfaceName, localIndex);
+
         try
         {
+            NotifyScrewCycleProgress(ScrewCycleProgressStep.Picking, surfaceName, localIndex);
             await _hardware.PickScrewAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (FeedFaultException ex)
         {
+            NotifyScrewCycleProgress(
+                ScrewCycleProgressStep.FeedFailed,
+                surfaceName,
+                localIndex,
+                ex.Message,
+                ex.ErrorCode);
             await HandleFeedFailureAsync(idx, ex, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -507,6 +519,12 @@ public sealed class OperatorSessionController
             if (pickToTightenDelay > 0)
                 await Task.Delay(pickToTightenDelay, cancellationToken).ConfigureAwait(false);
         }
+        else
+        {
+            NotifyScrewCycleProgress(ScrewCycleProgressStep.PickCompleteWaitTrigger, surfaceName, localIndex);
+        }
+
+        NotifyScrewCycleProgress(ScrewCycleProgressStep.Tightening, surfaceName, localIndex);
 
         var dto = _recipeScrews.FirstOrDefault(s => s.PositionIndex == localIndex)
                   ?? _recipeScrews.FirstOrDefault(s => s.PositionIndex == globalIndex)
@@ -568,6 +586,7 @@ public sealed class OperatorSessionController
 
         if (combinedOk)
         {
+            NotifyScrewCycleProgress(ScrewCycleProgressStep.CompletedOk, surfaceName, localIndex);
             SetState(idx, StationScrewState.Ok);
             _currentIndex = NextPendingIndex(idx + 1);
             if (_currentIndex < 0)
@@ -575,12 +594,19 @@ public sealed class OperatorSessionController
         }
         else
         {
+            var ngMessage = !deviceOk
+                ? $"Device NG (code {device?.DeviceErrorCode})"
+                : eval.Message ?? eval.ErrorCode;
+            _lastErrorMessage = ngMessage;
+            NotifyScrewCycleProgress(
+                ScrewCycleProgressStep.CompletedNg,
+                surfaceName,
+                localIndex,
+                ngMessage,
+                errorCode);
             SetState(idx, StationScrewState.Ng);
             _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.NgLocked;
             TryApply(JobSessionTrigger.ScrewNg);
-            _lastErrorMessage = !deviceOk
-                ? $"Device NG (code {device?.DeviceErrorCode})"
-                : eval.Message ?? eval.ErrorCode;
             await LogErrorAsync(idx, eval, device, cancellationToken).ConfigureAwait(false);
         }
 
@@ -796,6 +822,21 @@ public sealed class OperatorSessionController
     }
 
     private void NotifyTighteningProgress() => TighteningProgress?.Invoke(this, EventArgs.Empty);
+
+    private void NotifyScrewCycleProgress(
+        ScrewCycleProgressStep step,
+        string surfaceName,
+        int localScrewIndex,
+        string? errorMessage = null,
+        string? errorCode = null) =>
+        ScrewCycleProgress?.Invoke(this, new ScrewCycleProgressEventArgs
+        {
+            Step = step,
+            SurfaceName = surfaceName,
+            LocalScrewIndex = localScrewIndex,
+            ErrorMessage = errorMessage,
+            ErrorCode = errorCode
+        });
 
     private static bool IsRestorablePhase(JobSessionPhase phase) =>
         phase is JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked;

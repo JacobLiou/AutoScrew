@@ -45,6 +45,7 @@ public partial class MainViewModel : ObservableObject
         _user = user;
         _session.Changed += OnSessionChanged;
         _session.TighteningProgress += OnTighteningProgress;
+        _session.ScrewCycleProgress += OnScrewCycleProgress;
         _localization.CultureChanged += (_, _) => RefreshFromSession();
         ProgressTreeRoot = new OperatorProgressRootViewModel();
         ProgressTreeRoots.Add(ProgressTreeRoot);
@@ -133,9 +134,14 @@ public partial class MainViewModel : ObservableObject
     private void OnSessionChanged(object? sender, EventArgs e) =>
         RunOnUiThread(ApplySessionChanged);
 
+    private void OnScrewCycleProgress(object? sender, ScrewCycleProgressEventArgs e) =>
+        RunOnUiThread(() => LogScrewCycleProgress(e));
+
     private void ApplySessionChanged()
     {
+        var previousPhase = _previousPhase;
         RefreshFromSession();
+        LogPhaseTransitionIfNeeded(previousPhase, _session.Phase);
         NotifyCommandStates();
         OnPropertyChanged(nameof(ShowRunScrewButton));
         OnPropertyChanged(nameof(CanUnlockNgOverlay));
@@ -204,6 +210,7 @@ public partial class MainViewModel : ObservableObject
         {
             EnsureAwaitingSn();
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
+            AddLog(Loc.Get("S.Operation.LogLoadingRecipe"));
             await _session.SubmitSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
             if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage))
                 StatusMessage = _session.LastErrorMessage;
@@ -269,7 +276,7 @@ public partial class MainViewModel : ObservableObject
             IsNgOverlayVisible = false;
             IsOperationLocked = false;
             StatusMessage = Loc.Get("S.Operation.StatusUnlocked");
-            AddLog($"{DateTime.Now:HH:mm:ss} {Loc.Get("S.Operation.LogUnlock")}");
+            AddLog(Loc.Get("S.Operation.LogUnlock"));
             OnPropertyChanged(nameof(CanUnlockNgOverlay));
         }
         catch (Exception ex)
@@ -462,7 +469,7 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            var surfaceName = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
+            var surfaceName = ActiveSurfaceDisplayName();
             var screwNo = _session.CurrentScrewLocalIndex;
             StatusMessage = _appOptions.Value.UseSimulatedHardware
                 ? Loc.Get("S.Operation.StatusPickTighten")
@@ -473,14 +480,12 @@ public partial class MainViewModel : ObservableObject
             if (_session.LastErrorMessage is not null)
             {
                 StatusMessage = _session.LastErrorMessage;
-                AddLog(Loc.Format("S.Operation.LogNg", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo, _session.LastErrorMessage));
                 if (_session.Phase != JobSessionPhase.NgLocked)
                     CurveChanged?.Invoke(this, EventArgs.Empty);
             }
             else
             {
                 StatusMessage = Loc.Get("S.Operation.StatusStepDone");
-                AddLog(Loc.Format("S.Operation.LogOk", DateTime.Now.ToString("HH:mm:ss"), surfaceName, screwNo));
                 CurveChanged?.Invoke(this, EventArgs.Empty);
             }
 
@@ -608,7 +613,15 @@ public partial class MainViewModel : ObservableObject
             _session.ConfirmAdvanceToNextSurface();
             var surface = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? "";
             StatusMessage = Loc.Format("S.Operation.EnteredSurface", surface);
-            AddLog($"{DateTime.Now:HH:mm:ss} {Loc.Format("S.Operation.LogFlip", surface)}");
+            AddLog(Loc.Format("S.Operation.LogFlip", surface));
+            if (_session.CurrentScrewLocalIndex > 0)
+            {
+                AddLog(Loc.Format(
+                    "S.Operation.LogStartSurface",
+                    surface,
+                    _session.CurrentScrewLocalIndex,
+                    _session.Positions.Count));
+            }
         }
         catch (Exception ex)
         {
@@ -620,6 +633,80 @@ public partial class MainViewModel : ObservableObject
 
     private void AddLog(string line) =>
         _activityLog.Append(line, _session.SerialNumber);
+
+    private string ActiveSurfaceDisplayName() =>
+        _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
+
+    private void LogScrewCycleProgress(ScrewCycleProgressEventArgs e)
+    {
+        var surface = string.IsNullOrWhiteSpace(e.SurfaceName)
+            ? ActiveSurfaceDisplayName()
+            : e.SurfaceName;
+        var screwNo = e.LocalScrewIndex;
+
+        var message = e.Step switch
+        {
+            ScrewCycleProgressStep.Started =>
+                Loc.Format("S.Operation.LogScrewStart", surface, screwNo),
+            ScrewCycleProgressStep.Picking =>
+                Loc.Format("S.Operation.LogScrewPicking", surface, screwNo),
+            ScrewCycleProgressStep.PickCompleteWaitTrigger =>
+                Loc.Format("S.Operation.LogScrewWaitTrigger", surface, screwNo),
+            ScrewCycleProgressStep.Tightening =>
+                Loc.Format("S.Operation.LogScrewTightening", surface, screwNo),
+            ScrewCycleProgressStep.CompletedOk =>
+                Loc.Format("S.Operation.LogOk", surface, screwNo),
+            ScrewCycleProgressStep.CompletedNg =>
+                Loc.Format("S.Operation.LogNg", surface, screwNo, e.ErrorMessage ?? e.ErrorCode ?? ""),
+            ScrewCycleProgressStep.FeedFailed =>
+                Loc.Format("S.Operation.LogFeedNg", surface, screwNo, e.ErrorMessage ?? e.ErrorCode ?? ""),
+            _ => null
+        };
+
+        if (!string.IsNullOrWhiteSpace(message))
+            AddLog(message);
+    }
+
+    private void LogPhaseTransitionIfNeeded(JobSessionPhase from, JobSessionPhase to)
+    {
+        if (from == to)
+            return;
+
+        switch (to)
+        {
+            case JobSessionPhase.LoadingRecipe:
+                break;
+            case JobSessionPhase.Running when from is JobSessionPhase.LoadingRecipe or JobSessionPhase.SnPending:
+                AddLog(Loc.Format(
+                    "S.Operation.LogStartWork",
+                    ActiveSurfaceDisplayName(),
+                    _session.CurrentScrewLocalIndex,
+                    _session.Positions.Count));
+                break;
+            case JobSessionPhase.Running when from == JobSessionPhase.NgLocked:
+                AddLog(Loc.Format(
+                    "S.Operation.LogResumeWork",
+                    ActiveSurfaceDisplayName(),
+                    _session.CurrentScrewLocalIndex));
+                break;
+            case JobSessionPhase.AwaitFlip:
+            {
+                var (completedId, completedName) = _session.GetCompletedSurfaceForFlip();
+                var (_, nextName) = _session.GetPendingFlipTarget();
+                var done = completedName ?? completedId ?? ActiveSurfaceDisplayName();
+                var next = nextName ?? Loc.Get("S.Operation.NextSurface");
+                AddLog(Loc.Format("S.Operation.LogSurfaceDone", done, _session.Positions.Count));
+                AddLog(Loc.Format("S.Operation.LogAwaitFlip", done, next));
+                break;
+            }
+            case JobSessionPhase.Completed:
+                AddLog(Loc.Format("S.Operation.LogJobDone", _session.SerialNumber ?? ""));
+                break;
+            case JobSessionPhase.SnRejected when !string.IsNullOrWhiteSpace(_session.LastErrorMessage):
+                AddLog(Loc.Format("S.Operation.LogSnRejected", _session.LastErrorMessage));
+                break;
+        }
+    }
 
     private void NotifyCommandStates()
     {

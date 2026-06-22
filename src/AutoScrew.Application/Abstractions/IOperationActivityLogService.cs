@@ -7,7 +7,7 @@ public sealed record OperationActivityLogEntry(
     string Message,
     string? SerialNumber = null)
 {
-    public string DisplayLine => Message;
+    public string DisplayLine => $"[{Timestamp.LocalDateTime:HH:mm:ss}] {Message}";
 }
 
 public interface IOperationActivityLogService
