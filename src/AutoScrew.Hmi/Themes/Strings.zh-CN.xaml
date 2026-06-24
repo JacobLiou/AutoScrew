@@ -232,6 +232,8 @@
     <system:String x:Key="S.Template.AllSelected">已全选 {0} 个标注。</system:String>
     <system:String x:Key="S.Template.MarkersDeleted">已删除 {0} 个标注。</system:String>
     <system:String x:Key="S.Template.ImageLoaded">已加载产品底图：{0}。</system:String>
+    <system:String x:Key="S.Template.ImageImportedToTemplate">底图已复制到 {0}。</system:String>
+    <system:String x:Key="S.Template.ImageNeedsProductFolder">请先填写产品编号；保存时将写入模板 images/ 目录。</system:String>
     <system:String x:Key="S.Template.MarkersOutOfBounds">有 {0} 个点位超出当前画板范围。</system:String>
 
     <!-- MES -->

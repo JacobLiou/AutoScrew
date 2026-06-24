@@ -264,6 +264,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
         RunWithTreeSelectionSuppressed(() =>
         {
+            EnsureTemplateDirectory();
             FlushLoadedSurfaceToModel();
             NormalizeSurfaceOrders();
 
@@ -550,8 +551,19 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
         ProductTreeRoots.Clear();
         ProductTreeRoots.Add(new ProductTemplateTreeRootViewModel(ProductId, DisplayName, Revision));
+        EnsureTemplateDirectory();
         OnPropertyChanged(nameof(ProductRoot));
         OnPropertyChanged(nameof(HasProduct));
+    }
+
+    private void EnsureTemplateDirectory()
+    {
+        if (string.IsNullOrWhiteSpace(ProductId))
+            return;
+
+        _templateStore.EnsureProductFolder(ProductId);
+        _templateDirectory = _templateStore.GetProductFolder(ProductId);
+        CurrentSurfaceEditor.SetTemplateDirectory(_templateDirectory);
     }
 
     private void ResetSession()
@@ -610,6 +622,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
             return;
 
         _suppressDirty = true;
+        EnsureTemplateDirectory();
         CurrentSurfaceEditor.SetTemplateDirectory(_templateDirectory);
         CurrentSurfaceEditor.LoadFrom(_surfaceDocuments[index], _templateDirectory);
         item.MarkerCount = _surfaceDocuments[index].Markers.Count;

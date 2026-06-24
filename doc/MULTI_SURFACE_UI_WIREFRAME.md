@@ -64,7 +64,7 @@ flowchart TB
 | 2..N+1 | 编辑面 k | 嵌入现有画板 UI：底图、尺寸、打点、螺钉类型 | 上一步 / 下一步 |
 | 最后 | 预览与保存 | 汇总：总钉数、各面钉数、缺失底图警告 | **保存** / 取消 |
 
-**保存行为**：写入一个 `*.product-template.json`（schema v2）；资源图片写入同目录 `images/`。
+**保存行为**：写入一个 `*.product-template.json`（schema v2）；资源图片写入同目录 `images/`。加载外部底图时自动复制为 `images/{surfaceId}{ext}`，JSON 仅保存相对路径。
 
 **线框（ASCII）**
 

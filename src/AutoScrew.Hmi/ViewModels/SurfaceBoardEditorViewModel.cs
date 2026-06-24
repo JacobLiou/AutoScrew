@@ -27,6 +27,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     private readonly ICurrentUser? _user;
     private string? _templateDirectory;
     private string? _productImageAbsolutePath;
+    private string? _currentSurfaceId;
     private string? _loadedSurfaceName;
 
     [ObservableProperty]
@@ -90,6 +91,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     public void LoadFrom(SurfaceLayoutDocument surface, string? templateDirectory)
     {
         _templateDirectory = templateDirectory;
+        _currentSurfaceId = surface.SurfaceId;
         BoardWidth = surface.BoardWidth;
         BoardHeight = surface.BoardHeight;
         BoardWidthInput = surface.BoardWidth.ToString("0.##");
@@ -115,7 +117,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
     {
         RenumberMarkers();
         var defaultDiameter = DefaultScrewType.DiameterPx;
-        var (rel, abs) = BuildImagePathsForSave();
+        var (rel, abs) = BuildImagePathsForSave(surfaceId);
         return new SurfaceLayoutDocument
         {
             SurfaceId = surfaceId,
@@ -152,6 +154,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         OutOfBoundsWarning = string.Empty;
         StatusMessage = string.Empty;
         _loadedSurfaceName = null;
+        _currentSurfaceId = null;
         DeleteSelectedCommand.NotifyCanExecuteChanged();
         ClearProductImageCommand.NotifyCanExecuteChanged();
         MatchBoardToImageSizeCommand.NotifyCanExecuteChanged();
@@ -194,7 +197,7 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         AuditBoard("Configuration.BoardLoadImage", dlg.FileName);
         try
         {
-            LoadProductImageFromAbsolutePath(dlg.FileName);
+            LoadProductImageFromAbsolutePath(dlg.FileName, importToTemplate: true);
             RaiseContentChanged();
         }
         catch (Exception ex)
@@ -401,22 +404,44 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         MatchBoardToImageSizeCommand.NotifyCanExecuteChanged();
     }
 
-    private void LoadProductImageFromAbsolutePath(string absolutePath)
+    private void LoadProductImageFromAbsolutePath(string absolutePath, bool importToTemplate = false)
     {
         if (!File.Exists(absolutePath))
             throw new FileNotFoundException(absolutePath);
 
+        var resolvedPath = absolutePath;
+        string? importedRelative = null;
+        if (importToTemplate
+            && !string.IsNullOrWhiteSpace(_templateDirectory)
+            && !string.IsNullOrWhiteSpace(_currentSurfaceId))
+        {
+            var (relative, storedAbsolute) = ProductTemplatePathHelper.EnsureImageInTemplateFolder(
+                absolutePath,
+                _templateDirectory,
+                _currentSurfaceId);
+            if (!string.IsNullOrEmpty(storedAbsolute))
+                resolvedPath = storedAbsolute;
+            importedRelative = relative;
+        }
+
         var bmp = new BitmapImage();
         bmp.BeginInit();
-        bmp.UriSource = new Uri(Path.GetFullPath(absolutePath), UriKind.Absolute);
+        bmp.UriSource = new Uri(Path.GetFullPath(resolvedPath), UriKind.Absolute);
         bmp.CacheOption = BitmapCacheOption.OnLoad;
         bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
         bmp.EndInit();
         bmp.Freeze();
 
         BoardImageSource = bmp;
-        _productImageAbsolutePath = Path.GetFullPath(absolutePath);
-        StatusMessage = Loc.Format("S.Template.ImageLoaded", Path.GetFileName(absolutePath));
+        _productImageAbsolutePath = Path.GetFullPath(resolvedPath);
+        if (importToTemplate && !string.IsNullOrEmpty(importedRelative))
+            StatusMessage = Loc.Format("S.Template.ImageImportedToTemplate", importedRelative);
+        else if (importToTemplate
+                 && (string.IsNullOrWhiteSpace(_templateDirectory) || string.IsNullOrWhiteSpace(_currentSurfaceId)))
+            StatusMessage = Loc.Format("S.Template.ImageLoaded", Path.GetFileName(absolutePath))
+                            + " " + Loc.Get("S.Template.ImageNeedsProductFolder");
+        else
+            StatusMessage = Loc.Format("S.Template.ImageLoaded", Path.GetFileName(resolvedPath));
     }
 
     private void TryLoadProductImageFromDocument(SurfaceLayoutDocument doc)
@@ -439,8 +464,8 @@ public partial class SurfaceBoardEditorViewModel : ObservableObject
         }
     }
 
-    private (string? Relative, string? Absolute) BuildImagePathsForSave() =>
-        ProductTemplatePathHelper.BuildImagePathsForSave(_productImageAbsolutePath, _templateDirectory);
+    private (string? Relative, string? Absolute) BuildImagePathsForSave(string surfaceId) =>
+        ProductTemplatePathHelper.BuildImagePathsForSave(_productImageAbsolutePath, _templateDirectory, surfaceId);
 
     private static ScrewMarkerViewModel MarkerFromRecord(MarkerRecord r, SurfaceLayoutDocument doc)
     {

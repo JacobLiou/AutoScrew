@@ -1,46 +1,30 @@
-using System.IO;
+using AutoScrew.Application.Templates;
 using AutoScrew.Hmi.Models;
 
 namespace AutoScrew.Hmi.Services;
 
 public static class ProductTemplatePathHelper
 {
-    public static string? ResolveSurfaceImagePath(SurfaceLayoutDocument surface, string templateDirectory)
-    {
-        if (!string.IsNullOrWhiteSpace(surface.ProductImageRelativePath))
-        {
-            var combined = Path.GetFullPath(Path.Combine(templateDirectory, surface.ProductImageRelativePath));
-            if (File.Exists(combined))
-                return combined;
-        }
+    public const string ImagesSubfolder = ProductTemplateImagePathHelper.ImagesSubfolder;
 
-        if (!string.IsNullOrWhiteSpace(surface.ProductImageAbsolutePath) && File.Exists(surface.ProductImageAbsolutePath))
-            return surface.ProductImageAbsolutePath;
-
-        return null;
-    }
+    public static string? ResolveSurfaceImagePath(SurfaceLayoutDocument surface, string templateDirectory) =>
+        ProductTemplateImagePathHelper.ResolveSurfaceImagePath(
+            surface.ProductImageRelativePath,
+            surface.ProductImageAbsolutePath,
+            templateDirectory);
 
     public static (string? Relative, string? Absolute) BuildImagePathsForSave(
         string? productImageAbsolutePath,
-        string? templateDirectory)
-    {
-        if (string.IsNullOrEmpty(productImageAbsolutePath) || !File.Exists(productImageAbsolutePath))
-            return (null, null);
+        string? templateDirectory,
+        string? surfaceId) =>
+        ProductTemplateImagePathHelper.BuildImagePathsForSave(productImageAbsolutePath, templateDirectory, surfaceId);
 
-        if (!string.IsNullOrEmpty(templateDirectory))
-        {
-            try
-            {
-                var rel = Path.GetRelativePath(templateDirectory, productImageAbsolutePath);
-                if (!rel.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(rel))
-                    return (rel, null);
-            }
-            catch
-            {
-                // fall through
-            }
-        }
+    public static (string? Relative, string? StoredAbsolute) EnsureImageInTemplateFolder(
+        string absolutePath,
+        string templateDirectory,
+        string surfaceId) =>
+        ProductTemplateImagePathHelper.EnsureImageInTemplateFolder(absolutePath, templateDirectory, surfaceId);
 
-        return (null, productImageAbsolutePath);
-    }
+    public static bool IsUnderTemplateImages(string? relativePath) =>
+        ProductTemplateImagePathHelper.IsUnderTemplateImages(relativePath);
 }

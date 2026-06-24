@@ -224,6 +224,8 @@
     <system:String x:Key="S.Template.AllSelected">Selected all {0} markers.</system:String>
     <system:String x:Key="S.Template.MarkersDeleted">Deleted {0} marker(s).</system:String>
     <system:String x:Key="S.Template.ImageLoaded">Loaded image: {0}.</system:String>
+    <system:String x:Key="S.Template.ImageImportedToTemplate">Image copied to {0}.</system:String>
+    <system:String x:Key="S.Template.ImageNeedsProductFolder">Enter a product ID first; the image will be stored under the template images/ folder on save.</system:String>
     <system:String x:Key="S.Template.MarkersOutOfBounds">{0} marker(s) outside board.</system:String>
 
     <system:String x:Key="S.Mes.UseMock">Use Mock MES</system:String>
