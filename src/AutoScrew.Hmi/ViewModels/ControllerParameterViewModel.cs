@@ -17,15 +17,19 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerParameterListItem : ObservableObject
 {
-    public ControllerParameterListItem(int parameterId, string name)
+    public ControllerParameterListItem(int parameterId, string name, double? stage1TorqueNm = null)
     {
         ParameterId = parameterId;
         Name = name;
-        DisplayText = $"{parameterId:D3} · {name}";
+        Stage1TorqueNm = stage1TorqueNm;
+        DisplayText = stage1TorqueNm is double torque
+            ? $"{parameterId:D3} · {name} · {torque:F2} N·m"
+            : $"{parameterId:D3} · {name}";
     }
 
     public int ParameterId { get; }
     public string Name { get; }
+    public double? Stage1TorqueNm { get; }
     public string DisplayText { get; }
 }
 
@@ -35,12 +39,36 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
     {
         Index = index;
         Stage = stage;
-        Title = $"Stage {index + 1}";
+        Title = Loc.Format("S.Workbench.Param.StageTitle", index + 1);
     }
 
     public int Index { get; }
     public string Title { get; }
     public TighteningStageCore Stage { get; }
+
+    public int ControlModeIndex
+    {
+        get => (int)Stage.ControlMode;
+        set => Stage.ControlMode = (TighteningControlMode)value;
+    }
+
+    public double TargetTorqueNm
+    {
+        get => Stage.TargetTorqueMilliNm / 1000.0;
+        set => Stage.TargetTorqueMilliNm = (int)Math.Round(value * 1000);
+    }
+
+    public double MaxTorqueNm
+    {
+        get => Stage.MaxTorqueMilliNm / 1000.0;
+        set => Stage.MaxTorqueMilliNm = (int)Math.Round(value * 1000);
+    }
+
+    public double MinTorqueNm
+    {
+        get => Stage.MinTorqueMilliNm / 1000.0;
+        set => Stage.MinTorqueMilliNm = (int)Math.Round(value * 1000);
+    }
 }
 
 public sealed partial class ControllerParameterViewModel : ObservableObject
@@ -107,7 +135,62 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private int _selectedStageIndex;
 
     [ObservableProperty]
+    private int _selectedEditorTabIndex;
+
+    [ObservableProperty]
     private TighteningLoosenCore _loosen = new();
+
+    [ObservableProperty]
+    private bool _lastStageServoOn;
+
+    [ObservableProperty]
+    private int _linkedCompensationParamId;
+
+    [ObservableProperty]
+    private int _maxLoosenTimeTenthSec;
+
+    [ObservableProperty]
+    private int _maxLoosenAngleDeg;
+
+    [ObservableProperty]
+    private int _tighteningStartDelayCentiSec;
+
+    [ObservableProperty]
+    private int _loosenStartDelayCentiSec;
+
+    [ObservableProperty]
+    private bool _finalCurrentJudgeEnabled;
+
+    [ObservableProperty]
+    private int _feederResultDelayTenthSec;
+
+    public double MaxRunTimeSeconds
+    {
+        get => MaxTighteningTimeTenthSec / 10.0;
+        set => MaxTighteningTimeTenthSec = (int)Math.Round(value * 10);
+    }
+
+    public string SummaryText =>
+        Loc.Format(
+            "S.Workbench.Param.Summary",
+            ParameterId,
+            Name,
+            ActiveStageCount,
+            Stage1TorqueNm);
+
+    public int ActiveStageCount =>
+        StageItems.Count(s => s.Stage.TargetTorqueMilliNm > 0 || s.Stage.TargetAngleDeg > 0);
+
+    public double Stage1TorqueNm =>
+        StageItems.Count > 0 ? StageItems[0].TargetTorqueNm : 0;
+
+    public IReadOnlyList<int> StageBarIndices => Enumerable.Range(0, Math.Max(ActiveStageCount, 1)).ToList();
+
+    partial void OnNameChanged(string value) => NotifySummary();
+
+    partial void OnParameterIdChanged(int value) => NotifySummary();
+
+    partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
 
     partial void OnSelectedPresetChanged(ControllerParameterListItem? value)
     {
@@ -120,12 +203,20 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     partial void OnSelectedStageIndexChanged(int value)
     {
         if (value >= 0 && value < StageItems.Count)
+        {
             OnPropertyChanged(nameof(CurrentStage));
+            OnPropertyChanged(nameof(CurrentStageItem));
+        }
     }
 
     public TighteningStageCore? CurrentStage =>
         SelectedStageIndex >= 0 && SelectedStageIndex < StageItems.Count
             ? StageItems[SelectedStageIndex].Stage
+            : null;
+
+    public ControllerParameterStageItem? CurrentStageItem =>
+        SelectedStageIndex >= 0 && SelectedStageIndex < StageItems.Count
+            ? StageItems[SelectedStageIndex]
             : null;
 
     public async Task InitializeAsync()
@@ -149,6 +240,32 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StartNewPreset();
         StatusMessage = Loc.Get("S.ControllerParam.StatusNew");
     }
+
+    [RelayCommand]
+    private void QuickStartNew()
+    {
+        AuditConfig("Configuration.ParamQuickStart");
+        StartNewPreset();
+        const int finalTorqueMilliNm = 450;
+        var stages = _working.Core.Stages;
+        stages[0].ControlMode = TighteningControlMode.Torque;
+        stages[0].TargetTorqueMilliNm = finalTorqueMilliNm / 3;
+        stages[0].SpeedRpm = 800;
+        stages[1].ControlMode = TighteningControlMode.Angle;
+        stages[1].TargetAngleDeg = 90;
+        stages[1].SpeedRpm = 400;
+        stages[2].ControlMode = TighteningControlMode.Torque;
+        stages[2].TargetTorqueMilliNm = finalTorqueMilliNm;
+        stages[2].SpeedRpm = 200;
+        MaxTighteningTimeTenthSec = 300;
+        RebuildStageItems();
+        NotifySummary();
+        StatusMessage = Loc.Get("S.Workbench.Param.QuickStartDone");
+    }
+
+    public Task RunWriteToDeviceAsync() => WriteToDeviceAsync();
+
+    public Task RunActivateOnDeviceAsync() => ActivateOnDeviceAsync();
 
     [RelayCommand]
     private async Task SaveLocalAsync()
@@ -334,7 +451,21 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         var items = await _presetService.ListLocalPresetsAsync().ConfigureAwait(true);
         Presets.Clear();
         foreach (var item in items)
-            Presets.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+        {
+            double? torque = null;
+            try
+            {
+                var template = await _presetService.LoadLocalPresetAsync(item.ParameterId).ConfigureAwait(true);
+                if (template.Core.Stages.Count > 0)
+                    torque = template.Core.Stages[0].TargetTorqueMilliNm / 1000.0;
+            }
+            catch
+            {
+                // ignore broken preset in list
+            }
+
+            Presets.Add(new ControllerParameterListItem(item.ParameterId, item.Name, torque));
+        }
     }
 
     private async Task LoadPresetAsync(int parameterId)
@@ -373,9 +504,18 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         MaxAngleDeg = template.Core.MaxAngleDeg;
         MaxTighteningTimeTenthSec = template.Core.MaxTighteningTimeTenthSec;
         Loosen = template.Core.Loosen;
+        LastStageServoOn = template.Core.LastStageServoOn;
+        LinkedCompensationParamId = template.Core.LinkedCompensationParamId;
+        MaxLoosenTimeTenthSec = template.Core.MaxLoosenTimeTenthSec;
+        MaxLoosenAngleDeg = template.Core.MaxLoosenAngleDeg;
+        TighteningStartDelayCentiSec = template.Core.TighteningStartDelayCentiSec;
+        LoosenStartDelayCentiSec = template.Core.LoosenStartDelayCentiSec;
+        FinalCurrentJudgeEnabled = template.Core.FinalCurrentJudgeEnabled;
+        FeederResultDelayTenthSec = template.Core.FeederResultDelayTenthSec;
         SelectedStageIndex = 0;
         RebuildStageItems();
         OnPropertyChanged(nameof(Loosen));
+        NotifySummary();
     }
 
     private void RebuildStageItems()
@@ -389,6 +529,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             SelectedStageIndex = 0;
 
         OnPropertyChanged(nameof(CurrentStage));
+        NotifySummary();
     }
 
     private TighteningParameterTemplate BuildWorkingTemplate()
@@ -399,8 +540,25 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _working.Core.MaxAngleDeg = MaxAngleDeg;
         _working.Core.MaxTighteningTimeTenthSec = MaxTighteningTimeTenthSec;
         _working.Core.Loosen = Loosen;
+        _working.Core.LastStageServoOn = LastStageServoOn;
+        _working.Core.LinkedCompensationParamId = LinkedCompensationParamId;
+        _working.Core.MaxLoosenTimeTenthSec = MaxLoosenTimeTenthSec;
+        _working.Core.MaxLoosenAngleDeg = MaxLoosenAngleDeg;
+        _working.Core.TighteningStartDelayCentiSec = TighteningStartDelayCentiSec;
+        _working.Core.LoosenStartDelayCentiSec = LoosenStartDelayCentiSec;
+        _working.Core.FinalCurrentJudgeEnabled = FinalCurrentJudgeEnabled;
+        _working.Core.FeederResultDelayTenthSec = FeederResultDelayTenthSec;
         _working.ApplyCoreToRaw();
         return _working;
+    }
+
+    private void NotifySummary()
+    {
+        OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(ActiveStageCount));
+        OnPropertyChanged(nameof(Stage1TorqueNm));
+        OnPropertyChanged(nameof(StageBarIndices));
+        OnPropertyChanged(nameof(MaxRunTimeSeconds));
     }
 
     private void AuditConfig(string action, string? detail = null) =>

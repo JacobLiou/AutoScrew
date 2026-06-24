@@ -1,38 +1,32 @@
-<UserControl x:Class="AutoScrew.Hmi.Views.Pages.ControllerSequencePage"
+<UserControl x:Class="AutoScrew.Hmi.Views.ControllerWorkbench.Steps.SequenceStepView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              d:DataContext="{d:DesignInstance vm:ControllerSequenceViewModel, IsDesignTimeCreatable=False}"
-             Loaded="OnLoaded"
-             mc:Ignorable="d"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
-    <Grid Margin="0,0,0,24">
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
-            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.NewPresetCommand}" Content="{DynamicResource S.ControllerSeq.New}" />
-            <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding ViewModel.SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
-            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
-            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
-            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
+        <WrapPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:Button Margin="0,0,8,8" Command="{Binding NewPresetCommand}" Content="{DynamicResource S.ControllerSeq.New}" />
+            <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
             <Separator Margin="8,0" Width="1" Height="24" />
-            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
-            <ui:Button Margin="0,0,8,0" Appearance="Caution" Command="{Binding ViewModel.WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
-            <ui:Button Command="{Binding ViewModel.ActivateOnDeviceCommand}" Content="{DynamicResource S.ControllerSeq.Activate}" />
-        </StackPanel>
+            <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
+            <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ActivateOnDeviceCommand}" Content="{DynamicResource S.ControllerSeq.Activate}" />
+        </WrapPanel>
 
-        <ui:InfoBar Grid.Row="1" Margin="0,0,0,12" IsOpen="True"
-                    Message="{Binding ViewModel.DeviceStatusText}" Severity="Informational"
-                    Title="{DynamicResource S.ControllerParam.DeviceStatus}" />
-
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="12" />
@@ -43,12 +37,12 @@
                 <ui:CardControl.Header>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
                 </ui:CardControl.Header>
-                <ListBox ItemsSource="{Binding ViewModel.Presets}"
-                         SelectedItem="{Binding ViewModel.SelectedPreset, Mode=TwoWay}"
+                <ListBox ItemsSource="{Binding Presets}"
+                         SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
                          DisplayMemberPath="DisplayText" />
             </ui:CardControl>
 
-            <TabControl Grid.Column="2">
+            <TabControl Grid.Column="2" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
                 <TabItem Header="{DynamicResource S.ControllerParam.BasicSettings}">
                     <StackPanel Margin="8">
                         <Grid>
@@ -61,43 +55,47 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerSeq.SequenceId}" />
-                            <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Value="{Binding ViewModel.SequenceId, Mode=TwoWay}" />
+                            <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Value="{Binding SequenceId, Mode=TwoWay}" />
                             <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.Name}" />
-                            <ui:TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Text="{Binding ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerSeq.NavigatorMode}" />
-                            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"
-                                      SelectedIndex="{Binding ViewModel.NavigatorModeIndex, Mode=TwoWay}">
+                            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" SelectedIndex="{Binding NavigatorModeIndex, Mode=TwoWay}">
                                 <ComboBoxItem Content="{DynamicResource S.ControllerSeq.ModeGeneral}" />
                                 <ComboBoxItem Content="{DynamicResource S.ControllerSeq.ModeNavigator}" />
                             </ComboBox>
                             <CheckBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2"
                                       Content="{DynamicResource S.ControllerSeq.PositioningArm}"
-                                      IsChecked="{Binding ViewModel.PositioningArmEnabled, Mode=TwoWay}" />
+                                      IsChecked="{Binding PositioningArmEnabled, Mode=TwoWay}" />
                         </Grid>
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{DynamicResource S.ControllerSeq.Steps}">
                     <DockPanel Margin="8">
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                            <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.AddStepCommand}" Content="{DynamicResource S.ControllerSeq.AddStep}" />
-                            <ui:Button Command="{Binding ViewModel.RemoveStepCommand}" Content="{DynamicResource S.ControllerSeq.RemoveStep}" />
+                            <ui:Button Margin="0,0,8,0" Command="{Binding AddStepCommand}" Content="{DynamicResource S.ControllerSeq.AddStep}" />
+                            <ui:Button Command="{Binding RemoveStepCommand}" Content="{DynamicResource S.ControllerSeq.RemoveStep}" />
                         </StackPanel>
-                        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False"
-                                  ItemsSource="{Binding ViewModel.StepItems}">
+                        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding StepItems}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="#" Binding="{Binding Title}" IsReadOnly="True" Width="60" />
                                 <DataGridTextColumn Header="Tool ID" Binding="{Binding Step.ToolId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80" />
-                                <DataGridTextColumn Header="Param ID" Binding="{Binding Step.ParameterId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                <DataGridTemplateColumn Header="{DynamicResource S.Workbench.Seq.ParameterPreset}" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding DataContext.ParameterCatalog, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                      SelectedItem="{Binding SelectedParameter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      DisplayMemberPath="DisplayText" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
                 </TabItem>
                 <TabItem Header="{DynamicResource S.ControllerSeq.NavigatorCoords}">
-                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True"
-                              ItemsSource="{Binding ViewModel.NavigatorScrews}">
+                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True" ItemsSource="{Binding NavigatorScrews}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="X" Binding="{Binding X, Mode=TwoWay}" Width="*" />
                             <DataGridTextColumn Header="Y" Binding="{Binding Y, Mode=TwoWay}" Width="*" />
@@ -105,16 +103,14 @@
                     </DataGrid>
                 </TabItem>
                 <TabItem Header="{DynamicResource S.ControllerSeq.ImageCodes}">
-                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True"
-                              ItemsSource="{Binding ViewModel.ImageCodes}">
+                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True" ItemsSource="{Binding ImageCodes}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Code" Binding="{Binding Value, Mode=TwoWay}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </TabItem>
                 <TabItem Header="{DynamicResource S.ControllerSeq.PositioningArm}">
-                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True"
-                              ItemsSource="{Binding ViewModel.ArmCoordinates}">
+                    <DataGrid Margin="8" AutoGenerateColumns="False" CanUserAddRows="True" ItemsSource="{Binding ArmCoordinates}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="X mm" Binding="{Binding Xmm, Mode=TwoWay}" Width="*" />
                             <DataGridTextColumn Header="Y mm" Binding="{Binding Ymm, Mode=TwoWay}" Width="*" />
@@ -125,6 +121,6 @@
             </TabControl>
         </Grid>
 
-        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding ViewModel.StatusMessage}" />
+        <TextBlock Grid.Row="2" Margin="0,12,0,0" Text="{Binding StatusMessage}" />
     </Grid>
 </UserControl>

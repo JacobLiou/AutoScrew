@@ -29,16 +29,40 @@ public sealed partial class ControllerSequenceListItem : ObservableObject
 
 public sealed partial class ControllerSequenceStepItem : ObservableObject
 {
-    public ControllerSequenceStepItem(int index, TighteningSequenceStepCore step)
+    private readonly Action? _onParameterChanged;
+
+    public ControllerSequenceStepItem(int index, TighteningSequenceStepCore step, Action? onParameterChanged = null)
     {
         Index = index;
         Step = step;
-        Title = $"Step {index + 1}";
+        Title = Loc.Format("S.Workbench.Seq.StepTitle", index + 1);
+        _onParameterChanged = onParameterChanged;
     }
 
     public int Index { get; }
     public string Title { get; }
     public TighteningSequenceStepCore Step { get; }
+
+    private ControllerParameterListItem? _selectedParameter;
+
+    public ControllerParameterListItem? SelectedParameter
+    {
+        get => _selectedParameter;
+        set
+        {
+            if (SetProperty(ref _selectedParameter, value) && value is not null)
+            {
+                Step.ParameterId = value.ParameterId;
+                _onParameterChanged?.Invoke();
+            }
+        }
+    }
+
+    public void SyncSelectedParameter(IReadOnlyList<ControllerParameterListItem> catalog)
+    {
+        _selectedParameter = catalog.FirstOrDefault(p => p.ParameterId == Step.ParameterId);
+        OnPropertyChanged(nameof(SelectedParameter));
+    }
 }
 
 public sealed partial class ImageCodeItem : ObservableObject
@@ -49,6 +73,7 @@ public sealed partial class ImageCodeItem : ObservableObject
 public sealed partial class ControllerSequenceViewModel : ObservableObject
 {
     private readonly IControllerSequencePresetService _presetService;
+    private readonly IControllerParameterPresetService _parameterPresetService;
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
     private readonly IUserAuditService _audit;
@@ -58,6 +83,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     public ControllerSequenceViewModel(
         IControllerSequencePresetService presetService,
+        IControllerParameterPresetService parameterPresetService,
         IStationDeviceService devices,
         ISnackbarService snackbarService,
         IUserAuditService audit,
@@ -65,6 +91,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         ICurrentUser user)
     {
         _presetService = presetService;
+        _parameterPresetService = parameterPresetService;
         _devices = devices;
         _snackbarService = snackbarService;
         _audit = audit;
@@ -72,8 +99,11 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         _user = user;
         Presets = new ObservableCollection<ControllerSequenceListItem>();
         StepItems = new ObservableCollection<ControllerSequenceStepItem>();
+        ParameterCatalog = new ObservableCollection<ControllerParameterListItem>();
         DeviceStatusText = BuildDeviceStatusText();
     }
+
+    public ObservableCollection<ControllerParameterListItem> ParameterCatalog { get; }
 
     public bool IsDeviceAvailable => _presetService.IsDeviceAvailable;
     public ObservableCollection<ControllerSequenceListItem> Presets { get; }
@@ -104,6 +134,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     {
         await _devices.LoadAsync().ConfigureAwait(true);
         DeviceStatusText = BuildDeviceStatusText();
+        await RefreshParameterCatalogAsync().ConfigureAwait(true);
         await RefreshPresetListAsync().ConfigureAwait(true);
         if (Presets.Count > 0 && SelectedPreset is null)
             SelectedPreset = Presets[0];
@@ -280,6 +311,10 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     private bool CanUseDevice() => IsDeviceAvailable;
 
+    public Task RunWriteToDeviceAsync() => WriteToDeviceAsync();
+
+    public Task RunActivateOnDeviceAsync() => ActivateOnDeviceAsync();
+
     private async Task RefreshPresetListAsync()
     {
         var items = await _presetService.ListLocalPresetsAsync().ConfigureAwait(true);
@@ -346,11 +381,22 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         _working.ApplyCoreToRaw();
     }
 
+    private async Task RefreshParameterCatalogAsync()
+    {
+        var items = await _parameterPresetService.ListLocalPresetsAsync().ConfigureAwait(true);
+        ParameterCatalog.Clear();
+        foreach (var item in items)
+            ParameterCatalog.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+    }
+
     private void RebuildStepItems()
     {
         StepItems.Clear();
         for (var i = 0; i < _working.Core.Steps.Count; i++)
             StepItems.Add(new ControllerSequenceStepItem(i, _working.Core.Steps[i]));
+
+        foreach (var step in StepItems)
+            step.SyncSelectedParameter(ParameterCatalog);
     }
 
     private string BuildDeviceStatusText()

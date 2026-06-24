@@ -3,11 +3,11 @@ using Wpf.Ui.Abstractions.Controls;
 
 namespace AutoScrew.Hmi.Views.Pages;
 
-public partial class ControllerParameterPage : INavigableView<ControllerParameterViewModel>
+public partial class ControllerWorkbenchPage : INavigableView<ControllerWorkbenchViewModel>
 {
-    public ControllerParameterViewModel ViewModel { get; }
+    public ControllerWorkbenchViewModel ViewModel { get; }
 
-    public ControllerParameterPage(ControllerParameterViewModel viewModel)
+    public ControllerWorkbenchPage(ControllerWorkbenchViewModel viewModel)
     {
         ViewModel = viewModel;
         DataContext = this;

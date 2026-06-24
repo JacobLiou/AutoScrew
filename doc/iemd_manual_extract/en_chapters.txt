@@ -1,0 +1,1778 @@
+
+
+============================================================
+CH05_Parameters pages 60-91
+============================================================
+
+--- PAGE 60 ---
+5-1 
+Parameters 
+(Tightening parameters) 
+ 
+This chapter introduces the Parameters page of the smart screwdriving controller. You 
+can configure the appropriate parameters for different tightening scenarios to achieve 
+the quality requirements of products. You can also use the screw tightening strategies 
+to customize various tightening processes. 
+                                                            
+5.1  Parameters page overview  ·································································· 5-2 
+5.2  Creat ing a tightening parameter ···························································· 5-3 
+5.3  Tightening strategies and the Settings tabs  ············································· 5-4 
+5.3.1  General Settings  ········································································· 5-5 
+5.3.2  Tightening Settings  ······································································ 5-7 
+5.3.2.1  Standard strategy  ·································································· 5-7 
+5.3.2.2  Enhanced strategy  ······························································· 5-14 
+5.3.2.3  Pre- position strategy ···························································· 5-15 
+5.3.2.4  Self -defined strategy ···························································· 5-17 
+5.3.2.4.1  Synchronization settings in tightening parameters  ················ 5-17 
+5.3.2.4.2  Control methods descriptions  ··········································· 5-18 
+5.3.3  Loosening settings  ····································································· 5-28 
+5.4  Saving a tightening parameter  ···························································· 5-29 
+5.5  Copying / pasting a tightening parameter  ·············································· 5-29 
+5.6  Deleting a tightening parameter  ·························································· 5-31 
+5.7  Exporting / importing a tightening parameter  ·········································· 5-32 
+ 
+  
+5 
+--- PAGE 61 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-2 
+5 
+5.1  Parameters page overview 
+Create different tightening parameters for transducerized smart screwdrivers of different 
+specifications. Up to 500 sets of parameters can be created for a single tool. Each row in the 
+following parameter list represents one set of tightening parameter. 
+  
+  
+
+--- PAGE 62 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-3 
+5 
+5.2  Creating a tightening parameter 
+Steps to create a tightening parameter are as follows: 
+1. Click , and then the system searches for an available ID and sets it as the new parameter 
+ID. If desiring to specify an ID, directly set it in the ID field of the Create a Parameter window. 
+2. Input the parameter title. 
+3. Choose whether to use the Quick Start function for the parameter setting. 
+Quick Start function On Quick Start function Off 
+ The Quick Start function is On by default. 
+(a) Input the final Tightening Torque and click 
+Confirm to create the parameter. 
+Default values are applied to the remaining 
+settings. 
+ Switch off the Quick Start function and click 
+Confirm to enter the parameter editing 
+screen. 
+(a) Set the tightening strategy as Standard, 
+Enhanced, Pre-position, or Self-defined. 
+(b) Set the contents of the General Settings, 
+Tightening Settings, and Loosening 
+Settings tabs in sequence. 
+(c) Click Save to save the settings. 
+ 
+ 
+ 
+4. The parameter list displays the ID and Parameter Title of the parameters that are 
+successfully created. 
+  
+
+--- PAGE 63 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-4 
+5 
+5.3  Tightening strategies and the Settings tabs 
+The system provides four tightening strategies for you to customize the tightening processes 
+based on different needs. 
+1. Standard: there are four stages, including Start, Rundown, Pre-tightening, and Tightening. 
+The settings in each stage can be adjusted individually. 
+2. Enhanced: further tightening with the Tightening stage from the Standard strategy. 
+3. Pre-position: drive in the screw to reach the specified angle, torque, or torque rate with the 
+Start and Rundown stages from the Standard strategy. 
+Stage 
+Strategy Start Rundown Pre-tightening Tightening 
+Standard Start angle 
+Rundown angle 
+Rundown torque 
+Torque rate 
+Pre-tightening torque 
+Torque rate 
+Target angle 
+Target torque 
+Clamp torque 
+Clamp angle 
+Enhanced - - - Target angle 
+Target torque 
+Pre-position Start angle 
+Rundown angle 
+Rundown torque 
+Torque rate 
+- - 
+4. Self-defined: arrange the tightening process as needed with a maximum of six stages. Use 
+self-defined strategies for special scenarios. 
+Stage 
+Strategy Stage 1 Stage 2 Stage 3 Stage 4 Stage 5 Stage 6 
+Self-defined 
+Angle Control 
+Torque Control 
+Torque Rate Control 
+Clamp Torque Control 
+Clamp Angle Control 
+Yield point control 
+ 
+  
+--- PAGE 64 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-5 
+5 
+Each strategy contains three setting tabs: General Settings, Tightening Settings, and 
+Loosening Settings. The following illustrates the setting screens of the three tabs under 
+different tightening strategies. 
+5.3.1  General Settings 
+The screen of the General Settings tab is the same (except the curve graphs) for all tightening 
+strategies. In this tab, you can set the general tightening and loosening conditions. 
+This section takes the General Settings screen of Standard strategy as an example. 
+  
+Item Function description 
+Tool 1 / Tool 2 Tool ID for the current parameter. 
+Direction Specify the rotation direction of the tool. 
+Tightening 
+Condition 
+Max. Rotation Angle Set the maximum and minimum 
+rotation angle of the tightening 
+(1 turn = 360°). 
+For checking whether the 
+screw length is suitable. 
+Min. Rotation Angle For checking whether there is 
+an under-driven screw. 
+Timeout Limit the total time of the tightening process. 
+Delay Start Set the delay time before the tightening starts. 
+Loosening 
+Condition 
+Timeout Limit the total time of the loosening process. 
+Delay Start Set the delay time before the loosening starts. 
+Advanced 
+Setting 
+Final Current 
+Detection 
+This function is On by default. It can determine if the screwdriver 
+is degraded by using the controller current sensor and the tool 
+torque sensor to measure the current values at the final 
+tightening stage and then comparing them. 
+Delay Before 
+Outputting the 
+Tightening Result to 
+Feeder 
+If you have set a DO function as “Tightening Result Sent to 
+Feeder”, after the tightening task is complete, the system does 
+not send the DO signal to the feeder for feeding the next screw 
+until this delay time has elapsed. 
+
+--- PAGE 65 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-6 
+5 
+Item Function description 
+Advanced 
+Setting 
+Tool Accuracy 
+Compensation 
+Calibrate the tool torque with 
+a third-party calibration 
+device. This function is the 
+same as the Tool Calibration 
+in Section 10.4, except that it 
+only calibrates the parameter 
+being set at present. 
+ 
+Start Torque Rate for 
+Snug Angle 
+Calculation 
+When the set torque rate is reached, the system starts recording 
+the rotation angle of the tool from this time point until the end of 
+the final tightening. 
+Start Torque for 
+Switching the Curve 
+Sampling Rate 
+The curve sampling rate changes by referring to this torque 
+value. When the tightening torque reaches this value, the 
+sampling rate changes from 10 ms to 4 ms. 
+Angle Interval for 
+Torque Rate 
+Calculation 
+Torque rate is a curve described by the calculation of dividing the 
+unit torque by the unit angle. Adjusting this interval can filter out 
+the power surge during operation, but when the setting is too 
+high, the curve is more likely to become distorted. 
+Start Torque for 
+Tightening Angle 
+Calculation 
+If the tool start torque > 0 and reaches this setting value, the 
+rotation angle of the tool from this time point until the end of the 
+final tightening is recorded as the tightening angle. If the tool start 
+torque = 0, the rotation angle in the final stage is recorded as the 
+tightening angle. 
+Auto search for Snug 
+point 
+In Torque mode, you can set this function to On for calculating 
+the snug point torque after the tightening process is complete. 
+Snug Point Angle 
+Correction 
+Correct the angle by which the system determines the snug point 
+is reached. For example, if the angle determined by the system is 
+100° and you set the Snug Point Angle Correction to 10°, then 
+the angle is corrected to 90° (= 100° - 10°). 
+Detection Level for 
+Target Torque Rate 
+Reached 
+Setting this function can avoid misjudgment of reaching the 
+target torque rate caused by bit camming-out and can effectively 
+filter out the temporary surge in the torque rate during operation. 
+Cam-Out Detection This function is Off by default. When this function is On, the 
+following four functions can be set. 
+Start Torque for 
+Cam-Out Detection 
+Set the torque at which the system starts to detect for cam-out. 
+The default setting is 5% of the tool’s maximum torque 
+specification. 
+Trigger Torque for 
+Recording Cam-Out 
+Angle 
+When the tool torque is lower than this setting, the system starts 
+recording the accumulated rotation angle. Once the tool torque is 
+higher than this setting, the record is reset to 0. 
+Upper Limit for 
+Cam-Out Angle 
+Set the upper limit for the rotation angle. Once the accumulated 
+rotation angle exceeds this setting, it means the cam-out count 
+increments by 1. 
+Tolerance for Cam-Out Set the tolerance count for cam-out. Once the setting is 
+exceeded, an alarm is triggered. 
+Tool Perpendicularity 
+Detection 
+This function is Off by default. When this function is On, the 
+following two functions can be set. 
+Allowable error of tool 
+perpendicularity 
+Set the perpendicularity tolerance zone. If the perpendicularity 
+error exceeds this setting, an alarm is triggered. 
+Tool perpendicularity 
+offset 
+Calibrate the perpendicularity deviation at system start-up, and 
+then the perpendicularity detection is started from this angle. 
+  
+
+--- PAGE 66 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-7 
+5 
+5.3.2  Tightening Settings 
+5.3.2.1  Standard strategy 
+When you set the tightening strategy as Standard, the Tightening Settings tab contains four 
+stages: Start, Rundown, Pre-tightening, and Tightening. 
+A. Start: drive in the screw at low speed to make sure it aligns with the screw hole. 
+  
+Item Function description 
+Angle 
+After the set angle is reached, the system switches to the 
+Rundown stage. The recommended angle is 90° to 360°. 
+(0: skip the Start stage and switch to the Rundown stage). 
+Speed The speed should not be set too high; the recommended speed 
+is 80 rpm. 
+Max. Torque* Set the upper and lower limits 
+for the torque of this stage. You 
+can turn this function on or off. 
+For checking whether the 
+screw is already tightened. 
+Min. Torque* For identifying whether the 
+tool is successfully started. 
+Advanced 
+Setting 
+Max. Operation Time Set the upper and lower limits for the operation time of this 
+stage. You can turn this function on or off. Min. Operation Time 
+Acceleration Time Adjust the acceleration time for this stage. 
+Deceleration Time Adjust the deceleration time for this stage. 
+Synchronization 
+through DI7/DO7 signal 
+For synchronization with tool(s) of the other controller. When 
+this function is On, the functions of DI7 and DO7 signals are 
+force switched to “tool synchronization” and waits for triggering. 
+Meanwhile, the system sends out the DO7 signal to inform the 
+other controller that it can continue operating. 
+Wait for another tool to 
+complete before 
+continuing operation 
+For tool synchronization operation by a dual-tool controller. 
+When this function is On, the current tool will wait after finishing 
+its operation at this stage until another tool has finished. 
+Not included in the total 
+angle calc. 
+When this function is On, the rotation angle at this stage does 
+not count in the total angle. 
+Note: the torque values set for this stage cannot exceed the torque values set in the Tightening stage. 
+
+--- PAGE 67 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-8 
+5 
+B. Rundown: drive in the screw at high speed. 
+  
+Determine if the Rundown stage is complete by the set Angle, Torque, or Torque Rate. 
+Item Function description 
+Angle 
+After the set angle is reached, the system switches to the  
+Pre-tightening stage. For example, if the number of threads on the 
+screw is 10, the rundown angle must be smaller than 3600°; the 
+recommended angle is around 2880°, so some margin is kept for 
+the Pre-tightening and Tightening stages. 
+Torque* 
+After the set torque is reached, the system switches to the  
+Pre-tightening stage. The recommended torque is 25% of the target 
+torque. 
+Torque Rate 
+After the set torque rate is reached, the system switches to the 
+Pre-tightening stage.  
+Torque rate is a curve described by the calculation of dividing the 
+unit torque by the unit angle, often used to observe the drastic 
+torque changes during the tightening process. You can refer to the 
+torque rate curve to find when snug point is reached and then set 
+the torque rate as the threshold. 
+Speed 
+It is recommended that you set the speed lower than the 
+maximum speed of the tool specification; the default value is 70% 
+of the tool max. speed. 
+Max. Torque* Set the upper and lower 
+limits of the torque for this 
+stage. You can turn this 
+function on or off. 
+When there are foreign objects or 
+burrs in the screw holes, the friction 
+increases and leads to excessive 
+torque. Limit the maximum torque by 
+setting the Max. Torque. Min. Torque* 
+Max. Angle Set the upper and lower limits of the angle for this stage. You can 
+turn this function on or off. Min. Angle 
+
+--- PAGE 68 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-9 
+5 
+Item Function description 
+Advanced 
+Setting 
+Max. Operation Time Set the upper and lower limits of the operation time for this stage. 
+You can turn this function on or off. Min. Operation Time 
+Acceleration Time Adjust the acceleration time for this stage. 
+Deceleration Time Adjust the deceleration time for this stage. 
+Synchronization 
+through DI7/DO7 
+signal 
+For synchronization with tool(s) of the other controller. When this 
+function is On, the functions of DI7 and DO7 signals are force 
+switched to “tool synchronization” and waits for triggering. 
+Meanwhile, the system sends out the DO7 signal to inform the 
+other controller that it can continue operating. 
+Wait for another tool 
+to complete before 
+continuing operation 
+For tool synchronization operation by a dual-tool controller. When 
+this function is On, the current tool will wait after finishing its 
+operation at this stage until another tool has finished. 
+Not included in the 
+total angle calc. 
+When this function is On, the rotation angle at this stage does not 
+count in the total angle. 
+Note: the torque values set in this stage cannot exceed the torque values set in the Tightening stage, 
+otherwise an alarm occurs when you save the settings. 
+  
+--- PAGE 69 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-10 
+5 
+C. Pre-tightening: have the screw head sit flush with the object surface, and reach the 
+specified torque requirement. 
+  
+Determine if the Pre-tightening stage is complete by the set Torque or Torque Rate. 
+Item Function description 
+Torque*1 
+After the set torque is reached, the system switches to the 
+Tightening stage. The recommended torque is 80% of the target 
+torque. 
+Torque Rate 
+After the set torque rate is reached, the system switches to the 
+Tightening stage. 
+Torque rate is a curve described by the calculation of dividing the 
+unit torque by the unit angle, often used to observe the drastic 
+torque changes during the tightening process. You can refer to the 
+torque rate curve to find when snug point is reached and then set 
+the torque rate as the threshold. 
+Speed*2 
+In this stage, the screw head is tightened closer to the object 
+surface, so the speed should not be too high; the recommended 
+setting is < 200 rpm. 
+Max. Angle Set the upper and lower limits of the angle for this stage. You can 
+turn this function on or off. Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time Set the upper and lower limits of the operation time for this stage. 
+You can turn this function on or off. Min. Operation Time 
+Pause Time After the set torque or torque rate is reached, the tool stops for a 
+period of time to release stress. The recommended setting is 50 ms. 
+Acceleration Time Adjust the acceleration time for this stage. 
+Deceleration Time Adjust the deceleration time for this stage. 
+Ergo Stop Enabling this function reduces the discomfort caused by stress 
+released during tool operation. 
+
+--- PAGE 70 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-11 
+5 
+Item Function description 
+Advanced 
+Setting 
+Synchronization 
+through DI7/DO7 
+signal 
+For synchronization with tool(s) of the other controller. When this 
+function is On, the functions of DI7 and DO7 signals are force 
+switched to “tool synchronization” and waits for triggering. 
+Meanwhile, the system sends out the DO7 signal to inform the 
+other controller that it can continue operating. 
+Wait for another tool 
+to complete before 
+continuing operation 
+For tool synchronization operation by a dual-tool controller. When 
+this function is On, the current tool will wait after finishing its 
+operation at this stage until another tool has finished. 
+Not included in the 
+total angle calc. 
+When this function is On, the rotation angle at this stage does not 
+count in the total angle. 
+Note:  
+1. The torque value set in this stage cannot exceed the torque value set in the Tightening stage, 
+otherwise an alarm occurs when you save the settings. 
+2. The speed set for this stage cannot exceed the speed set in the Tightening stage. 
+ 
+  
+--- PAGE 71 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-12 
+5 
+D. Tightening: tighten the screw at a low speed to achieve the final tightening results. 
+  
+Determine if the Tightening stage is complete by the set Angle, Torque, Clamp Torque, or Clamp 
+Angle. 
+Item Function description 
+Angle After the set angle is reached, the Tightening operation ends. 
+Torque After the set torque is reached, the Tightening operation ends. 
+Clamp Torque 
+Set a relative torque, and after the torque value is reached, the 
+Tightening operation ends. 
+ When the Rundown stage is in Torque Rate control: 
+Relative torque = (Final torque) - (Torque when snug point is 
+reached) 
+ When the Rundown stage is not in Torque Rate control: 
+Relative torque = (Final torque) - (Pre-tightening torque) 
+Clamp Angle 
+Set a relative angle, and after the angle value is reached, the Tightening 
+operation ends. 
+ When the Rundown stage is in Torque Rate control: 
+Relative angle = (Final tightening angle) - (Angle when snug point is 
+reached) 
+ When the Rundown stage is not in Torque Rate control: 
+Relative angle = (Final tightening angle) - (Angle when  
+Pre-tightening is complete) 
+Speed 
+During the Tightening stage, do not set the speed too high so as to 
+avoid object surface damage caused by excessive tightening speed. 
+The default setting is 100 rpm. 
+Max. Torque Set the upper and lower 
+limits of the torque for this 
+stage. 
+For checking whether the tightening 
+results meet the product specification. Min. Torque 
+Max. Angle Set the upper and lower 
+limits of the angle for this 
+stage. You can turn this 
+function on or off. 
+The Max. angle is for monitoring the final 
+torque to determine whether the 
+tightening results meet the product 
+specification. The final tightening angle is 
+different according to the hardness of the 
+object material. The softer the material, 
+the larger the angle. 
+Min. Angle 
+
+--- PAGE 72 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-13 
+5 
+Item Function description 
+Advanced 
+Setting 
+Max. Operation 
+Time 
+Set the upper and lower 
+limits of the operation time 
+for this stage. You can turn 
+this function on or off. 
+The Min. Operation Time is for checking 
+whether the actual operation time is too 
+short and determining whether there is 
+an under-driven screw. 
+Min. Operation 
+Time 
+Hold Time 
+Set the duration of keeping the Servo ON state after the tightening 
+process is complete to enhance the tightening effect. The default value 
+is 0 ms. You can turn this function on or off. 
+Acceleration 
+Time Adjust the acceleration time for this stage. 
+Deceleration 
+Time Adjust the deceleration time for this stage. 
+Max. Clamp 
+Torque Set the upper and lower limits of the torque for the duration from the time 
+when snug point is reached to the Tightening stage. You can turn this 
+function on or off. Min. Clamp 
+Torque 
+Max. Clamp 
+Angle Set the upper and lower limits of the angle for the duration from the time 
+when snug point is reached to the Tightening stage. You can turn this 
+function on or off. 
+Min. Clamp 
+Angle 
+Two-stage 
+mode 
+Further divide this stage into two stages. You can turn this function on or 
+off. 
+Torque of 1st Stage Torque of the 1st stage. The default is 0.8 
+times of the target torque. 
+Pause Time after 1st Stage The pause before entering the 2nd stage 
+from the 1st stage. The default is 0 ms. 
+Acc. Time of 2nd Stage The acceleration time of the 2nd stage. 
+The default is 1000 ms. 
+Speed of 2nd Stage The rotation speed of the 2nd stage. The 
+default is 100 rpm. 
+Ergo Stop Enabling this function reduces the discomfort caused by stress released 
+during tool operation. 
+Synchronization 
+through 
+DI7/DO7 signal 
+For synchronization with tool(s) of the other controller. When this 
+function is On, the functions of DI7 and DO7 signals are force switched 
+to “tool synchronization” and waits for triggering. Meanwhile, the system 
+sends out the DO7 signal to inform the other controller that it can 
+continue operating. 
+Wait for another 
+tool to complete 
+before continuing 
+operation 
+For tool synchronization operation by a dual-tool controller. When this 
+function is On, the current tool will wait after finishing its operation at this 
+stage until another tool has finished. 
+Not included in 
+the total angle 
+calc. 
+When this function is On, the rotation angle at this stage does not count 
+in the total angle. 
+ 
+  
+--- PAGE 73 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-14 
+5 
+5.3.2.2  Enhanced strategy 
+When you set the tightening strategy as Enhanced, the Tightening Settings tab only contains 
+the Tightening stage. 
+  
+Determine whether the Tightening is complete by the set Angle or Torque. 
+Item Function description 
+Angle After the set angle is reached, the Tightening operation ends. 
+Torque After the set torque is reached, the Tightening operation ends. 
+Speed This strategy is for further tightening the screw, so the speed 
+should not be too high. The default speed is 100 rpm. 
+Max. Torque 
+Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Hold Time 
+Acceleration Time 
+Deceleration Time 
+Two-stage mode 
+Torque of 1st Stage 
+Refer to Section 5.3.2.1 for the 
+Tightening stage under Standard 
+strategy. 
+Pause Time after 1st Stage 
+Acc. Time of 2nd Stage 
+Speed of 2nd Stage 
+Ergo Stop 
+Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Not included in the 
+total angle calc. 
+ 
+
+--- PAGE 74 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-15 
+5 
+5.3.2.3  Pre-position strategy 
+When you set the tightening strategy as Pre-position, the Tightening Settings tab contains two 
+stages: Start and Rundown. 
+A. Start 
+  
+Item Function description 
+Angle 
+After the set angle is reached, the system switches to the 
+Rundown stage. The recommended setting is 90° to 360°. 
+(0: skip the Start stage and switch to the Rundown stage) 
+Speed The speed should not be set too high; the recommended setting 
+is < 80 rpm. 
+Max. Torque 
+Refer to Section 5.3.2.1 for the Start stage under Standard 
+strategy. 
+Min. Torque 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Acceleration Time 
+Deceleration Time 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Not included in the 
+total angle calc. 
+  
+
+--- PAGE 75 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-16 
+5 
+B. Rundown 
+  
+Determine whether the Rundown stage is complete by the set Angle, Torque, or Torque Rate. 
+Item Function description 
+Angle After the set angle is reached, the Rundown operation ends. 
+Torque After the set torque is reached, the Rundown operation ends. 
+Torque Rate After the set torque rate is reached, the Rundown operation 
+ends. 
+Speed 
+It is recommended that you set the speed lower than the 
+maximum speed of the tool specification. The recommended 
+setting is 70% of the tool max. speed. 
+Max. Torque 
+Refer to Section 5.3.2.1 for the Rundown stage under Standard 
+strategy. 
+Min. Torque 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Acceleration Time 
+Deceleration Time 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Not included in the 
+total angle calc. 
+  
+
+--- PAGE 76 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-17 
+5 
+5.3.2.4  Self-defined strategy 
+5.3.2.4.1  Synchronization  settings in tightening parameters 
+Using the functions of “Synchronization through DI7/DO7 signal” and “Wait for another tool to 
+complete before continuing operation” to perform synchronous tightening operations using two 
+controllers. The descriptions are as follows. 
+1. Create the same tightening parameters: use the Self-defined strategy and set the following 
+four stages; each stage is available for setting the synchronization. 
+Stage 
+Strategy Stage 1 Stage 2 Stage 3 Stage 4 
+Self-defined 
+Angle Control 
+(synchronization 
+setting is available) 
+Angle Control 
+(synchronization 
+setting is available) 
+Torque Rate Control 
+(synchronization 
+setting is available) 
+Torque Control 
+(synchronization 
+setting is available) 
+2. Set the operating mode of the system to “Single tool” in the Sources page, and then call the 
+tightening parameter set in Step 1. 
+3. In the DI/DO tab of the Controller page, set the function of DO7 to “Tighten to waiting 
+stage” and the function of DI7 to “Wait for external signal before continuing tighten”. 
+The following describes the synchronization settings for different application scenarios:  
+Scenario 
+Dual-tool synchronization 
+(one dual-tool controller and two 
+tools) 
+Dual-tool synchronization 
+(two single-tool controllers, each 
+with one tool) 
+Four-tool synchronization 
+(two dual-tool controllers, each 
+with two tools) 
+Function 
+Wait for another 
+tool to complete 
+before continuing 
+operation 
+Synchronization 
+through DI7/DO7 
+signal 
+Wait for another 
+tool to complete 
+before continuing 
+operation 
+Synchronization 
+through DI7/DO7 
+signal 
+Wait for another 
+tool to complete 
+before continuing 
+operation 
+Synchronization 
+through DI7/DO7 
+signal 
+Controller A 
+Tool 1 
+On Off N/A 
+On; connect DO7 
+of Controller A to 
+DI7 of Controller 
+B 
+On 
+On; connect DO7 
+of Controller A to 
+DI7 of Controller 
+B 
+Tool 2 
+On Off - - On Off 
+Controller B 
+Tool 1 
+- - N/A 
+On; connect DO7 
+of Controller B to 
+DI7 of Controller 
+A 
+On 
+On; connect DO7 
+of Controller B to 
+DI7 of Controller 
+A 
+Tool 2 
+- - - - On Off 
+ 
+ 
+  
+--- PAGE 77 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-18 
+5 
+5.3.2.4.2  Control method s descriptions 
+When you set the tightening strategy as Self-defined, up to six stages can be set in the 
+Tightening Settings tab. You can specify the tool rotation direction and control method for each 
+stage. The control methods are detailed as follows. 
+A. Angle Control: when tightening, the tool stops after the specified angle is reached. 
+  
+Item Function description 
+Angle After the set angle is reached, the operation for this stage ends. 
+Speed Set the operation speed of this stage. 
+Max. Torque Set the upper and lower limits for the torque of this stage. You 
+can turn this function on or off. Min. Torque 
+Max. Angle Set the upper and lower limits for the angle of this stage. You 
+can turn this function on or off. Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time Set the upper and lower limits for the operation time of this 
+stage. You can turn this function on or off. Min. Operation Time 
+Pause Time 
+Set the tool pause time after the set angle is reached. After the 
+operation for this stage ends, the system does not enter the next 
+stage until the pause time has elapsed. (0: disable the function) 
+ Release torque during pause: if this function is On during 
+the pause time, the torque is released. 
+ 
+Acceleration Time Adjust the acceleration time of this stage. 
+Deceleration Time Adjust the deceleration time of this stage. 
+
+--- PAGE 78 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-19 
+5 
+Item Function description 
+Advanced 
+Setting 
+Angle Range for 
+Prevail Torque 
+Calculation 
+Set the angle range for which you want to calculate the average 
+torque. 
+For example, if the total rotation angle in this stage is 1000°, and 
+the Angle Range for Prevail Torque Calculation is set as 70%, 
+then the average torque of the last 700° in this stage is 
+automatically calculated during the tightening process. 
+Ergo Stop Enabling this function reduces the discomfort caused by stress 
+released during tool operation. 
+Synchronization through 
+DI7/DO7 signal 
+For synchronization with tool(s) of the other controller. When this 
+function is On, the functions of DI7 and DO7 signals are force 
+switched to “tool synchronization” and waits for triggering. 
+Meanwhile, the system sends out the DO7 signal to inform the 
+other controller that it can continue operating. 
+Wait for another tool 
+to complete before 
+continuing operation 
+For tool synchronization operation by a dual-tool controller. 
+When this function is On, the current tool will wait after finishing 
+its operation at this stage until another tool has finished. 
+Max. Switching Torque Set the upper and lower limits for the ending torque of this stage. 
+You can turn this function on or off. Min. Switching Torque 
+Not included in the 
+total angle calc. 
+When this function is On, the rotation angle at this stage does 
+not count in the total angle. 
+  
+--- PAGE 79 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-20 
+5 
+B. Torque Control: when tightening, the tool stops after the specified torque is reached. 
+  
+Item Function description 
+Torque After the set torque is reached, the operation for this stage ends. 
+Speed Set the operation speed of this stage. 
+Max. Torque 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Hold Time Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Pause Time After the set torque is reached, the tool stops for a period of time 
+to release stress. 
+Acceleration Time Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. Deceleration Time 
+Link to Prevail Torque 
+Link to the prevail torque saved in different tightening 
+parameters to compensate the final torque in this stage. You can 
+turn this function on or off. 
+Max. Clamp Torque 
+Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Min. Clamp Torque 
+Max. Clamp Angle 
+Min. Clamp Angle 
+Two-stage mode 
+Torque of 1st Stage 
+Refer to Section 5.3.2.1 for the 
+Tightening stage under 
+Standard strategy. 
+Pause Time after 1st Stage 
+Acc. Time of 2nd Stage 
+Speed of 2nd Stage 
+
+--- PAGE 80 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-21 
+5 
+Item Function description 
+Advanced 
+Setting 
+Ergo Stop 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-defined 
+strategy. 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Max. Switching Torque 
+Min. Switching Torque 
+Not included in the 
+total angle calc. 
+  
+--- PAGE 81 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-22 
+5 
+C. Torque Rate Control: when tightening, the tool stops after the specified torque rate is 
+reached. 
+  
+Item Function description 
+Torque Rate After the set torque rate is reached, the operation for this stage 
+ends. 
+Speed Set the operation speed of this stage. 
+Max. Torque 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Pause Time After the set torque rate is reached, the tool stops for a period of 
+time to release stress. 
+Acceleration Time 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Deceleration Time 
+Ergo Stop 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Max. Switching Torque 
+Min. Switching Torque 
+Not included in the 
+total angle calc. 
+  
+
+--- PAGE 82 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-23 
+5 
+D. Clamp Torque Control: when tightening, the tool stops after the relative torque is reached. 
+  
+Item Function description 
+Clamp Torque 
+Set a relative torque, and after the torque value is reached, the 
+operation for this stage ends. 
+ When the previous stage is in Torque Rate Control: 
+Relative torque = (Final torque) - (Torque when snug point is 
+reached) 
+ When the previous stage is not in Torque Rate Control: 
+Relative torque = (Final torque) - (Torque of the previous 
+stage) 
+ If this is the first stage, set the Clamp Torque to the target 
+torque, which must not exceed the Max. Torque of this stage. 
+Speed Set the operation speed of this stage. 
+Max. Torque 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Hold Time Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Pause Time Refer to Section 5.3.2.4.2 for the Angle Control under Self-defined 
+strategy. 
+Acceleration Time 
+Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Deceleration Time 
+Max. Clamp Torque 
+Min. Clamp Torque 
+Max. Clamp Angle 
+Min. Clamp Angle 
+
+--- PAGE 83 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-24 
+5 
+Item Function description 
+Advanced 
+Setting 
+Two-stage mode 
+Torque of 1st Stage 
+Refer to Section 5.3.2.1 for the 
+Tightening stage under 
+Standard strategy. 
+Pause Time after 1st Stage 
+Acc. Time of 2nd Stage 
+Speed of 2nd Stage 
+Ergo Stop 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-defined 
+strategy. 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Max. Switching Torque 
+Min. Switching Torque 
+Not included in the 
+total angle calc. 
+ 
+  
+--- PAGE 84 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-25 
+5 
+E. Clamp Angle Control: when tightening, the tool stops after the relative angle is reached. 
+  
+Item Function description 
+Clamp Angle 
+Set a relative angle, and after the angle value is reached, the 
+operation for this stage ends. 
+ When the previous stage is in Torque Rate Control: 
+Relative angle = (Final tightening angle) - (Angle when snug 
+point is reached) 
+ When the previous stage is not in Torque Rate Control: 
+Relative angle = (Final tightening angle) - (Angle of the 
+previous stage) 
+ If this is the first stage, set the Clamp Angle to the target 
+angle, which must not exceed the Max. Angle of this stage. 
+Speed Set the operation speed of this stage. 
+Max. Torque 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Pause Time 
+Acceleration Time 
+Deceleration Time 
+Max. Clamp Torque 
+Refer to Section 5.3.2.1 for the Tightening stage under Standard 
+strategy. 
+Min. Clamp Torque 
+Max. Clamp Angle 
+Min. Clamp Angle 
+
+--- PAGE 85 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-26 
+5 
+Item Function description 
+Advanced 
+Setting 
+Ergo Stop 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-defined 
+strategy. 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Max. Switching Torque 
+Min. Switching Torque 
+Not included in the 
+total angle calc. 
+--- PAGE 86 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-27 
+5 
+F. Yield point control: when tightening, the tool stops after reaching the specified yield point. 
+  
+Item Function description 
+Yield point The tool stops the operation of this stage after reaching the 
+maximum torque rate (%) set in this field. 
+Start Torque for Yield point detection Set the start torque at which the yield point is being detected. 
+Speed Set the operation speed of this stage. 
+Max. Torque 
+Refer to Section 5.3.2.4.2 for the Angle Control under Self-
+defined strategy. 
+Min. Torque 
+Max. Angle 
+Min. Angle 
+Advanced 
+Setting 
+Max. Operation Time 
+Min. Operation Time 
+Pause Time 
+Acceleration Time 
+Deceleration Time 
+Ergo Stop 
+Synchronization through 
+DI7/DO7 signal 
+Wait for another tool 
+to complete before 
+continuing operation 
+Max. Switching Torque 
+Min. Switching Torque 
+Not included in the 
+total angle calc. 
+  
+
+--- PAGE 87 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-28 
+5 
+5.3.3  Loosening settings 
+The screen of the Loosening Settings tab is nearly the same for all tightening strategies, 
+except for the exclusive “CW/CCW” option in the Self-defined strategy and the curve graphs. In 
+this tab, you can set the loosening parameters of two stages. 
+This section takes the Loosening Settings screen of Self-defined strategy as an example. 
+   
+Item Function description 
+CW / CCW You can select the rotation direction in the Loosening stage under Self-
+defined strategy. 
+1st Stage 
+Angle 
+After the set angle is reached, the system switches to the second stage. 
+The angle set for this stage must be sufficient for the screwdriver to remove 
+the screw properly. 
+Speed The torque in the 1st stage is higher than that in the 2nd Stage, so the speed 
+should not be set too high. The default speed is 100 rpm. 
+2nd Stage 
+Angle 
+Set a fixed reverse angle, and the loosening operation automatically stops 
+when the set angle is reached. 
+Note: the system regards that the loosening operation has ended when the set angle 
+is reached or the servo screwdriver is withdrawn during the loosening process. 
+Speed 
+This can be set higher than the speed of the 1st stage, but should not 
+exceed the max. speed for the tool. The default value is 70% of the tool 
+max. speed. 
+Save the Production 
+Report 
+Save the result of loosening operation, which can be checked in the 
+Reports page. 
+Min. Torque 
+Set the lower limit of the torque for 
+this stage. You can turn this 
+function on or off. 
+For identifying whether the screw is 
+properly loosened. When the actual 
+torque is lower than this torque 
+setting, it triggers an alarm. 
+Advanced 
+Setting 
+1st. Acc. time Adjust the 1st acceleration time. 
+2nd. Acc. time Adjust the 2nd acceleration time. 
+Homing Mode When this function is On, the tool returns to the original angle at system 
+start-up. 
+  
+
+--- PAGE 88 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-29 
+5 
+5.4  Saving a tightening parameter 
+The Save button is available in the following situations: 
+1. After creating a tightening parameter and completing the settings. 
+2. After modifying an existing tightening parameter. 
+3. If you have edited a running tightening parameter and then you click Save, the Results 
+page refreshes the tightening parameter contents. 
+5.5  Copying / pasting a tightening parameter 
+The system provides the Copy ( ) and Paste ( ) functions for editing the tightening 
+parameters more efficiently. The following example illustrates the operation steps. 
+1. Click the  button to the right of the parameter title to enter the parameter editing screen, 
+and then click  to copy the contents of the tightening parameter. 
+  
+ 
+  
+
+--- PAGE 89 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-30 
+5 
+2. Click  to return to the parameter list, and then click  to create a new tightening 
+parameter. 
+  
+3. Enter the editing screen of the newly created parameter. Click  to paste the copied 
+contents, and the screen displays a window showing pasting successful. 
+  
+  
+
+--- PAGE 90 ---
+SD3 Series Controller (10.1-inch)                                  Parameters (Tightening parameters) 
+5-31 
+5 
+5.6  Deleting a tightening parameter 
+In the parameter list, click the radio button to the left of the parameter, click , and then click 
+Confirm in the confirmation window to delete the parameter. 
+  
+  
+
+--- PAGE 91 ---
+Parameters (Tightening parameters)                                  SD3 Series Controller (10.1-inch) 
+5-32 
+5 
+5.7  Exporting / importing a tightening parameter 
+You can use a USB flash drive or the HMI Disk with the export ( ) and import ( ) functions 
+for data backup and management. 
+ 
+ 
+
+
+============================================================
+CH06_Sequence pages 92-103
+============================================================
+
+--- PAGE 92 ---
+6-1 
+Sequence 
+(Tightening sequence) 
+ 
+This chapter introduces the Sequence page of the smart screwdriving controller. You 
+can create the screw tightening sequences for different tightening requirements, and 
+export data to / import data from the USB flash drive or HMI Disk. 
+                                                                              
+6.1  Sequence page overview  ···································································· 6-2 
+6.2  Creating a tightening sequence  ···························································· 6-4 
+6.3  Saving a tightening sequence  ······························································ 6-8 
+6.4  Copying / pasting a tightening sequence  ················································ 6-9 
+6.5  Deleting a tightening sequence ···························································· 6-11 
+6.6  Exporting / importing a tightening sequence  ·········································· 6-12 
+ 
+  
+6 
+--- PAGE 93 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-2 
+6 
+6.1  Sequence page overview 
+ 
+You can create and configure the tightening sequences in the Sequence page. Up to 500 sets 
+of tightening sequences can be created; each set can store a maximum of 100 tightening 
+parameters. 
+  
+
+--- PAGE 94 ---
+SD3 Series Controller (10.1-inch)                                     Sequence (Tightening sequence) 
+6-3 
+6 
+The Sequence page displays the ID, Mode, and Sequence Title fields, and the content of the 
+Mode field indicates the combination of tool parameters in the tightening sequence. 
+ Tool 1: the tightening sequence simply includes the tightening parameters of Tool 1. 
+ Tool 2: the tightening sequence simply includes the tightening parameters of Tool 2. 
+ Mix: the tightening sequence includes the tightening parameters of both Tool 1 and Tool 2. 
+The example of screw tightening with a tightening sequence is as follows: 
+  
+ 
+x 41 2
+3
+4
+5 67
+8
+M5-Standard 1.5 Nm
+M4-Enhanced 2.0 Nm
+x 2
+x 2
+M4-Pre-position 360 degrees
+ 
+  
+
+--- PAGE 95 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-4 
+6 
+6.2  Creating a tightening sequence 
+Each tightening sequence can configure a maximum of 100 sets of tightening parameters. 
+Steps for creating a tightening sequence are detailed as follows: 
+1. Click , input the title of the tightening sequence, and then click Confirm. 
+ 
+ 
+  
+
+--- PAGE 96 ---
+SD3 Series Controller (10.1-inch)                                     Sequence (Tightening sequence) 
+6-5 
+6 
+2. After entering the tightening sequence configuration screen, click  to show the list of all 
+tightening parameters. Click the desired parameter to add it to the configuration screen. 
+ 
+  
+  
+
+--- PAGE 97 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-6 
+6 
+3. Set the fields of Qty. (the number of times to execute this parameter) and Bit ID (the 
+corresponding bit ID number, 0: no corresponding bit) for each tightening parameter. 
+ 
+1
+9
+M5
+M4
+ 
+4. Go to the Navigator tab. This optional function supports PNG or JPG image files with the 
+size no more than 1 MB. One tightening sequence can store up to 30 image files, and the 
+maximum number of Screw ID is 100. 
+Click  to open the Preview Picture window. Then, select an image from the USB flash 
+drive or the HMI internal memory (need to load images to the HMI through FTP in advance) 
+by clicking USB Disk or HMI Disk. And then, click  to save the image. If the available 
+space is smaller than the image file size, the image cannot be saved. 
+  
+
+--- PAGE 98 ---
+SD3 Series Controller (10.1-inch)                                     Sequence (Tightening sequence) 
+6-7 
+6 
+5. Directly enter a screw ID or click  or  to specify a screw, and then drag the screw ID 
+to the desired positions on the image. 
+6. Switch on the Positioning arm function. Use this optional function together with the 
+positioning arm setting under Controller > Peripheral Device > RS485_1 to set the 
+coordinate tolerance of the positioning arm for the current screw (You can also directly enter 
+a screw ID or click  or  to specify a screw). For the current screw, clicking  saves 
+the coordinates of positioning arm; clicking  clears the coordinates of positioning arm. 
+Click  to view the XYZ coordinates of positioning arm for all screws. Refer to Appendix 
+C for detailed description of positioning arm settings. 
+7. Click Save to save the settings. 
+   
+ 
+  
+
+--- PAGE 99 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-8 
+6 
+6.3  Saving a tightening sequence 
+The Save button in the tightening sequence configuration screen is available in the following 
+situations: 
+ After creating a tightening sequence and completing the settings. 
+ After modifying an existing tightening sequence. 
+ If you have edited a running tightening sequence and then you click Save, the Results 
+page refreshes the tightening sequence contents and resets the total screw quantity, 
+parameter quantity, and screw quantity of the parameter. 
+ 
+ 
+ 
+  
+
+--- PAGE 100 ---
+SD3 Series Controller (10.1-inch)                                     Sequence (Tightening sequence) 
+6-9 
+6 
+6.4  Copying / pasting a tightening sequence 
+The system provides the Copy ( ) and Paste ( ) functions for editing the tightening 
+sequences more efficiently. The following illustrates the operation steps. 
+1. Click the  button to the right of the sequence title. 
+ 
+2. Click  to copy the contents of the selected tightening sequence. 
+ 
+
+--- PAGE 101 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-10 
+6 
+3. Click  to return to the list of tightening sequences, and then click  to create a new 
+tightening sequence and input a sequence title. 
+  
+4. Click the  button to the right of the newly created tightening sequence. Then, click  
+to paste the copied contents in the configuration screen of the new sequence, and then 
+click Save. Now, the copied sequence is shown in the list of tightening sequences. 
+  
+  
+
+--- PAGE 102 ---
+SD3 Series Controller (10.1-inch)                                     Sequence (Tightening sequence) 
+6-11 
+6 
+6.5  Deleting a tightening sequence 
+ To delete a single parameter in the tightening sequence, click the  button to the left of 
+the specific parameter. 
+  
+ To delete the entire set of tightening sequence, click the radio button on the left, click , 
+and then click Confirm in the confirmation window. 
+  
+
+--- PAGE 103 ---
+Sequence (Tightening sequence)                                     S D3 Series Controller (10.1-inch) 
+6-12 
+6 
+6.6  Exporting / importing a tightening sequence 
+You can use the export ( ) and import ( ) functions with a USB flash drive or the HMI Disk 
+to create and manage the tightening sequence file backups. 
+ 
+ 
+
+
+============================================================
+CH07_Source pages 104-120
+============================================================
+
+--- PAGE 104 ---
+7-1 
+Sources 
+(Tightening source) 
+ 
+This chapter introduces the Sources page of the smart screwdriving controller. You can 
+specify the operating mode of the system, and choose the switching method, which 
+allows you to manually set or use the screw bit selector or the barcode scanner to call 
+the tightening source (tightening parameters or tightening sequence) for execution. 
+                                                                               
+7.1  Operating mode  ················································································· 7-2 
+7.2  Switching Method  ··············································································· 7-4 
+7.2.1  Manual (Manual setting)  ·································································  7-5 
+7.2.2  Screw Bit Selector ········································································· 7-7 
+7.2.3  Barcode Scanner  ·········································································· 7-8 
+7.3  Copying / pasting a tightening source  ······················································ 7-9 
+7.4  Deleting a tightening source ································································ 7-11 
+7.5  Exporting / importing a tightening source  ··············································· 7-12 
+  
+7 
+--- PAGE 105 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-2 
+7 
+7.1  Operating mode 
+ 
+In the Sources page, set the operating mode of the system to one of the following: 
+ Single-tool: set the tightening source for Tool 1 and Tool 2 separately. The two tools operate 
+independently. 
+  
+
+--- PAGE 106 ---
+SD3 Series Controller (10.1-inch)                                        Sources (Tightening source) 
+7-3 
+7 
+ Dual-tool Alternation: select the tightening sequence that includes tightening parameters of 
+both Tool 1 and Tool 2. The two tools operate alternately according to the configuration of 
+the sequence. 
+ 
+ Dual-tool Synchronization: select any of the tightening sources. Tool 1 and Tool 2 operate 
+synchronously according to the configuration of the tightening source. 
+ 
+  
+
+--- PAGE 107 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-4 
+7 
+7.2  Switching Method 
+In each operating mode, choose one of the following methods to switch the tightening source. 
+ Manual (Manual setting): manually specify the tightening source to be operated. 
+ Screw Bit Selector: pick up the screw bit to switch to the corresponding tightening source. 
+ Barcode Scanner: scan the barcode to switch to the corresponding tightening source. 
+ 
+  
+
+--- PAGE 108 ---
+SD3 Series Controller (10.1-inch)                                        Sources (Tightening source) 
+7-5 
+7 
+7.2.1  Manual (Manual setting) 
+When you set the Switching Method to Manual, the operation interface is as follows. 
+   
+Follow these steps: 
+1. Click the  button to the right of the Title field; select one tightening source at a time. 
+2. Set the operating conditions of the tightening source. Refer to the following table.  
+Item Description 
+Title 
+Select a tightening parameter. 
+ 
+Select a tightening sequence. 
+ 
+After a tightening source is set, the software automatically returns to the previous screen for you 
+to set the quantity, bit ID, and advanced setting. 
+Qty. Set the number of times to execute the 
+parameter. 
+Displays the total screw quantity required for 
+the tightening sequence. 
+Bit 
+ID 
+Set the corresponding bit ID number 
+(0: no corresponding bit). 
+Displays the corresponding bit ID number set 
+in the tightening sequence. 
+
+--- PAGE 109 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-6 
+7 
+Item Description 
+Set. 
+The advanced setting for the operating conditions. 
+  
+Item Description 
+Torque unit N.m, kgf.cm, lbf.ft, lbf.in, ozf.ft, ozf.in, cNm 
+Start condition Push Start, DI, Lever Start, Push Start or Lever Start, 
+Push Start and Lever Start, DI or Push Start, DI or Lever Start 
+Loosening prohibited after tightening OK Protection condition switch. 
+Loosening prohibited after tightening NOK Protection condition switch. 
+Max. count for single screw NOK tightening Protection condition switch with a maximum count setting. 
+Max. count for single screw NOK loosening Protection condition switch with a maximum count setting. 
+Go to next step after tightening NOK Function switch. 
+Go to previous step after loosening OK Function switch. 
+Prohibit tool operation when scanner string 
+is null Protection condition switch. 
+Clear scanner string when screw Qty. reached Function switch. 
+Prohibit scanning when screw Qty. not reached Function switch. 
+Max. Operation Time Protection condition switch with a maximum setting of the 
+total operation time (unit: second). 
+Reset Qty. when screw Qty. reached Function switch. 
+Enable reminder when tightening signal 
+ends too early Function switch. 
+Prohibit tool operation when scanner string 
+length mismatch 
+Protection condition switch with a maximum setting of the 
+string length. 
+ 
+  
+Torque unit Start condition 
+--- PAGE 110 ---
+SD3 Series Controller (10.1-inch)                                        Sources (Tightening source) 
+7-7 
+7 
+7.2.2  Screw Bit Selector 
+When you set the Switching Method to Screw Bit Selector, the operation interface is as 
+follows. 
+   
+Follow these steps: 
+1. Click  to specify a bit ID number. 
+2. Click the  button to the right of the Title field to select a corresponding tightening source. 
+3. Set the operating conditions of the tightening source. Refer to the following table.  
+4. After the settings are complete, when you pick up the bit from the screw bit selector, the 
+system automatically switches to the corresponding tightening source. 
+Note: the system switches the tightening source by referring to the Bit ID Output Table. Refer to Section 
+9.3 Peripheral Device. 
+Item Description 
+ID The bit ID number. 
+Title 
+Select a tightening parameter. 
+ 
+Select a tightening sequence. 
+ 
+Note: this window only shows the tightening 
+sequences that include parameters set with the 
+same bit ID. 
+After a tightening source is set, the software automatically returns to the previous screen for you to 
+set the quantity and advanced setting. 
+Qty. Set the number of screws required for the 
+operation. 
+Displays the total screw quantity required for the 
+tightening sequence. 
+Set. The advanced setting for the operating conditions. Refer to the description in Section 7.2.1. 
+ 
+  
+
+--- PAGE 111 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-8 
+7 
+7.2.3  Barcode Scanner 
+When you set the Switching Method to Barcode Scanner, the operation interface is as follows. 
+   
+Follow these steps: 
+1. Click  to add an ID, and then click the  button to the right of the Title field to select a 
+tightening source. 
+2. Set the operating conditions of the tightening source. Refer to the following table. 
+3. After completing the settings, use a scanner to scan the barcode. The system then compares 
+the string and switches to the corresponding tightening source. 
+Item Description 
+ID The sequential numbering of the tightening source in the list. 
+Barcode Set the barcode string corresponding to the tightening source. 
+Title 
+Select a tightening parameter. 
+ 
+Select a tightening sequence. 
+ 
+After a tightening source is set, the software automatically returns to the previous screen for 
+you to set the quantity, bit ID, and advanced setting. 
+Qty. Set the number of screws required for the 
+operation. 
+Displays the total screw quantity required for 
+the tightening sequence. 
+Bit ID Set the corresponding bit ID number 
+(0: no corresponding bit). 
+Displays the corresponding bit ID number set 
+in the tightening sequence. 
+Set. The advanced setting for the operating conditions. Refer to the description in Section 7.2.1. 
+  
+
+--- PAGE 112 ---
+SD3 Series Controller (10.1-inch)                                        Sources (Tightening source) 
+7-9 
+7 
+7.3  Copying / pasting a tightening source 
+The system provides the Copy ( ) and Paste ( ) functions for editing the tightening sources 
+more efficiently. The following examples illustrate the operation steps. 
+1. Click  to create a new ID (ID 2). 
+   
+2. Click the  of ID 1 to open the Advanced Setting window, and then click  to copy 
+the Title, Qty., and Advanced Setting contents of ID 1. 
+   
+  
+
+--- PAGE 113 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-10 
+7 
+3. Return to the Sources list, click the  of ID 2 to open the Advanced Setting window, and 
+then click  to paste the copied contents. 
+   
+4. Return to the Sources list, where you can see the copy and paste is complete. 
+ 
+  
+
+--- PAGE 114 ---
+SD3 Series Controller (10.1-inch)                                        Sources (Tightening source) 
+7-11 
+7 
+7.4  Deleting a tightening source 
+Click the  of a tightening source to open its Advanced Setting window, and then click  
+to delete the tightening source from the list. 
+   
+ 
+  
+
+--- PAGE 115 ---
+Sources (Tightening source)                                        SD3 Se ries Controller (10.1-inch) 
+7-12 
+7 
+7.5  Exporting / importing a tightening source 
+You can use the Export ( ) and Import ( ) functions with a USB flash drive or HMI Disk for 
+the tightening source data backup and management. 
+ 
+ 
+
+--- PAGE 116 ---
+                                                                                                             8-1 
+Results 
+ 
+This chapter introduces the Results page of the smart screwdriving controller. This 
+function provides information of the current tightening operation and the operating 
+curves. 
+                                                                    
+8.1  Operation results (Result)  ···································································· 8-2 
+8.2  Operating curve (Curve)  ······································································ 8-9 
+8.3  HDMI output  ··················································································· 8-10 
+8.4  VNC remote connection  ···································································· 8-10 
+ 
+  
+8 
+--- PAGE 117 ---
+Results                                                             SD3 Series Controller (10.1-inch) 
+8-2                                                                                     
+8 
+8.1  Operation results (Result) 
+  
+The Results page provides information of the current tightening operation. After each tightening 
+is completed, the screen shows information such as the screw tightening status, final torque, 
+and total angle, so that you can easily check the operation status. 
+  
+
+--- PAGE 118 ---
+SD3 Series Controller (10.1-inch)                                                             Results 
+                                                                                                       8-3 
+8 
+See the item descriptions of the Result tab in the following table. 
+ 
+Navigator function Off 
+ 
+Navigator function On 
+○2  
+ ○3  
+○1  
+○4  
+○7  
+○11  
+○8  
+ ○10  
+○9  
+○13  
+○14  
+○15  
+ ○16  
+○17  
+○18  
+○5  
+○6  
+○12  
+○8  
+○9  
+○10  
+○11  
+ 
+○12  
+ 
+○3  
+ ○15  
+ 
+○17  ○4  ○7  ○16  
+--- PAGE 119 ---
+Results                                                             SD3 Series Controller (10.1-inch) 
+8-4                                                                                     
+8 
+Item Name Description 
+1 Tool start 
+condition 
+Displays the start condition of the transducerized smart screwdriver. Click to 
+open the Advanced Setting window of the tightening source (shown as 
+follows), and then click the field marked with a red box to change the tool 
+start condition. 
+ 
+2 Switching 
+method Displays the switching method of the tightening source in operation. 
+3 Barcode 
+string Scan the barcode to show the string or manually input the string. 
+
+--- PAGE 120 ---
+SD3 Series Controller (10.1-inch)                                                             Results 
+                                                                                                       8-5 
+8 
+Item Name Description 
+4 
+Scanner 
+Advanced 
+Settings 
+ 
+ Positioning arm target coordinates (XYZ axes): if the positioning arm 
+function is enabled for the tightening sequence in execution, the target 
+coordinates of the positioning arm are displayed. 
+ Positioning arm current coordinates (XYZ axes): if the positioning arm 
+function is enabled for the tightening sequence in execution, the current 
+coordinates of the positioning arm are displayed. 
+ Tool Perpendicularity Detection: if the detection is enabled for the 
+tightening parameter in execution, the tool perpendicularity error (0° to 
+180°) is displayed. 
+ The Scanner String Position (char.) to be Saved: save the characters of 
+the specified positions in the scanner string and record the characters in 
+the reports. 
+ The Scanner String Position (char.) to be Matched: when the switching 
+method is Barcode Scanner, the system matches the characters of the 
+specified positions in the scanner string against the tightening source 
+strings. If finding a match, the system calls the corresponding parameter 
+or sequence. 
+For example, when the scanner string is SD3F30S0T23010001, if you set 
+The Scanner String Position (char.) to be Saved as 9 - 17 and The Scanner 
+String Position (char.) to be Matched as 1 - 8, the system matches 
+“SD3F30S0” against the tightening source strings and records “T23010001” 
+in the reports. 
+5 Sequence The tightening sequence in operation. Click the sequence title to directly link 
+to the editing window of the sequence. 
+6 Parameter The tightening parameter in operation. Click the parameter title to directly link 
+to the editing window of the parameter. 
+7 Target torque  
+or angle Displays the final target torque or target angle of the operation. 
+8 Previous 
+step Force to execute the parameter of the previous screw. 
+9 Progress 
+reset 
+Reset the total screw quantity, parameter quantity, and screw quantity of the 
+parameter. 
+10 Next step Force to execute the parameter of the next screw. 

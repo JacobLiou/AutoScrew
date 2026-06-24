@@ -51,4 +51,6 @@ public sealed class ControllerSourceConfigDocument
     public TighteningSourceModeCore Mode { get; set; } = new();
 
     public TighteningSourceContentCore Content { get; set; } = new();
+
+    public List<ControllerSourceBindingEntry> Bindings { get; set; } = [];
 }

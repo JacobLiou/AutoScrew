@@ -113,14 +113,14 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ControllerParameterViewModel>();
         builder.Services.AddSingleton<ControllerSequenceViewModel>();
         builder.Services.AddSingleton<ControllerSourceViewModel>();
+        builder.Services.AddSingleton<ControllerDeploymentViewModel>();
+        builder.Services.AddSingleton<ControllerWorkbenchViewModel>();
         builder.Services.AddSingleton<OperationNavPage>();
         builder.Services.AddSingleton<TemplateNavPage>();
         builder.Services.AddSingleton<SettingsPage>();
         builder.Services.AddSingleton<MesPage>();
         builder.Services.AddSingleton<LogsPage>();
-        builder.Services.AddSingleton<ControllerParameterPage>();
-        builder.Services.AddSingleton<ControllerSequencePage>();
-        builder.Services.AddSingleton<ControllerSourcePage>();
+        builder.Services.AddSingleton<ControllerWorkbenchPage>();
         builder.Services.AddSingleton<DeviceConnectionPage>();
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();

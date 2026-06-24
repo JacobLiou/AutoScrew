@@ -27,9 +27,7 @@ public enum MainAppSection
     Template,
     Mes,
     Logs,
-    ControllerParameters,
-    ControllerSequence,
-    ControllerSource,
+    ControllerWorkbench,
     DeviceConnection,
     Settings
 }
@@ -208,12 +206,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Mes;
         else if (pageType == typeof(LogsPage))
             SelectedSection = MainAppSection.Logs;
-        else if (pageType == typeof(ControllerParameterPage))
-            SelectedSection = MainAppSection.ControllerParameters;
-        else if (pageType == typeof(ControllerSequencePage))
-            SelectedSection = MainAppSection.ControllerSequence;
-        else if (pageType == typeof(ControllerSourcePage))
-            SelectedSection = MainAppSection.ControllerSource;
+        else if (pageType == typeof(ControllerWorkbenchPage))
+            SelectedSection = MainAppSection.ControllerWorkbench;
         else if (pageType == typeof(DeviceConnectionPage))
             SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
@@ -252,9 +246,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.Template => typeof(TemplateNavPage),
             MainAppSection.Mes => typeof(MesPage),
             MainAppSection.Logs => typeof(LogsPage),
-            MainAppSection.ControllerParameters => typeof(ControllerParameterPage),
-            MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
-            MainAppSection.ControllerSource => typeof(ControllerSourcePage),
+            MainAppSection.ControllerWorkbench => typeof(ControllerWorkbenchPage),
             MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
@@ -408,9 +400,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             or MainAppSection.Logs;
 
     private static bool IsDeviceConfigurationSection(MainAppSection section) =>
-        section is MainAppSection.ControllerParameters
-            or MainAppSection.ControllerSequence
-            or MainAppSection.ControllerSource;
+        section is MainAppSection.ControllerWorkbench;
 
     private void RebuildMenuItems()
     {
@@ -450,24 +440,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
             deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
-                Content = Loc.Get("S.Nav.ControllerParams"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Wrench24 },
-                TargetPageType = typeof(ControllerParameterPage),
-                TargetPageTag = "controller-params"
-            });
-            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.ControllerSequence"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.List24 },
-                TargetPageType = typeof(ControllerSequencePage),
-                TargetPageTag = "controller-sequence"
-            });
-            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.ControllerSource"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.SoundSource24 },
-                TargetPageType = typeof(ControllerSourcePage),
-                TargetPageTag = "controller-source"
+                Content = Loc.Get("S.Nav.ControllerWorkbench"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.WrenchScrewdriver24 },
+                TargetPageType = typeof(ControllerWorkbenchPage),
+                TargetPageTag = "controller-workbench"
             });
         }
 

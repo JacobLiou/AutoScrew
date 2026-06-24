@@ -4,6 +4,7 @@
 |------|------|------|
 | 1.0 | 2026-06-11 | 初版：基于 [PRD.md](PRD.md) 单工位单设备半自动化差距梳理 |
 | 1.1 | 2026-06-11 | 对齐 PRD V1.1：**程控供料器**纳入 In-Scope；T-06 升级为 P0 真驱动；更新双设备数据流 |
+| 1.2 | 2026-06-22 | 工艺工作台 P0+P1 落地；同步 §1/§4/§5/§6；新增 T-24（工作台 P2） |
 
 **权威追溯**
 
@@ -43,8 +44,8 @@
 | 驱动 `UDL.Delta.IemdSd` | ~85%（Modbus） | 149 功能码目录、`ExecuteModbusCommandAsync`、产线相关强类型 API；**无 FTP 包** |
 | 驱动 **程控供料器** | ~0% | **新增设备**；协议/寄存器待厂商定稿；需 `IFeeder` + Infrastructure 适配 |
 | 硬件适配 `IemdSdLockStationHardware` | ~55% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；**取钉仍走 `_feederSim`** |
-| 业务 `OperatorSessionController` | ~75% | SN→Recipe→自动拧紧调度→判定→归档；**供料仍为仿真**；无 checkpoint 恢复加载、漏锁 |
-| HMI | ~75% | 作业台/模板/参数/顺序/来源/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
+| 业务 `OperatorSessionController` | ~80% | SN→Recipe→自动拧紧调度→判定→归档；checkpoint 恢复、漏锁校验已有；**供料仍为仿真** |
+| HMI | ~80% | 作业台/模板/**工艺工作台 Hub**（参数/顺序/来源/FAT）/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
 | MES | ~70% | 占位 HTTP v1 + `mes-settings.json` 持久化；Mock 可热切换；Outbox 重传已有 |
 
 ```mermaid
@@ -60,9 +61,6 @@ flowchart LR
   end
   subgraph gap [主要缺口]
     Feeder[程控供料器真驱动]
-    Barcode["#401写控制器"]
-    Resume[断电恢复加载]
-    RealMES[真MES联调]
   end
 ```
 
@@ -78,14 +76,15 @@ flowchart LR
 - [x] 拧紧参数 `#100`/`#150`：349 word Codec [`TighteningParameterCodec`](../src/UDL.Delta.IemdSd/Protocol/TighteningParameterCodec.cs)
 - [x] 产线核心：`#302` 换参、`#750` 报告、`#751` 曲线分块读
 - [x] 初始化：`#406`/`#533`/`#562`（[`IemdSdClient.InitializeAsync`](../src/UDL.Delta.IemdSd/IemdSdClient.cs)）
-- [x] 强类型 API（驱动内已实现，**应用层多数未接线**）：条码 `#401`/`#451`、来源 `#300`/`#351`、履历 `#752`–`#760`、`#517` 单颗导出、系统/工具、运行状态区 [`ReadOperatingStatusAsync`](../src/UDL.Delta.IemdSd/Protocol/OperatingStatusSnapshot.cs)
+- [x] 强类型 API（驱动内已实现；**应用层部分已接线**）：条码 `#401`（T-03）、来源 `#300`/`#351`；履历 `#752`–`#760`、`#517` 单颗导出、清错/运行状态等 **多数未接线**
 - [x] 单元测试：[`tests/UDL.Delta.IemdSd.Tests`](../tests/UDL.Delta.IemdSd.Tests)
 
 ### 2.2 基础设施
 
 - [x] 真机拧紧适配：[`IemdSdLockStationHardware.cs`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)（`SwitchParameterAsync` → `ExecuteTighteningCycleAsync` → `ReadReportAsync`/`ReadCurveAsync`）
-- [x] 参数预设：[`ControllerParameterPresetService`](../src/AutoScrew.Infrastructure/Hardware/ControllerParameterPresetService.cs) + HMI [`ControllerParameterPage`](../src/AutoScrew.Hmi/Views/Pages/ControllerParameterPage.xaml)
-- [x] 顺序/来源预设：`ControllerSequencePresetService` / `ControllerSourceConfigService` + HMI 顺序/来源页（`#200`–`#253`、`#300`/`#301`）
+- [x] 参数预设：[`ControllerParameterPresetService`](../src/AutoScrew.Infrastructure/Hardware/ControllerParameterPresetService.cs) + HMI [`ParameterStepView`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/ParameterStepView.xaml)
+- [x] 顺序/来源预设：`ControllerSequencePresetService` / `ControllerSourceConfigService` + HMI [`SequenceStepView`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/SequenceStepView.xaml) / [`SourceStepView`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/SourceStepView.xaml)（`#200`–`#253`、`#300`/`#301`）
+- [x] **工艺工作台 UI 重构**（2026-06）：线框 [CONTROLLER_TIGHTENING_UI_WIREFRAME.md](CONTROLLER_TIGHTENING_UI_WIREFRAME.md) Hub + 四步骤；P0+P1 已实现（[`ControllerWorkbenchPage`](../src/AutoScrew.Hmi/Views/Pages/ControllerWorkbenchPage.xaml)）；P2 Navigator/作业台联动见 T-24
 - [x] 单工位单设备：[`StationDeviceManager`](../src/AutoScrew.Infrastructure/Hardware/StationDeviceManager.cs) + [`DeviceConnectionPage`](../src/AutoScrew.Hmi/Views/Pages/DeviceConnectionPage.xaml)
 - [x] 仿真切换：`AutoScrew:UseSimulatedHardware` → [`SimulatedLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/SimulatedLockStationHardware.cs) / `IemdSdLockStationHardware`
 - [x] MES Outbox 重传：[`OutboxMesRetryHostedService`](../src/AutoScrew.Infrastructure/Mes/OutboxMesRetryHostedService.cs)
@@ -106,7 +105,8 @@ flowchart LR
 
 - [x] 作业台：[`OperationPageView`](../src/AutoScrew.Hmi/Views/OperationPageView.xaml) + [`MainViewModel`](../src/AutoScrew.Hmi/ViewModels/MainViewModel.cs)（SN、Marker 黄闪/绿/红、手动「运行当前螺钉」、翻面、NG 解锁）
 - [x] 产品模板编辑：[`ProductTemplateEditorView`](../src/AutoScrew.Hmi/Views/ProductTemplateEditorView.xaml)（v2 多面）
-- [x] 拧紧参数、设备连接、MES 连接页（[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml)）
+- [x] 工艺工作台 Hub：[`ControllerWorkbenchPage`](../src/AutoScrew.Hmi/Views/Pages/ControllerWorkbenchPage.xaml) + 四步骤子视图（参数/顺序/来源/FAT）
+- [x] 设备连接、MES 连接页（[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml)）
 - [x] 角色登录：Development / MIMS MySQL（[`MimsMySqlAuthenticationService`](../src/AutoScrew.Infrastructure/Authentication/MimsMySqlAuthenticationService.cs)）
 
 ---
@@ -150,6 +150,7 @@ flowchart LR
 | T-17 | [ ] | 吸头外径 vs 螺钉头 **运行时防错**（≤ 头径 +0.6 mm） | 业务 | PRD §3.2.1 |
 | T-18 | [ ] | 作业完成屏 + 引导下一 SN | HMI | PRD §2.2 旅程终点 |
 | T-19 | [ ] | 日志/审计查询对技术员开放 | HMI | PRD §3.2.2；[`LogsPage`](../src/AutoScrew.Hmi/Views/Pages/LogsPage.xaml) 导航当前隐藏 |
+| T-24 | [ ] | **工艺工作台 P2**：Navigator←模板画板、底栏快捷、作业台产线模式指示 | HMI | [CONTROLLER_TIGHTENING_UI_WIREFRAME.md](CONTROLLER_TIGHTENING_UI_WIREFRAME.md) §14 P2 |
 
 ### P3 — 驱动与产线工程化（可选）
 
@@ -177,7 +178,7 @@ flowchart LR
 | 能力 | 驱动 API | 应用接线状态 |
 |------|----------|--------------|
 | 手动拧紧来源 | `WriteSourceModeAsync` (#300) | **已接线**（Apply/Test + `PrepareForJobAsync`） |
-| 条码写控制器 | `WriteBarcodeAsync` (#401) | 未接线 |
+| 条码写控制器 | `WriteBarcodeAsync` (#401) | **已接线**（`WriteSnToController` + [`IemdSdControllerTraceService`](../src/AutoScrew.Infrastructure/Hardware/IemdSdControllerTraceService.cs)） |
 | 换参 | `SwitchParameterAsync` (#302) | **已接线**（[`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)） |
 | 拧紧周期 | `ExecuteTighteningCycleAsync` | **已接线** |
 | 报告/曲线 | `ReadReportAsync` / `ReadCurveAsync` | **已接线** |
@@ -187,7 +188,7 @@ flowchart LR
 
 **顺序/来源 HMI**：`#200`–`#253`、`#300`/`#301` 已实现（见 PRD V1.3）；**系统设置 `#500+` 全套界面** α 不必做。
 
-**FAT（三步配置）**：① 三页分别读写真机 ② DeviceProgram 跑 3 钉顺序 ③ 切回 HostGuided 验证 `#302`。
+**FAT（四步配置）**：① 工艺工作台四步骤分别读写真机 ② DeviceProgram 跑 3 钉顺序 ③ 切回 HostGuided 验证 `#302` ④ 步骤④ FAT 勾选清单（部分项仍为人工 diff 提示）。
 
 ---
 
@@ -200,7 +201,7 @@ flowchart LR
 | 黄闪待打位置 | Marker Pending 闪烁 | 已实现 |
 | **程控供料/上料** | `PickScrewAsync` → **供料器指令** | **仿真 Delay**（T-06） |
 | 按指引锁附 | `AutoRunScrewCycle` + Manual 扳机 | **已实现**（T-01） |
-| 实时曲线判定 | `LockCurveEvaluator` + 设备 Status | 周期结束后展示曲线 |
+| 实时曲线判定 | `LockCurveEvaluator` + 设备 Status | **拧紧中增量刷新**（T-11）；周期结束仍保留完整曲线 |
 | OK/NG 反馈 | Marker 绿/红 + NgLocked 模态 | **已实现**（T-05） |
 | 完成 → Log + MES | `lock_log` + Outbox | 已实现（Mock 上传） |
 
@@ -211,9 +212,10 @@ flowchart LR
 | 阶段 | 任务 ID | 目标 |
 |------|---------|------|
 | Week 1 | T-01、T-02、T-05 | 真机拧紧半自动闭环 + NG 体验（**已完成**） |
-| Week 2 | T-04、T-03（**T-06/T-06a 跳过**） | 真 MES 占位 REST、控制器条码 #401 |
+| Week 2 | T-04、T-03（**T-06/T-06a 跳过**）（**已完成**） | 真 MES 占位 REST、控制器条码 #401 |
 | Week 3 | T-07、T-08、T-06b、T-10、T-11（**已完成**） | 供料异常、追溯、漏锁、实时曲线 + 仿真增强 |
-| Week 4 | T-14、T-15/T-16 | 权限、任务/MES 模板（视 IT 就绪） |
+| — | **工艺工作台 P0+P1**（**已完成**，2026-06） | Hub + 四步骤；原三页导航已移除 |
+| Week 4 | T-14、T-15/T-16、T-24（视优先级） | 权限、任务/MES 模板、工作台 P2 |
 
 **联机最小路径**（见 [driverAnaC.md](driverAnaC.md) §8 + PRD §3.2.1a）：
 
@@ -245,3 +247,5 @@ flowchart LR
 | 作业 HMI | `src/AutoScrew.Hmi/ViewModels/MainViewModel.cs` |
 | MES 端口 | `src/AutoScrew.Application/Abstractions/IMesClient.cs` |
 | 曲线判定 | `src/AutoScrew.Domain/Curves/LockCurveEvaluator.cs` |
+| 工艺工作台 | `src/AutoScrew.Hmi/Views/Pages/ControllerWorkbenchPage.xaml` |
+| 工作台 VM | `src/AutoScrew.Hmi/ViewModels/ControllerWorkbenchViewModel.cs` |

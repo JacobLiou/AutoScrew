@@ -1,6 +1,7 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
-using Microsoft.Extensions.Logging;using UDL.Delta.IemdSd;
+using Microsoft.Extensions.Logging;
+using UDL.Delta.IemdSd;
 using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Infrastructure.Hardware;
@@ -60,6 +61,33 @@ public sealed class ControllerSourceConfigService : IControllerSourceConfigServi
         var doc = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
         doc.Content = content;
         await _store.SaveAsync(doc, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<ControllerSourceBindingEntry>> LoadBindingsAsync(CancellationToken cancellationToken = default)
+    {
+        var doc = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
+        EnsureBindingsMigrated(doc);
+        return doc.Bindings;
+    }
+
+    public async Task SaveBindingsAsync(
+        IReadOnlyList<ControllerSourceBindingEntry> bindings,
+        TighteningSourceModeCore mode,
+        CancellationToken cancellationToken = default)
+    {
+        var doc = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
+        doc.Mode = mode;
+        doc.Bindings = bindings.ToList();
+        doc.Content = ControllerSourceConfigProjection.ToPrimaryContent(mode.OperatingMode, doc.Bindings, doc.Content);
+        await _store.SaveAsync(doc, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void EnsureBindingsMigrated(ControllerSourceConfigDocument doc)
+    {
+        if (doc.Bindings.Count > 0)
+            return;
+
+        doc.Bindings = ControllerSourceConfigProjection.FromLegacyContent(doc.Content);
     }
 
     public async Task<(TighteningSourceModeCore Mode, TighteningSourceContentCore Content)> ReadFromDeviceAsync(

@@ -1,0 +1,127 @@
+<UserControl x:Class="AutoScrew.Hmi.Views.ControllerWorkbench.Steps.SourceStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
+             xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             d:DataContext="{d:DesignInstance vm:ControllerSourceViewModel, IsDesignTimeCreatable=False}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolVis" />
+    </UserControl.Resources>
+    <Grid Margin="0,0,0,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <WrapPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
+            <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding DeployToDeviceCommand}" Content="{DynamicResource S.Workbench.Source.Deploy}" />
+        </WrapPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <ui:InfoBar Margin="0,0,0,8" IsOpen="{Binding IsHostGuided}"
+                        Message="{DynamicResource S.Workbench.Source.HostGuidedHint}"
+                        Severity="Informational"
+                        Title="{DynamicResource S.ControllerSource.ProductionMode}" />
+            <ui:InfoBar IsOpen="True"
+                        Message="{DynamicResource S.Workbench.Source.NoSequenceHint}"
+                        Severity="Warning"
+                        Title="{DynamicResource S.Workbench.Source.AssociationTitle}"
+                        Visibility="{Binding HasSequences, Converter={StaticResource InverseBoolVis}}" />
+            <ui:Button HorizontalAlignment="Left" Command="{Binding GoToSequenceStepCommand}"
+                       Content="{DynamicResource S.Workbench.Source.GoSequence}"
+                       Visibility="{Binding HasSequences, Converter={StaticResource InverseBoolVis}}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Text="{DynamicResource S.Workbench.Source.Topology}" />
+                <TabControl SelectedIndex="{Binding OperatingModeIndex, Mode=TwoWay}" Margin="0,0,0,12">
+                    <TabItem Header="{DynamicResource S.ControllerSource.OpSingle}" />
+                    <TabItem Header="{DynamicResource S.ControllerSource.OpDualAlt}" />
+                    <TabItem Header="{DynamicResource S.ControllerSource.OpDualSync}" />
+                </TabControl>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource S.ControllerSource.SwitchingMethod}" />
+                    <ComboBox Grid.Column="1" SelectedIndex="{Binding SwitchingMethodIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchManual}" />
+                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBit}" />
+                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBarcode}" />
+                    </ComboBox>
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding BindingRows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:ControllerSourceBindingRowViewModel}">
+                            <ui:CardControl Margin="0,0,0,12">
+                                <ui:CardControl.Header>
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ToolLabel}" />
+                                </ui:CardControl.Header>
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Grid.Column="0" Margin="0,0,8,0"
+                                                  ItemsSource="{Binding DataContext.SequenceCatalog, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  SelectedItem="{Binding SelectedSequence, Mode=TwoWay}"
+                                                  DisplayMemberPath="DisplayText" />
+                                        <ui:NumberBox Grid.Column="1" Margin="0,0,8,0" Value="{Binding ScrewCount, Mode=TwoWay}" />
+                                        <ui:NumberBox Grid.Column="2" Margin="0,0,8,0" Value="{Binding BitId, Mode=TwoWay}" />
+                                        <ui:Button Grid.Column="3"
+                                                   Command="{Binding DataContext.OpenAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}"
+                                                   Content="⚙" />
+                                    </Grid>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                               Text="{Binding SummaryText}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ui:CardControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Expander Header="{DynamicResource S.Workbench.Source.AdvancedPanel}" IsExpanded="False">
+                    <StackPanel Margin="8" DataContext="{Binding EditingAdvanced}">
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenOk}" IsChecked="{Binding ProhibitLoosenAfterTightenOk, Mode=TwoWay}" />
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenNg}" IsChecked="{Binding ProhibitLoosenAfterTightenNg, Mode=TwoWay}" />
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitTightenNg}" IsChecked="{Binding LimitMaxTightenNgPerScrew, Mode=TwoWay}" />
+                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxTightenNgPerScrew, Mode=TwoWay}" />
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitLoosenNg}" IsChecked="{Binding LimitMaxLoosenNgPerScrew, Mode=TwoWay}" />
+                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxLoosenNgPerScrew, Mode=TwoWay}" />
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitEmptyBarcode}" IsChecked="{Binding ProhibitStartWhenBarcodeEmpty, Mode=TwoWay}" />
+                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitRunTime}" IsChecked="{Binding LimitMaxRunTime, Mode=TwoWay}" />
+                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
+                        <ui:Button HorizontalAlignment="Left"
+                                   Command="{Binding DataContext.ApplyAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   Content="{DynamicResource S.Workbench.Source.ApplyAdvanced}" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                   Text="{DynamicResource S.Workbench.Source.AdvancedLocalOnly}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding StatusMessage}" />
+    </Grid>
+</UserControl>

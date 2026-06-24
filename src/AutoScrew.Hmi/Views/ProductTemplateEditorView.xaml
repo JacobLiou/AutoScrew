@@ -68,8 +68,14 @@
                     BorderBrush="{DynamicResource ShellBorderBrush}"
                     BorderThickness="0,0,1,0"
                     Padding="8">
-                <DockPanel>
-                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
                         <ui:Button Content="{DynamicResource S.Template.AddSurface}"
                                    Style="{StaticResource ShellSecondaryButtonStyle}"
                                    Command="{Binding AddSurfaceCommand}" />
@@ -92,40 +98,11 @@
                                    Padding="8,4"
                                    Command="{Binding MoveSurfaceDownCommand}" />
                     </WrapPanel>
-                    <TextBlock DockPanel.Dock="Top"
+                    <TextBlock Grid.Row="1"
                                Text="{DynamicResource S.Template.TreeHeader}"
                                FontWeight="SemiBold"
                                Margin="4,0,0,8" />
-                    <Border DockPanel.Dock="Bottom"
-                            BorderBrush="{DynamicResource ShellBorderBrush}"
-                            BorderThickness="0,1,0,0"
-                            Margin="0,8,0,0"
-                            Padding="0,8,0,0">
-                        <DockPanel LastChildFill="True">
-                            <Grid DockPanel.Dock="Top" Margin="4,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource S.Template.LocalTemplates}"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center" />
-                                <ui:Button Grid.Column="1"
-                                           Padding="6,2"
-                                           Style="{StaticResource ShellSecondaryButtonStyle}"
-                                           ToolTip="{DynamicResource S.Template.LocalTemplatesRefresh}"
-                                           Command="{Binding RefreshLocalTemplatesCommand}">
-                                    <ui:SymbolIcon Symbol="ArrowClockwise24" />
-                                </ui:Button>
-                            </Grid>
-                            <ListBox ItemsSource="{Binding LocalTemplates}"
-                                     SelectedItem="{Binding SelectedLocalTemplate, Mode=TwoWay}"
-                                     DisplayMemberPath="DisplayText"
-                                     MinHeight="120"
-                                     MaxHeight="220" />
-                        </DockPanel>
-                    </Border>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                         <TreeView x:Name="SurfaceTree"
                                   ItemsSource="{Binding ProductTreeRoots}"
                                   SelectedItemChanged="SurfaceTree_OnSelectedItemChanged">
@@ -151,7 +128,39 @@
                             </TreeView.ItemTemplate>
                         </TreeView>
                     </ScrollViewer>
-                </DockPanel>
+                    <Border Grid.Row="3"
+                            BorderBrush="{DynamicResource ShellBorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            Margin="0,8,0,0"
+                            Padding="0,8,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0" Margin="4,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{DynamicResource S.Template.LocalTemplates}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                                <ui:Button Grid.Column="1"
+                                           Padding="6,2"
+                                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                                           ToolTip="{DynamicResource S.Template.LocalTemplatesRefresh}"
+                                           Command="{Binding RefreshLocalTemplatesCommand}">
+                                    <ui:SymbolIcon Symbol="ArrowClockwise24" />
+                                </ui:Button>
+                            </Grid>
+                            <ListBox Grid.Row="1"
+                                     ItemsSource="{Binding LocalTemplates}"
+                                     SelectedItem="{Binding SelectedLocalTemplate, Mode=TwoWay}"
+                                     DisplayMemberPath="DisplayText" />
+                        </Grid>
+                    </Border>
+                </Grid>
             </Border>
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent" />
             <Grid Grid.Column="2">

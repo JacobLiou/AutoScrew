@@ -1,5 +1,4 @@
-using AutoScrew.Application.Configuration;
-using UDL.Delta.IemdSd.Protocol;
+using AutoScrew.Application.Configuration;using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Application.Abstractions;
 
@@ -25,5 +24,12 @@ public interface IControllerSourceConfigService
     Task WriteToDeviceAsync(
         TighteningSourceModeCore mode,
         TighteningSourceContentCore content,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ControllerSourceBindingEntry>> LoadBindingsAsync(CancellationToken cancellationToken = default);
+
+    Task SaveBindingsAsync(
+        IReadOnlyList<ControllerSourceBindingEntry> bindings,
+        TighteningSourceModeCore mode,
         CancellationToken cancellationToken = default);
 }

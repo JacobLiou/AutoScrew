@@ -307,6 +307,8 @@ Scenario: 歪斜异常检测
 | ② | 拧紧顺序 | `#200`/`#250`/`#260`/`#303` + `#201`–`#253` | **拧紧顺序**页（步骤 / 导航坐标 / 图像码 / 定位臂） |
 | ③ | 拧紧来源 | `#300`/`#301`/`#350`/`#351` | **拧紧来源**页（运行模式 / 切换方式 / 单来源绑定） |
 
+**HMI 线框（草案）**：[CONTROLLER_TIGHTENING_UI_WIREFRAME.md](CONTROLLER_TIGHTENING_UI_WIREFRAME.md) — 三页合并为「工艺工作台」Hub、步骤条、简易/高级分层；实现前可与设备 HMI 对照表迭代。
+
 **本地存储**
 
 - 参数：`{DataDirectory}/controller-parameters/{id}.json`
