@@ -1,12 +1,12 @@
-<UserControl x:Class="AutoScrew.Hmi.Views.ControllerWorkbench.Steps.SourceStepView"
+<UserControl x:Class="AutoScrew.Hmi.Views.ControllerDevice.SourceEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
-             d:DataContext="{d:DesignInstance vm:ControllerSourceViewModel, IsDesignTimeCreatable=False}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance vm:ControllerSourceViewModel, IsDesignTimeCreatable=False}"
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolVis" />
@@ -17,6 +17,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <WrapPanel Grid.Row="0" Margin="0,0,0,12">
@@ -24,6 +25,7 @@
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
             <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding DeployToDeviceCommand}" Content="{DynamicResource S.Workbench.Source.Deploy}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ActivateSequenceOnDeviceCommand}" Content="{DynamicResource S.ControllerSource.ActivateSequence}" />
         </WrapPanel>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
@@ -31,14 +33,10 @@
                         Message="{DynamicResource S.Workbench.Source.HostGuidedHint}"
                         Severity="Informational"
                         Title="{DynamicResource S.ControllerSource.ProductionMode}" />
-            <ui:InfoBar IsOpen="True"
+            <ui:InfoBar IsOpen="{Binding ShowNoSequenceHint}"
                         Message="{DynamicResource S.Workbench.Source.NoSequenceHint}"
                         Severity="Warning"
-                        Title="{DynamicResource S.Workbench.Source.AssociationTitle}"
-                        Visibility="{Binding HasSequences, Converter={StaticResource InverseBoolVis}}" />
-            <ui:Button HorizontalAlignment="Left" Command="{Binding GoToSequenceStepCommand}"
-                       Content="{DynamicResource S.Workbench.Source.GoSequence}"
-                       Visibility="{Binding HasSequences, Converter={StaticResource InverseBoolVis}}" />
+                        Title="{DynamicResource S.Workbench.Source.AssociationTitle}" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
@@ -122,6 +120,29 @@
             </StackPanel>
         </ScrollViewer>
 
-        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding StatusMessage}" />
+        <Border Grid.Row="3"
+                Margin="0,12,0,8"
+                Padding="12"
+                BorderBrush="{ui:ThemeResource ControlStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock Margin="0,0,12,0"
+                              VerticalAlignment="Center"
+                              FontTypography="BodyStrong"
+                              Text="{DynamicResource S.Workbench.ProductionMode}" />
+                <ComboBox Grid.Column="1"
+                          SelectedIndex="{Binding ProductionControlModeIndex, Mode=TwoWay}">
+                    <ComboBoxItem Content="{DynamicResource S.ControllerSource.ModeHostGuided}" />
+                    <ComboBoxItem Content="{DynamicResource S.ControllerSource.ModeDeviceProgram}" />
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" />
     </Grid>
 </UserControl>

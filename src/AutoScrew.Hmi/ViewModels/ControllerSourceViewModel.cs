@@ -21,7 +21,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
-    private ControllerWorkbenchViewModel? _workbench;
+    private bool _suppressProductionModeSave;
 
     public ControllerSourceViewModel(
         IControllerSourceConfigService sourceService,
@@ -42,6 +42,19 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         SequenceCatalog = new ObservableCollection<ControllerSequenceListItem>();
         BindingRows = new ObservableCollection<ControllerSourceBindingRowViewModel>();
         DeviceStatusText = BuildDeviceStatusText();
+        _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
+    }
+
+    private void OnDeviceConnectionChanged()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(RefreshDeviceConnectionState);
+            return;
+        }
+
+        RefreshDeviceConnectionState();
     }
 
     public ObservableCollection<ControllerSequenceListItem> SequenceCatalog { get; }
@@ -56,6 +69,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     [ObservableProperty] private int _operatingModeIndex;
     [ObservableProperty] private int _switchingMethodIndex;
     [ObservableProperty] private bool _hasSequences;
+
+    public bool ShowNoSequenceHint => !HasSequences;
+
+    partial void OnHasSequencesChanged(bool value) => OnPropertyChanged(nameof(ShowNoSequenceHint));
     [ObservableProperty] private ControllerSourceBindingRowViewModel? _selectedBindingRow;
     [ObservableProperty] private SourceAdvancedSettingsCore _editingAdvanced = SourceAdvancedSettingsCore.CreateDefaults();
 
@@ -69,13 +86,13 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
 
     public bool IsDualSyncMode => OperatingModeIndex == (int)TighteningOperatingMode.DualToolSynchronization;
 
-    public void SetWorkbenchHost(ControllerWorkbenchViewModel workbench) => _workbench = workbench;
-
-    public void SyncProductionMode(int modeIndex)
+    partial void OnProductionControlModeIndexChanged(int value)
     {
-        ProductionControlModeIndex = modeIndex;
         OnPropertyChanged(nameof(IsHostGuided));
         OnPropertyChanged(nameof(IsDeviceProgram));
+        DeployToDeviceCommand.NotifyCanExecuteChanged();
+        if (!_suppressProductionModeSave)
+            _ = SaveProductionModeAsync();
     }
 
     partial void OnOperatingModeIndexChanged(int value)
@@ -89,14 +106,32 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await _devices.LoadAsync().ConfigureAwait(true);
-        DeviceStatusText = BuildDeviceStatusText();
+        RefreshDeviceConnectionState();
+        _suppressProductionModeSave = true;
         ProductionControlModeIndex = (int)await _sourceService.LoadProductionControlModeAsync().ConfigureAwait(true);
+        _suppressProductionModeSave = false;
         var mode = await _sourceService.LoadLocalModeAsync().ConfigureAwait(true);
         var bindings = await _sourceService.LoadBindingsAsync().ConfigureAwait(true);
         OperatingModeIndex = (int)mode.OperatingMode;
         SwitchingMethodIndex = (int)mode.SwitchingMethod;
         await RefreshSequenceCatalogAsync().ConfigureAwait(true);
         ApplyBindings(bindings);
+    }
+
+    public async Task OnPageActivatedAsync()
+    {
+        await _devices.LoadAsync().ConfigureAwait(true);
+        RefreshDeviceConnectionState();
+    }
+
+    private void RefreshDeviceConnectionState()
+    {
+        DeviceStatusText = BuildDeviceStatusText();
+        OnPropertyChanged(nameof(IsDeviceAvailable));
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        DeployToDeviceCommand.NotifyCanExecuteChanged();
+        ActivateSequenceOnDeviceCommand.NotifyCanExecuteChanged();
     }
 
     public async Task RefreshSequenceCatalogAsync()
@@ -128,8 +163,43 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void GoToSequenceStep() => _workbench?.GoToSequenceStep();
+    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    private async Task ActivateSequenceOnDeviceAsync()
+    {
+        try
+        {
+            var content = await _sourceService.LoadLocalContentAsync().ConfigureAwait(true);
+            if (content.BindingType != TighteningSourceBindingType.Sequence || content.TargetId <= 0)
+            {
+                StatusMessage = Loc.Get("S.ControllerSource.ActivateNeedsSequence");
+                ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+                return;
+            }
+
+            await _sequenceService.ActivateOnDeviceAsync(content.TargetId).ConfigureAwait(true);
+            StatusMessage = Loc.Format("S.ControllerSource.StatusActivated", content.TargetId);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    private async Task SaveProductionModeAsync()
+    {
+        try
+        {
+            await _sourceService
+                .SaveProductionControlModeAsync((ProductionTighteningMode)ProductionControlModeIndex)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
 
     [RelayCommand]
     private async Task SaveLocalAsync()

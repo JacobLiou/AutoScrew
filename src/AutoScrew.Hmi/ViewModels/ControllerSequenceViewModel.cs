@@ -70,6 +70,31 @@ public sealed partial class ImageCodeItem : ObservableObject
     [ObservableProperty] private int _value;
 }
 
+public sealed partial class NavigatorScrewDisplayItem : ObservableObject
+{
+    public NavigatorScrewDisplayItem(int stepIndex, NavigatorScrewCoordinate coordinate)
+    {
+        StepIndex = stepIndex;
+        X = coordinate.X;
+        Y = coordinate.Y;
+    }
+
+    public int StepIndex { get; }
+
+    public string Label => (StepIndex + 1).ToString();
+
+    [ObservableProperty]
+    private int _x;
+
+    [ObservableProperty]
+    private int _y;
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    public NavigatorScrewCoordinate ToCoordinate() => new() { X = X, Y = Y };
+}
+
 public sealed partial class ControllerSequenceViewModel : ObservableObject
 {
     private readonly IControllerSequencePresetService _presetService;
@@ -101,6 +126,19 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         StepItems = new ObservableCollection<ControllerSequenceStepItem>();
         ParameterCatalog = new ObservableCollection<ControllerParameterListItem>();
         DeviceStatusText = BuildDeviceStatusText();
+        _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
+    }
+
+    private void OnDeviceConnectionChanged()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(RefreshDeviceConnectionState);
+            return;
+        }
+
+        RefreshDeviceConnectionState();
     }
 
     public ObservableCollection<ControllerParameterListItem> ParameterCatalog { get; }
@@ -110,6 +148,8 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     public ObservableCollection<ControllerSequenceStepItem> StepItems { get; }
 
     public ObservableCollection<NavigatorScrewCoordinate> NavigatorScrews { get; } = [];
+
+    public ObservableCollection<NavigatorScrewDisplayItem> NavigatorDisplayItems { get; } = [];
 
     public ObservableCollection<ImageCodeItem> ImageCodes { get; } = [];
 
@@ -123,6 +163,21 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     [ObservableProperty] private int _navigatorModeIndex;
     [ObservableProperty] private bool _positioningArmEnabled;
     [ObservableProperty] private int _selectedTabIndex;
+    [ObservableProperty] private int _selectedNavigatorStepIndex = -1;
+    [ObservableProperty] private string? _navigatorImagePath;
+    [ObservableProperty] private int _selectedStepIndex;
+
+    partial void OnSelectedNavigatorStepIndexChanged(int value)
+    {
+        for (var i = 0; i < NavigatorDisplayItems.Count; i++)
+            NavigatorDisplayItems[i].IsSelected = i == value;
+    }
+
+    partial void OnSelectedStepIndexChanged(int value)
+    {
+        if (value >= 0 && value < StepItems.Count)
+            SelectedNavigatorStepIndex = value;
+    }
 
     partial void OnSelectedPresetChanged(ControllerSequenceListItem? value)
     {
@@ -133,13 +188,29 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await _devices.LoadAsync().ConfigureAwait(true);
-        DeviceStatusText = BuildDeviceStatusText();
+        RefreshDeviceConnectionState();
         await RefreshParameterCatalogAsync().ConfigureAwait(true);
         await RefreshPresetListAsync().ConfigureAwait(true);
         if (Presets.Count > 0 && SelectedPreset is null)
             SelectedPreset = Presets[0];
         else if (Presets.Count == 0)
             StartNewPreset();
+    }
+
+    public async Task OnPageActivatedAsync()
+    {
+        await _devices.LoadAsync().ConfigureAwait(true);
+        RefreshDeviceConnectionState();
+        await RefreshParameterCatalogAsync().ConfigureAwait(true);
+    }
+
+    private void RefreshDeviceConnectionState()
+    {
+        DeviceStatusText = BuildDeviceStatusText();
+        OnPropertyChanged(nameof(IsDeviceAvailable));
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand] private async Task RefreshListAsync() => await RefreshPresetListAsync().ConfigureAwait(true);
@@ -253,6 +324,50 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SelectNavigatorStep(object? parameter)
+    {
+        if (parameter is int index)
+            SelectedNavigatorStepIndex = index;
+        else if (parameter is string text && int.TryParse(text, out var parsed))
+            SelectedNavigatorStepIndex = parsed;
+    }
+
+    [RelayCommand]
+    private void MoveNavigatorLeft() => AdjustNavigator(-10, 0);
+
+    [RelayCommand]
+    private void MoveNavigatorRight() => AdjustNavigator(10, 0);
+
+    [RelayCommand]
+    private void MoveNavigatorUp() => AdjustNavigator(0, -10);
+
+    [RelayCommand]
+    private void MoveNavigatorDown() => AdjustNavigator(0, 10);
+
+    [RelayCommand]
+    private void PickNavigatorImage()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Images (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp",
+            RestoreDirectory = true,
+        };
+        if (dialog.ShowDialog() == true)
+            NavigatorImagePath = dialog.FileName;
+    }
+
+    private void AdjustNavigator(int deltaX, int deltaY)
+    {
+        if (SelectedNavigatorStepIndex < 0 || SelectedNavigatorStepIndex >= NavigatorDisplayItems.Count)
+            return;
+
+        var item = NavigatorDisplayItems[SelectedNavigatorStepIndex];
+        item.X = Math.Clamp(item.X + deltaX, 0, 9999);
+        item.Y = Math.Clamp(item.Y + deltaY, 0, 9999);
+        SyncNavigatorScrewsFromDisplay();
+    }
+
+    [RelayCommand]
     private void AddStep()
     {
         _working.Core.Steps.Add(new TighteningSequenceStepCore { ParameterId = 1 });
@@ -361,6 +476,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         NavigatorScrews.Clear();
         foreach (var s in pkg.NavigatorCoordinates.Screws)
             NavigatorScrews.Add(s);
+        SyncNavigatorDisplayFromScrews();
         ImageCodes.Clear();
         foreach (var c in pkg.NavigatorImageCodes.ImageCodes)
             ImageCodes.Add(new ImageCodeItem { Value = c });
@@ -375,7 +491,9 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         _working.Core.Name = Name;
         _working.Core.NavigatorMode = (TighteningSequenceNavigatorMode)NavigatorModeIndex;
         _working.Core.PositioningArmEnabled = PositioningArmEnabled;
-        _working.NavigatorCoordinates.Screws = NavigatorScrews.ToList();
+        _working.NavigatorCoordinates.Screws = NavigatorDisplayItems.Count > 0
+            ? NavigatorDisplayItems.Select(i => i.ToCoordinate()).ToList()
+            : NavigatorScrews.ToList();
         _working.NavigatorImageCodes.ImageCodes = ImageCodes.Select(i => i.Value).ToList();
         _working.PositioningArmCoordinates.Screws = ArmCoordinates.ToList();
         _working.ApplyCoreToRaw();
@@ -383,20 +501,84 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     private async Task RefreshParameterCatalogAsync()
     {
-        var items = await _parameterPresetService.ListLocalPresetsAsync().ConfigureAwait(true);
         ParameterCatalog.Clear();
+        var seen = new HashSet<int>();
+        var items = await _parameterPresetService.ListLocalPresetsAsync().ConfigureAwait(true);
         foreach (var item in items)
-            ParameterCatalog.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+        {
+            if (seen.Add(item.ParameterId))
+                ParameterCatalog.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+        }
+
+        if (_parameterPresetService.IsDeviceAvailable)
+        {
+            try
+            {
+                var deviceIds = await _parameterPresetService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
+                foreach (var id in deviceIds)
+                {
+                    if (seen.Add(id))
+                        ParameterCatalog.Add(new ControllerParameterListItem(id, Loc.Format("S.ControllerParam.DeviceSlotName", id)));
+                }
+            }
+            catch
+            {
+                // device catalog is optional for offline editing
+            }
+        }
     }
 
     private void RebuildStepItems()
     {
         StepItems.Clear();
         for (var i = 0; i < _working.Core.Steps.Count; i++)
-            StepItems.Add(new ControllerSequenceStepItem(i, _working.Core.Steps[i]));
+            StepItems.Add(new ControllerSequenceStepItem(i, _working.Core.Steps[i], SyncNavigatorDisplayFromSteps));
 
         foreach (var step in StepItems)
             step.SyncSelectedParameter(ParameterCatalog);
+
+        if (SelectedStepIndex >= StepItems.Count)
+            SelectedStepIndex = StepItems.Count > 0 ? 0 : -1;
+
+        SyncNavigatorDisplayFromSteps();
+    }
+
+    private void SyncNavigatorDisplayFromSteps()
+    {
+        while (NavigatorDisplayItems.Count < StepItems.Count)
+        {
+            var index = NavigatorDisplayItems.Count;
+            var existing = index < NavigatorScrews.Count ? NavigatorScrews[index] : new NavigatorScrewCoordinate();
+            NavigatorDisplayItems.Add(new NavigatorScrewDisplayItem(index, existing));
+        }
+
+        while (NavigatorDisplayItems.Count > StepItems.Count)
+            NavigatorDisplayItems.RemoveAt(NavigatorDisplayItems.Count - 1);
+
+        SyncNavigatorScrewsFromDisplay();
+        if (SelectedNavigatorStepIndex < 0 && NavigatorDisplayItems.Count > 0)
+            SelectedNavigatorStepIndex = 0;
+    }
+
+    private void SyncNavigatorDisplayFromScrews()
+    {
+        NavigatorDisplayItems.Clear();
+        var count = Math.Max(StepItems.Count, NavigatorScrews.Count);
+        for (var i = 0; i < count; i++)
+        {
+            var coord = i < NavigatorScrews.Count ? NavigatorScrews[i] : new NavigatorScrewCoordinate();
+            NavigatorDisplayItems.Add(new NavigatorScrewDisplayItem(i, coord));
+        }
+
+        if (SelectedNavigatorStepIndex < 0 && NavigatorDisplayItems.Count > 0)
+            SelectedNavigatorStepIndex = 0;
+    }
+
+    private void SyncNavigatorScrewsFromDisplay()
+    {
+        NavigatorScrews.Clear();
+        foreach (var item in NavigatorDisplayItems)
+            NavigatorScrews.Add(item.ToCoordinate());
     }
 
     private string BuildDeviceStatusText()

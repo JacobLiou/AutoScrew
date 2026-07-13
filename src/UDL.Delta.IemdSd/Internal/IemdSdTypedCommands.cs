@@ -199,7 +199,10 @@ internal sealed class IemdSdTypedCommands
 
     public async Task<ParameterListSnapshot> ListParametersAsync(uint wordCount, CancellationToken ct)
     {
-        var words = await ReadPayloadOnly((int)ModbusFunctionCode.Read_created_sets_tightening_parameters, wordCount, ct)
+        var words = await ReadPayloadWithToolIndex(
+                (int)ModbusFunctionCode.Read_created_sets_tightening_parameters,
+                wordCount,
+                ct)
             .ConfigureAwait(false);
         return new ParameterListSnapshot { RawWords = words };
     }
@@ -422,6 +425,14 @@ internal sealed class IemdSdTypedCommands
     {
         var result = await _executor.ExecuteAsync(
             ModbusCommandInvocation.WithReadPayload(code, wordCount, word2: id),
+            ct).ConfigureAwait(false);
+        return result.ReadPayload ?? [];
+    }
+
+    private async Task<int[]> ReadPayloadWithToolIndex(int code, uint wordCount, CancellationToken ct)
+    {
+        var result = await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithReadPayload(code, wordCount, word2: _toolIndex),
             ct).ConfigureAwait(false);
         return result.ReadPayload ?? [];
     }

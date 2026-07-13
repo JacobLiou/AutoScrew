@@ -41,13 +41,11 @@
 | 来源藏底部 / 与①②割裂 | 来源页独立 CRUD，未关联顺序库 | 步骤③ **绑定② + 摘要①**；顶栏模式联动 |
 | 无部署闭环 | 无 FAT 清单 | 步骤④勾选验收 |
 
-**现有实现文件**（2026-06 已合并为工艺工作台 Hub；原三页 XAML 已移除）：
+**现有实现文件**（2026-06 已改为设备式三独立页；原工艺工作台 Hub 已移除）：
 
-- [`ControllerWorkbenchPage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerWorkbenchPage.xaml)
-- [`ParameterStepView.xaml`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/ParameterStepView.xaml)
-- [`SequenceStepView.xaml`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/SequenceStepView.xaml)
-- [`SourceStepView.xaml`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/SourceStepView.xaml)
-- [`DeploymentStepView.xaml`](../src/AutoScrew.Hmi/Views/ControllerWorkbench/Steps/DeploymentStepView.xaml)
+- [`ControllerParameterPage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerParameterPage.xaml)
+- [`ControllerSequencePage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerSequencePage.xaml)
+- [`ControllerSourcePage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerSourcePage.xaml)
 
 ---
 
@@ -58,21 +56,25 @@
 ```mermaid
 flowchart TB
   subgraph shell [主壳侧栏 - 设备配置]
-    WB[工艺工作台 Hub]
+    P[拧紧参数]
+    S[拧紧顺序]
+    Src[拧紧来源]
     DevConn[设备连接]
-    Feed[供料器 待建]
   end
-  subgraph wb_steps [工作台内步骤]
-    S1[① 拧紧参数]
-    S2[② 拧紧顺序]
-    S3[③ 拧紧来源]
-    S4[④ 部署校验]
-  end
-  WB --> S1 --> S2 --> S3 --> S4
 ```
 
-- **推荐**：侧栏仅保留 **「工艺工作台」** 一项；原三页可作为深链（步骤条跳转）或过渡期保留子菜单。
-- **入口文案**：`S.Nav.ControllerWorkbench` → 中文「工艺工作台」。
+- **当前实现**：侧栏「设备配置」下 **三个独立菜单项**，与台达 IEMD-SD 设备 HMI 首页三入口一一对应（CH05/06/07）。
+- **入口文案**：`S.Nav.ControllerParams` / `S.Nav.ControllerSequence` / `S.Nav.ControllerSource`。
+- **产线模式**：`HostGuided` / `DeviceProgram` 已移至 **拧紧来源** 页底部（不再使用工艺工作台顶栏）。
+
+**实现文件**（2026-06 设备式三页）：
+
+- [`ControllerParameterPage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerParameterPage.xaml)
+- [`ControllerSequencePage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerSequencePage.xaml)
+- [`ControllerSourcePage.xaml`](../src/AutoScrew.Hmi/Views/Pages/ControllerSourcePage.xaml)
+- [`ParameterEditorView.xaml`](../src/AutoScrew.Hmi/Views/ControllerDevice/ParameterEditorView.xaml)
+- [`SequenceEditorView.xaml`](../src/AutoScrew.Hmi/Views/ControllerDevice/SequenceEditorView.xaml)
+- [`SourceEditorView.xaml`](../src/AutoScrew.Hmi/Views/ControllerDevice/SourceEditorView.xaml)
 
 ### 3.2 与产线 / 模板 / MES 的关系
 

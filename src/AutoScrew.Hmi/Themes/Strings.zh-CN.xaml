@@ -340,6 +340,14 @@
     <system:String x:Key="S.ControllerParam.StatusReadDevice">已从设备读取参数 #{0}。</system:String>
     <system:String x:Key="S.ControllerParam.StatusWriteDevice">已下发参数 #{0} 到设备。</system:String>
     <system:String x:Key="S.ControllerParam.StatusActivated">已在设备激活参数 #{0}。</system:String>
+    <system:String x:Key="S.ControllerParam.DevicePresets">设备参数 (#160)</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceSlotName">设备 #{0}</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListCount">控制器已配置 {0} 组参数。</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">控制器暂无已配置参数，请先在设备 HMI 创建或从其他工位导入。</system:String>
+    <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备列表</system:String>
+    <system:String x:Key="S.ControllerParam.ImportFromDevice">导入选中 (#150)</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedDevice">已从设备导入参数 #{0} 到本地库。</system:String>
+    <system:String x:Key="S.ControllerParam.TighteningSettings">拧紧设定</system:String>
 
     <system:String x:Key="S.ControllerSeq.New">新建顺序</system:String>
     <system:String x:Key="S.ControllerSeq.Activate">激活 (#303)</system:String>
@@ -361,6 +369,10 @@
     <system:String x:Key="S.ControllerSeq.StatusReadDevice">已从设备读取顺序 #{0}。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusWriteDevice">已下发顺序 #{0} 到设备。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusActivated">已在设备激活顺序 #{0}。</system:String>
+    <system:String x:Key="S.ControllerSeq.TabGeneral">一般</system:String>
+    <system:String x:Key="S.ControllerSeq.TabNavigatorGuide">锁附导引</system:String>
+    <system:String x:Key="S.ControllerSeq.PickImage">选择产品图</system:String>
+    <system:String x:Key="S.ControllerSeq.NavigatorHint">选中钉位圆点，用方向键微调坐标并写入 #201。</system:String>
 
     <system:String x:Key="S.ControllerSource.ProductionMode">产线控制模式</system:String>
     <system:String x:Key="S.ControllerSource.ModeHostGuided">上位机引导（模板 + #302）</system:String>
@@ -383,14 +395,11 @@
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">已保存到本地。</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">已从设备读取来源配置。</system:String>
     <system:String x:Key="S.ControllerSource.StatusWriteDevice">已下发来源配置到设备。</system:String>
+    <system:String x:Key="S.ControllerSource.ActivateSequence">激活顺序 (#303)</system:String>
+    <system:String x:Key="S.ControllerSource.StatusActivated">已在设备激活顺序 #{0} (#303)。</system:String>
+    <system:String x:Key="S.ControllerSource.ActivateNeedsSequence">请先保存顺序绑定后再激活 #303。</system:String>
 
-    <system:String x:Key="S.Nav.ControllerWorkbench">工艺工作台</system:String>
     <system:String x:Key="S.Workbench.ProductionMode">产线模式</system:String>
-    <system:String x:Key="S.Workbench.Step.Parameters">① 拧紧参数</system:String>
-    <system:String x:Key="S.Workbench.Step.Sequence">② 拧紧顺序</system:String>
-    <system:String x:Key="S.Workbench.Step.Source">③ 拧紧来源</system:String>
-    <system:String x:Key="S.Workbench.Step.Deployment">④ 部署校验</system:String>
-    <system:String x:Key="S.Workbench.StepHint">按 参数 → 顺序 → 来源 配置设备；来源页从顺序库选取绑定对象。</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStart">Quick Start</system:String>
     <system:String x:Key="S.Workbench.Param.SummaryCard">参数摘要</system:String>
     <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} 阶段有效 · 阶段1 {3:F2} N·m</system:String>
@@ -421,7 +430,7 @@
     <system:String x:Key="S.Workbench.Source.Deploy">一键部署</system:String>
     <system:String x:Key="S.Workbench.Source.Deployed">已部署来源并激活顺序。</system:String>
     <system:String x:Key="S.Workbench.Source.HostGuidedHint">上位机引导模式：作业台通过 Recipe #302 换参；下方绑定表仅作预览/本地记录。</system:String>
-    <system:String x:Key="S.Workbench.Source.NoSequenceHint">请先在 ② 创建至少一条拧紧顺序，再配置来源绑定。</system:String>
+    <system:String x:Key="S.Workbench.Source.NoSequenceHint">请先在「拧紧顺序」页创建至少一条顺序，再配置来源绑定。</system:String>
     <system:String x:Key="S.Workbench.Source.AssociationTitle">顺序关联</system:String>
     <system:String x:Key="S.Workbench.Source.GoSequence">前往 ② 拧紧顺序</system:String>
     <system:String x:Key="S.Workbench.Source.SequenceName">名称（顺序）</system:String>

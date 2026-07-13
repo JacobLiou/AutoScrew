@@ -64,6 +64,25 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         return template;
     }
 
+    public async Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default)
+    {
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var snapshot = await client
+            .ListParametersAsync(ParameterListSnapshot.MaxParameterSlots, cancellationToken)
+            .ConfigureAwait(false);
+        return snapshot.GetConfiguredIds();
+    }
+
+    public async Task<TighteningParameterTemplate> ImportFromDeviceAsync(
+        int parameterId,
+        CancellationToken cancellationToken = default)
+    {
+        var template = await ReadFromDeviceAsync(parameterId, cancellationToken).ConfigureAwait(false);
+        await SaveLocalPresetAsync(template, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Imported parameter {ParamId} from IEMD-SD to local store", parameterId);
+        return template;
+    }
+
     public async Task WriteToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(template);

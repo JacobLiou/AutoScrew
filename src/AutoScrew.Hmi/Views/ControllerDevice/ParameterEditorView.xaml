@@ -1,11 +1,11 @@
-<UserControl x:Class="AutoScrew.Hmi.Views.ControllerWorkbench.Steps.ParameterStepView"
+<UserControl x:Class="AutoScrew.Hmi.Views.ControllerDevice.ParameterEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
-             d:DataContext="{d:DesignInstance vm:ControllerParameterViewModel, IsDesignTimeCreatable=False}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance vm:ControllerParameterViewModel, IsDesignTimeCreatable=False}"
              mc:Ignorable="d">
     <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
@@ -22,6 +22,8 @@
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
             <Separator Margin="8,0" Width="1" Height="24" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding RefreshDeviceListCommand}" Content="{DynamicResource S.ControllerParam.RefreshDeviceList}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ImportSelectedFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportFromDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
             <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ActivateOnDeviceCommand}" Content="{DynamicResource S.ControllerParam.Activate}" />
@@ -34,20 +36,49 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ui:CardControl Grid.Column="0" Icon="{ui:SymbolIcon List24}">
-                <ui:CardControl.Header>
-                    <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
-                </ui:CardControl.Header>
-                <ListBox ItemsSource="{Binding Presets}"
-                         SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
-                         DisplayMemberPath="DisplayText" />
-            </ui:CardControl>
+            <StackPanel Grid.Column="0">
+                <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Server24}">
+                    <ui:CardControl.Header>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.DevicePresets}" />
+                    </ui:CardControl.Header>
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,8"
+                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                   Text="{Binding DeviceListStatus}"
+                                   TextWrapping="Wrap" />
+                        <ListBox MinHeight="120"
+                                 ItemsSource="{Binding DeviceParameters}"
+                                 SelectedItem="{Binding SelectedDeviceParameter, Mode=TwoWay}"
+                                 DisplayMemberPath="DisplayText" />
+                    </StackPanel>
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon List24}">
+                    <ui:CardControl.Header>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
+                    </ui:CardControl.Header>
+                    <ListBox ItemsSource="{Binding Presets}"
+                             SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                             DisplayMemberPath="DisplayText" />
+                </ui:CardControl>
+            </StackPanel>
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <ui:CardControl Margin="0,0,0,12">
                         <ui:CardControl.Header>
-                            <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.Workbench.Param.SummaryCard}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.ParameterId}" />
+                                <ui:NumberBox Grid.Column="1" Margin="0,0,12,0" Minimum="1" Maximum="500" Value="{Binding ParameterId, Mode=TwoWay}" />
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.Name}" />
+                                <ui:TextBox Grid.Column="3" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
                         </ui:CardControl.Header>
                         <StackPanel>
                             <TextBlock Margin="0,0,0,8" Text="{Binding SummaryText}" TextWrapping="Wrap" />
@@ -67,32 +98,47 @@
                     </ui:CardControl>
 
                     <TabControl SelectedIndex="{Binding SelectedEditorTabIndex, Mode=TwoWay}">
-                        <TabItem Header="{DynamicResource S.Workbench.Param.TabSimple}">
+                        <TabItem Header="{DynamicResource S.ControllerParam.BasicSettings}">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="220" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MinAngle}" />
+                                <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
+                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
+                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
+                                <CheckBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,0,0,8"
+                                          Content="{DynamicResource S.Workbench.Param.LastStageServoOn}"
+                                          IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
+                                <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8"
+                                          Content="{DynamicResource S.Workbench.Param.FinalCurrentJudge}"
+                                          IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
+                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxLoosenAngle}" />
+                                <ui:NumberBox Grid.Row="3" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxLoosenAngleDeg, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
+                                <ui:NumberBox Grid.Row="3" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LoosenStartDelay}" />
+                                <ui:NumberBox Grid.Row="4" Grid.Column="1" Margin="0,0,12,0" Value="{Binding LoosenStartDelayCentiSec, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
+                                <ui:NumberBox Grid.Row="4" Grid.Column="3" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="{DynamicResource S.ControllerParam.TighteningSettings}">
                             <StackPanel Margin="8">
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="160" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="160" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.ParameterId}" />
-                                    <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Minimum="1" Maximum="500" Value="{Binding ParameterId, Mode=TwoWay}" />
-                                    <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.Name}" />
-                                    <ui:TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MinAngle}" />
-                                    <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
-                                    <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
-                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
-                                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
-                                    <ui:NumberBox Grid.Row="2" Grid.Column="1" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
-                                </Grid>
-
                                 <TabControl ItemsSource="{Binding StageItems}" SelectedIndex="{Binding SelectedStageIndex, Mode=TwoWay}">
                                     <TabControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
@@ -156,38 +202,6 @@
                                 <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding Stage1SpeedRpm, Mode=TwoWay}" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.DetectTorqueNm}" />
                                 <ui:NumberBox Grid.Row="1" Grid.Column="1" Value="{Binding DetectTorqueMilliNm, Mode=TwoWay}" />
-                            </Grid>
-                        </TabItem>
-                        <TabItem Header="{DynamicResource S.Workbench.Param.TabAdvanced}">
-                            <Grid Margin="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8"
-                                          Content="{DynamicResource S.Workbench.Param.LastStageServoOn}"
-                                          IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
-                                <CheckBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,0,0,8"
-                                          Content="{DynamicResource S.Workbench.Param.FinalCurrentJudge}"
-                                          IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
-                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxLoosenAngle}" />
-                                <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MaxLoosenAngleDeg, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
-                                <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="0,0,12,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LoosenStartDelay}" />
-                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LoosenStartDelayCentiSec, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
-                                <ui:NumberBox Grid.Row="3" Grid.Column="1" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
                             </Grid>
                         </TabItem>
                     </TabControl>

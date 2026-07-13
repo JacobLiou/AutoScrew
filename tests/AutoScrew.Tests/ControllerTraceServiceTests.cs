@@ -86,6 +86,8 @@ public sealed class ControllerTraceServiceTests
 
         public bool IsRuntimeDeviceAvailable => true;
 
+        public event Action? DeviceConnectionChanged;
+
         public Task<StationDeviceConfiguration> LoadAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(new StationDeviceConfiguration());
 

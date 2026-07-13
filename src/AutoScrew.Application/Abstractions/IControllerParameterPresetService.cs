@@ -22,6 +22,10 @@ public interface IControllerParameterPresetService
 
     Task<TighteningParameterTemplate> ReadFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default);
+
+    Task<TighteningParameterTemplate> ImportFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);
+
     Task WriteToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
 
     Task ActivateOnDeviceAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default);

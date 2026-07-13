@@ -1,0 +1,184 @@
+<UserControl x:Class="AutoScrew.Hmi.Views.ControllerDevice.SequenceEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance vm:ControllerSequenceViewModel, IsDesignTimeCreatable=False}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="NavigatorDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Stroke" Value="White" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Fill" Value="#FF6B00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="False">
+                    <Setter Property="Fill" Value="#4A90D9" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="0,0,0,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <WrapPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:Button Margin="0,0,8,8" Command="{Binding NewPresetCommand}" Content="{DynamicResource S.ControllerSeq.New}" />
+            <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
+            <Separator Margin="8,0" Width="1" Height="24" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
+            <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ActivateOnDeviceCommand}" Content="{DynamicResource S.ControllerSeq.Activate}" />
+        </WrapPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ui:CardControl Grid.Column="0" Icon="{ui:SymbolIcon List24}">
+                <ui:CardControl.Header>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
+                </ui:CardControl.Header>
+                <ListBox ItemsSource="{Binding Presets}"
+                         SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                         DisplayMemberPath="DisplayText" />
+            </ui:CardControl>
+
+            <TabControl Grid.Column="2" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+                <TabItem Header="{DynamicResource S.ControllerSeq.TabGeneral}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="8">
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerSeq.SequenceId}" />
+                                <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding SequenceId, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.Name}" />
+                                <ui:TextBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerSeq.NavigatorMode}" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,0" SelectedIndex="{Binding NavigatorModeIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="{DynamicResource S.ControllerSeq.ModeGeneral}" />
+                                    <ComboBoxItem Content="{DynamicResource S.ControllerSeq.ModeNavigator}" />
+                                </ComboBox>
+                                <CheckBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2"
+                                          Content="{DynamicResource S.ControllerSeq.PositioningArm}"
+                                          IsChecked="{Binding PositioningArmEnabled, Mode=TwoWay}" />
+                            </Grid>
+
+                            <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                                <ui:Button Margin="0,0,8,0" Command="{Binding AddStepCommand}" Content="{DynamicResource S.ControllerSeq.AddStep}" />
+                                <ui:Button Command="{Binding RemoveStepCommand}" Content="{DynamicResource S.ControllerSeq.RemoveStep}" />
+                            </StackPanel>
+
+                            <ItemsControl ItemsSource="{Binding StepItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:ControllerSequenceStepItem}">
+                                        <Border Margin="0,0,0,8" Padding="8" BorderBrush="{ui:ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="80" />
+                                                    <ColumnDefinition Width="80" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding Title}" />
+                                                <ui:NumberBox Grid.Column="1" Margin="0,0,8,0" Value="{Binding Step.ToolId, Mode=TwoWay}" />
+                                                <ComboBox Grid.Column="2"
+                                                          ItemsSource="{Binding DataContext.ParameterCatalog, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          SelectedItem="{Binding SelectedParameter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          DisplayMemberPath="DisplayText" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{DynamicResource S.ControllerSeq.TabNavigatorGuide}">
+                    <Grid Margin="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                MinHeight="360"
+                                Background="#F3F3F3"
+                                BorderBrush="{ui:ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                ClipToBounds="True">
+                            <Grid>
+                                <Image Source="{Binding NavigatorImagePath}" Stretch="Uniform" Opacity="0.95" />
+                                <ItemsControl ItemsSource="{Binding NavigatorDisplayItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                            <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:NavigatorScrewDisplayItem}">
+                                            <Grid>
+                                                <Ellipse Style="{StaticResource NavigatorDotStyle}"
+                                                         MouseLeftButtonDown="OnNavigatorDotClick" />
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="White"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Text="{Binding Label}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <ui:Button Margin="0,0,0,8" Command="{Binding PickNavigatorImageCommand}" Content="{DynamicResource S.ControllerSeq.PickImage}" />
+                            <ui:Button Width="48" Margin="0,0,0,4" Command="{Binding MoveNavigatorUpCommand}" Content="▲" />
+                            <StackPanel Orientation="Horizontal">
+                                <ui:Button Width="48" Margin="0,0,4,4" Command="{Binding MoveNavigatorLeftCommand}" Content="◀" />
+                                <ui:Button Width="48" Margin="0,0,0,4" Command="{Binding MoveNavigatorRightCommand}" Content="▶" />
+                            </StackPanel>
+                            <ui:Button Width="48" Command="{Binding MoveNavigatorDownCommand}" Content="▼" />
+                            <TextBlock Margin="0,12,0,0"
+                                       MaxWidth="140"
+                                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="{DynamicResource S.ControllerSeq.NavigatorHint}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Margin="0,12,0,0" Text="{Binding StatusMessage}" />
+    </Grid>
+</UserControl>

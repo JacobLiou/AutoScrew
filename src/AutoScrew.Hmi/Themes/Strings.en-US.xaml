@@ -326,6 +326,14 @@
     <system:String x:Key="S.ControllerParam.StatusReadDevice">Read parameter #{0} from device.</system:String>
     <system:String x:Key="S.ControllerParam.StatusWriteDevice">Wrote parameter #{0} to device.</system:String>
     <system:String x:Key="S.ControllerParam.StatusActivated">Activated parameter #{0} on device.</system:String>
+    <system:String x:Key="S.ControllerParam.DevicePresets">Device parameters (#160)</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceSlotName">Device #{0}</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListCount">{0} parameter(s) configured on controller.</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">No parameters on controller. Create them on device HMI first.</system:String>
+    <system:String x:Key="S.ControllerParam.RefreshDeviceList">Refresh device list</system:String>
+    <system:String x:Key="S.ControllerParam.ImportFromDevice">Import selected (#150)</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedDevice">Imported parameter #{0} from device to local library.</system:String>
+    <system:String x:Key="S.ControllerParam.TighteningSettings">Tightening</system:String>
 
     <system:String x:Key="S.ControllerSeq.New">New sequence</system:String>
     <system:String x:Key="S.ControllerSeq.Activate">Activate (#303)</system:String>
@@ -347,6 +355,10 @@
     <system:String x:Key="S.ControllerSeq.StatusReadDevice">Read sequence #{0} from device.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusWriteDevice">Wrote sequence #{0} to device.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusActivated">Activated sequence #{0} on device.</system:String>
+    <system:String x:Key="S.ControllerSeq.TabGeneral">General</system:String>
+    <system:String x:Key="S.ControllerSeq.TabNavigatorGuide">Navigator guide</system:String>
+    <system:String x:Key="S.ControllerSeq.PickImage">Pick product image</system:String>
+    <system:String x:Key="S.ControllerSeq.NavigatorHint">Select a screw dot and use D-pad to adjust coordinates (#201).</system:String>
 
     <system:String x:Key="S.ControllerSource.ProductionMode">Production control mode</system:String>
     <system:String x:Key="S.ControllerSource.ModeHostGuided">Host guided (template + #302)</system:String>
@@ -369,14 +381,11 @@
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">Saved locally.</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">Read source config from device.</system:String>
     <system:String x:Key="S.ControllerSource.StatusWriteDevice">Wrote source config to device.</system:String>
+    <system:String x:Key="S.ControllerSource.ActivateSequence">Activate sequence (#303)</system:String>
+    <system:String x:Key="S.ControllerSource.StatusActivated">Activated sequence #{0} on device (#303).</system:String>
+    <system:String x:Key="S.ControllerSource.ActivateNeedsSequence">Save a sequence binding before activating #303.</system:String>
 
-    <system:String x:Key="S.Nav.ControllerWorkbench">Controller workbench</system:String>
     <system:String x:Key="S.Workbench.ProductionMode">Production mode</system:String>
-    <system:String x:Key="S.Workbench.Step.Parameters">① Parameters</system:String>
-    <system:String x:Key="S.Workbench.Step.Sequence">② Sequence</system:String>
-    <system:String x:Key="S.Workbench.Step.Source">③ Source</system:String>
-    <system:String x:Key="S.Workbench.Step.Deployment">④ Deployment</system:String>
-    <system:String x:Key="S.Workbench.StepHint">Configure device in order: Parameters → Sequence → Source binding.</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStart">Quick Start</system:String>
     <system:String x:Key="S.Workbench.Param.SummaryCard">Summary</system:String>
     <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} active stages · stage1 {3:F2} N·m</system:String>

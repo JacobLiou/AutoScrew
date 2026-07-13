@@ -96,19 +96,44 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _appOptions = appOptions;
         _user = user;
         Presets = new ObservableCollection<ControllerParameterListItem>();
+        DeviceParameters = new ObservableCollection<ControllerParameterListItem>();
         StageItems = new ObservableCollection<ControllerParameterStageItem>();
         RebuildStageItems();
         DeviceStatusText = BuildDeviceStatusText();
+        _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
+    }
+
+    private void OnDeviceConnectionChanged()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(RefreshDeviceConnectionState);
+            return;
+        }
+
+        RefreshDeviceConnectionState();
     }
 
     public bool IsDeviceAvailable => _presetService.IsDeviceAvailable;
 
     public ObservableCollection<ControllerParameterListItem> Presets { get; }
 
+    public ObservableCollection<ControllerParameterListItem> DeviceParameters { get; }
+
     public ObservableCollection<ControllerParameterStageItem> StageItems { get; }
 
     [ObservableProperty]
     private ControllerParameterListItem? _selectedPreset;
+
+    [ObservableProperty]
+    private ControllerParameterListItem? _selectedDeviceParameter;
+
+    [ObservableProperty]
+    private bool _deviceHasConfiguredParameters;
+
+    [ObservableProperty]
+    private string _deviceListStatus = string.Empty;
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
@@ -192,6 +217,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
 
+    partial void OnSelectedDeviceParameterChanged(ControllerParameterListItem? value) =>
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+
     partial void OnSelectedPresetChanged(ControllerParameterListItem? value)
     {
         if (value is null)
@@ -222,12 +250,102 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await _devices.LoadAsync().ConfigureAwait(true);
-        DeviceStatusText = BuildDeviceStatusText();
+        RefreshDeviceConnectionState();
         await RefreshPresetListAsync().ConfigureAwait(true);
+        if (IsDeviceAvailable)
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
         if (Presets.Count > 0 && SelectedPreset is null)
             SelectedPreset = Presets[0];
         else if (Presets.Count == 0)
             StartNewPreset();
+    }
+
+    public async Task OnPageActivatedAsync()
+    {
+        await _devices.LoadAsync().ConfigureAwait(true);
+        RefreshDeviceConnectionState();
+        if (IsDeviceAvailable)
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+    }
+
+    private void RefreshDeviceConnectionState()
+    {
+        DeviceStatusText = BuildDeviceStatusText();
+        OnPropertyChanged(nameof(IsDeviceAvailable));
+        NotifyDeviceCommandsCanExecuteChanged();
+    }
+
+    private void NotifyDeviceCommandsCanExecuteChanged()
+    {
+        RefreshDeviceListCommand.NotifyCanExecuteChanged();
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        ActivateOnDeviceCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    private Task RefreshDeviceListAsync() => RefreshDeviceListCoreAsync();
+
+    private async Task RefreshDeviceListCoreAsync()
+    {
+        try
+        {
+            var ids = await _presetService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
+            DeviceParameters.Clear();
+            foreach (var id in ids)
+                DeviceParameters.Add(new ControllerParameterListItem(id, Loc.Format("S.ControllerParam.DeviceSlotName", id)));
+
+            DeviceHasConfiguredParameters = DeviceParameters.Count > 0;
+            DeviceListStatus = DeviceHasConfiguredParameters
+                ? Loc.Format("S.ControllerParam.DeviceListCount", DeviceParameters.Count)
+                : Loc.Get("S.ControllerParam.DeviceListEmpty");
+        }
+        catch (Exception ex)
+        {
+            DeviceListStatus = ex.Message;
+            DeviceHasConfiguredParameters = false;
+        }
+
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnDeviceHasConfiguredParametersChanged(bool value)
+    {
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanImportFromDevice))]
+    private async Task ImportSelectedFromDeviceAsync()
+    {
+        var id = SelectedDeviceParameter?.ParameterId ?? ParameterId;
+        if (id <= 0)
+            return;
+
+        AuditConfig("Configuration.ParamImportDevice", $"paramId={id}");
+        try
+        {
+            var template = await _presetService.ImportFromDeviceAsync(id).ConfigureAwait(true);
+            ApplyTemplate(template);
+            await RefreshPresetListAsync().ConfigureAwait(true);
+            SelectedPreset = Presets.FirstOrDefault(p => p.ParameterId == template.ParameterId);
+            StatusMessage = Loc.Format("S.ControllerParam.StatusImportedDevice", id);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (IemdSdCommunicationException ex)
+        {
+            var detail = ex.DeviceErrorCode is int code
+                ? TighteningParameterErrorCodes.Describe(ex.CommandCode ?? 0, code)
+                : ex.Message;
+            StatusMessage = detail;
+            ShowSnackbar(detail, ControlAppearance.Danger);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
     }
 
     [RelayCommand]
@@ -338,7 +456,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    [RelayCommand(CanExecute = nameof(CanWriteToDevice))]
     private async Task WriteToDeviceAsync()
     {
         AuditConfig("Configuration.ParamWriteDevice", $"paramId={ParameterId};name={Name}");
@@ -445,6 +563,12 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     }
 
     private bool CanUseDevice() => IsDeviceAvailable;
+
+    private bool CanWriteToDevice() =>
+        CanUseDevice() && DeviceHasConfiguredParameters;
+
+    private bool CanImportFromDevice() =>
+        CanUseDevice() && (SelectedDeviceParameter is not null || ParameterId > 0);
 
     private async Task RefreshPresetListAsync()
     {

@@ -8,11 +8,11 @@ namespace AutoScrew.Infrastructure.Hardware;
 /// </summary>
 public static class IemdSdProductionSetup
 {
-    /// <summary>手册：拧紧来源 = 手动设定（单来源）。</summary>
-    public const int OperatingModeManualSet = 0;
+    /// <summary>手册 #300 CB：0 = 单轴独立。</summary>
+    public const int SingleToolOperatingMode = 0;
 
-    /// <summary>手册：切换方式 = 手动设定；非 1 时 #302 会拒收。</summary>
-    public const int SwitchingMethodManualSet = 1;
+    /// <summary>手册 #300 CC：0 = 手动设定；#302/#303 须此模式。</summary>
+    public const int SwitchingMethodManual = 0;
 
     public static async Task EnsureManualSourceAsync(
         IIemdSdClient client,
@@ -25,8 +25,8 @@ public static class IemdSdProductionSetup
         try
         {
             var current = await client.ReadSourceModeAsync(cancellationToken).ConfigureAwait(false);
-            if (current.OperatingMode == OperatingModeManualSet
-                && current.SwitchingMethod == SwitchingMethodManualSet)
+            if (current.OperatingMode == SingleToolOperatingMode
+                && current.SwitchingMethod == SwitchingMethodManual)
             {
                 return;
             }
@@ -37,11 +37,11 @@ public static class IemdSdProductionSetup
         }
 
         await client
-            .WriteSourceModeAsync(0, OperatingModeManualSet, SwitchingMethodManualSet, cancellationToken)
+            .WriteSourceModeAsync(0, SingleToolOperatingMode, SwitchingMethodManual, cancellationToken)
             .ConfigureAwait(false);
         logger.LogInformation(
             "IEMD-SD #300 manual source applied (operatingMode={Mode}, switchingMethod={Switch}).",
-            OperatingModeManualSet,
-            SwitchingMethodManualSet);
+            SingleToolOperatingMode,
+            SwitchingMethodManual);
     }
 }

@@ -29,6 +29,8 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         _useSimulatedHardware = appOptions.Value.UseSimulatedHardware;
     }
 
+    public event Action? DeviceConnectionChanged;
+
     public string StationId { get; }
 
     public bool IsSimulatedHardware => _useSimulatedHardware;
@@ -73,6 +75,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         finally
         {
             _gate.Release();
+            NotifyDeviceConnectionChanged();
         }
     }
 
@@ -131,6 +134,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         finally
         {
             _gate.Release();
+            NotifyDeviceConnectionChanged();
         }
     }
 
@@ -191,7 +195,10 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
 
         await _client.DisposeAsync().ConfigureAwait(false);
         _client = null;
+        NotifyDeviceConnectionChanged();
     }
+
+    private void NotifyDeviceConnectionChanged() => DeviceConnectionChanged?.Invoke();
 
     private static StationDeviceConfiguration CloneConfiguration(StationDeviceConfiguration source)
     {

@@ -70,6 +70,8 @@ public sealed record DeviceSummary(
 
 public interface IStationDeviceService
 {
+    event Action? DeviceConnectionChanged;
+
     string StationId { get; }
 
     bool IsSimulatedHardware { get; }
