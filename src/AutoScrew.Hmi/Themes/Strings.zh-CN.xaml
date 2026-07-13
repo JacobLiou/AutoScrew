@@ -343,9 +343,13 @@
     <system:String x:Key="S.ControllerParam.DevicePresets">设备参数 (#160)</system:String>
     <system:String x:Key="S.ControllerParam.DeviceSlotName">设备 #{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">控制器已配置 {0} 组参数。</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceListEmpty">控制器暂无已配置参数，请先在设备 HMI 创建或从其他工位导入。</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 未返回已配置 ID。可点「全部导入」重试，或在上方填写实际参数 ID 后「从设备读取」；新建参数请编辑后「下发到设备」(#100)。</system:String>
     <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备列表</system:String>
+    <system:String x:Key="S.ControllerParam.ImportAllFromDevice">全部导入 (#160→#150)</system:String>
     <system:String x:Key="S.ControllerParam.ImportFromDevice">导入选中 (#150)</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllProgress">正在从设备批量导入参数…</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllDone">已从设备导入 {0} 组参数到本地库。</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllPartial">已导入 {0} 组，{1} 组失败（见状态栏）。</system:String>
     <system:String x:Key="S.ControllerParam.StatusImportedDevice">已从设备导入参数 #{0} 到本地库。</system:String>
     <system:String x:Key="S.ControllerParam.TighteningSettings">拧紧设定</system:String>
 

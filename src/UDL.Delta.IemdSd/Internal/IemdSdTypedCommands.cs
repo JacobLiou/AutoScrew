@@ -207,6 +207,16 @@ internal sealed class IemdSdTypedCommands
         return new ParameterListSnapshot { RawWords = words };
     }
 
+    public async Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount, CancellationToken ct)
+    {
+        var words = await ReadPayloadOnly(
+                (int)ModbusFunctionCode.Read_created_sets_tightening_parameters,
+                wordCount,
+                ct)
+            .ConfigureAwait(false);
+        return new ParameterListSnapshot { RawWords = words };
+    }
+
     public Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(template);

@@ -36,6 +36,8 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public IemdSdClientOptions Options { get; }
 
+    public bool IsConnected => _transport.IsConnected;
+
     public int CurveVersion { get; private set; }
 
     public uint ReportIdMax { get; private set; } = 200_000;
@@ -172,6 +174,9 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
         _typed.ListParametersAsync(wordCount, cancellationToken);
+
+    public Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
+        _typed.ListParametersWithoutToolIndexAsync(wordCount, cancellationToken);
 
     public Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken cancellationToken = default) =>
         _typed.WriteSequenceAsync(template, cancellationToken);

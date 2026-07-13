@@ -4,6 +4,12 @@ namespace AutoScrew.Application.Abstractions;
 
 public sealed record ControllerParameterPresetSummary(int ParameterId, string Name, int ToolIndex);
 
+public sealed record ControllerParameterBulkImportResult(
+    IReadOnlyList<int> ImportedIds,
+    IReadOnlyList<ControllerParameterImportFailure> Failures);
+
+public sealed record ControllerParameterImportFailure(int ParameterId, string Message);
+
 public interface IControllerParameterPresetService
 {
     bool IsDeviceAvailable { get; }
@@ -25,6 +31,8 @@ public interface IControllerParameterPresetService
     Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default);
 
     Task<TighteningParameterTemplate> ImportFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);
+
+    Task<ControllerParameterBulkImportResult> ImportAllFromDeviceAsync(CancellationToken cancellationToken = default);
 
     Task WriteToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
 

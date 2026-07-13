@@ -2,6 +2,8 @@ namespace UDL.Delta.IemdSd.Modbus;
 
 internal interface IModbusTransport : IDisposable
 {
+    bool IsConnected { get; }
+
     Task ConnectAsync(CancellationToken cancellationToken);
 
     Task<int> ReadSingleAsync(int address, CancellationToken cancellationToken);

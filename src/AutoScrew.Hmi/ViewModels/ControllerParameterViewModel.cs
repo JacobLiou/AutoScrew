@@ -213,7 +213,12 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     partial void OnNameChanged(string value) => NotifySummary();
 
-    partial void OnParameterIdChanged(int value) => NotifySummary();
+    partial void OnParameterIdChanged(int value)
+    {
+        NotifySummary();
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+    }
 
     partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
 
@@ -279,6 +284,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         RefreshDeviceListCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ImportAllFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ActivateOnDeviceCommand.NotifyCanExecuteChanged();
@@ -309,11 +315,37 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ImportAllFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnDeviceHasConfiguredParametersChanged(bool value)
+    [RelayCommand(CanExecute = nameof(CanImportAllFromDevice))]
+    private async Task ImportAllFromDeviceAsync()
     {
-        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        AuditConfig("Configuration.ParamImportAllDevice");
+        try
+        {
+            StatusMessage = Loc.Get("S.ControllerParam.StatusImportAllProgress");
+            var result = await _presetService.ImportAllFromDeviceAsync().ConfigureAwait(true);
+            await RefreshPresetListAsync().ConfigureAwait(true);
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+            if (result.ImportedIds.Count > 0)
+            {
+                var lastId = result.ImportedIds[^1];
+                SelectedPreset = Presets.FirstOrDefault(p => p.ParameterId == lastId);
+                var template = await _presetService.LoadLocalPresetAsync(lastId).ConfigureAwait(true);
+                ApplyTemplate(template);
+            }
+
+            StatusMessage = result.Failures.Count > 0
+                ? Loc.Format("S.ControllerParam.StatusImportAllPartial", result.ImportedIds.Count, result.Failures.Count)
+                : Loc.Format("S.ControllerParam.StatusImportAllDone", result.ImportedIds.Count);
+            ShowSnackbar(StatusMessage, result.Failures.Count > 0 ? ControlAppearance.Caution : ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanImportFromDevice))]
@@ -430,15 +462,19 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    [RelayCommand(CanExecute = nameof(CanReadFromDevice))]
     private async Task ReadFromDeviceAsync()
     {
-        AuditConfig("Configuration.ParamReadDevice", $"paramId={ParameterId}");
+        var id = ResolveDeviceParameterId();
+        if (id is null)
+            return;
+
+        AuditConfig("Configuration.ParamReadDevice", $"paramId={id}");
         try
         {
-            var template = await _presetService.ReadFromDeviceAsync(ParameterId).ConfigureAwait(true);
+            var template = await _presetService.ReadFromDeviceAsync(id.Value).ConfigureAwait(true);
             ApplyTemplate(template);
-            StatusMessage = Loc.Format("S.ControllerParam.StatusReadDevice", ParameterId);
+            StatusMessage = Loc.Format("S.ControllerParam.StatusReadDevice", id.Value);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (IemdSdCommunicationException ex)
@@ -456,7 +492,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanWriteToDevice))]
+    [RelayCommand(CanExecute = nameof(CanUseDevice))]
     private async Task WriteToDeviceAsync()
     {
         AuditConfig("Configuration.ParamWriteDevice", $"paramId={ParameterId};name={Name}");
@@ -467,6 +503,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             await _presetService.WriteToDeviceAsync(template).ConfigureAwait(true);
             await _presetService.SaveLocalPresetAsync(template).ConfigureAwait(true);
             await RefreshPresetListAsync().ConfigureAwait(true);
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
             StatusMessage = Loc.Format("S.ControllerParam.StatusWriteDevice", template.ParameterId);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
@@ -564,11 +601,17 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     private bool CanUseDevice() => IsDeviceAvailable;
 
-    private bool CanWriteToDevice() =>
-        CanUseDevice() && DeviceHasConfiguredParameters;
+    private bool CanReadFromDevice() => IsDeviceAvailable && ResolveDeviceParameterId() is not null;
 
-    private bool CanImportFromDevice() =>
-        CanUseDevice() && (SelectedDeviceParameter is not null || ParameterId > 0);
+    private bool CanImportFromDevice() => CanReadFromDevice();
+
+    private bool CanImportAllFromDevice() => IsDeviceAvailable;
+
+    private int? ResolveDeviceParameterId()
+    {
+        var id = SelectedDeviceParameter?.ParameterId ?? ParameterId;
+        return id is >= 1 and <= 500 ? id : null;
+    }
 
     private async Task RefreshPresetListAsync()
     {

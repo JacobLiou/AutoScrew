@@ -70,7 +70,48 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         var snapshot = await client
             .ListParametersAsync(ParameterListSnapshot.MaxParameterSlots, cancellationToken)
             .ConfigureAwait(false);
+        var ids = snapshot.GetConfiguredIds();
+        if (ids.Count > 0)
+            return ids;
+
+        _logger.LogDebug("#160 with tool index returned no parameters; retrying without tool index.");
+        snapshot = await client
+            .ListParametersWithoutToolIndexAsync(ParameterListSnapshot.MaxParameterSlots, cancellationToken)
+            .ConfigureAwait(false);
         return snapshot.GetConfiguredIds();
+    }
+
+    public async Task<ControllerParameterBulkImportResult> ImportAllFromDeviceAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var ids = await ListDeviceParameterIdsAsync(cancellationToken).ConfigureAwait(false);
+        if (ids.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Controller returned no configured parameter IDs from #160. Refresh the device list or read by parameter ID.");
+        }
+
+        var imported = new List<int>();
+        var failures = new List<ControllerParameterImportFailure>();
+        foreach (var id in ids)
+        {
+            try
+            {
+                await ImportFromDeviceAsync(id, cancellationToken).ConfigureAwait(false);
+                imported.Add(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Bulk import skipped parameter {ParamId}", id);
+                failures.Add(new ControllerParameterImportFailure(id, ex.Message));
+            }
+        }
+
+        _logger.LogInformation(
+            "Bulk imported {Imported} parameter(s) from IEMD-SD ({Failed} failed)",
+            imported.Count,
+            failures.Count);
+        return new ControllerParameterBulkImportResult(imported, failures);
     }
 
     public async Task<TighteningParameterTemplate> ImportFromDeviceAsync(

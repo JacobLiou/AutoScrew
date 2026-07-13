@@ -115,6 +115,8 @@ public sealed class ControllerTraceServiceTests
 
         public IemdSdClientOptions Options { get; } = new();
 
+        public bool IsConnected => true;
+
         public int CurveVersion => 1;
 
         public uint ReportIdMax => 100;
@@ -162,6 +164,8 @@ public sealed class ControllerTraceServiceTests
         public Task DeleteParameterAsync(int parameterId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+        public Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSequenceTemplate> ReadSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();

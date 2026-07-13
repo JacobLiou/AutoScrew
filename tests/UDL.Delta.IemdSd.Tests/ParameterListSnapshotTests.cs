@@ -19,6 +19,19 @@ public sealed class ParameterListSnapshotTests
     }
 
     [Fact]
+    public void GetConfiguredIds_ParsesCompactIdList()
+    {
+        var snapshot = new ParameterListSnapshot
+        {
+            RawWords = [3, 111, 112, 200, 0],
+        };
+
+        var ids = snapshot.GetConfiguredIds();
+
+        Assert.Equal([111, 112, 200], ids);
+    }
+
+    [Fact]
     public void GetConfiguredIds_RespectsMaxParameterSlots()
     {
         var words = new int[ParameterListSnapshot.MaxParameterSlots + 10];

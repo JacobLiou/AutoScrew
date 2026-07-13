@@ -24,6 +24,8 @@ internal sealed class ModbusRtuTransport : IModbusTransport
         _interFrameDelayMs = Math.Max(0, options.RtuInterFrameDelayMs);
     }
 
+    public bool IsConnected => _serialPort?.IsOpen == true;
+
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);

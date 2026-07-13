@@ -329,7 +329,11 @@
     <system:String x:Key="S.ControllerParam.DevicePresets">Device parameters (#160)</system:String>
     <system:String x:Key="S.ControllerParam.DeviceSlotName">Device #{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">{0} parameter(s) configured on controller.</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceListEmpty">No parameters on controller. Create them on device HMI first.</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 returned no configured IDs. Try Import all, enter the actual parameter ID above and Read, or Write (#100) to create a new one.</system:String>
+    <system:String x:Key="S.ControllerParam.ImportAllFromDevice">Import all (#160→#150)</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllProgress">Importing all parameters from device…</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllDone">Imported {0} parameter set(s) from device.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportAllPartial">Imported {0}; {1} failed (see status).</system:String>
     <system:String x:Key="S.ControllerParam.RefreshDeviceList">Refresh device list</system:String>
     <system:String x:Key="S.ControllerParam.ImportFromDevice">Import selected (#150)</system:String>
     <system:String x:Key="S.ControllerParam.StatusImportedDevice">Imported parameter #{0} from device to local library.</system:String>

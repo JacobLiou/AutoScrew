@@ -168,7 +168,7 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         if (_useSimulatedHardware)
             return;
 
-        if (_client is not null)
+        if (_client is not null && _client.IsConnected)
             return;
 
         await ApplyDeviceAsync(cancellationToken).ConfigureAwait(false);

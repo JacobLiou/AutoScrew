@@ -7,6 +7,8 @@ public interface IIemdSdClient : IAsyncDisposable
 {
     IemdSdClientOptions Options { get; }
 
+    bool IsConnected { get; }
+
     int CurveVersion { get; }
 
     uint ReportIdMax { get; }
@@ -82,6 +84,8 @@ public interface IIemdSdClient : IAsyncDisposable
     Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default);
 
     Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default);
+
+    Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default);
 
     Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken cancellationToken = default);
 
