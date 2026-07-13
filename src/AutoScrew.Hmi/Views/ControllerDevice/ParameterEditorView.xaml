@@ -15,8 +15,9 @@
         </Grid.RowDefinitions>
 
         <WrapPanel Grid.Row="0" Margin="0,0,0,12">
-            <ui:Button Margin="0,0,8,8" Command="{Binding NewPresetCommand}" Content="{DynamicResource S.ControllerParam.New}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding QuickStartNewCommand}" Content="{DynamicResource S.Workbench.Param.QuickStart}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding NewPresetCommand}"
+                       Content="{DynamicResource S.ControllerParam.New}" />
             <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />

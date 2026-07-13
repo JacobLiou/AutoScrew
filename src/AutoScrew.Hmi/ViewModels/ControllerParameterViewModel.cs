@@ -391,27 +391,27 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StatusMessage = Loc.Get("S.ControllerParam.StatusNew");
     }
 
-    [RelayCommand]
-    private void QuickStartNew()
-    {
-        AuditConfig("Configuration.ParamQuickStart");
-        StartNewPreset();
-        const int finalTorqueMilliNm = 450;
-        var stages = _working.Core.Stages;
-        stages[0].ControlMode = TighteningControlMode.Torque;
-        stages[0].TargetTorqueMilliNm = finalTorqueMilliNm / 3;
-        stages[0].SpeedRpm = 800;
-        stages[1].ControlMode = TighteningControlMode.Angle;
-        stages[1].TargetAngleDeg = 90;
-        stages[1].SpeedRpm = 400;
-        stages[2].ControlMode = TighteningControlMode.Torque;
-        stages[2].TargetTorqueMilliNm = finalTorqueMilliNm;
-        stages[2].SpeedRpm = 200;
-        MaxTighteningTimeTenthSec = 300;
-        RebuildStageItems();
-        NotifySummary();
-        StatusMessage = Loc.Get("S.Workbench.Param.QuickStartDone");
-    }
+    //[RelayCommand]
+    //private void QuickStartNew()
+    //{
+    //    AuditConfig("Configuration.ParamQuickStart");
+    //    StartNewPreset();
+    //    const int finalTorqueMilliNm = 450;
+    //    var stages = _working.Core.Stages;
+    //    stages[0].ControlMode = TighteningControlMode.Torque;
+    //    stages[0].TargetTorqueMilliNm = finalTorqueMilliNm / 3;
+    //    stages[0].SpeedRpm = 800;
+    //    stages[1].ControlMode = TighteningControlMode.Angle;
+    //    stages[1].TargetAngleDeg = 90;
+    //    stages[1].SpeedRpm = 400;
+    //    stages[2].ControlMode = TighteningControlMode.Torque;
+    //    stages[2].TargetTorqueMilliNm = finalTorqueMilliNm;
+    //    stages[2].SpeedRpm = 200;
+    //    MaxTighteningTimeTenthSec = 300;
+    //    RebuildStageItems();
+    //    NotifySummary();
+    //    StatusMessage = Loc.Get("S.Workbench.Param.QuickStartDone");
+    //}
 
     public Task RunWriteToDeviceAsync() => WriteToDeviceAsync();
 

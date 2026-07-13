@@ -451,7 +451,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerParams"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Keyboard24 },
                 TargetPageType = typeof(ControllerParameterPage),
                 TargetPageTag = "controller-parameter"
             });
@@ -467,7 +467,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.ControllerSource"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.ArrowRouting24 },
+                Icon = new SymbolIcon { Symbol = SymbolRegular.RatingMature24 },
                 TargetPageType = typeof(ControllerSourcePage),
                 TargetPageTag = "controller-source"
             });
