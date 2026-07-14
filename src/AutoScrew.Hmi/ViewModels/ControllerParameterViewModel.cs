@@ -599,13 +599,13 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable;
+    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
 
-    private bool CanReadFromDevice() => IsDeviceAvailable && ResolveDeviceParameterId() is not null;
+    private bool CanReadFromDevice() => CanUseDevice() && ResolveDeviceParameterId() is not null;
 
     private bool CanImportFromDevice() => CanReadFromDevice();
 
-    private bool CanImportAllFromDevice() => IsDeviceAvailable;
+    private bool CanImportAllFromDevice() => CanUseDevice();
 
     private int? ResolveDeviceParameterId()
     {

@@ -10,17 +10,38 @@ public sealed class ParameterListSnapshot
     /// <summary>
     /// Returns configured parameter IDs (1–500).
     /// Supports slot bitmap (word[i]&gt;0 ⇒ ID i+1) and compact ID list (word0=count, word1..N=IDs).
+    /// Binary 0/1 occupancy flags prefer bitmap (compact would mis-read leading 1 as "count=1").
     /// </summary>
     public IReadOnlyList<int> GetConfiguredIds()
     {
         if (RawWords.Length == 0)
             return [];
 
+        if (IsBinaryOccupiedFlags())
+            return ParseSlotBitmap();
+
         var compact = TryParseCompactIdList();
         if (compact.Count > 0)
             return compact;
 
         return ParseSlotBitmap();
+    }
+
+    /// <summary>True when payload looks like per-slot occupied flags (only 0/1).</summary>
+    private bool IsBinaryOccupiedFlags()
+    {
+        var limit = Math.Min(RawWords.Length, MaxParameterSlots);
+        var sawOne = false;
+        for (var i = 0; i < limit; i++)
+        {
+            var w = RawWords[i];
+            if (w is not (0 or 1))
+                return false;
+            if (w == 1)
+                sawOne = true;
+        }
+
+        return sawOne;
     }
 
     private List<int> TryParseCompactIdList()

@@ -1,5 +1,7 @@
+using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Modbus;
 using UDL.Delta.IemdSd.Protocol;
+using UDL.Delta.IemdSd.Session;
 
 namespace UDL.Delta.IemdSd.Internal;
 
@@ -8,15 +10,24 @@ internal sealed class TighteningCycleRunner
     private readonly IModbusTransport _transport;
     private readonly CommandMailbox _mailbox;
     private readonly IemdSdClientOptions _options;
+    private readonly DeviceSession _session;
 
-    public TighteningCycleRunner(IModbusTransport transport, CommandMailbox mailbox, IemdSdClientOptions options)
+    public TighteningCycleRunner(
+        IModbusTransport transport,
+        CommandMailbox mailbox,
+        IemdSdClientOptions options,
+        DeviceSession session)
     {
         _transport = transport;
         _mailbox = mailbox;
         _options = options;
+        _session = session;
     }
 
-    public async Task<TighteningResult> RunAsync(TighteningTrigger trigger, CancellationToken cancellationToken)
+    public Task<TighteningResult> RunAsync(TighteningTrigger trigger, CancellationToken cancellationToken) =>
+        _session.RunAsync(ct => RunCoreAsync(trigger, ct), cancellationToken);
+
+    private async Task<TighteningResult> RunCoreAsync(TighteningTrigger trigger, CancellationToken cancellationToken)
     {
         var useDi = trigger == TighteningTrigger.AutoDi
             || (_options.TriggerMode == TighteningTriggerMode.AutoDi && trigger != TighteningTrigger.Manual);
@@ -37,7 +48,7 @@ internal sealed class TighteningCycleRunner
         var dword = (uint)(torqueWords[1] * 65536 + (ushort)torqueWords[0]);
         var finalNm = dword / 1000.0;
 
-        var reportId = await ReadReportIdAsync(cancellationToken).ConfigureAwait(false);
+        var reportId = await ReadReportIdCoreAsync(cancellationToken).ConfigureAwait(false);
 
         if (useDi)
         {
@@ -76,7 +87,7 @@ internal sealed class TighteningCycleRunner
             await Task.Delay(_options.TighteningPollIntervalMs, cancellationToken).ConfigureAwait(false);
         }
 
-        throw new Exceptions.IemdSdCommunicationException("Controller not ready (0x1F52).");
+        throw new IemdSdCommunicationException("Controller not ready (0x1F52).");
     }
 
     private async Task WaitDiAckAsync(CancellationToken cancellationToken)
@@ -91,7 +102,7 @@ internal sealed class TighteningCycleRunner
             await Task.Delay(_options.TighteningPollIntervalMs, cancellationToken).ConfigureAwait(false);
         }
 
-        throw new Exceptions.IemdSdCommunicationException("DI bit0 not acknowledged.");
+        throw new IemdSdCommunicationException("DI bit0 not acknowledged.");
     }
 
     private async Task WaitDiClearAsync(CancellationToken cancellationToken)
@@ -113,7 +124,10 @@ internal sealed class TighteningCycleRunner
             ? ModbusRegisterMap.TighteningResultLegacy
             : ModbusRegisterMap.TighteningFinish;
 
-        while (true)
+        var timeoutMs = Math.Max(1_000, _options.TighteningCycleTimeoutMs);
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+
+        while (DateTime.UtcNow < deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var v = await _transport.ReadSingleAsync(addr, cancellationToken).ConfigureAwait(false);
@@ -121,6 +135,9 @@ internal sealed class TighteningCycleRunner
                 return (DeviceTighteningStatus)v;
             await Task.Delay(_options.TighteningPollIntervalMs, cancellationToken).ConfigureAwait(false);
         }
+
+        throw new IemdSdCommunicationException(
+            $"Tightening finish wait timed out after {timeoutMs} ms (register 0x{addr:X}).");
     }
 
     private async Task ClearFinishAsync(CancellationToken cancellationToken)
@@ -131,7 +148,10 @@ internal sealed class TighteningCycleRunner
         await _transport.WriteSingleAsync(addr, 0, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<uint> ReadReportIdAsync(CancellationToken cancellationToken)
+    public Task<uint> ReadReportIdAsync(CancellationToken cancellationToken) =>
+        _session.RunAsync(ReadReportIdCoreAsync, cancellationToken);
+
+    private async Task<uint> ReadReportIdCoreAsync(CancellationToken cancellationToken)
     {
         var row = await _transport.ReadHoldingAsync(ModbusRegisterMap.ReportIdLow, 2, cancellationToken)
             .ConfigureAwait(false);

@@ -4,6 +4,9 @@ internal interface IModbusTransport : IDisposable
 {
     bool IsConnected { get; }
 
+    /// <summary>Force-drop local TCP/serial after IO failure so callers must reconnect.</summary>
+    void Invalidate();
+
     Task ConnectAsync(CancellationToken cancellationToken);
 
     Task<int> ReadSingleAsync(int address, CancellationToken cancellationToken);

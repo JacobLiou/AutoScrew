@@ -1,5 +1,6 @@
 using UDL.Delta.IemdSd.Internal;
 using UDL.Delta.IemdSd.Modbus;
+using UDL.Delta.IemdSd.Session;
 
 namespace UDL.Delta.IemdSd.Tests;
 
@@ -10,7 +11,8 @@ public class IemdSdCommandExecutorTests
     {
         var transport = new RecordingTransport();
         var mailbox = new FakeMailbox();
-        var executor = new IemdSdCommandExecutor(transport, mailbox);
+        await using var session = new DeviceSession();
+        var executor = new IemdSdCommandExecutor(transport, mailbox, session);
 
         var payload = Enumerable.Repeat(7, ModbusRegisterMap.ParameterBlockWordCount).ToArray();
         await executor.ExecuteAsync(
@@ -28,7 +30,8 @@ public class IemdSdCommandExecutorTests
     {
         var transport = new RecordingTransport();
         var mailbox = new FakeMailbox();
-        var executor = new IemdSdCommandExecutor(transport, mailbox);
+        await using var session = new DeviceSession();
+        var executor = new IemdSdCommandExecutor(transport, mailbox, session);
 
         var result = await executor.ExecuteAsync(
             ModbusCommandInvocation.WithReadPayload(150, 4, word2: 0, word3: 9),
@@ -42,6 +45,12 @@ public class IemdSdCommandExecutorTests
     private sealed class RecordingTransport : IModbusTransport
     {
         public List<string> Steps { get; } = [];
+
+        public bool IsConnected => true;
+
+        public void Invalidate()
+        {
+        }
 
         public Task ConnectAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 

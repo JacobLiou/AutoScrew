@@ -108,13 +108,6 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
         _logger.LogInformation("Activated sequence {SeqId} on IEMD-SD (#303)", sequenceId);
     }
 
-    private async Task<IIemdSdClient> RequireClientAsync(CancellationToken cancellationToken)
-    {
-        if (!_devices.IsRuntimeDeviceAvailable)
-            throw new InvalidOperationException("IEMD-SD device is not available in the current configuration.");
-
-        await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
-        return _devices.GetClient()
-               ?? throw new InvalidOperationException("IEMD-SD device is not connected. Configure it on the Device Connection page.");
-    }
+    private Task<IIemdSdClient> RequireClientAsync(CancellationToken cancellationToken) =>
+        StationDeviceClientGuard.RequireIdleClientAsync(_devices, cancellationToken);
 }

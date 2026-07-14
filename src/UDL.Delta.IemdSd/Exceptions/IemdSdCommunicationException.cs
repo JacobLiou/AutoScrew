@@ -1,6 +1,6 @@
 namespace UDL.Delta.IemdSd.Exceptions;
 
-public sealed class IemdSdCommunicationException : Exception
+public class IemdSdCommunicationException : Exception
 {
     public IemdSdCommunicationException(string message) : base(message) { }
 

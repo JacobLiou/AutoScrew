@@ -340,10 +340,10 @@
     <system:String x:Key="S.ControllerParam.StatusReadDevice">已从设备读取参数 #{0}。</system:String>
     <system:String x:Key="S.ControllerParam.StatusWriteDevice">已下发参数 #{0} 到设备。</system:String>
     <system:String x:Key="S.ControllerParam.StatusActivated">已在设备激活参数 #{0}。</system:String>
-    <system:String x:Key="S.ControllerParam.DevicePresets">设备参数 (#160)</system:String>
+    <system:String x:Key="S.ControllerParam.DevicePresets">设备参数</system:String>
     <system:String x:Key="S.ControllerParam.DeviceSlotName">设备 #{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">控制器已配置 {0} 组参数。</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 未返回已配置 ID。可点「全部导入」重试，或在上方填写实际参数 ID 后「从设备读取」；新建参数请编辑后「下发到设备」(#100)。</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 未返回已配置 ID（通信可能已成功但列表为空）。请核对设备连接页「工具号」后重试；或在上方填写控制器上真实存在的参数 ID 后再「从设备读取」。新建参数请编辑后「下发到设备」(#100)。</system:String>
     <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备列表</system:String>
     <system:String x:Key="S.ControllerParam.ImportAllFromDevice">全部导入 (#160→#150)</system:String>
     <system:String x:Key="S.ControllerParam.ImportFromDevice">导入选中 (#150)</system:String>

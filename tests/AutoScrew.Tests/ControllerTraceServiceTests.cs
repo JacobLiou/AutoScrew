@@ -86,6 +86,8 @@ public sealed class ControllerTraceServiceTests
 
         public bool IsRuntimeDeviceAvailable => true;
 
+        public bool IsDeviceBusy => false;
+
         public event Action? DeviceConnectionChanged;
 
         public Task<StationDeviceConfiguration> LoadAsync(CancellationToken cancellationToken = default) =>
@@ -117,6 +119,8 @@ public sealed class ControllerTraceServiceTests
 
         public bool IsConnected => true;
 
+        public bool IsBusy => false;
+
         public int CurveVersion => 1;
 
         public uint ReportIdMax => 100;
@@ -140,8 +144,10 @@ public sealed class ControllerTraceServiceTests
         public Task<TighteningParameterTemplate> ReadParameterAsync(int parameterId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteParameterAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningResult> ExecuteTighteningCycleAsync(TighteningTrigger? trigger = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ProductionTighteningArtifacts> ExecuteProductionTighteningAsync(TighteningTrigger? trigger = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ProductionReport> ReadReportAsync(uint reportId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<CurveSnapshot> ReadCurveAsync(uint reportId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ModbusCommandResult> ExecuteRawMailboxAsync(ModbusCommandInvocation invocation, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<string> ReadBarcodeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task ClearErrorsAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task ResetOperationProgressAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -164,7 +170,7 @@ public sealed class ControllerTraceServiceTests
         public Task DeleteParameterAsync(int parameterId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-
+        public Task<ParameterListSnapshot> ListParametersForToolAsync(int toolIndex, uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteSequenceAsync(TighteningSequenceTemplate template, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSequenceTemplate> ReadSequenceAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();

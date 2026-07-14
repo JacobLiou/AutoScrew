@@ -322,9 +322,9 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         StatusMessage = Loc.Get("S.Workbench.Source.AdvancedSavedLocal");
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable;
+    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
 
-    private bool CanDeploy() => IsDeviceAvailable && IsDeviceProgram && HasSequences;
+    private bool CanDeploy() => CanUseDevice() && IsDeviceProgram && HasSequences;
 
     private TighteningSourceModeCore BuildMode() => new()
     {

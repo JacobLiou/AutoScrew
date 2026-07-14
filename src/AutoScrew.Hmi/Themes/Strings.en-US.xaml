@@ -329,7 +329,7 @@
     <system:String x:Key="S.ControllerParam.DevicePresets">Device parameters (#160)</system:String>
     <system:String x:Key="S.ControllerParam.DeviceSlotName">Device #{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">{0} parameter(s) configured on controller.</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 returned no configured IDs. Try Import all, enter the actual parameter ID above and Read, or Write (#100) to create a new one.</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 returned no configured IDs (link may be OK but list empty). Check Tool Index on Device Connection, enter a real parameter ID and Read, or Write (#100) to create one.</system:String>
     <system:String x:Key="S.ControllerParam.ImportAllFromDevice">Import all (#160→#150)</system:String>
     <system:String x:Key="S.ControllerParam.StatusImportAllProgress">Importing all parameters from device…</system:String>
     <system:String x:Key="S.ControllerParam.StatusImportAllDone">Imported {0} parameter set(s) from device.</system:String>

@@ -38,6 +38,9 @@ public sealed class IemdSdClientOptions
 
     public int CommandTimeoutMs { get; set; } = 3000;
 
+    /// <summary>Max wait for tighten finish status (0x1F5D / legacy). Default 120 seconds.</summary>
+    public int TighteningCycleTimeoutMs { get; set; } = 120_000;
+
     public int TighteningPollIntervalMs { get; set; } = 100;
 
     public int ReadWindowSize { get; set; } = 120;

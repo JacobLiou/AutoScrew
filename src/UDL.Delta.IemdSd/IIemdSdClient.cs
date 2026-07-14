@@ -3,11 +3,19 @@ using UDL.Delta.IemdSd.Protocol;
 
 namespace UDL.Delta.IemdSd;
 
+/// <summary>
+/// Single-device IEMD-SD client. Production paths: Parameters (#160/#150/#100/#302),
+/// Sequences (#200/#250/#303), Source (#300/#301/#350), Cycle (<see cref="ExecuteProductionTighteningAsync"/>).
+/// Other mailbox codes go through <see cref="ExecuteRawMailboxAsync"/>.
+/// </summary>
 public interface IIemdSdClient : IAsyncDisposable
 {
     IemdSdClientOptions Options { get; }
 
     bool IsConnected { get; }
+
+    /// <summary>True while a mailbox command or exclusive tightening cycle owns the device session.</summary>
+    bool IsBusy { get; }
 
     int CurveVersion { get; }
 
@@ -33,9 +41,21 @@ public interface IIemdSdClient : IAsyncDisposable
         TighteningTrigger? trigger = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Exclusive production path: cycle + #750/#751 under one device session (holds IsBusy throughout).
+    /// </summary>
+    Task<ProductionTighteningArtifacts> ExecuteProductionTighteningAsync(
+        TighteningTrigger? trigger = null,
+        CancellationToken cancellationToken = default);
+
     Task<ProductionReport> ReadReportAsync(uint reportId, CancellationToken cancellationToken = default);
 
     Task<CurveSnapshot> ReadCurveAsync(uint reportId, CancellationToken cancellationToken = default);
+
+    /// <summary>Escape hatch for non-production mailbox codes; still serialized by DeviceSession.</summary>
+    Task<ModbusCommandResult> ExecuteRawMailboxAsync(
+        ModbusCommandInvocation invocation,
+        CancellationToken cancellationToken = default);
 
     // Phase A
     Task WriteBarcodeAsync(string barcode, CancellationToken cancellationToken = default);
@@ -84,6 +104,9 @@ public interface IIemdSdClient : IAsyncDisposable
     Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default);
 
     Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default);
+
+    /// <summary>#160 for an explicit tool index (0/1), independent of client default ToolIndex.</summary>
+    Task<ParameterListSnapshot> ListParametersForToolAsync(int toolIndex, uint wordCount = 500, CancellationToken cancellationToken = default);
 
     Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default);
 

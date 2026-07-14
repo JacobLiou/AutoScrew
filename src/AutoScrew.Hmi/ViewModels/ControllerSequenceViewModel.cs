@@ -424,7 +424,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         }
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable;
+    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
 
     public Task RunWriteToDeviceAsync() => WriteToDeviceAsync();
 

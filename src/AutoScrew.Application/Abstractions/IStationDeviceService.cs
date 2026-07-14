@@ -78,6 +78,9 @@ public interface IStationDeviceService
 
     bool IsRuntimeDeviceAvailable { get; }
 
+    /// <summary>True when the persistent IEMD-SD client holds an exclusive session (e.g. tightening cycle).</summary>
+    bool IsDeviceBusy { get; }
+
     Task<StationDeviceConfiguration> LoadAsync(CancellationToken cancellationToken = default);
 
     Task SaveAsync(StationDeviceConfiguration configuration, CancellationToken cancellationToken = default);

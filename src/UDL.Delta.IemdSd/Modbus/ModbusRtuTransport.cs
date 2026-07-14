@@ -26,6 +26,42 @@ internal sealed class ModbusRtuTransport : IModbusTransport
 
     public bool IsConnected => _serialPort?.IsOpen == true;
 
+    public void Invalidate()
+    {
+        if (!_gate.Wait(0))
+        {
+            try
+            {
+                _master?.Dispose();
+                if (_serialPort?.IsOpen == true)
+                    _serialPort.Close();
+                _serialPort?.Dispose();
+            }
+            catch
+            {
+                // ignore
+            }
+
+            _master = null;
+            _serialPort = null;
+            return;
+        }
+
+        try
+        {
+            _master?.Dispose();
+            _master = null;
+            if (_serialPort?.IsOpen == true)
+                _serialPort.Close();
+            _serialPort?.Dispose();
+            _serialPort = null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -102,6 +138,7 @@ internal sealed class ModbusRtuTransport : IModbusTransport
         }
         catch (Exception ex)
         {
+            InvalidateUnsafe();
             throw new IemdSdCommunicationException($"Write register 0x{address:X} failed.", ex);
         }
         finally
@@ -123,6 +160,7 @@ internal sealed class ModbusRtuTransport : IModbusTransport
         }
         catch (Exception ex)
         {
+            InvalidateUnsafe();
             throw new IemdSdCommunicationException($"Write registers 0x{address:X} len={values.Length} failed.", ex);
         }
         finally
@@ -176,6 +214,24 @@ internal sealed class ModbusRtuTransport : IModbusTransport
     {
         if (_master is null || _serialPort?.IsOpen != true)
             throw new IemdSdCommunicationException("Modbus RTU not connected.");
+    }
+
+    private void InvalidateUnsafe()
+    {
+        try
+        {
+            _master?.Dispose();
+            if (_serialPort?.IsOpen == true)
+                _serialPort.Close();
+            _serialPort?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        _master = null;
+        _serialPort = null;
     }
 
     public void Dispose()

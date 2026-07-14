@@ -29,4 +29,5 @@
 | #100 code 18 | 扭矩超工具规格；降低目标扭矩 |
 | #302 code 1 | #300 切换方式须为手动 (CC=0) |
 
-参见 [`doc/iemd_manual_extract/README.md`](iemd_manual_extract/README.md)、[`doc/driverAnaC.md`](driverAnaC.md) §5.6。
+参见 [`doc/iemd_manual_extract/README.md`](iemd_manual_extract/README.md)、[`doc/driverAnaC.md`](driverAnaC.md) §5.6、
+真机单客户端步骤见 [`doc/IEMD_SD_SINGLE_DEVICE_SOP.md`](IEMD_SD_SINGLE_DEVICE_SOP.md)。

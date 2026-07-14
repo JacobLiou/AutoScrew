@@ -100,20 +100,20 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
             await client.SwitchParameterAsync(paramId, 1, cancellationToken).ConfigureAwait(false);
         }
 
-        var beforeId = await client.GetCurrentReportIdAsync(cancellationToken).ConfigureAwait(false);
-        var cycle = await client.ExecuteTighteningCycleAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        // Cycle + #750/#751 under one exclusive device session (IsBusy held throughout).
+        var artifacts = await client.ExecuteProductionTighteningAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var cycle = artifacts.Cycle;
+        var report = artifacts.Report;
+        var curve = artifacts.Curve;
+        var reportId = artifacts.ReportId;
 
-        var reportId = cycle.ReportId > 0 ? cycle.ReportId : beforeId;
-        ProductionReport? report = null;
-        CurveSnapshot? curve = null;
-        try
+        if (artifacts.ArtifactReadError is not null)
         {
-            report = await client.ReadReportAsync(reportId, cancellationToken).ConfigureAwait(false);
-            curve = await client.ReadCurveAsync(reportId, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Read report/curve for ReportId={ReportId} failed; using cycle registers only.", reportId);
+            _logger.LogWarning(
+                "Read report/curve for ReportId={ReportId} failed; using cycle registers only. {Error}",
+                reportId,
+                artifacts.ArtifactReadError);
         }
 
         LastOutcome = new LockHardwareOutcome(

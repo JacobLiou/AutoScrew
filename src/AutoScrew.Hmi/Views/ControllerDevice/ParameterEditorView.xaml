@@ -10,7 +10,7 @@
     <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="0" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -38,32 +38,57 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-                <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Server24}">
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" MinHeight="0" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="*" MinHeight="0" />
+                </Grid.RowDefinitions>
+
+                <ui:CardControl Grid.Row="0"
+                                MinHeight="0"
+                                VerticalAlignment="Stretch"
+                                VerticalContentAlignment="Stretch">
                     <ui:CardControl.Header>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.DevicePresets}" />
                     </ui:CardControl.Header>
-                    <StackPanel>
-                        <TextBlock Margin="0,0,0,8"
+                    <Grid MinHeight="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" MinHeight="0" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Margin="0,0,0,8"
                                    Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                                    Text="{Binding DeviceListStatus}"
                                    TextWrapping="Wrap" />
-                        <ListBox MinHeight="120"
+                        <ListBox Grid.Row="1"
+                                 MinHeight="0"
+                                 VerticalAlignment="Stretch"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemsSource="{Binding DeviceParameters}"
                                  SelectedItem="{Binding SelectedDeviceParameter, Mode=TwoWay}"
                                  DisplayMemberPath="DisplayText" />
-                    </StackPanel>
+                    </Grid>
                 </ui:CardControl>
 
-                <ui:CardControl Icon="{ui:SymbolIcon List24}">
+                <ui:CardControl Grid.Row="2"
+                                MinHeight="0"
+                                VerticalAlignment="Stretch"
+                                VerticalContentAlignment="Stretch">
                     <ui:CardControl.Header>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
                     </ui:CardControl.Header>
-                    <ListBox ItemsSource="{Binding Presets}"
+                    <ListBox MinHeight="0"
+                             VerticalAlignment="Stretch"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemsSource="{Binding Presets}"
                              SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
                              DisplayMemberPath="DisplayText" />
                 </ui:CardControl>
-            </StackPanel>
+            </Grid>
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
                 <StackPanel>

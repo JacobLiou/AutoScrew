@@ -47,6 +47,8 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
     }
 
+    public bool IsDeviceBusy => _client?.IsBusy == true;
+
     public async Task<StationDeviceConfiguration> LoadAsync(CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -79,30 +81,9 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         }
     }
 
-    public async Task<TestConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default)
-    {
-        if (_useSimulatedHardware)
-            return new TestConnectionResult(false, "Simulation mode: set AutoScrew:UseSimulatedHardware=false to test devices.");
-
-        var config = await LoadAsync(cancellationToken).ConfigureAwait(false);
-        var endpoint = config.Device;
-        if (!endpoint.Enabled)
-            return new TestConnectionResult(false, "Device connection is disabled.");
-
-        await using var client = _clientFactory.Create(endpoint);
-        try
-        {
-            await client.ConnectAsync(cancellationToken).ConfigureAwait(false);
-            await client.InitializeAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-            await IemdSdProductionSetup.EnsureManualSourceAsync(client, _logger, cancellationToken).ConfigureAwait(false);
-            return new TestConnectionResult(true, $"Connected to {endpoint.DisplayName} ({endpoint.DescribeConnection()}).");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Test connection failed for station device");
-            return new TestConnectionResult(false, ex.Message);
-        }
-    }
+    /// <summary>Test connection using the same persistent client as Apply (Test ≡ Apply).</summary>
+    public Task<TestConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default) =>
+        ApplyDeviceAsync(cancellationToken);
 
     public async Task<TestConnectionResult> ApplyDeviceAsync(CancellationToken cancellationToken = default)
     {

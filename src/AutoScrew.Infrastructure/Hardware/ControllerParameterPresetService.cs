@@ -67,6 +67,8 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
     public async Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default)
     {
         var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var configuredTool = client.Options.ToolIndex;
+
         var snapshot = await client
             .ListParametersAsync(ParameterListSnapshot.MaxParameterSlots, cancellationToken)
             .ConfigureAwait(false);
@@ -74,11 +76,22 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         if (ids.Count > 0)
             return ids;
 
-        _logger.LogDebug("#160 with tool index returned no parameters; retrying without tool index.");
-        snapshot = await client
-            .ListParametersWithoutToolIndexAsync(ParameterListSnapshot.MaxParameterSlots, cancellationToken)
+        // Probe the other tool axis. Do NOT treat mailbox word2=0 as "no tool" while staying on tool 1 for #150/#100 —
+        // that previously returned phantom IDs that then failed #150 with deviceError=3.
+        var otherTool = configuredTool == 0 ? 1 : 0;
+        var other = await client
+            .ListParametersForToolAsync(otherTool, ParameterListSnapshot.MaxParameterSlots, cancellationToken)
             .ConfigureAwait(false);
-        return snapshot.GetConfiguredIds();
+        var otherIds = other.GetConfiguredIds();
+        if (otherIds.Count > 0)
+        {
+            var sample = string.Join(", ", otherIds.Take(12));
+            throw new InvalidOperationException(
+                $"当前设备连接「工具号」为 {configuredTool}，该工具下 #160 无参数；工具 {otherTool} 上检测到参数 ID：{sample}。" +
+                $"请到「设备连接」将工具号改为 {otherTool} 后重新「应用」，再刷新/读写拧紧参数。");
+        }
+
+        return [];
     }
 
     public async Task<ControllerParameterBulkImportResult> ImportAllFromDeviceAsync(
@@ -139,14 +152,6 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         _logger.LogInformation("Activated parameter {ParamId} on IEMD-SD screwCount={Count}", parameterId, screwCount);
     }
 
-    private async Task<IIemdSdClient> RequireClientAsync(CancellationToken cancellationToken)
-    {
-        if (!_devices.IsRuntimeDeviceAvailable)
-            throw new InvalidOperationException("IEMD-SD device is not available in the current configuration.");
-
-        await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
-        var client = _devices.GetClient()
-                     ?? throw new InvalidOperationException("IEMD-SD device is not connected. Configure it on the Device Connection page.");
-        return client;
-    }
+    private Task<IIemdSdClient> RequireClientAsync(CancellationToken cancellationToken) =>
+        StationDeviceClientGuard.RequireIdleClientAsync(_devices, cancellationToken);
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using UDL.Delta.IemdSd.Internal;
 using UDL.Delta.IemdSd.Modbus;
 using UDL.Delta.IemdSd.Protocol;
+using UDL.Delta.IemdSd.Session;
 
 namespace UDL.Delta.IemdSd;
 
@@ -10,6 +11,7 @@ public sealed class IemdSdClient : IIemdSdClient
 {
     private readonly ILogger _logger;
     private readonly IModbusTransport _transport;
+    private readonly DeviceSession _session;
     private readonly CommandMailbox _mailbox;
     private readonly IIemdSdCommandExecutor _executor;
     private readonly IemdSdTypedCommands _typed;
@@ -23,13 +25,14 @@ public sealed class IemdSdClient : IIemdSdClient
     {
         Options = options;
         _logger = logger ?? NullLogger<IemdSdClient>.Instance;
+        _session = new DeviceSession();
         _transport = ModbusTransportFactory.Create(options, _logger);
         _mailbox = new CommandMailbox(_transport, options, _logger);
-        _executor = new IemdSdCommandExecutor(_transport, _mailbox);
+        _executor = new IemdSdCommandExecutor(_transport, _mailbox, _session);
         _typed = new IemdSdTypedCommands(_executor, _transport, options.ToolIndex);
         _reportReader = new ReportReader(_executor);
         _curveReader = new CurveReader(_executor);
-        _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options);
+        _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options, _session);
         _parameterReader = new ParameterBlockReader(_executor, options.ToolIndex);
         _parameterWriter = new ParameterBlockWriter(_executor, options.ToolIndex);
     }
@@ -38,6 +41,8 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public bool IsConnected => _transport.IsConnected;
 
+    public bool IsBusy => _session.IsBusy;
+
     public int CurveVersion { get; private set; }
 
     public uint ReportIdMax { get; private set; } = 200_000;
@@ -45,7 +50,10 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task ConnectAsync(CancellationToken cancellationToken = default) =>
         _transport.ConnectAsync(cancellationToken);
 
-    public async Task InitializeAsync(IemdSdInitOptions? initOptions = null, CancellationToken cancellationToken = default)
+    public Task InitializeAsync(IemdSdInitOptions? initOptions = null, CancellationToken cancellationToken = default) =>
+        _session.RunAsync(ct => InitializeCoreAsync(initOptions, ct), cancellationToken);
+
+    private async Task InitializeCoreAsync(IemdSdInitOptions? initOptions, CancellationToken cancellationToken)
     {
         initOptions ??= new IemdSdInitOptions();
         if (initOptions.ClearDi)
@@ -94,17 +102,66 @@ public sealed class IemdSdClient : IIemdSdClient
         TighteningTrigger? trigger = null,
         CancellationToken cancellationToken = default)
     {
-        var t = trigger ?? (Options.TriggerMode == TighteningTriggerMode.AutoDi
-            ? TighteningTrigger.AutoDi
-            : TighteningTrigger.Manual);
+        var t = ResolveTrigger(trigger);
         return _cycleRunner.RunAsync(t, cancellationToken);
     }
+
+    public Task<ProductionTighteningArtifacts> ExecuteProductionTighteningAsync(
+        TighteningTrigger? trigger = null,
+        CancellationToken cancellationToken = default)
+    {
+        var t = ResolveTrigger(trigger);
+        return _session.RunAsync(ct => ExecuteProductionCoreAsync(t, ct), cancellationToken);
+    }
+
+    private async Task<ProductionTighteningArtifacts> ExecuteProductionCoreAsync(
+        TighteningTrigger trigger,
+        CancellationToken cancellationToken)
+    {
+        // Nested session calls (cycle / mailbox) re-enter the same flow and keep IsBusy held.
+        var beforeId = await _cycleRunner.ReadReportIdAsync(cancellationToken).ConfigureAwait(false);
+        var cycle = await _cycleRunner.RunAsync(trigger, cancellationToken).ConfigureAwait(false);
+        var reportId = cycle.ReportId > 0 ? cycle.ReportId : beforeId;
+
+        ProductionReport? report = null;
+        CurveSnapshot? curve = null;
+        string? artifactError = null;
+        try
+        {
+            report = await _reportReader.ReadAsync(reportId, cancellationToken).ConfigureAwait(false);
+            curve = await _curveReader.ReadAsync(reportId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            artifactError = ex.Message;
+            _logger.LogWarning(ex, "Read report/curve for ReportId={ReportId} failed under production session.", reportId);
+        }
+
+        return new ProductionTighteningArtifacts
+        {
+            Cycle = cycle,
+            ReportId = reportId,
+            Report = report,
+            Curve = curve,
+            ArtifactReadError = artifactError,
+        };
+    }
+
+    private TighteningTrigger ResolveTrigger(TighteningTrigger? trigger) =>
+        trigger ?? (Options.TriggerMode == TighteningTriggerMode.AutoDi
+            ? TighteningTrigger.AutoDi
+            : TighteningTrigger.Manual);
 
     public Task<ProductionReport> ReadReportAsync(uint reportId, CancellationToken cancellationToken = default) =>
         _reportReader.ReadAsync(reportId, cancellationToken);
 
     public Task<CurveSnapshot> ReadCurveAsync(uint reportId, CancellationToken cancellationToken = default) =>
         _curveReader.ReadAsync(reportId, cancellationToken);
+
+    public Task<ModbusCommandResult> ExecuteRawMailboxAsync(
+        ModbusCommandInvocation invocation,
+        CancellationToken cancellationToken = default) =>
+        ExecuteModbusCommandAsync(invocation, cancellationToken);
 
     public Task WriteBarcodeAsync(string barcode, CancellationToken cancellationToken = default) =>
         _typed.WriteBarcodeAsync(barcode, cancellationToken);
@@ -175,6 +232,12 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task<ParameterListSnapshot> ListParametersAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
         _typed.ListParametersAsync(wordCount, cancellationToken);
 
+    public Task<ParameterListSnapshot> ListParametersForToolAsync(
+        int toolIndex,
+        uint wordCount = 500,
+        CancellationToken cancellationToken = default) =>
+        _typed.ListParametersForToolAsync(toolIndex, wordCount, cancellationToken);
+
     public Task<ParameterListSnapshot> ListParametersWithoutToolIndexAsync(uint wordCount = 500, CancellationToken cancellationToken = default) =>
         _typed.ListParametersWithoutToolIndexAsync(wordCount, cancellationToken);
 
@@ -230,7 +293,7 @@ public sealed class IemdSdClient : IIemdSdClient
         _typed.ClearProductionReportFilesAsync(cancellationToken);
 
     public Task<OperatingStatusSnapshot> ReadOperatingStatusAsync(CancellationToken cancellationToken = default) =>
-        _typed.ReadOperatingStatusAsync(cancellationToken);
+        _session.RunAsync(ct => _typed.ReadOperatingStatusAsync(ct), cancellationToken);
 
     public Task LoginAsync(int role, int passwordHash, CancellationToken cancellationToken = default) =>
         _typed.LoginAsync(role, passwordHash, cancellationToken);
@@ -240,7 +303,7 @@ public sealed class IemdSdClient : IIemdSdClient
 
     public async ValueTask DisposeAsync()
     {
+        await _session.DisposeAsync().ConfigureAwait(false);
         _transport.Dispose();
-        await ValueTask.CompletedTask;
     }
 }
