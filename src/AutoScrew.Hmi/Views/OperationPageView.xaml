@@ -246,8 +246,9 @@
                            Margin="0,0,0,12"/>
                 <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
                            HorizontalAlignment="Center"
+                           Appearance="Primary"
                            Command="{Binding UnlockNgCommand}"
-                           Visibility="{Binding CanUnlockNgOverlay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                           IsEnabled="{Binding CanUnlockNgOverlay}"/>
             </StackPanel>
         </Border>
     </Border>

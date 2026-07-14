@@ -16,7 +16,10 @@ public sealed class SessionCurrentUser : ICurrentUser, INotifyPropertyChanged
 
     public bool CanAdjustParameters => Role >= UserRole.Technician;
 
-    public bool CanUnlockNg => Role >= UserRole.Technician;
+    /// <summary>
+    /// NG 锁定后允许当前登录用户解锁继续（含操作员）；弹框遮罩会挡住其它控件，必须保留可点按钮。
+    /// </summary>
+    public bool CanUnlockNg => true;
 
     public int? MimsPersonId { get; private set; }
 

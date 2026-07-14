@@ -79,7 +79,7 @@
     <system:String x:Key="S.Operation.SubmitSn">Submit SN</system:String>
     <system:String x:Key="S.Operation.RunScrew">Pick + tighten</system:String>
     <system:String x:Key="S.Operation.ConfirmFlip">Confirm flip</system:String>
-    <system:String x:Key="S.Operation.UnlockNg">Unlock NG (technician)</system:String>
+    <system:String x:Key="S.Operation.UnlockNg">Unlock NG</system:String>
     <system:String x:Key="S.Operation.ResetSession">Reset session</system:String>
     <system:String x:Key="S.Operation.ProgressTree">Progress</system:String>
     <system:String x:Key="S.Operation.CurveTitle">Torque–angle (last step)</system:String>
@@ -96,7 +96,7 @@
     <system:String x:Key="S.Operation.GuideRunningScrew">Fasten [{0}] screw #{1}</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">Fasten surface [{0}]</system:String>
     <system:String x:Key="S.Operation.GuideAwaitFlip">[{0}] complete. Flip to [{1}], then Confirm flip.</system:String>
-    <system:String x:Key="S.Operation.GuideNgLocked">Screw NG. Contact technician to unlock.</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">Screw NG. Unlock to continue.</system:String>
     <system:String x:Key="S.Operation.GuideCompleted">Job complete. Scan next SN.</system:String>
     <system:String x:Key="S.Operation.CurrentSurface">current surface</system:String>
     <system:String x:Key="S.Operation.NextSurface">next surface</system:String>
@@ -119,7 +119,7 @@
     <system:String x:Key="S.Operation.LogAwaitFlip">Await flip · [{0}] → [{1}]</system:String>
     <system:String x:Key="S.Operation.LogJobDone">Job complete · SN {0}</system:String>
     <system:String x:Key="S.Operation.LogSnRejected">SN rejected — {0}</system:String>
-    <system:String x:Key="S.Operation.LogUnlock">Technician unlocked NG; job resumed</system:String>
+    <system:String x:Key="S.Operation.LogUnlock">NG unlocked; job resumed</system:String>
     <system:String x:Key="S.Operation.LogFlip">Flip confirmed → [{0}]</system:String>
     <system:String x:Key="S.Operation.StatusReady">Ready.</system:String>
     <system:String x:Key="S.Operation.StatusEnterSn">Enter SN and confirm.</system:String>
@@ -142,7 +142,7 @@
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
-    <system:String x:Key="S.Operation.NgOverlayOperatorHint">Contact a technician to unlock. Operators cannot dismiss this dialog.</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">After clearing the controller fault, tap Unlock NG below to continue.</system:String>
 
     <system:String x:Key="S.Template.Title">Screw template</system:String>
     <system:String x:Key="S.Template.TitleWithProduct">Screw template · {0}{1}</system:String>
