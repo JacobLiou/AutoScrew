@@ -319,16 +319,16 @@
                                                                           DisplayMemberPath="DisplayText" />
                                                                 <ui:NumberBox Grid.Column="4"
                                                                               Margin="4,0"
-                                                                              Minimum="0"
-                                                                              Maximum="100"
+                                                                              Minimum="1"
+                                                                              Maximum="999999"
                                                                               SpinButtonPlacementMode="Hidden"
-                                                                              Value="{Binding Step.Quantity, Mode=TwoWay}" />
+                                                                              Value="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                                 <ui:NumberBox Grid.Column="5"
                                                                               Margin="4,0"
                                                                               Minimum="0"
-                                                                              Maximum="99"
+                                                                              Maximum="255"
                                                                               SpinButtonPlacementMode="Hidden"
-                                                                              Value="{Binding Step.BitId, Mode=TwoWay}" />
+                                                                              Value="{Binding BitId, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>

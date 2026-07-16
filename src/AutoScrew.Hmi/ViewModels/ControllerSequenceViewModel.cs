@@ -102,6 +102,37 @@ public sealed partial class ControllerSequenceStepItem : ObservableObject
         _selectedTool = _toolOptions.FirstOrDefault(t => t.ToolId == Step.ToolId) ?? _toolOptions.FirstOrDefault();
         OnPropertyChanged(nameof(SelectedTool));
     }
+
+    /// <summary>螺丝数量（绑定用；避免 NumberBox 直接绑 Step.Quantity 读成 0）。</summary>
+    public double Quantity
+    {
+        get => Step.Quantity;
+        set
+        {
+            var qty = (int)Math.Round(value);
+            if (qty < 1)
+                qty = 1;
+            if (Step.Quantity == qty)
+                return;
+            Step.Quantity = qty;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>批头编号（绑定用）。</summary>
+    public double BitId
+    {
+        get => Step.BitId;
+        set
+        {
+            var bit = (int)Math.Round(value);
+            bit = Math.Clamp(bit, 0, 255);
+            if (Step.BitId == bit)
+                return;
+            Step.BitId = bit;
+            OnPropertyChanged();
+        }
+    }
 }
 
 public sealed partial class ImageCodeItem : ObservableObject

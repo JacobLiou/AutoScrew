@@ -18,11 +18,13 @@ public static class TighteningSequenceCodec
                 break;
             var qtyLow = raw[TighteningSequenceRegisterMap.QuantityStart + i * 2];
             var qtyHigh = raw[TighteningSequenceRegisterMap.QuantityStart + i * 2 + 1];
+            var quantity = qtyLow | (qtyHigh << 16);
             steps.Add(new TighteningSequenceStepCore
             {
                 ToolId = raw[TighteningSequenceRegisterMap.ToolIdStart + i],
                 ParameterId = paramId > 0 ? paramId : 1,
-                Quantity = qtyLow | (qtyHigh << 16),
+                // 手册有效范围 1–999999；设备/空槽可能回 0，与写侧钳位一致。
+                Quantity = quantity <= 0 ? 1 : quantity,
                 BitId = raw[TighteningSequenceRegisterMap.BitIdStart + i],
             });
         }
