@@ -163,6 +163,16 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         _logger.LogInformation("Wrote parameter {ParamId} to IEMD-SD", template.ParameterId);
     }
 
+    public async Task DeleteFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default)
+    {
+        if (parameterId is < 1 or > 500)
+            throw new ArgumentOutOfRangeException(nameof(parameterId), parameterId, "Parameter ID must be 1–500.");
+
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        await client.DeleteParameterAsync(parameterId, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Deleted parameter {ParamId} from IEMD-SD (#110)", parameterId);
+    }
+
     private static void EnsureWritableStages(TighteningParameterTemplate template)
     {
         var stages = template.Core.Stages;

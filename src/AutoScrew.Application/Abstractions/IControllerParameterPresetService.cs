@@ -36,5 +36,8 @@ public interface IControllerParameterPresetService
 
     Task WriteToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
 
+    /// <summary>删除设备上的参数（Modbus #110）。</summary>
+    Task DeleteFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);
+
     Task ActivateOnDeviceAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default);
 }

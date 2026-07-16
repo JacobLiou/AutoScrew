@@ -3,11 +3,22 @@ namespace UDL.Delta.IemdSd;
 /// <summary>扭矩单位换算（移植自厂商 Demo TorqUnitcoef）。</summary>
 public static class TorqueUnitConverter
 {
+    /// <summary>Demo unit-1 系数：1 N·m ≈ 10.197 kgf·cm。</summary>
+    public const double NmPerKgfCmFactor = 10.197;
+
     public static double ToNm(double rawThousandths, int torqueUnitMode) =>
         rawThousandths / 1000.0 * GetCoefficient(torqueUnitMode) / GetCoefficient(1001);
 
     public static double ConvertNmToDisplay(double nm, int displayUnitMode) =>
         nm * GetCoefficient(displayUnitMode) / GetCoefficient(1001);
+
+    public static double ConvertDisplayToNm(double display, int displayUnitMode) =>
+        display * GetCoefficient(1001) / GetCoefficient(displayUnitMode);
+
+    public static double MilliNmToKgfCm(int milliNm) => milliNm / 1000.0 * NmPerKgfCmFactor;
+
+    public static int KgfCmToMilliNm(double kgfCm) =>
+        (int)Math.Round(kgfCm / NmPerKgfCmFactor * 1000.0);
 
     private static double GetCoefficient(int mode)
     {

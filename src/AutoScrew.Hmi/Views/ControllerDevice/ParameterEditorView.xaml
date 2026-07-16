@@ -3,10 +3,120 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              d:DataContext="{d:DesignInstance vm:ControllerParameterViewModel, IsDesignTimeCreatable=False}"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVisLocal" />
+        <Style x:Key="IemdTabControl" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top"
+                                    Background="#4A5563"
+                                    Padding="0">
+                                <TabPanel IsItemsHost="True" Background="Transparent" />
+                            </Border>
+                            <Border Background="#F5F7FA" Padding="0,8,0,0">
+                                <ContentPresenter ContentSource="SelectedContent" />
+                            </Border>
+                        </DockPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="IemdTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#DDD" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <StackPanel>
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  RecognizesAccessKey="True" />
+                                <Border x:Name="Underline"
+                                        Height="3"
+                                        Margin="0,6,0,0"
+                                        Background="Transparent" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Underline" Property="Background" Value="#1E88E5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="OnOffToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" CornerRadius="14" Background="#9AA0A6" Padding="4,0">
+                            <TextBlock x:Name="Txt"
+                                       Text="OFF"
+                                       Foreground="White"
+                                       FontWeight="SemiBold"
+                                       FontSize="11"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E88E5" />
+                                <Setter TargetName="Txt" Property="Text" Value="ON" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#445" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+        <Style x:Key="FieldUnit" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="MinWidth" Value="64" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="StageDotButton" TargetType="Button">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse x:Name="Dot" Fill="{Binding DotBrush}" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -20,13 +130,15 @@
                        Content="{DynamicResource S.ControllerParam.New}" />
             <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
-            <!--<ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />-->
             <Separator Margin="8,0" Width="1" Height="24" />
             <ui:Button Margin="0,0,8,8" Command="{Binding RefreshDeviceListCommand}" Content="{DynamicResource S.ControllerParam.RefreshDeviceList}" />
-            <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding ImportAllFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportAllFromDevice}" />
+            <!--<ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding ImportAllFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportAllFromDevice}" />-->
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportSelectedFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportFromDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Danger"
+                       Command="{Binding DeleteFromDeviceCommand}"
+                       Content="{DynamicResource S.ControllerParam.DeleteDevice}" />
             <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ActivateOnDeviceCommand}" Content="{DynamicResource S.ControllerParam.Activate}" />
         </WrapPanel>
@@ -90,170 +202,649 @@
                 </ui:CardControl>
             </Grid>
 
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <ui:CardControl Margin="0,0,0,12">
-                        <ui:CardControl.Header>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" MinWidth="160" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Margin="0,0,8,0"
-                                           VerticalAlignment="Center"
-                                           Text="{DynamicResource S.ControllerParam.ParameterId}" />
-                                <ui:NumberBox Grid.Column="1"
-                                              Margin="0,0,24,0"
-                                              MinWidth="100"
-                                              Minimum="1"
+            <!-- Device-like right editor -->
+            <Border Grid.Column="2"
+                    Background="#EEF2F6"
+                    BorderBrush="#CFD8DC"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- ID / Name header -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="*" MinWidth="120" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                       Margin="0,0,8,8"
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Text="{DynamicResource S.ControllerParam.ParameterId}" />
+                            <Border Grid.Row="0" Grid.Column="1"
+                                    Margin="0,0,8,8"
+                                    Background="White"
+                                    BorderBrush="#B0BEC5"
+                                    BorderThickness="1"
+                                    Padding="4,2">
+                                <ui:NumberBox Minimum="1"
                                               Maximum="500"
-                                              SpinButtonPlacementMode="Compact"
+                                              SpinButtonPlacementMode="Hidden"
                                               Value="{Binding ParameterId, Mode=TwoWay}" />
-                                <TextBlock Grid.Column="2"
-                                           Margin="0,0,8,0"
-                                           VerticalAlignment="Center"
-                                           Text="{DynamicResource S.ControllerParam.Name}" />
-                                <ui:TextBox Grid.Column="3" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            </Grid>
-                        </ui:CardControl.Header>
-                        <StackPanel>
-                            <TextBlock Margin="0,0,0,8" Text="{Binding SummaryText}" TextWrapping="Wrap" />
-                            <ItemsControl ItemsSource="{Binding StageBarIndices}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Width="48" Height="12" Margin="0,0,4,0" Background="#4A90D9" CornerRadius="2" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ui:CardControl>
+                            </Border>
+                            <Border Grid.Row="0" Grid.Column="2"
+                                    Margin="0,0,0,8"
+                                    Background="White"
+                                    BorderBrush="#B0BEC5"
+                                    BorderThickness="1"
+                                    Padding="6,2">
+                                <ui:TextBox BorderThickness="0"
+                                            PlaceholderText="{DynamicResource S.ControllerParam.Name}"
+                                            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                       Foreground="#78909C"
+                                       FontSize="12"
+                                       Text="{Binding SummaryText}"
+                                       TextWrapping="Wrap" />
+                        </Grid>
 
-                    <TabControl SelectedIndex="{Binding SelectedEditorTabIndex, Mode=TwoWay}">
-                        <TabItem Header="{DynamicResource S.ControllerParam.BasicSettings}">
-                            <Grid Margin="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MinAngle}" />
-                                <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
-                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
-                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
-                                <CheckBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,0,0,8"
-                                          Content="{DynamicResource S.Workbench.Param.LastStageServoOn}"
-                                          IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
-                                <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8"
-                                          Content="{DynamicResource S.Workbench.Param.FinalCurrentJudge}"
-                                          IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
-                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxLoosenAngle}" />
-                                <ui:NumberBox Grid.Row="3" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxLoosenAngleDeg, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
-                                <ui:NumberBox Grid.Row="3" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.LoosenStartDelay}" />
-                                <ui:NumberBox Grid.Row="4" Grid.Column="1" Margin="0,0,12,0" Value="{Binding LoosenStartDelayCentiSec, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
-                                <ui:NumberBox Grid.Row="4" Grid.Column="3" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
-                            </Grid>
-                        </TabItem>
-                        <TabItem Header="{DynamicResource S.ControllerParam.TighteningSettings}">
-                            <StackPanel Margin="8">
-                                <TabControl ItemsSource="{Binding StageItems}" SelectedIndex="{Binding SelectedStageIndex, Mode=TwoWay}">
-                                    <TabControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
-                                            <TextBlock Text="{Binding Title}" />
-                                        </DataTemplate>
-                                    </TabControl.ItemTemplate>
-                                    <!-- Header-only tabs: body binds CurrentStageItem so rebuild always refreshes. -->
-                                    <TabControl.ContentTemplate>
-                                        <DataTemplate>
-                                            <Border Height="0" />
-                                        </DataTemplate>
-                                    </TabControl.ContentTemplate>
-                                </TabControl>
-                                <ContentControl Content="{Binding CurrentStageItem}">
-                                    <ContentControl.ContentTemplate>
-                                        <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
-                                            <Grid Margin="0,8,0,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="160" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="160" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-                                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.ControlMode}" />
-                                                <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8"
-                                                          SelectedIndex="{Binding ControlModeIndex, Mode=TwoWay}">
-                                                    <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeAngle}" />
-                                                    <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeTorque}" />
-                                                    <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeTorqueRate}" />
-                                                    <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeClampTorque}" />
-                                                    <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeClampAngle}" />
-                                                </ComboBox>
-                                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.SpeedRpm}" />
-                                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding SpeedRpm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.TargetTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding TargetTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.TargetAngle}" />
-                                                <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TargetAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="2" Grid.Column="1" Value="{Binding MaxTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MinTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Value="{Binding MinTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ContentControl.ContentTemplate>
-                                </ContentControl>
-                            </StackPanel>
-                        </TabItem>
-                        <TabItem Header="{DynamicResource S.ControllerParam.Loosen}">
-                            <Grid Margin="8" DataContext="{Binding Loosen}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.LoosenAngle1}" />
-                                <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding Stage1AngleDeg, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.LoosenSpeed1}" />
-                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding Stage1SpeedRpm, Mode=TwoWay}" />
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.DetectTorqueNm}" />
-                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Value="{Binding DetectTorqueMilliNm, Mode=TwoWay}" />
-                            </Grid>
-                        </TabItem>
-                    </TabControl>
-                </StackPanel>
-            </ScrollViewer>
+                        <TabControl Style="{StaticResource IemdTabControl}"
+                                    SelectedIndex="{Binding SelectedEditorTabIndex, Mode=TwoWay}">
+                            <!-- Basic -->
+                            <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerParam.BasicSettings}">
+                                <StackPanel Margin="0,4,0,0">
+                                    <!-- 拧紧条件 -->
+                                    <Border Background="White"
+                                            BorderBrush="#CFD8DC"
+                                            BorderThickness="1"
+                                            Padding="0"
+                                            Margin="0,0,0,10">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Left"
+                                                    Width="4"
+                                                    Background="#1E88E5" />
+                                            <StackPanel Margin="12,10">
+                                                <TextBlock Margin="0,0,0,10"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"
+                                                           Foreground="#37474F"
+                                                           Text="{DynamicResource S.ControllerParam.Basic.TightenCondition}" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
+                                                    <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MinAngle}" />
+                                                    <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- 拧松条件 -->
+                                    <Border Background="White"
+                                            BorderBrush="#CFD8DC"
+                                            BorderThickness="1"
+                                            Padding="0"
+                                            Margin="0,0,0,10">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Left"
+                                                    Width="4"
+                                                    Background="#FB8C00" />
+                                            <StackPanel Margin="12,10">
+                                                <TextBlock Margin="0,0,0,10"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"
+                                                           Foreground="#37474F"
+                                                           Text="{DynamicResource S.ControllerParam.Basic.LoosenCondition}" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Basic.MaxLoosenTimeSec}" />
+                                                    <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxLoosenTimeSeconds, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.LoosenStartDelay}" />
+                                                    <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LoosenStartDelayCentiSec, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.MaxLoosenAngle}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,0" Value="{Binding MaxLoosenAngleDeg, Mode=TwoWay}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- 进阶设定 -->
+                                    <Border Background="White"
+                                            BorderBrush="#CFD8DC"
+                                            BorderThickness="1"
+                                            Padding="0">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Left"
+                                                    Width="4"
+                                                    Background="#43A047" />
+                                            <StackPanel Margin="12,10">
+                                                <TextBlock Margin="0,0,0,10"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"
+                                                           Foreground="#37474F"
+                                                           Text="{DynamicResource S.ControllerParam.Basic.Advanced}" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,12,8"
+                                                              VerticalAlignment="Center"
+                                                              Content="{DynamicResource S.Workbench.Param.FinalCurrentJudge}"
+                                                              IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
+                                                    <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
+                                                    <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,12,8"
+                                                              VerticalAlignment="Center"
+                                                              Content="{DynamicResource S.Workbench.Param.LastStageServoOn}"
+                                                              IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem>
+
+                            <!-- Tightening: standard 4 stages -->
+                            <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerParam.TighteningSettings}">
+                                <StackPanel Margin="0,4,0,0">
+                                    <TabControl ItemsSource="{Binding StandardStageItems}"
+                                                SelectedIndex="{Binding SelectedStageIndex, Mode=TwoWay}">
+                                        <TabControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="4,0" />
+                                            </DataTemplate>
+                                        </TabControl.ItemTemplate>
+                                        <TabControl.ContentTemplate>
+                                            <DataTemplate>
+                                                <Border Height="0" />
+                                            </DataTemplate>
+                                        </TabControl.ContentTemplate>
+                                    </TabControl>
+
+                                    <ContentControl Content="{Binding CurrentStageItem}">
+                                        <ContentControl.ContentTemplate>
+                                            <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
+                                                <Border Background="#E3F2FD"
+                                                        BorderBrush="#90CAF9"
+                                                        BorderThickness="1"
+                                                        Padding="12"
+                                                        Margin="0,4,0,0">
+                                                    <StackPanel>
+                                                        <!-- 启动：固定角度 + 速度 -->
+                                                        <StackPanel Visibility="{Binding IsStartStage, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
+                                                            <Grid Margin="0,0,0,8">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Angle}" />
+                                                                <ui:NumberBox Grid.Column="1" Value="{Binding TargetAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="2" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                                <ui:Button Grid.Column="3"
+                                                                           Margin="8,0,0,0"
+                                                                           Appearance="Secondary"
+                                                                           Icon="{ui:SymbolIcon Settings24}"
+                                                                           ToolTip="{DynamicResource S.ControllerParam.AdvancedTitle}"
+                                                                           Command="{Binding DataContext.OpenStageAdvancedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <!-- 旋入：角度/扭矩/扭矩率 三选一 -->
+                                                        <StackPanel Visibility="{Binding IsScrewInStage, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="ScrewInMode"
+                                                                             IsChecked="{Binding IsModeAngle, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Angle}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeAngle}"
+                                                                              Value="{Binding TargetAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                                <ui:Button Grid.Column="4"
+                                                                           Margin="8,0,0,0"
+                                                                           Appearance="Secondary"
+                                                                           Icon="{ui:SymbolIcon Settings24}"
+                                                                           ToolTip="{DynamicResource S.ControllerParam.AdvancedTitle}"
+                                                                           Command="{Binding DataContext.OpenStageAdvancedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="ScrewInMode"
+                                                                             IsChecked="{Binding IsModeTorque, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Torque}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeTorque}"
+                                                                              Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="ScrewInMode"
+                                                                             IsChecked="{Binding IsModeTorqueRate, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.TorqueRate}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeTorqueRate}"
+                                                                              Value="{Binding TargetTorqueRate, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.TorqueRate}" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <!-- 预紧：扭矩/扭矩率 二选一 -->
+                                                        <StackPanel Visibility="{Binding IsPreTightenStage, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="PreTightenMode"
+                                                                             IsChecked="{Binding IsModeTorque, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Torque}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeTorque}"
+                                                                              Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                <ui:Button Grid.Column="4"
+                                                                           Margin="8,0,0,0"
+                                                                           Appearance="Secondary"
+                                                                           Icon="{ui:SymbolIcon Settings24}"
+                                                                           ToolTip="{DynamicResource S.ControllerParam.AdvancedTitle}"
+                                                                           Command="{Binding DataContext.OpenStageAdvancedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="PreTightenMode"
+                                                                             IsChecked="{Binding IsModeTorqueRate, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.TorqueRate}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeTorqueRate}"
+                                                                              Value="{Binding TargetTorqueRate, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.TorqueRate}" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <!-- 拧紧：角度/扭矩/夹紧扭矩/夹紧角度 -->
+                                                        <StackPanel Visibility="{Binding IsFinalTightenStage, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="FinalTightenMode"
+                                                                             IsChecked="{Binding IsModeAngle, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Angle}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeAngle}"
+                                                                              Value="{Binding TargetAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                                <ui:Button Grid.Column="4"
+                                                                           Margin="8,0,0,0"
+                                                                           Appearance="Secondary"
+                                                                           Icon="{ui:SymbolIcon Settings24}"
+                                                                           ToolTip="{DynamicResource S.ControllerParam.AdvancedTitle}"
+                                                                           Command="{Binding DataContext.OpenStageAdvancedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="FinalTightenMode"
+                                                                             IsChecked="{Binding IsModeTorque, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Torque}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeTorque}"
+                                                                              Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="FinalTightenMode"
+                                                                             IsChecked="{Binding IsModeClampTorque, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.ClampTorque}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeClampTorque}"
+                                                                              Value="{Binding MaxClampTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                            </Grid>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="100" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <RadioButton Grid.Column="0"
+                                                                             Margin="0,0,8,0"
+                                                                             VerticalAlignment="Center"
+                                                                             GroupName="FinalTightenMode"
+                                                                             IsChecked="{Binding IsModeClampAngle, Mode=TwoWay}" />
+                                                                <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.ClampAngle}" />
+                                                                <ui:NumberBox Grid.Column="2"
+                                                                              IsEnabled="{Binding IsModeClampAngle}"
+                                                                              Value="{Binding MaxClampAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <!-- 速度（各阶段共有） -->
+                                                        <Grid Margin="0,0,0,12">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="100" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Speed}" />
+                                                            <ui:NumberBox Grid.Column="1" Value="{Binding SpeedRpm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                            <TextBlock Grid.Column="2" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Rpm}" />
+                                                        </Grid>
+
+                                                        <!-- 扭矩监视：启动 / 旋入 / 拧紧 -->
+                                                        <Border Visibility="{Binding ShowTorqueMonitorSection, Converter={StaticResource BoolToVis}}"
+                                                                BorderBrush="#43A047"
+                                                                BorderThickness="3,0,0,0"
+                                                                Padding="10,4,0,4"
+                                                                Margin="0,0,0,8"
+                                                                Background="#F1F8E9">
+                                                            <StackPanel>
+                                                                <Grid Margin="0,0,0,6">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="120" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <ToggleButton Grid.Column="0" Style="{StaticResource OnOffToggle}" IsChecked="{Binding TorqueMonitorEnabled, Mode=TwoWay}" />
+                                                                    <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.MaxTorque}" />
+                                                                    <ui:NumberBox Grid.Column="2"
+                                                                                  IsEnabled="{Binding TorqueMonitorEnabled}"
+                                                                                  Value="{Binding MaxTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                </Grid>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="120" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Border Grid.Column="0" Width="56" Margin="0,0,12,0" />
+                                                                    <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.MinTorque}" />
+                                                                    <ui:NumberBox Grid.Column="2"
+                                                                                  IsEnabled="{Binding TorqueMonitorEnabled}"
+                                                                                  Value="{Binding MinTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                </Grid>
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <!-- 角度监视：旋入 / 预紧 / 拧紧 -->
+                                                        <Border Visibility="{Binding ShowAngleMonitorSection, Converter={StaticResource BoolToVis}}"
+                                                                BorderBrush="#FB8C00"
+                                                                BorderThickness="3,0,0,0"
+                                                                Padding="10,4,0,4"
+                                                                Margin="0,0,0,12"
+                                                                Background="#FFF8E1">
+                                                            <StackPanel>
+                                                                <Grid Margin="0,0,0,6">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="120" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <ToggleButton Grid.Column="0" Style="{StaticResource OnOffToggle}" IsChecked="{Binding AngleMonitorEnabled, Mode=TwoWay}" />
+                                                                    <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.MaxAngle}" />
+                                                                    <ui:NumberBox Grid.Column="2"
+                                                                                  IsEnabled="{Binding AngleMonitorEnabled}"
+                                                                                  Value="{Binding MaxAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                                </Grid>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="120" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Border Grid.Column="0" Width="56" Margin="0,0,12,0" />
+                                                                    <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.MinAngle}" />
+                                                                    <ui:NumberBox Grid.Column="2"
+                                                                                  IsEnabled="{Binding AngleMonitorEnabled}"
+                                                                                  Value="{Binding MinAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                                                </Grid>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
+                                </StackPanel>
+                            </TabItem>
+
+                            <!-- Loosen -->
+                            <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerParam.Loosen}">
+                                <Border Background="#EEF2F6"
+                                        BorderBrush="#CFD8DC"
+                                        BorderThickness="1"
+                                        Padding="12"
+                                        Margin="0,4,0,0"
+                                        DataContext="{Binding LoosenEditor}">
+                                    <StackPanel>
+                                        <!-- 第一段 -->
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="64" />
+                                                <ColumnDefinition Width="72" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0"
+                                                       Grid.Column="0"
+                                                       Grid.RowSpan="2"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#546E7A"
+                                                       Text="{DynamicResource S.ControllerParam.Loosen.Stage1}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Angle}" />
+                                            <ui:NumberBox Grid.Row="0"
+                                                          Grid.Column="2"
+                                                          Margin="0,0,8,8"
+                                                          Value="{Binding Stage1AngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                            <ui:Button Grid.Row="0"
+                                                       Grid.Column="4"
+                                                       Margin="8,0,0,8"
+                                                       Appearance="Secondary"
+                                                       Icon="{ui:SymbolIcon Settings24}"
+                                                       ToolTip="{DynamicResource S.ControllerParam.LoosenAdvancedTitle}"
+                                                       Command="{Binding DataContext.OpenLoosenAdvancedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Speed}" />
+                                            <ui:NumberBox Grid.Row="1"
+                                                          Grid.Column="2"
+                                                          Margin="0,0,8,0"
+                                                          Value="{Binding Stage1SpeedRpm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                            <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Rpm}" />
+                                        </Grid>
+
+                                        <!-- 第二段 -->
+                                        <Grid Margin="0,0,0,14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="64" />
+                                                <ColumnDefinition Width="72" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0"
+                                                       Grid.Column="0"
+                                                       Grid.RowSpan="2"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#546E7A"
+                                                       Text="{DynamicResource S.ControllerParam.Loosen.Stage2}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Angle}" />
+                                            <ui:NumberBox Grid.Row="0"
+                                                          Grid.Column="2"
+                                                          Margin="0,0,8,8"
+                                                          Value="{Binding Stage2AngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Field.Speed}" />
+                                            <ui:NumberBox Grid.Row="1"
+                                                          Grid.Column="2"
+                                                          Margin="0,0,8,0"
+                                                          Value="{Binding Stage2SpeedRpm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                            <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.Rpm}" />
+                                        </Grid>
+
+                                        <Border BorderBrush="#CFD8DC" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               VerticalAlignment="Center"
+                                                               Text="{DynamicResource S.ControllerParam.Loosen.ProductionLog}" />
+                                                    <ToggleButton Grid.Column="1"
+                                                                  Style="{StaticResource OnOffToggle}"
+                                                                  IsChecked="{Binding ProductionLogEnabled, Mode=TwoWay}" />
+                                                </Grid>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Style="{StaticResource FieldLabel}"
+                                                               Text="{DynamicResource S.ControllerParam.Loosen.MinTorque}" />
+                                                    <ui:NumberBox Grid.Column="1"
+                                                                  Value="{Binding DetectTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                    <TextBlock Grid.Column="2"
+                                                               Style="{StaticResource FieldUnit}"
+                                                               Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
         </Grid>
 
         <TextBlock Grid.Row="2" Margin="0,12,0,0" Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}" Text="{Binding StatusMessage}" />

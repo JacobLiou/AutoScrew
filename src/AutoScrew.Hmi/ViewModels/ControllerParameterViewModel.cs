@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,6 +12,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using UDL.Delta.IemdSd;
 using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Protocol;
 using Wpf.Ui;
@@ -20,111 +22,20 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerParameterListItem : ObservableObject
 {
-    public ControllerParameterListItem(int parameterId, string name, double? stage1TorqueNm = null)
+    public ControllerParameterListItem(int parameterId, string name, double? stage1TorqueKgfCm = null)
     {
         ParameterId = parameterId;
         Name = name;
-        Stage1TorqueNm = stage1TorqueNm;
-        DisplayText = stage1TorqueNm is double torque
-            ? $"{parameterId:D3} · {name} · {torque:F2} N·m"
+        Stage1TorqueKgfCm = stage1TorqueKgfCm;
+        DisplayText = stage1TorqueKgfCm is double torque
+            ? $"{parameterId:D3} · {name} · {torque:F3} kgf.cm"
             : $"{parameterId:D3} · {name}";
     }
 
     public int ParameterId { get; }
     public string Name { get; }
-    public double? Stage1TorqueNm { get; }
+    public double? Stage1TorqueKgfCm { get; }
     public string DisplayText { get; }
-}
-
-public sealed partial class ControllerParameterStageItem : ObservableObject
-{
-    public ControllerParameterStageItem(int index, TighteningStageCore stage)
-    {
-        Index = index;
-        Stage = stage;
-        Title = Loc.Format("S.Workbench.Param.StageTitle", index + 1);
-    }
-
-    public int Index { get; }
-    public string Title { get; }
-    public TighteningStageCore Stage { get; }
-
-    public int ControlModeIndex
-    {
-        get => (int)Stage.ControlMode;
-        set
-        {
-            if ((int)Stage.ControlMode == value)
-                return;
-            Stage.ControlMode = (TighteningControlMode)value;
-            OnPropertyChanged();
-        }
-    }
-
-    public double SpeedRpm
-    {
-        get => Stage.SpeedRpm;
-        set
-        {
-            var rpm = (int)Math.Round(value);
-            if (Stage.SpeedRpm == rpm)
-                return;
-            Stage.SpeedRpm = rpm;
-            OnPropertyChanged();
-        }
-    }
-
-    public double TargetAngleDeg
-    {
-        get => Stage.TargetAngleDeg;
-        set
-        {
-            var angle = (int)Math.Round(value);
-            if (Stage.TargetAngleDeg == angle)
-                return;
-            Stage.TargetAngleDeg = angle;
-            OnPropertyChanged();
-        }
-    }
-
-    public double TargetTorqueNm
-    {
-        get => Stage.TargetTorqueMilliNm / 1000.0;
-        set
-        {
-            var milli = (int)Math.Round(value * 1000);
-            if (Stage.TargetTorqueMilliNm == milli)
-                return;
-            Stage.TargetTorqueMilliNm = milli;
-            OnPropertyChanged();
-        }
-    }
-
-    public double MaxTorqueNm
-    {
-        get => Stage.MaxTorqueMilliNm / 1000.0;
-        set
-        {
-            var milli = (int)Math.Round(value * 1000);
-            if (Stage.MaxTorqueMilliNm == milli)
-                return;
-            Stage.MaxTorqueMilliNm = milli;
-            OnPropertyChanged();
-        }
-    }
-
-    public double MinTorqueNm
-    {
-        get => Stage.MinTorqueMilliNm / 1000.0;
-        set
-        {
-            var milli = (int)Math.Round(value * 1000);
-            if (Stage.MinTorqueMilliNm == milli)
-                return;
-            Stage.MinTorqueMilliNm = milli;
-            OnPropertyChanged();
-        }
-    }
 }
 
 public sealed partial class ControllerParameterViewModel : ObservableObject
@@ -154,6 +65,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         Presets = new ObservableCollection<ControllerParameterListItem>();
         DeviceParameters = new ObservableCollection<ControllerParameterListItem>();
         StageItems = new ObservableCollection<ControllerParameterStageItem>();
+        StandardStageItems = new ObservableCollection<ControllerParameterStageItem>();
         RebuildStageItems();
         DeviceStatusText = BuildDeviceStatusText();
         _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
@@ -178,6 +90,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     public ObservableCollection<ControllerParameterListItem> DeviceParameters { get; }
 
     public ObservableCollection<ControllerParameterStageItem> StageItems { get; }
+
+    /// <summary>标准策略四阶段：启动 / 旋入 / 预紧 / 拧紧。</summary>
+    public ObservableCollection<ControllerParameterStageItem> StandardStageItems { get; }
+
 
     [ObservableProperty]
     private ControllerParameterListItem? _selectedPreset;
@@ -219,7 +135,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private int _selectedEditorTabIndex;
 
     [ObservableProperty]
-    private TighteningLoosenCore _loosen = new();
+    private ControllerParameterLoosenItem _loosenEditor = new(new TighteningLoosenCore());
 
     [ObservableProperty]
     private bool _lastStageServoOn;
@@ -251,21 +167,31 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         set => MaxTighteningTimeTenthSec = (int)Math.Round(value * 10);
     }
 
+    public double MaxLoosenTimeSeconds
+    {
+        get => MaxLoosenTimeTenthSec / 10.0;
+        set => MaxLoosenTimeTenthSec = (int)Math.Round(value * 10);
+    }
+
     public string SummaryText =>
         Loc.Format(
             "S.Workbench.Param.Summary",
             ParameterId,
             Name,
             ActiveStageCount,
-            Stage1TorqueNm);
+            Stage1TorqueKgfCm);
 
-    public int ActiveStageCount =>
-        StageItems.Count(s => s.Stage.TargetTorqueMilliNm > 0 || s.Stage.TargetAngleDeg > 0);
+    public int ActiveStageCount => StageItems.Count(s => s.IsConfigured);
 
     public double Stage1TorqueNm =>
         StageItems.Count > 0 ? StageItems[0].TargetTorqueNm : 0;
 
+    public double Stage1TorqueKgfCm =>
+        StageItems.Count > 0 ? StageItems[0].TargetTorqueKgfCm : 0;
+
     public IReadOnlyList<int> StageBarIndices => Enumerable.Range(0, Math.Max(ActiveStageCount, 1)).ToList();
+
+    public const int MaxStageCount = 6;
 
     partial void OnNameChanged(string value) => NotifySummary();
 
@@ -273,10 +199,13 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         NotifySummary();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
+
+    partial void OnMaxLoosenTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxLoosenTimeSeconds));
 
     partial void OnSelectedDeviceParameterChanged(ControllerParameterListItem? value)
     {
@@ -285,6 +214,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedPresetChanged(ControllerParameterListItem? value)
@@ -299,8 +229,42 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         if (value >= 0 && value < StageItems.Count)
         {
+            CoerceStandardStageMode(StageItems[value]);
             OnPropertyChanged(nameof(CurrentStage));
             OnPropertyChanged(nameof(CurrentStageItem));
+            RemoveStageCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private static void CoerceStandardStageMode(ControllerParameterStageItem item)
+    {
+        switch (item.Index)
+        {
+            case 0:
+                if (item.ControlModeIndex != (int)TighteningControlMode.Angle)
+                    item.ControlModeIndex = (int)TighteningControlMode.Angle;
+                break;
+            case 1:
+                if (item.ControlModeIndex is not (
+                    (int)TighteningControlMode.Angle
+                    or (int)TighteningControlMode.Torque
+                    or (int)TighteningControlMode.TorqueRate))
+                    item.ControlModeIndex = (int)TighteningControlMode.Torque;
+                break;
+            case 2:
+                if (item.ControlModeIndex is not (
+                    (int)TighteningControlMode.Torque
+                    or (int)TighteningControlMode.TorqueRate))
+                    item.ControlModeIndex = (int)TighteningControlMode.Torque;
+                break;
+            case 3:
+                if (item.ControlModeIndex is not (
+                    (int)TighteningControlMode.Angle
+                    or (int)TighteningControlMode.Torque
+                    or (int)TighteningControlMode.ClampTorque
+                    or (int)TighteningControlMode.ClampAngle))
+                    item.ControlModeIndex = (int)TighteningControlMode.Torque;
+                break;
         }
     }
 
@@ -348,6 +312,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ImportAllFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
@@ -453,6 +418,82 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StatusMessage = Loc.Get("S.ControllerParam.StatusNew");
     }
 
+    [RelayCommand]
+    private void SelectStage(ControllerParameterStageItem? item)
+    {
+        if (item is null)
+            return;
+        SelectedStageIndex = item.Index;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddStage))]
+    private void AddStage()
+    {
+        CommitPendingEdits();
+        var empty = StageItems.FirstOrDefault(s => !s.IsConfigured);
+        if (empty is null)
+        {
+            StatusMessage = Loc.Get("S.ControllerParam.StageFull");
+            return;
+        }
+
+        empty.ApplyDefaultsForNew();
+        SelectedStageIndex = empty.Index;
+        NotifySummary();
+        OnPropertyChanged(nameof(CurrentStageItem));
+        AddStageCommand.NotifyCanExecuteChanged();
+        RemoveStageCommand.NotifyCanExecuteChanged();
+        StatusMessage = Loc.Format("S.ControllerParam.StatusStageAdded", empty.Index + 1);
+    }
+
+    private bool CanAddStage() => StageItems.Any(s => !s.IsConfigured);
+
+    [RelayCommand(CanExecute = nameof(CanRemoveStage))]
+    private void RemoveStage()
+    {
+        var item = CurrentStageItem;
+        if (item is null)
+            return;
+
+        CommitPendingEdits();
+        item.ClearToEmpty();
+        NotifySummary();
+        OnPropertyChanged(nameof(CurrentStageItem));
+        AddStageCommand.NotifyCanExecuteChanged();
+        RemoveStageCommand.NotifyCanExecuteChanged();
+        StatusMessage = Loc.Format("S.ControllerParam.StatusStageRemoved", item.Index + 1);
+    }
+
+    private bool CanRemoveStage() => CurrentStageItem is not null;
+
+    [RelayCommand]
+    private void OpenLoosenAdvanced()
+    {
+        CommitPendingEdits();
+        var dialog = new Views.ControllerDevice.LoosenAdvancedSettingsDialog(LoosenEditor)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void OpenStageAdvanced()
+    {
+        var item = CurrentStageItem;
+        if (item is null)
+            return;
+
+        CommitPendingEdits();
+        var dialog = new Views.ControllerDevice.StageAdvancedSettingsDialog(item)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dialog.ShowDialog();
+        OnPropertyChanged(nameof(CurrentStageItem));
+        NotifySummary();
+    }
+
     //[RelayCommand]
     //private void QuickStartNew()
     //{
@@ -537,6 +578,43 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             var template = await _presetService.ReadFromDeviceAsync(id.Value).ConfigureAwait(true);
             ApplyTemplate(template);
             StatusMessage = Loc.Format("S.ControllerParam.StatusReadDevice", id.Value);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (IemdSdCommunicationException ex)
+        {
+            var detail = ex.DeviceErrorCode is int code
+                ? TighteningParameterErrorCodes.Describe(ex.CommandCode ?? 0, code)
+                : ex.Message;
+            StatusMessage = detail;
+            ShowSnackbar(detail, ControlAppearance.Danger);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanReadFromDevice))]
+    private async Task DeleteFromDeviceAsync()
+    {
+        var id = ResolveDeviceParameterId();
+        if (id is null)
+            return;
+
+        if (!ConfirmTips.ShowDialog(
+                Loc.Format("S.ControllerParam.ConfirmDeleteDevice", id.Value),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ControllerParam.DeleteDevice")))
+            return;
+
+        AuditConfig("Configuration.ParamDeleteDevice", $"paramId={id}");
+        try
+        {
+            await _presetService.DeleteFromDeviceAsync(id.Value).ConfigureAwait(true);
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+            SelectedDeviceParameter = DeviceParameters.FirstOrDefault(p => p.ParameterId == id.Value);
+            StatusMessage = Loc.Format("S.ControllerParam.StatusDeleteDevice", id.Value);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (IemdSdCommunicationException ex)
@@ -687,7 +765,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             {
                 var template = await _presetService.LoadLocalPresetAsync(item.ParameterId).ConfigureAwait(true);
                 if (template.Core.Stages.Count > 0)
-                    torque = template.Core.Stages[0].TargetTorqueMilliNm / 1000.0;
+                    torque = TorqueUnitConverter.MilliNmToKgfCm(template.Core.Stages[0].TargetTorqueMilliNm);
             }
             catch
             {
@@ -733,7 +811,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         MinAngleDeg = template.Core.MinAngleDeg;
         MaxAngleDeg = template.Core.MaxAngleDeg;
         MaxTighteningTimeTenthSec = template.Core.MaxTighteningTimeTenthSec;
-        Loosen = template.Core.Loosen;
+        LoosenEditor = new ControllerParameterLoosenItem(template.Core.Loosen);
         LastStageServoOn = template.Core.LastStageServoOn;
         LinkedCompensationParamId = template.Core.LinkedCompensationParamId;
         MaxLoosenTimeTenthSec = template.Core.MaxLoosenTimeTenthSec;
@@ -743,7 +821,6 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         FinalCurrentJudgeEnabled = template.Core.FinalCurrentJudgeEnabled;
         FeederResultDelayTenthSec = template.Core.FeederResultDelayTenthSec;
         RebuildStageItems();
-        OnPropertyChanged(nameof(Loosen));
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
         NotifySummary();
@@ -754,14 +831,24 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         // Drop selection so consumers (CurrentStageItem) clear before new items arrive.
         SelectedStageIndex = -1;
         StageItems.Clear();
+        StandardStageItems.Clear();
         var stages = _working.Core.Stages;
         for (var i = 0; i < stages.Count; i++)
             StageItems.Add(new ControllerParameterStageItem(i, stages[i]));
 
-        SelectedStageIndex = StageItems.Count > 0 ? 0 : -1;
+        for (var i = 0; i < Math.Min(4, StageItems.Count); i++)
+            StandardStageItems.Add(StageItems[i]);
+
+        // 标准策略：启动阶段固定角度控制
+        if (StageItems.Count > 0 && StageItems[0].ControlModeIndex != (int)TighteningControlMode.Angle)
+            StageItems[0].ControlModeIndex = (int)TighteningControlMode.Angle;
+
+        SelectedStageIndex = StandardStageItems.Count > 0 ? 0 : -1;
 
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
+        AddStageCommand.NotifyCanExecuteChanged();
+        RemoveStageCommand.NotifyCanExecuteChanged();
         NotifySummary();
     }
 
@@ -772,7 +859,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _working.Core.MinAngleDeg = MinAngleDeg;
         _working.Core.MaxAngleDeg = MaxAngleDeg;
         _working.Core.MaxTighteningTimeTenthSec = MaxTighteningTimeTenthSec;
-        _working.Core.Loosen = Loosen;
+        _working.Core.Loosen = LoosenEditor.Core;
         _working.Core.LastStageServoOn = LastStageServoOn;
         _working.Core.LinkedCompensationParamId = LinkedCompensationParamId;
         _working.Core.MaxLoosenTimeTenthSec = MaxLoosenTimeTenthSec;
@@ -790,8 +877,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         OnPropertyChanged(nameof(SummaryText));
         OnPropertyChanged(nameof(ActiveStageCount));
         OnPropertyChanged(nameof(Stage1TorqueNm));
+        OnPropertyChanged(nameof(Stage1TorqueKgfCm));
         OnPropertyChanged(nameof(StageBarIndices));
         OnPropertyChanged(nameof(MaxRunTimeSeconds));
+        OnPropertyChanged(nameof(MaxLoosenTimeSeconds));
     }
 
     private void AuditConfig(string action, string? detail = null) =>
