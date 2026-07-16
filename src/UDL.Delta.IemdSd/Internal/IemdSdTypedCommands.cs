@@ -166,6 +166,19 @@ internal sealed class IemdSdTypedCommands
         return (PerScrewExportMode)(result.ReadPayload?.ElementAtOrDefault(0) ?? 0);
     }
 
+    public async Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken ct)
+    {
+        var result = await _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithReadPayload(
+                (int)ModbusFunctionCode.Read_default_torque_unit,
+                1),
+            ct).ConfigureAwait(false);
+        var raw = result.ReadPayload?.ElementAtOrDefault(0) ?? (int)DefaultTorqueUnit.KgfCm;
+        return raw is >= 0 and <= 3
+            ? (DefaultTorqueUnit)raw
+            : DefaultTorqueUnit.KgfCm;
+    }
+
     public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount, CancellationToken ct) =>
         ReadHistoryAsync((int)ModbusFunctionCode.Find_read_error_report_entries, reportId, wordCount, ct);
 

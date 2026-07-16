@@ -15,8 +15,8 @@ public class TighteningSequenceCodecTests
             PositioningArmEnabled = true,
             Steps =
             [
-                new TighteningSequenceStepCore { ToolId = 0, ParameterId = 3 },
-                new TighteningSequenceStepCore { ToolId = 1, ParameterId = 7 },
+                new TighteningSequenceStepCore { ToolId = 0, ParameterId = 3, Quantity = 6, BitId = 2 },
+                new TighteningSequenceStepCore { ToolId = 1, ParameterId = 7, Quantity = 1, BitId = 0 },
             ],
         };
 
@@ -28,7 +28,42 @@ public class TighteningSequenceCodecTests
         Assert.True(decoded.PositioningArmEnabled);
         Assert.Equal(2, decoded.Steps.Count);
         Assert.Equal(3, decoded.Steps[0].ParameterId);
+        Assert.Equal(6, decoded.Steps[0].Quantity);
+        Assert.Equal(2, decoded.Steps[0].BitId);
         Assert.Equal(7, decoded.Steps[1].ParameterId);
+        Assert.Equal(1, decoded.Steps[1].Quantity);
+        Assert.Equal(0, decoded.Steps[1].BitId);
+    }
+
+    [Fact]
+    public void Sequence_quantity_uses_dword_at_0x1B8()
+    {
+        var raw = TighteningSequencePackage.CreateMainRawBlock();
+        // Absolute 0x1B8 / 0x1B9 relative to block base 0xD2
+        var qtyIndex = TighteningSequenceRegisterMap.QuantityStart;
+        raw[TighteningSequenceRegisterMap.ParameterIdStart] = 12;
+        raw[qtyIndex] = 0x86A0; // 100000 & 0xFFFF
+        raw[qtyIndex + 1] = 0x1; // 100000 >> 16
+        raw[TighteningSequenceRegisterMap.BitIdStart] = 7;
+
+        var decoded = TighteningSequenceCodec.ExtractCoreFromRaw(raw);
+        Assert.Equal(100_000, decoded.Steps[0].Quantity);
+        Assert.Equal(7, decoded.Steps[0].BitId);
+    }
+
+    [Fact]
+    public void Sequence_apply_clamps_zero_quantity_to_one()
+    {
+        var raw = TighteningSequencePackage.CreateMainRawBlock();
+        var core = new TighteningSequenceCore
+        {
+            Name = "Q",
+            Steps = [new TighteningSequenceStepCore { ParameterId = 1, Quantity = 0 }],
+        };
+
+        TighteningSequenceCodec.ApplyCoreToRaw(raw, core);
+        Assert.Equal(1, raw[TighteningSequenceRegisterMap.QuantityStart]);
+        Assert.Equal(0, raw[TighteningSequenceRegisterMap.QuantityStart + 1]);
     }
 
     [Fact]
@@ -36,6 +71,8 @@ public class TighteningSequenceCodecTests
     {
         Assert.Equal(530, TighteningSequenceRegisterMap.BlockWordCount);
         Assert.Equal(530, TighteningSequenceTemplate.SequenceBlockWordCount);
+        Assert.Equal(0x1B8 - 0xD2, TighteningSequenceRegisterMap.QuantityStart);
+        Assert.Equal(0x280 - 0xD2, TighteningSequenceRegisterMap.BitIdStart);
     }
 
     [Fact]

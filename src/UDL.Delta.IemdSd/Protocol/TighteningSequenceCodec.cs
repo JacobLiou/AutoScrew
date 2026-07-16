@@ -16,10 +16,14 @@ public static class TighteningSequenceCodec
             var paramId = raw[TighteningSequenceRegisterMap.ParameterIdStart + i];
             if (paramId <= 0 && i > 0)
                 break;
+            var qtyLow = raw[TighteningSequenceRegisterMap.QuantityStart + i * 2];
+            var qtyHigh = raw[TighteningSequenceRegisterMap.QuantityStart + i * 2 + 1];
             steps.Add(new TighteningSequenceStepCore
             {
                 ToolId = raw[TighteningSequenceRegisterMap.ToolIdStart + i],
                 ParameterId = paramId > 0 ? paramId : 1,
+                Quantity = qtyLow | (qtyHigh << 16),
+                BitId = raw[TighteningSequenceRegisterMap.BitIdStart + i],
             });
         }
 
@@ -53,6 +57,12 @@ public static class TighteningSequenceCodec
             var step = core.Steps[i];
             raw[TighteningSequenceRegisterMap.ToolIdStart + i] = step.ToolId;
             raw[TighteningSequenceRegisterMap.ParameterIdStart + i] = step.ParameterId;
+
+            // 设备拒绝数量为 0（#200 异常码 2）。
+            var quantity = step.Quantity <= 0 ? 1 : Math.Min(step.Quantity, 999_999);
+            raw[TighteningSequenceRegisterMap.QuantityStart + i * 2] = quantity & 0xFFFF;
+            raw[TighteningSequenceRegisterMap.QuantityStart + i * 2 + 1] = (quantity >> 16) & 0xFFFF;
+            raw[TighteningSequenceRegisterMap.BitIdStart + i] = Math.Clamp(step.BitId, 0, 255);
         }
     }
 

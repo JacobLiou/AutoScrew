@@ -65,6 +65,14 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         return template;
     }
 
+    public async Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default)
+    {
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var unit = await client.ReadDefaultTorqueUnitAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Read default torque unit from IEMD-SD: {Unit}", unit);
+        return unit;
+    }
+
     public async Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default)
     {
         var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);

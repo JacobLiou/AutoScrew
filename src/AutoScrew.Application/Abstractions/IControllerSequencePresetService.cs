@@ -22,6 +22,12 @@ public interface IControllerSequencePresetService
 
     Task<TighteningSequencePackage> ReadFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);
 
+    /// <summary>Lists configured sequence IDs from device (#260).</summary>
+    Task<IReadOnlyList<int>> ListDeviceSequenceIdsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Reads sequence from device (#250+) and saves to local store.</summary>
+    Task<TighteningSequencePackage> ImportFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);
+
     Task WriteToDeviceAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default);
 
     Task ActivateOnDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);

@@ -95,6 +95,9 @@ public interface IIemdSdClient : IAsyncDisposable
 
     Task<PerScrewExportMode> ReadPerScrewExportAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>#555 读控制器默认扭矩单位（0=N.m / 1=kgf.cm / 2=lbf.ft / 3=lbf.in）。</summary>
+    Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default);
+
     Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default);
 
     Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default);

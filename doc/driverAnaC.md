@@ -306,7 +306,9 @@ AutoScrew 扫码换 PN 工艺时，应在 α 联调阶段单独验证此命令�
 | 0xE6 | General(0) / Navigator(1) |
 | 0xE7 | 定位臂开关 0/1 |
 | 0xF0–0x153 | Set 1–100 Tool ID |
-| 0x154–0x217 | Set 1–100 Parameter ID（1–500） |
+| 0x154–0x1B7 | Set 1–100 Parameter ID（1–500） |
+| 0x1B8–0x27F | Set 1–100 螺丝数量 DWORD（L/H，1–999999） |
+| 0x280–0x2E3 | Set 1–100 提示批头编号（0–255） |
 
 附属块（按顺序 ID 读写）：
 

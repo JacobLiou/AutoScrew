@@ -214,6 +214,9 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task<PerScrewExportMode> ReadPerScrewExportAsync(CancellationToken cancellationToken = default) =>
         _typed.ReadPerScrewExportAsync(cancellationToken);
 
+    public Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default) =>
+        _typed.ReadDefaultTorqueUnitAsync(cancellationToken);
+
     public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
         _typed.ReadErrorReportAsync(reportId, wordCount, cancellationToken);
 

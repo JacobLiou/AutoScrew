@@ -28,6 +28,9 @@ public interface IControllerParameterPresetService
 
     Task<TighteningParameterTemplate> ReadFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);
 
+    /// <summary>#555 读控制器默认扭矩单位；离线时由调用方默认 kgf.cm。</summary>
+    Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default);
 
     Task<TighteningParameterTemplate> ImportFromDeviceAsync(int parameterId, CancellationToken cancellationToken = default);

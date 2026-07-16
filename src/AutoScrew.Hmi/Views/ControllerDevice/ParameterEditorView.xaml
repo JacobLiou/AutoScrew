@@ -475,7 +475,7 @@
                                                                 <ui:NumberBox Grid.Column="2"
                                                                               IsEnabled="{Binding IsModeTorque}"
                                                                               Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                             </Grid>
                                                             <Grid Margin="0,0,0,6">
                                                                 <Grid.ColumnDefinitions>
@@ -516,7 +516,7 @@
                                                                 <ui:NumberBox Grid.Column="2"
                                                                               IsEnabled="{Binding IsModeTorque}"
                                                                               Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                                 <ui:Button Grid.Column="4"
                                                                            Margin="8,0,0,0"
                                                                            Appearance="Secondary"
@@ -587,7 +587,7 @@
                                                                 <ui:NumberBox Grid.Column="2"
                                                                               IsEnabled="{Binding IsModeTorque}"
                                                                               Value="{Binding TargetTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                             </Grid>
                                                             <Grid Margin="0,0,0,6">
                                                                 <Grid.ColumnDefinitions>
@@ -605,7 +605,7 @@
                                                                 <ui:NumberBox Grid.Column="2"
                                                                               IsEnabled="{Binding IsModeClampTorque}"
                                                                               Value="{Binding MaxClampTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                             </Grid>
                                                             <Grid Margin="0,0,0,6">
                                                                 <Grid.ColumnDefinitions>
@@ -659,7 +659,7 @@
                                                                     <ui:NumberBox Grid.Column="2"
                                                                                   IsEnabled="{Binding TorqueMonitorEnabled}"
                                                                                   Value="{Binding MaxTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                                 </Grid>
                                                                 <Grid>
                                                                     <Grid.ColumnDefinitions>
@@ -673,7 +673,7 @@
                                                                     <ui:NumberBox Grid.Column="2"
                                                                                   IsEnabled="{Binding TorqueMonitorEnabled}"
                                                                                   Value="{Binding MinTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
-                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldUnit}" Text="{Binding TorqueUnitLabel}" />
                                                                 </Grid>
                                                             </StackPanel>
                                                         </Border>
@@ -834,7 +834,7 @@
                                                                   Value="{Binding DetectTorqueKgfCm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                     <TextBlock Grid.Column="2"
                                                                Style="{StaticResource FieldUnit}"
-                                                               Text="{DynamicResource S.ControllerParam.Unit.KgfCm}" />
+                                                               Text="{Binding TorqueUnitLabel}" />
                                                 </Grid>
                                             </StackPanel>
                                         </Border>

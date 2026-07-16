@@ -27,21 +27,54 @@ public sealed partial class ControllerSequenceListItem : ObservableObject
     public string DisplayText { get; }
 }
 
+public sealed class SequenceToolOption
+{
+    public SequenceToolOption(int toolId, string displayText)
+    {
+        ToolId = toolId;
+        DisplayText = displayText;
+    }
+
+    public int ToolId { get; }
+    public string DisplayText { get; }
+}
+
 public sealed partial class ControllerSequenceStepItem : ObservableObject
 {
     private readonly Action? _onParameterChanged;
+    private readonly IReadOnlyList<SequenceToolOption> _toolOptions;
 
-    public ControllerSequenceStepItem(int index, TighteningSequenceStepCore step, Action? onParameterChanged = null)
+    public ControllerSequenceStepItem(
+        int index,
+        TighteningSequenceStepCore step,
+        IReadOnlyList<SequenceToolOption> toolOptions,
+        Action? onParameterChanged = null)
     {
         Index = index;
         Step = step;
         Title = Loc.Format("S.Workbench.Seq.StepTitle", index + 1);
+        DisplayId = (index + 1).ToString();
+        _toolOptions = toolOptions;
         _onParameterChanged = onParameterChanged;
+        _selectedTool = toolOptions.FirstOrDefault(t => t.ToolId == step.ToolId) ?? toolOptions.FirstOrDefault();
     }
 
     public int Index { get; }
+    public string DisplayId { get; }
     public string Title { get; }
     public TighteningSequenceStepCore Step { get; }
+
+    private SequenceToolOption? _selectedTool;
+
+    public SequenceToolOption? SelectedTool
+    {
+        get => _selectedTool;
+        set
+        {
+            if (SetProperty(ref _selectedTool, value) && value is not null)
+                Step.ToolId = value.ToolId;
+        }
+    }
 
     private ControllerParameterListItem? _selectedParameter;
 
@@ -62,6 +95,12 @@ public sealed partial class ControllerSequenceStepItem : ObservableObject
     {
         _selectedParameter = catalog.FirstOrDefault(p => p.ParameterId == Step.ParameterId);
         OnPropertyChanged(nameof(SelectedParameter));
+    }
+
+    public void SyncSelectedTool()
+    {
+        _selectedTool = _toolOptions.FirstOrDefault(t => t.ToolId == Step.ToolId) ?? _toolOptions.FirstOrDefault();
+        OnPropertyChanged(nameof(SelectedTool));
     }
 }
 
@@ -123,9 +162,16 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         _appOptions = appOptions;
         _user = user;
         Presets = new ObservableCollection<ControllerSequenceListItem>();
+        DeviceSequences = new ObservableCollection<ControllerSequenceListItem>();
         StepItems = new ObservableCollection<ControllerSequenceStepItem>();
         ParameterCatalog = new ObservableCollection<ControllerParameterListItem>();
+        ToolOptions =
+        [
+            new SequenceToolOption(0, Loc.Get("S.ControllerSeq.Tool1")),
+            new SequenceToolOption(1, Loc.Get("S.ControllerSeq.Tool2")),
+        ];
         DeviceStatusText = BuildDeviceStatusText();
+        DeviceListStatus = Loc.Get("S.ControllerSeq.DeviceListHint");
         _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
     }
 
@@ -143,8 +189,11 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     public ObservableCollection<ControllerParameterListItem> ParameterCatalog { get; }
 
+    public IReadOnlyList<SequenceToolOption> ToolOptions { get; }
+
     public bool IsDeviceAvailable => _presetService.IsDeviceAvailable;
     public ObservableCollection<ControllerSequenceListItem> Presets { get; }
+    public ObservableCollection<ControllerSequenceListItem> DeviceSequences { get; }
     public ObservableCollection<ControllerSequenceStepItem> StepItems { get; }
 
     public ObservableCollection<NavigatorScrewCoordinate> NavigatorScrews { get; } = [];
@@ -156,8 +205,11 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     public ObservableCollection<PositioningArmScrewCoordinate> ArmCoordinates { get; } = [];
 
     [ObservableProperty] private ControllerSequenceListItem? _selectedPreset;
+    [ObservableProperty] private ControllerSequenceListItem? _selectedDeviceSequence;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private string _deviceStatusText = string.Empty;
+    [ObservableProperty] private string _deviceListStatus = string.Empty;
+    [ObservableProperty] private bool _deviceHasConfiguredSequences;
     [ObservableProperty] private int _sequenceId = 1;
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private int _navigatorModeIndex;
@@ -166,11 +218,43 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     [ObservableProperty] private int _selectedNavigatorStepIndex = -1;
     [ObservableProperty] private string? _navigatorImagePath;
     [ObservableProperty] private int _selectedStepIndex;
+    [ObservableProperty] private double _nowArmX;
+    [ObservableProperty] private double _nowArmY;
+    [ObservableProperty] private double _nowArmZ;
+    [ObservableProperty] private double _teachArmX;
+    [ObservableProperty] private double _teachArmY;
+    [ObservableProperty] private double _teachArmZ;
+
+    private bool _suppressArmTeachSync;
+    private bool _suppressDeviceSelection;
+
+    public bool IsNavigatorGuideEnabled
+    {
+        get => NavigatorModeIndex == (int)TighteningSequenceNavigatorMode.Navigator;
+        set
+        {
+            var target = value
+                ? (int)TighteningSequenceNavigatorMode.Navigator
+                : (int)TighteningSequenceNavigatorMode.General;
+            if (NavigatorModeIndex == target)
+                return;
+            NavigatorModeIndex = target;
+        }
+    }
+
+    public string SelectedScrewLabel =>
+        SelectedNavigatorStepIndex >= 0
+            ? $"#{SelectedNavigatorStepIndex + 1}"
+            : "#";
+
+    partial void OnNavigatorModeIndexChanged(int value) => OnPropertyChanged(nameof(IsNavigatorGuideEnabled));
 
     partial void OnSelectedNavigatorStepIndexChanged(int value)
     {
         for (var i = 0; i < NavigatorDisplayItems.Count; i++)
             NavigatorDisplayItems[i].IsSelected = i == value;
+        OnPropertyChanged(nameof(SelectedScrewLabel));
+        LoadArmTeachForSelection();
     }
 
     partial void OnSelectedStepIndexChanged(int value)
@@ -179,10 +263,28 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             SelectedNavigatorStepIndex = value;
     }
 
+    partial void OnSelectedDeviceSequenceChanged(ControllerSequenceListItem? value)
+    {
+        if (_suppressDeviceSelection || value is null)
+            return;
+
+        if (value.SequenceId != SequenceId)
+            SequenceId = value.SequenceId;
+
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+    }
+
     partial void OnSelectedPresetChanged(ControllerSequenceListItem? value)
     {
         if (value is not null)
             _ = LoadPresetAsync(value.SequenceId);
+    }
+
+    partial void OnSequenceIdChanged(int value)
+    {
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
     public async Task InitializeAsync()
@@ -191,6 +293,8 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         RefreshDeviceConnectionState();
         await RefreshParameterCatalogAsync().ConfigureAwait(true);
         await RefreshPresetListAsync().ConfigureAwait(true);
+        if (IsDeviceAvailable)
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
         if (Presets.Count > 0 && SelectedPreset is null)
             SelectedPreset = Presets[0];
         else if (Presets.Count == 0)
@@ -202,18 +306,78 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         await _devices.LoadAsync().ConfigureAwait(true);
         RefreshDeviceConnectionState();
         await RefreshParameterCatalogAsync().ConfigureAwait(true);
+        if (IsDeviceAvailable)
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
     }
 
     private void RefreshDeviceConnectionState()
     {
         DeviceStatusText = BuildDeviceStatusText();
         OnPropertyChanged(nameof(IsDeviceAvailable));
+        RefreshDeviceListCommand.NotifyCanExecuteChanged();
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand] private async Task RefreshListAsync() => await RefreshPresetListAsync().ConfigureAwait(true);
+
+    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    private Task RefreshDeviceListAsync() => RefreshDeviceListCoreAsync();
+
+    private async Task RefreshDeviceListCoreAsync()
+    {
+        try
+        {
+            var ids = await _presetService.ListDeviceSequenceIdsAsync().ConfigureAwait(true);
+            DeviceSequences.Clear();
+            foreach (var id in ids)
+                DeviceSequences.Add(new ControllerSequenceListItem(id, Loc.Format("S.ControllerSeq.DeviceSlotName", id)));
+
+            DeviceHasConfiguredSequences = DeviceSequences.Count > 0;
+            DeviceListStatus = DeviceHasConfiguredSequences
+                ? Loc.Format("S.ControllerSeq.DeviceListCount", DeviceSequences.Count)
+                : Loc.Get("S.ControllerSeq.DeviceListEmpty");
+        }
+        catch (Exception ex)
+        {
+            DeviceListStatus = ex.Message;
+            DeviceHasConfiguredSequences = false;
+        }
+
+        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanImportFromDevice))]
+    private async Task ImportSelectedFromDeviceAsync()
+    {
+        var id = ResolveDeviceSequenceId();
+        if (id is null)
+            return;
+
+        AuditConfig("Configuration.SequenceImportDevice", $"sequenceId={id}");
+        try
+        {
+            var pkg = await _presetService.ImportFromDeviceAsync(id.Value).ConfigureAwait(true);
+            ApplyPackage(pkg);
+            await RefreshPresetListAsync().ConfigureAwait(true);
+            SelectedPreset = Presets.FirstOrDefault(p => p.SequenceId == pkg.SequenceId);
+            StatusMessage = Loc.Format("S.ControllerSeq.StatusImportedDevice", id.Value);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (IemdSdCommunicationException ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
 
     [RelayCommand]
     private void NewPreset()
@@ -261,14 +425,18 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    [RelayCommand(CanExecute = nameof(CanReadFromDevice))]
     private async Task ReadFromDeviceAsync()
     {
+        var id = ResolveDeviceSequenceId();
+        if (id is null)
+            return;
+
         try
         {
-            var pkg = await _presetService.ReadFromDeviceAsync(SequenceId).ConfigureAwait(true);
+            var pkg = await _presetService.ReadFromDeviceAsync(id.Value).ConfigureAwait(true);
             ApplyPackage(pkg);
-            StatusMessage = Loc.Format("S.ControllerSeq.StatusReadDevice", SequenceId);
+            StatusMessage = Loc.Format("S.ControllerSeq.StatusReadDevice", id.Value);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (IemdSdCommunicationException ex)
@@ -292,6 +460,10 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             await _presetService.WriteToDeviceAsync(_working).ConfigureAwait(true);
             await _presetService.SaveLocalPresetAsync(_working).ConfigureAwait(true);
             await RefreshPresetListAsync().ConfigureAwait(true);
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+            _suppressDeviceSelection = true;
+            SelectedDeviceSequence = DeviceSequences.FirstOrDefault(p => p.SequenceId == _working.SequenceId);
+            _suppressDeviceSelection = false;
             StatusMessage = Loc.Format("S.ControllerSeq.StatusWriteDevice", _working.SequenceId);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
@@ -370,7 +542,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     [RelayCommand]
     private void AddStep()
     {
-        _working.Core.Steps.Add(new TighteningSequenceStepCore { ParameterId = 1 });
+        _working.Core.Steps.Add(new TighteningSequenceStepCore { ParameterId = 1, Quantity = 1 });
         RebuildStepItems();
     }
 
@@ -380,6 +552,76 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         if (_working.Core.Steps.Count <= 1) return;
         _working.Core.Steps.RemoveAt(_working.Core.Steps.Count - 1);
         RebuildStepItems();
+    }
+
+    [RelayCommand]
+    private void RemoveStepAt(object? parameter)
+    {
+        var index = parameter switch
+        {
+            int i => i,
+            string s when int.TryParse(s, out var parsed) => parsed,
+            ControllerSequenceStepItem item => item.Index,
+            _ => -1,
+        };
+        if (index < 0 || index >= _working.Core.Steps.Count || _working.Core.Steps.Count <= 1)
+            return;
+
+        _working.Core.Steps.RemoveAt(index);
+        RebuildStepItems();
+    }
+
+    [RelayCommand]
+    private void PrevScrew()
+    {
+        if (NavigatorDisplayItems.Count == 0) return;
+        SelectedNavigatorStepIndex = SelectedNavigatorStepIndex <= 0
+            ? NavigatorDisplayItems.Count - 1
+            : SelectedNavigatorStepIndex - 1;
+    }
+
+    [RelayCommand]
+    private void NextScrew()
+    {
+        if (NavigatorDisplayItems.Count == 0) return;
+        SelectedNavigatorStepIndex = SelectedNavigatorStepIndex >= NavigatorDisplayItems.Count - 1
+            ? 0
+            : SelectedNavigatorStepIndex + 1;
+    }
+
+    [RelayCommand]
+    private void CaptureTeachFromNow()
+    {
+        _suppressArmTeachSync = true;
+        TeachArmX = NowArmX;
+        TeachArmY = NowArmY;
+        TeachArmZ = NowArmZ;
+        _suppressArmTeachSync = false;
+        ApplyTeachToArm();
+    }
+
+    [RelayCommand]
+    private void RefreshArmNow()
+    {
+        LoadArmTeachForSelection();
+    }
+
+    partial void OnTeachArmXChanged(double value)
+    {
+        if (!_suppressArmTeachSync)
+            ApplyTeachToArm();
+    }
+
+    partial void OnTeachArmYChanged(double value)
+    {
+        if (!_suppressArmTeachSync)
+            ApplyTeachToArm();
+    }
+
+    partial void OnTeachArmZChanged(double value)
+    {
+        if (!_suppressArmTeachSync)
+            ApplyTeachToArm();
     }
 
     [RelayCommand]
@@ -425,6 +667,16 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     }
 
     private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
+
+    private bool CanReadFromDevice() => CanUseDevice() && ResolveDeviceSequenceId() is not null;
+
+    private bool CanImportFromDevice() => CanReadFromDevice();
+
+    private int? ResolveDeviceSequenceId()
+    {
+        var id = SelectedDeviceSequence?.SequenceId ?? SequenceId;
+        return id is >= 1 and <= TighteningSequenceRegisterMap.MaxSteps ? id : null;
+    }
 
     public Task RunWriteToDeviceAsync() => WriteToDeviceAsync();
 
@@ -483,6 +735,8 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         ArmCoordinates.Clear();
         foreach (var a in pkg.PositioningArmCoordinates.Screws)
             ArmCoordinates.Add(a);
+        EnsureAuxiliaryCollections();
+        LoadArmTeachForSelection();
     }
 
     private void CommitPendingEdits()
@@ -532,15 +786,67 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     {
         StepItems.Clear();
         for (var i = 0; i < _working.Core.Steps.Count; i++)
-            StepItems.Add(new ControllerSequenceStepItem(i, _working.Core.Steps[i], SyncNavigatorDisplayFromSteps));
+            StepItems.Add(new ControllerSequenceStepItem(i, _working.Core.Steps[i], ToolOptions, SyncNavigatorDisplayFromSteps));
 
         foreach (var step in StepItems)
+        {
             step.SyncSelectedParameter(ParameterCatalog);
+            step.SyncSelectedTool();
+        }
 
         if (SelectedStepIndex >= StepItems.Count)
             SelectedStepIndex = StepItems.Count > 0 ? 0 : -1;
 
+        EnsureAuxiliaryCollections();
         SyncNavigatorDisplayFromSteps();
+        LoadArmTeachForSelection();
+    }
+
+    private void EnsureAuxiliaryCollections()
+    {
+        while (ArmCoordinates.Count < StepItems.Count)
+            ArmCoordinates.Add(new PositioningArmScrewCoordinate());
+        while (ArmCoordinates.Count > StepItems.Count && ArmCoordinates.Count > 0)
+            ArmCoordinates.RemoveAt(ArmCoordinates.Count - 1);
+
+        while (ImageCodes.Count < StepItems.Count)
+            ImageCodes.Add(new ImageCodeItem());
+        while (ImageCodes.Count > StepItems.Count && ImageCodes.Count > 0)
+            ImageCodes.RemoveAt(ImageCodes.Count - 1);
+    }
+
+    private void LoadArmTeachForSelection()
+    {
+        EnsureAuxiliaryCollections();
+        _suppressArmTeachSync = true;
+        if (SelectedNavigatorStepIndex < 0 || SelectedNavigatorStepIndex >= ArmCoordinates.Count)
+        {
+            NowArmX = NowArmY = NowArmZ = 0;
+            TeachArmX = TeachArmY = TeachArmZ = 0;
+            _suppressArmTeachSync = false;
+            return;
+        }
+
+        var arm = ArmCoordinates[SelectedNavigatorStepIndex];
+        NowArmX = arm.Xmm;
+        NowArmY = arm.Ymm;
+        NowArmZ = arm.Zmm;
+        TeachArmX = arm.Xmm;
+        TeachArmY = arm.Ymm;
+        TeachArmZ = arm.Zmm;
+        _suppressArmTeachSync = false;
+    }
+
+    private void ApplyTeachToArm()
+    {
+        EnsureAuxiliaryCollections();
+        if (SelectedNavigatorStepIndex < 0 || SelectedNavigatorStepIndex >= ArmCoordinates.Count)
+            return;
+
+        var arm = ArmCoordinates[SelectedNavigatorStepIndex];
+        arm.Xmm = TeachArmX;
+        arm.Ymm = TeachArmY;
+        arm.Zmm = TeachArmZ;
     }
 
     private void SyncNavigatorDisplayFromSteps()
@@ -558,6 +864,10 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         SyncNavigatorScrewsFromDisplay();
         if (SelectedNavigatorStepIndex < 0 && NavigatorDisplayItems.Count > 0)
             SelectedNavigatorStepIndex = 0;
+        else if (SelectedNavigatorStepIndex >= NavigatorDisplayItems.Count)
+            SelectedNavigatorStepIndex = NavigatorDisplayItems.Count > 0 ? NavigatorDisplayItems.Count - 1 : -1;
+
+        OnPropertyChanged(nameof(SelectedScrewLabel));
     }
 
     private void SyncNavigatorDisplayFromScrews()

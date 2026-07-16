@@ -7,9 +7,28 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerParameterLoosenItem : ObservableObject
 {
-    public ControllerParameterLoosenItem(TighteningLoosenCore core) => Core = core;
+    private DefaultTorqueUnit _displayTorqueUnit = DefaultTorqueUnit.LbfIn;
+
+    public ControllerParameterLoosenItem(
+        TighteningLoosenCore core,
+        DefaultTorqueUnit displayTorqueUnit = DefaultTorqueUnit.LbfIn)
+    {
+        Core = core;
+        _displayTorqueUnit = displayTorqueUnit;
+    }
 
     public TighteningLoosenCore Core { get; }
+
+    public string TorqueUnitLabel => TorqueUnitConverter.GetUnitSymbol(_displayTorqueUnit);
+
+    public void SetDisplayTorqueUnit(DefaultTorqueUnit unit)
+    {
+        if (_displayTorqueUnit == unit)
+            return;
+        _displayTorqueUnit = unit;
+        OnPropertyChanged(nameof(TorqueUnitLabel));
+        OnPropertyChanged(nameof(DetectTorqueKgfCm));
+    }
 
     public double Stage1AngleDeg
     {
@@ -89,10 +108,10 @@ public sealed partial class ControllerParameterLoosenItem : ObservableObject
 
     public double DetectTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Core.DetectTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Core.DetectTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Core.DetectTorqueMilliNm);
             if (Core.DetectTorqueMilliNm == milli)
                 return;
             Core.DetectTorqueMilliNm = milli;

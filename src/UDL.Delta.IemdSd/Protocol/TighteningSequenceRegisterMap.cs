@@ -12,7 +12,14 @@ public static class TighteningSequenceRegisterMap
     public const int ToolIdStart = 0xF0 - 0xD2;
     public const int MaxSteps = 100;
 
+    /// <summary>第 1–100 组拧紧参数 ID（手册 0x154–0x1B7）。</summary>
     public const int ParameterIdStart = 0x154 - 0xD2;
+
+    /// <summary>第 1–100 组螺丝数量 DWORD L/H（手册 0x1B8–0x27F）。</summary>
+    public const int QuantityStart = 0x1B8 - 0xD2;
+
+    /// <summary>第 1–100 组提示批头编号（手册 0x280–0x2E3）。</summary>
+    public const int BitIdStart = 0x280 - 0xD2;
 
     public const int BlockWordCount = 0x2E3 - 0xD2 + 1;
 

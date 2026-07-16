@@ -164,6 +164,8 @@ public sealed class ControllerTraceServiceTests
         public Task<TighteningIndicatorStatus> ReadIndicatorStatusAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SetPerScrewExportAsync(PerScrewExportMode mode, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<PerScrewExportMode> ReadPerScrewExportAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(DefaultTorqueUnit.KgfCm);
         public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();

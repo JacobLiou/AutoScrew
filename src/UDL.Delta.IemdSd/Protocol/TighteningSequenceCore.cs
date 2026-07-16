@@ -11,6 +11,12 @@ public sealed class TighteningSequenceStepCore
     public int ToolId { get; set; }
 
     public int ParameterId { get; set; } = 1;
+
+    /// <summary>参数执行次数（手册 #200：0x1B8 起 DWORD，1–999999）。</summary>
+    public int Quantity { get; set; } = 1;
+
+    /// <summary>提示批头编号（手册 #200：0x280 起，0=无）。</summary>
+    public int BitId { get; set; }
 }
 
 public sealed class TighteningSequenceCore

@@ -10,12 +10,66 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolVis" />
+        <Style x:Key="IemdTabControl" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="#4A5563" Padding="0">
+                                <TabPanel IsItemsHost="True" Background="Transparent" />
+                            </Border>
+                            <Border Background="#F5F7FA" Padding="0,8,0,0">
+                                <ContentPresenter ContentSource="SelectedContent" />
+                            </Border>
+                        </DockPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="IemdTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#DDD" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <StackPanel>
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  RecognizesAccessKey="True" />
+                                <Border x:Name="Underline"
+                                        Height="3"
+                                        Margin="0,6,0,0"
+                                        Background="Transparent" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Underline" Property="Background" Value="#1E88E5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TableHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
     </UserControl.Resources>
+
     <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="0" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -39,86 +93,160 @@
                         Title="{DynamicResource S.Workbench.Source.AssociationTitle}" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Text="{DynamicResource S.Workbench.Source.Topology}" />
-                <TabControl SelectedIndex="{Binding OperatingModeIndex, Mode=TwoWay}" Margin="0,0,0,12">
-                    <TabItem Header="{DynamicResource S.ControllerSource.OpSingle}" />
-                    <TabItem Header="{DynamicResource S.ControllerSource.OpDualAlt}" />
-                    <TabItem Header="{DynamicResource S.ControllerSource.OpDualSync}" />
-                </TabControl>
+        <Border Grid.Row="2"
+                Background="#EEF2F6"
+                BorderBrush="#CFD8DC"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TabControl Style="{StaticResource IemdTabControl}"
+                                SelectedIndex="{Binding OperatingModeIndex, Mode=TwoWay}"
+                                Margin="0,0,0,12">
+                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpSingle}" />
+                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpDualAlt}" />
+                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpDualSync}" />
+                    </TabControl>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="160" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center" Text="{DynamicResource S.ControllerSource.SwitchingMethod}" />
-                    <ComboBox Grid.Column="1" SelectedIndex="{Binding SwitchingMethodIndex, Mode=TwoWay}">
-                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchManual}" />
-                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBit}" />
-                        <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBarcode}" />
-                    </ComboBox>
-                </Grid>
-
-                <ItemsControl ItemsSource="{Binding BindingRows}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:ControllerSourceBindingRowViewModel}">
-                            <ui:CardControl Margin="0,0,0,12">
-                                <ui:CardControl.Header>
-                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ToolLabel}" />
-                                </ui:CardControl.Header>
-                                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding BindingRows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ControllerSourceBindingRowViewModel}">
+                                <Border Margin="0,0,0,12"
+                                        Background="White"
+                                        BorderBrush="#90CAF9"
+                                        BorderThickness="1"
+                                        Padding="0">
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Grid.Column="0" Margin="0,0,8,0"
-                                                  ItemsSource="{Binding DataContext.SequenceCatalog, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                  SelectedItem="{Binding SelectedSequence, Mode=TwoWay}"
-                                                  DisplayMemberPath="DisplayText" />
-                                        <ui:NumberBox Grid.Column="1" Margin="0,0,8,0" Value="{Binding ScrewCount, Mode=TwoWay}" />
-                                        <ui:NumberBox Grid.Column="2" Margin="0,0,8,0" Value="{Binding BitId, Mode=TwoWay}" />
-                                        <ui:Button Grid.Column="3"
-                                                   Command="{Binding DataContext.OpenAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                   CommandParameter="{Binding}"
-                                                   Content="⚙" />
-                                    </Grid>
-                                    <TextBlock Margin="0,8,0,0"
-                                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                               Text="{Binding SummaryText}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </ui:CardControl>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                <Expander Header="{DynamicResource S.Workbench.Source.AdvancedPanel}" IsExpanded="False">
-                    <StackPanel Margin="8" DataContext="{Binding EditingAdvanced}">
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenOk}" IsChecked="{Binding ProhibitLoosenAfterTightenOk, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenNg}" IsChecked="{Binding ProhibitLoosenAfterTightenNg, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitTightenNg}" IsChecked="{Binding LimitMaxTightenNgPerScrew, Mode=TwoWay}" />
-                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxTightenNgPerScrew, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitLoosenNg}" IsChecked="{Binding LimitMaxLoosenNgPerScrew, Mode=TwoWay}" />
-                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxLoosenNgPerScrew, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitEmptyBarcode}" IsChecked="{Binding ProhibitStartWhenBarcodeEmpty, Mode=TwoWay}" />
-                        <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitRunTime}" IsChecked="{Binding LimitMaxRunTime, Mode=TwoWay}" />
-                        <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
-                        <ui:Button HorizontalAlignment="Left"
-                                   Command="{Binding DataContext.ApplyAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                   Content="{DynamicResource S.Workbench.Source.ApplyAdvanced}" />
-                        <TextBlock Margin="0,8,0,0"
-                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="{DynamicResource S.Workbench.Source.AdvancedLocalOnly}"
-                                   TextWrapping="Wrap" />
-                    </StackPanel>
-                </Expander>
-            </StackPanel>
-        </ScrollViewer>
+                                        <DockPanel Margin="12,10,12,8">
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,8,0"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="#546E7A"
+                                                           Text="{DynamicResource S.ControllerSource.SwitchingMethod}" />
+                                                <ComboBox MinWidth="140"
+                                                          SelectedIndex="{Binding DataContext.SwitchingMethodIndex, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}">
+                                                    <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchManual}" />
+                                                    <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBit}" />
+                                                    <ComboBoxItem Content="{DynamicResource S.ControllerSource.SwitchBarcode}" />
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <TextBlock VerticalAlignment="Center"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="15"
+                                                       Foreground="#1E3A5F"
+                                                       Text="{Binding ToolLabel}" />
+                                        </DockPanel>
+
+                                        <StackPanel Grid.Row="1"
+                                                    Margin="12,0,12,8"
+                                                    Orientation="Horizontal">
+                                            <ui:Button Margin="0,0,8,0"
+                                                       Appearance="Secondary"
+                                                       Command="{Binding DataContext.WriteToDeviceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       Icon="{ui:SymbolIcon ArrowUpload24}"
+                                                       ToolTip="{DynamicResource S.ControllerParam.WriteDevice}" />
+                                            <ui:Button Appearance="Secondary"
+                                                       Command="{Binding DataContext.ReadFromDeviceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       Icon="{ui:SymbolIcon ArrowDownload24}"
+                                                       ToolTip="{DynamicResource S.ControllerParam.ReadDevice}" />
+                                        </StackPanel>
+
+                                        <Border Grid.Row="2"
+                                                Margin="8,0,8,8"
+                                                BorderBrush="#CFD8DC"
+                                                BorderThickness="1">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <Border Background="#1E3A5F" Padding="8,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" MinWidth="160" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="64" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Style="{StaticResource TableHeader}" Text="{DynamicResource S.Workbench.Source.SequenceName}" />
+                                                        <TextBlock Grid.Column="1" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ScrewCount}" />
+                                                        <TextBlock Grid.Column="2" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ColBit}" />
+                                                        <TextBlock Grid.Column="3" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ColSetting}" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <Border Grid.Row="1" Padding="8,6" Background="White">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" MinWidth="160" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="64" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <ComboBox Margin="0,0,8,0"
+                                                                  ItemsSource="{Binding DataContext.SequenceCatalog, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                  SelectedItem="{Binding SelectedSequence, Mode=TwoWay}"
+                                                                  DisplayMemberPath="DisplayText" />
+                                                        <ui:NumberBox Grid.Column="1"
+                                                                      Margin="0,0,8,0"
+                                                                      Minimum="0"
+                                                                      Maximum="100"
+                                                                      SpinButtonPlacementMode="Hidden"
+                                                                      Value="{Binding ScrewCount, Mode=TwoWay}" />
+                                                        <ui:NumberBox Grid.Column="2"
+                                                                      Margin="0,0,8,0"
+                                                                      Minimum="0"
+                                                                      Maximum="99"
+                                                                      SpinButtonPlacementMode="Hidden"
+                                                                      Value="{Binding BitId, Mode=TwoWay}" />
+                                                        <ui:Button Grid.Column="3"
+                                                                   HorizontalAlignment="Center"
+                                                                   Appearance="Secondary"
+                                                                   Command="{Binding DataContext.OpenAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                   CommandParameter="{Binding}"
+                                                                   Icon="{ui:SymbolIcon Settings24}"
+                                                                   ToolTip="{DynamicResource S.ControllerSource.ColSetting}" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Expander Header="{DynamicResource S.Workbench.Source.AdvancedPanel}" IsExpanded="False">
+                        <StackPanel Margin="8" DataContext="{Binding EditingAdvanced}">
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenOk}" IsChecked="{Binding ProhibitLoosenAfterTightenOk, Mode=TwoWay}" />
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenNg}" IsChecked="{Binding ProhibitLoosenAfterTightenNg, Mode=TwoWay}" />
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitTightenNg}" IsChecked="{Binding LimitMaxTightenNgPerScrew, Mode=TwoWay}" />
+                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxTightenNgPerScrew, Mode=TwoWay}" />
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitLoosenNg}" IsChecked="{Binding LimitMaxLoosenNgPerScrew, Mode=TwoWay}" />
+                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxLoosenNgPerScrew, Mode=TwoWay}" />
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitEmptyBarcode}" IsChecked="{Binding ProhibitStartWhenBarcodeEmpty, Mode=TwoWay}" />
+                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitRunTime}" IsChecked="{Binding LimitMaxRunTime, Mode=TwoWay}" />
+                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
+                            <ui:Button HorizontalAlignment="Left"
+                                       Command="{Binding DataContext.ApplyAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                       Content="{DynamicResource S.Workbench.Source.ApplyAdvanced}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="{DynamicResource S.Workbench.Source.AdvancedLocalOnly}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
 
         <Border Grid.Row="3"
                 Margin="0,12,0,8"

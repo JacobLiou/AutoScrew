@@ -86,6 +86,28 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
         return pkg;
     }
 
+    public async Task<IReadOnlyList<int>> ListDeviceSequenceIdsAsync(CancellationToken cancellationToken = default)
+    {
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var words = await client
+            .ListSequencesAsync((uint)TighteningSequenceRegisterMap.MaxSteps, cancellationToken)
+            .ConfigureAwait(false);
+        var snapshot = new ParameterListSnapshot { RawWords = words };
+        return snapshot.GetConfiguredIds()
+            .Where(id => id is >= 1 and <= TighteningSequenceRegisterMap.MaxSteps)
+            .ToList();
+    }
+
+    public async Task<TighteningSequencePackage> ImportFromDeviceAsync(
+        int sequenceId,
+        CancellationToken cancellationToken = default)
+    {
+        var pkg = await ReadFromDeviceAsync(sequenceId, cancellationToken).ConfigureAwait(false);
+        await SaveLocalPresetAsync(pkg, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Imported sequence {SeqId} from IEMD-SD to local store", sequenceId);
+        return pkg;
+    }
+
     public async Task WriteToDeviceAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(package);

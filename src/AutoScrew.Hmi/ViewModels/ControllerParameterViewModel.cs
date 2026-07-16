@@ -22,13 +22,17 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerParameterListItem : ObservableObject
 {
-    public ControllerParameterListItem(int parameterId, string name, double? stage1TorqueKgfCm = null)
+    public ControllerParameterListItem(
+        int parameterId,
+        string name,
+        double? stage1Torque = null,
+        string? torqueUnitSymbol = null)
     {
         ParameterId = parameterId;
         Name = name;
-        Stage1TorqueKgfCm = stage1TorqueKgfCm;
-        DisplayText = stage1TorqueKgfCm is double torque
-            ? $"{parameterId:D3} · {name} · {torque:F3} kgf.cm"
+        Stage1TorqueKgfCm = stage1Torque;
+        DisplayText = stage1Torque is double torque
+            ? $"{parameterId:D3} · {name} · {torque:F3} {torqueUnitSymbol ?? "lbf.in"}"
             : $"{parameterId:D3} · {name}";
     }
 
@@ -47,6 +51,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
     private TighteningParameterTemplate _working = new();
+    private DefaultTorqueUnit _displayTorqueUnit = DefaultTorqueUnit.LbfIn;
 
     public ControllerParameterViewModel(
         IControllerParameterPresetService presetService,
@@ -76,11 +81,16 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher is not null && !dispatcher.CheckAccess())
         {
-            dispatcher.Invoke(RefreshDeviceConnectionState);
+            _ = dispatcher.InvokeAsync(async () =>
+            {
+                RefreshDeviceConnectionState();
+                await RefreshDisplayTorqueUnitAsync().ConfigureAwait(true);
+            });
             return;
         }
 
         RefreshDeviceConnectionState();
+        _ = RefreshDisplayTorqueUnitAsync();
     }
 
     public bool IsDeviceAvailable => _presetService.IsDeviceAvailable;
@@ -179,7 +189,8 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             ParameterId,
             Name,
             ActiveStageCount,
-            Stage1TorqueKgfCm);
+            Stage1TorqueKgfCm,
+            TorqueUnitLabel);
 
     public int ActiveStageCount => StageItems.Count(s => s.IsConfigured);
 
@@ -188,6 +199,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     public double Stage1TorqueKgfCm =>
         StageItems.Count > 0 ? StageItems[0].TargetTorqueKgfCm : 0;
+
+    public string TorqueUnitLabel => TorqueUnitConverter.GetUnitSymbol(_displayTorqueUnit);
+
+    public DefaultTorqueUnit DisplayTorqueUnit => _displayTorqueUnit;
 
     public IReadOnlyList<int> StageBarIndices => Enumerable.Range(0, Math.Max(ActiveStageCount, 1)).ToList();
 
@@ -282,6 +297,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         await _devices.LoadAsync().ConfigureAwait(true);
         RefreshDeviceConnectionState();
+        await RefreshDisplayTorqueUnitAsync().ConfigureAwait(true);
         await RefreshPresetListAsync().ConfigureAwait(true);
         if (IsDeviceAvailable)
             await RefreshDeviceListCoreAsync().ConfigureAwait(true);
@@ -295,6 +311,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         await _devices.LoadAsync().ConfigureAwait(true);
         RefreshDeviceConnectionState();
+        await RefreshDisplayTorqueUnitAsync().ConfigureAwait(true);
         if (IsDeviceAvailable)
             await RefreshDeviceListCoreAsync().ConfigureAwait(true);
     }
@@ -304,6 +321,24 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         DeviceStatusText = BuildDeviceStatusText();
         OnPropertyChanged(nameof(IsDeviceAvailable));
         NotifyDeviceCommandsCanExecuteChanged();
+    }
+
+    private Task RefreshDisplayTorqueUnitAsync()
+    {
+        // 与当前产线控制器一致：界面扭矩单位固定为 lbf.in。
+        ApplyDisplayTorqueUnit(DefaultTorqueUnit.LbfIn);
+        return Task.CompletedTask;
+    }
+
+    private void ApplyDisplayTorqueUnit(DefaultTorqueUnit unit)
+    {
+        _displayTorqueUnit = unit;
+        foreach (var stage in StageItems)
+            stage.SetDisplayTorqueUnit(unit);
+        LoosenEditor.SetDisplayTorqueUnit(unit);
+        OnPropertyChanged(nameof(DisplayTorqueUnit));
+        OnPropertyChanged(nameof(TorqueUnitLabel));
+        NotifySummary();
     }
 
     private void NotifyDeviceCommandsCanExecuteChanged()
@@ -385,6 +420,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         AuditConfig("Configuration.ParamImportDevice", $"paramId={id}");
         try
         {
+            await RefreshDisplayTorqueUnitAsync().ConfigureAwait(true);
             var template = await _presetService.ImportFromDeviceAsync(id).ConfigureAwait(true);
             ApplyTemplate(template);
             await RefreshPresetListAsync().ConfigureAwait(true);
@@ -575,6 +611,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         AuditConfig("Configuration.ParamReadDevice", $"paramId={id}");
         try
         {
+            await RefreshDisplayTorqueUnitAsync().ConfigureAwait(true);
             var template = await _presetService.ReadFromDeviceAsync(id.Value).ConfigureAwait(true);
             ApplyTemplate(template);
             StatusMessage = Loc.Format("S.ControllerParam.StatusReadDevice", id.Value);
@@ -759,21 +796,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         var items = await _presetService.ListLocalPresetsAsync().ConfigureAwait(true);
         Presets.Clear();
         foreach (var item in items)
-        {
-            double? torque = null;
-            try
-            {
-                var template = await _presetService.LoadLocalPresetAsync(item.ParameterId).ConfigureAwait(true);
-                if (template.Core.Stages.Count > 0)
-                    torque = TorqueUnitConverter.MilliNmToKgfCm(template.Core.Stages[0].TargetTorqueMilliNm);
-            }
-            catch
-            {
-                // ignore broken preset in list
-            }
-
-            Presets.Add(new ControllerParameterListItem(item.ParameterId, item.Name, torque));
-        }
+            Presets.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
     }
 
     private async Task LoadPresetAsync(int parameterId)
@@ -811,7 +834,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         MinAngleDeg = template.Core.MinAngleDeg;
         MaxAngleDeg = template.Core.MaxAngleDeg;
         MaxTighteningTimeTenthSec = template.Core.MaxTighteningTimeTenthSec;
-        LoosenEditor = new ControllerParameterLoosenItem(template.Core.Loosen);
+        LoosenEditor = new ControllerParameterLoosenItem(template.Core.Loosen, _displayTorqueUnit);
         LastStageServoOn = template.Core.LastStageServoOn;
         LinkedCompensationParamId = template.Core.LinkedCompensationParamId;
         MaxLoosenTimeTenthSec = template.Core.MaxLoosenTimeTenthSec;
@@ -834,7 +857,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StandardStageItems.Clear();
         var stages = _working.Core.Stages;
         for (var i = 0; i < stages.Count; i++)
-            StageItems.Add(new ControllerParameterStageItem(i, stages[i]));
+            StageItems.Add(new ControllerParameterStageItem(i, stages[i], _displayTorqueUnit));
 
         for (var i = 0; i < Math.Min(4, StageItems.Count); i++)
             StandardStageItems.Add(StageItems[i]);
@@ -878,6 +901,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         OnPropertyChanged(nameof(ActiveStageCount));
         OnPropertyChanged(nameof(Stage1TorqueNm));
         OnPropertyChanged(nameof(Stage1TorqueKgfCm));
+        OnPropertyChanged(nameof(TorqueUnitLabel));
         OnPropertyChanged(nameof(StageBarIndices));
         OnPropertyChanged(nameof(MaxRunTimeSeconds));
         OnPropertyChanged(nameof(MaxLoosenTimeSeconds));

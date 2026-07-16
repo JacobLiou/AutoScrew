@@ -33,11 +33,13 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
     private int _cachedSegment1PauseMs;
     private int _cachedSegment2AccelMs;
     private int _cachedFinalSpeedRpm;
+    private DefaultTorqueUnit _displayTorqueUnit = DefaultTorqueUnit.LbfIn;
 
-    public ControllerParameterStageItem(int index, TighteningStageCore stage)
+    public ControllerParameterStageItem(int index, TighteningStageCore stage, DefaultTorqueUnit displayTorqueUnit = DefaultTorqueUnit.LbfIn)
     {
         Index = index;
         Stage = stage;
+        _displayTorqueUnit = displayTorqueUnit;
         _cachedMaxTorqueMilliNm = stage.MaxTorqueMilliNm;
         _cachedMinTorqueMilliNm = stage.MinTorqueMilliNm;
         _cachedMaxAngleDeg = stage.MaxAngleDeg;
@@ -58,6 +60,17 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public int Index { get; }
     public TighteningStageCore Stage { get; }
+
+    public string TorqueUnitLabel => TorqueUnitConverter.GetUnitSymbol(_displayTorqueUnit);
+
+    public void SetDisplayTorqueUnit(DefaultTorqueUnit unit)
+    {
+        if (_displayTorqueUnit == unit)
+            return;
+        _displayTorqueUnit = unit;
+        OnPropertyChanged(nameof(TorqueUnitLabel));
+        NotifyAllBoundFields();
+    }
 
     public string Title { get; private set; } = string.Empty;
 
@@ -201,10 +214,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public double TargetTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.TargetTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.TargetTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.TargetTorqueMilliNm);
             if (Stage.TargetTorqueMilliNm == milli)
                 return;
             Stage.TargetTorqueMilliNm = milli;
@@ -217,15 +230,24 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
     public double TargetTorqueNm
     {
         get => Stage.TargetTorqueMilliNm / 1000.0;
-        set => TargetTorqueKgfCm = TorqueUnitConverter.NmPerKgfCmFactor * value;
+        set
+        {
+            var milli = (int)Math.Round(value * 1000.0);
+            if (Stage.TargetTorqueMilliNm == milli)
+                return;
+            Stage.TargetTorqueMilliNm = milli;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TargetTorqueKgfCm));
+            OnPropertyChanged(nameof(IsConfigured));
+        }
     }
 
     public double MaxTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.MaxTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.MaxTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.MaxTorqueMilliNm);
             if (Stage.MaxTorqueMilliNm == milli)
                 return;
             Stage.MaxTorqueMilliNm = milli;
@@ -238,10 +260,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public double MinTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.MinTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.MinTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.MinTorqueMilliNm);
             if (Stage.MinTorqueMilliNm == milli)
                 return;
             Stage.MinTorqueMilliNm = milli;
@@ -466,10 +488,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public double MaxClampTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.MaxClampTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.MaxClampTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.MaxClampTorqueMilliNm);
             if (Stage.MaxClampTorqueMilliNm == milli)
                 return;
             Stage.MaxClampTorqueMilliNm = milli;
@@ -483,10 +505,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public double MinClampTorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.MinClampTorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.MinClampTorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.MinClampTorqueMilliNm);
             if (Stage.MinClampTorqueMilliNm == milli)
                 return;
             Stage.MinClampTorqueMilliNm = milli;
@@ -632,10 +654,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public double Segment1TorqueKgfCm
     {
-        get => TorqueUnitConverter.MilliNmToKgfCm(Stage.Segment1TorqueMilliNm);
+        get => TorqueUnitConverter.MilliNmToDisplay(Stage.Segment1TorqueMilliNm, _displayTorqueUnit);
         set
         {
-            var milli = TorqueUnitConverter.KgfCmToMilliNm(value);
+            var milli = TorqueUnitConverter.DisplayToMilliNm(value, _displayTorqueUnit, Stage.Segment1TorqueMilliNm);
             if (Stage.Segment1TorqueMilliNm == milli)
                 return;
             Stage.Segment1TorqueMilliNm = milli;
@@ -825,13 +847,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         OnPropertyChanged(nameof(SpeedRpm));
         OnPropertyChanged(nameof(TargetAngleDeg));
         OnPropertyChanged(nameof(TargetTorqueRate));
-        OnPropertyChanged(nameof(TargetTorqueKgfCm));
-        OnPropertyChanged(nameof(TargetTorqueNm));
-        OnPropertyChanged(nameof(MaxTorqueKgfCm));
-        OnPropertyChanged(nameof(MinTorqueKgfCm));
+        OnPropertyChanged(nameof(TorqueUnitLabel));
+        NotifyTorqueDisplayFields();
         OnPropertyChanged(nameof(MaxAngleDeg));
         OnPropertyChanged(nameof(MinAngleDeg));
-        OnPropertyChanged(nameof(TorqueMonitorEnabled));
         OnPropertyChanged(nameof(AngleMonitorEnabled));
         OnPropertyChanged(nameof(MaxRunTimeSeconds));
         OnPropertyChanged(nameof(MinRunTimeSeconds));
@@ -840,19 +859,29 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         OnPropertyChanged(nameof(PauseTimeMs));
         OnPropertyChanged(nameof(PauseTimeEnabled));
         OnPropertyChanged(nameof(AccelTimeMs));
-        OnPropertyChanged(nameof(MaxClampTorqueKgfCm));
-        OnPropertyChanged(nameof(MinClampTorqueKgfCm));
-        OnPropertyChanged(nameof(ClampTorqueEnabled));
         OnPropertyChanged(nameof(MaxClampAngleDeg));
         OnPropertyChanged(nameof(MinClampAngleDeg));
         OnPropertyChanged(nameof(ClampAngleEnabled));
         OnPropertyChanged(nameof(TwoStageModeEnabled));
-        OnPropertyChanged(nameof(Segment1TorqueKgfCm));
         OnPropertyChanged(nameof(Segment1PauseMs));
         OnPropertyChanged(nameof(Segment2AccelMs));
         OnPropertyChanged(nameof(FinalSpeedRpm));
         OnPropertyChanged(nameof(IsConfigured));
         NotifyPrimaryVisibility();
         NotifyModeSelection();
+    }
+
+    private void NotifyTorqueDisplayFields()
+    {
+        OnPropertyChanged(nameof(TargetTorqueKgfCm));
+        OnPropertyChanged(nameof(TargetTorqueNm));
+        OnPropertyChanged(nameof(MaxTorqueKgfCm));
+        OnPropertyChanged(nameof(MinTorqueKgfCm));
+        OnPropertyChanged(nameof(TorqueMonitorEnabled));
+        OnPropertyChanged(nameof(MaxClampTorqueKgfCm));
+        OnPropertyChanged(nameof(MinClampTorqueKgfCm));
+        OnPropertyChanged(nameof(ClampTorqueEnabled));
+        OnPropertyChanged(nameof(Segment1TorqueKgfCm));
+        OnPropertyChanged(nameof(IsConfigured));
     }
 }
