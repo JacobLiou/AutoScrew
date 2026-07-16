@@ -50,6 +50,9 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task ConnectAsync(CancellationToken cancellationToken = default) =>
         _transport.ConnectAsync(cancellationToken);
 
+    public Task ProbeConnectionAsync(CancellationToken cancellationToken = default) =>
+        _transport.ReadSingleAsync(ModbusRegisterMap.CommandRequest, cancellationToken);
+
     public Task InitializeAsync(IemdSdInitOptions? initOptions = null, CancellationToken cancellationToken = default) =>
         _session.RunAsync(ct => InitializeCoreAsync(initOptions, ct), cancellationToken);
 

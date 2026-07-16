@@ -15,6 +15,17 @@ public class TighteningParameterCodecTests
     }
 
     [Fact]
+    public void NamePacking_UsesLowByteFirst_MatchingDeviceHmi()
+    {
+        var raw = TighteningParameterTemplate.CreateEmptyRawBlock();
+        TighteningParameterCodec.WriteName(raw, "388");
+        // LE within register: word0 = ('8' << 8) | '3' = 0x3833
+        Assert.Equal(0x3833, raw[0]);
+        Assert.Equal(0x0038, raw[1]);
+        Assert.Equal("388", TighteningParameterCodec.ReadName(raw));
+    }
+
+    [Fact]
     public void StageRoundTrip_PreservesModeledFields()
     {
         var raw = TighteningParameterTemplate.CreateEmptyRawBlock();

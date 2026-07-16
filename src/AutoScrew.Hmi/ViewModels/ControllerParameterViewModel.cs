@@ -6,8 +6,11 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Protocol;
 using Wpf.Ui;
@@ -49,25 +52,78 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
     public int ControlModeIndex
     {
         get => (int)Stage.ControlMode;
-        set => Stage.ControlMode = (TighteningControlMode)value;
+        set
+        {
+            if ((int)Stage.ControlMode == value)
+                return;
+            Stage.ControlMode = (TighteningControlMode)value;
+            OnPropertyChanged();
+        }
+    }
+
+    public double SpeedRpm
+    {
+        get => Stage.SpeedRpm;
+        set
+        {
+            var rpm = (int)Math.Round(value);
+            if (Stage.SpeedRpm == rpm)
+                return;
+            Stage.SpeedRpm = rpm;
+            OnPropertyChanged();
+        }
+    }
+
+    public double TargetAngleDeg
+    {
+        get => Stage.TargetAngleDeg;
+        set
+        {
+            var angle = (int)Math.Round(value);
+            if (Stage.TargetAngleDeg == angle)
+                return;
+            Stage.TargetAngleDeg = angle;
+            OnPropertyChanged();
+        }
     }
 
     public double TargetTorqueNm
     {
         get => Stage.TargetTorqueMilliNm / 1000.0;
-        set => Stage.TargetTorqueMilliNm = (int)Math.Round(value * 1000);
+        set
+        {
+            var milli = (int)Math.Round(value * 1000);
+            if (Stage.TargetTorqueMilliNm == milli)
+                return;
+            Stage.TargetTorqueMilliNm = milli;
+            OnPropertyChanged();
+        }
     }
 
     public double MaxTorqueNm
     {
         get => Stage.MaxTorqueMilliNm / 1000.0;
-        set => Stage.MaxTorqueMilliNm = (int)Math.Round(value * 1000);
+        set
+        {
+            var milli = (int)Math.Round(value * 1000);
+            if (Stage.MaxTorqueMilliNm == milli)
+                return;
+            Stage.MaxTorqueMilliNm = milli;
+            OnPropertyChanged();
+        }
     }
 
     public double MinTorqueNm
     {
         get => Stage.MinTorqueMilliNm / 1000.0;
-        set => Stage.MinTorqueMilliNm = (int)Math.Round(value * 1000);
+        set
+        {
+            var milli = (int)Math.Round(value * 1000);
+            if (Stage.MinTorqueMilliNm == milli)
+                return;
+            Stage.MinTorqueMilliNm = milli;
+            OnPropertyChanged();
+        }
     }
 }
 
@@ -222,8 +278,14 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
 
-    partial void OnSelectedDeviceParameterChanged(ControllerParameterListItem? value) =>
+    partial void OnSelectedDeviceParameterChanged(ControllerParameterListItem? value)
+    {
+        if (value is not null && value.ParameterId != ParameterId)
+            ParameterId = value.ParameterId;
+
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
+        ReadFromDeviceCommand.NotifyCanExecuteChanged();
+    }
 
     partial void OnSelectedPresetChanged(ControllerParameterListItem? value)
     {
@@ -504,6 +566,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             await _presetService.SaveLocalPresetAsync(template).ConfigureAwait(true);
             await RefreshPresetListAsync().ConfigureAwait(true);
             await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+            SelectedDeviceParameter = DeviceParameters.FirstOrDefault(p => p.ParameterId == template.ParameterId);
             StatusMessage = Loc.Format("S.ControllerParam.StatusWriteDevice", template.ParameterId);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
@@ -679,23 +742,26 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         LoosenStartDelayCentiSec = template.Core.LoosenStartDelayCentiSec;
         FinalCurrentJudgeEnabled = template.Core.FinalCurrentJudgeEnabled;
         FeederResultDelayTenthSec = template.Core.FeederResultDelayTenthSec;
-        SelectedStageIndex = 0;
         RebuildStageItems();
         OnPropertyChanged(nameof(Loosen));
+        OnPropertyChanged(nameof(CurrentStage));
+        OnPropertyChanged(nameof(CurrentStageItem));
         NotifySummary();
     }
 
     private void RebuildStageItems()
     {
+        // Drop selection so consumers (CurrentStageItem) clear before new items arrive.
+        SelectedStageIndex = -1;
         StageItems.Clear();
         var stages = _working.Core.Stages;
         for (var i = 0; i < stages.Count; i++)
             StageItems.Add(new ControllerParameterStageItem(i, stages[i]));
 
-        if (SelectedStageIndex < 0 || SelectedStageIndex >= StageItems.Count)
-            SelectedStageIndex = 0;
+        SelectedStageIndex = StageItems.Count > 0 ? 0 : -1;
 
         OnPropertyChanged(nameof(CurrentStage));
+        OnPropertyChanged(nameof(CurrentStageItem));
         NotifySummary();
     }
 
@@ -747,7 +813,36 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     private static void CommitPendingEdits()
     {
-        if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == true)
-            Keyboard.ClearFocus();
+        var app = System.Windows.Application.Current;
+        if (app?.Dispatcher.CheckAccess() != true)
+            return;
+
+        // WPF-UI NumberBox only parses Text→Value on LostFocus and may skip UpdateSource
+        // when Value DP already equals parsed text. Force ValidateInput + UpdateSource on all boxes.
+        if (app.MainWindow is { } root)
+        {
+            var validate = typeof(NumberBox).GetMethod(
+                "ValidateInput",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var box in EnumerateVisualDescendants(root).OfType<NumberBox>())
+            {
+                validate?.Invoke(box, null);
+                BindingOperations.GetBindingExpression(box, NumberBox.ValueProperty)?.UpdateSource();
+            }
+        }
+
+        Keyboard.ClearFocus();
+    }
+
+    private static IEnumerable<DependencyObject> EnumerateVisualDescendants(DependencyObject root)
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            yield return child;
+            foreach (var nested in EnumerateVisualDescendants(child))
+                yield return nested;
+        }
     }
 }

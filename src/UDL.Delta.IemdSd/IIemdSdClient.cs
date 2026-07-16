@@ -23,6 +23,11 @@ public interface IIemdSdClient : IAsyncDisposable
 
     Task ConnectAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Lightweight Modbus I/O to detect half-open TCP (TcpClient.Connected can stay true after peer drop).
+    /// </summary>
+    Task ProbeConnectionAsync(CancellationToken cancellationToken = default);
+
     Task InitializeAsync(IemdSdInitOptions? initOptions = null, CancellationToken cancellationToken = default);
 
     Task<uint> GetCurrentReportIdAsync(CancellationToken cancellationToken = default);

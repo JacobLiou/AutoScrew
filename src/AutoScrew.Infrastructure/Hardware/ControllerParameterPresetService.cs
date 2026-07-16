@@ -1,6 +1,7 @@
 using AutoScrew.Application.Abstractions;
 using Microsoft.Extensions.Logging;
 using UDL.Delta.IemdSd;
+using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Infrastructure.Hardware;
@@ -140,10 +141,45 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
     public async Task WriteToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(template);
-        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
-        await client.WriteParameterAsync(template, cancellationToken).ConfigureAwait(false);
+        EnsureWritableStages(template);
+
+        try
+        {
+            var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+            await client.WriteParameterAsync(template, cancellationToken).ConfigureAwait(false);
+        }
+        catch (IemdSdCommunicationException ex) when (IsTransportIoFailure(ex))
+        {
+            _logger.LogWarning(ex, "Write parameter {ParamId} hit transport failure; reconnecting once", template.ParameterId);
+
+            var reapplied = await _devices.TestConnectionAsync(cancellationToken).ConfigureAwait(false);
+            if (!reapplied.Success)
+                throw new IemdSdCommunicationException($"下发失败且重连未成功：{reapplied.Message}", ex);
+
+            var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+            await client.WriteParameterAsync(template, cancellationToken).ConfigureAwait(false);
+        }
+
         _logger.LogInformation("Wrote parameter {ParamId} to IEMD-SD", template.ParameterId);
     }
+
+    private static void EnsureWritableStages(TighteningParameterTemplate template)
+    {
+        var stages = template.Core.Stages;
+        var hasConfiguredStage = stages.Any(s =>
+            s.TargetTorqueMilliNm > 0 || s.TargetAngleDeg > 0 || s.SpeedRpm > 0);
+        if (!hasConfiguredStage)
+        {
+            throw new InvalidOperationException(
+                "下发前请至少配置一段有效拧紧参数（目标扭矩、目标角度或转速不能全为 0）。");
+        }
+    }
+
+    private static bool IsTransportIoFailure(IemdSdCommunicationException ex) =>
+        ex.InnerException is System.IO.IOException or System.Net.Sockets.SocketException
+        || ex.Message.Contains("Write registers", StringComparison.OrdinalIgnoreCase)
+        || ex.Message.Contains("Read registers", StringComparison.OrdinalIgnoreCase)
+        || ex.Message.Contains("Modbus not connected", StringComparison.OrdinalIgnoreCase);
 
     public async Task ActivateOnDeviceAsync(int parameterId, uint screwCount = 1, CancellationToken cancellationToken = default)
     {

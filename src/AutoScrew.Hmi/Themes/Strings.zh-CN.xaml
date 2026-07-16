@@ -304,9 +304,9 @@
     <system:String x:Key="S.ControllerParam.Delete">删除</system:String>
     <system:String x:Key="S.ControllerParam.Import">导入 JSON</system:String>
     <system:String x:Key="S.ControllerParam.Export">导出 JSON</system:String>
-    <system:String x:Key="S.ControllerParam.ReadDevice">从设备读取</system:String>
+    <system:String x:Key="S.ControllerParam.ReadDevice">读取当前参数</system:String>
     <system:String x:Key="S.ControllerParam.WriteDevice">下发到设备</system:String>
-    <system:String x:Key="S.ControllerParam.Activate">激活 (#302)</system:String>
+    <system:String x:Key="S.ControllerParam.Activate">激活参数(#302)</system:String>
     <system:String x:Key="S.ControllerParam.DeviceStatus">设备状态</system:String>
     <system:String x:Key="S.ControllerParam.DeviceOnline">IEMD-SD 已连接配置，可对设备读写与激活。</system:String>
     <system:String x:Key="S.ControllerParam.DeviceOffline">当前为仿真模式，仅可编辑本地 JSON 预设。将 AutoScrew:UseSimulatedHardware 设为 false 后可连接设备。</system:String>
@@ -326,7 +326,7 @@
     <system:String x:Key="S.ControllerParam.TargetAngle">目标角度 (°)</system:String>
     <system:String x:Key="S.ControllerParam.MaxTorque">最大扭矩 (mNm)</system:String>
     <system:String x:Key="S.ControllerParam.MinTorque">最小扭矩 (mNm)</system:String>
-    <system:String x:Key="S.ControllerParam.Loosen">拧松</system:String>
+    <system:String x:Key="S.ControllerParam.Loosen">拧松设定</system:String>
     <system:String x:Key="S.ControllerParam.LoosenAngle1">第一段角度 (°)</system:String>
     <system:String x:Key="S.ControllerParam.LoosenSpeed1">第一段速度 (rpm)</system:String>
     <system:String x:Key="S.ControllerParam.DetectTorque">侦测扭矩 (mNm)</system:String>
@@ -344,7 +344,7 @@
     <system:String x:Key="S.ControllerParam.DeviceSlotName">设备 #{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">控制器已配置 {0} 组参数。</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 未返回已配置 ID（通信可能已成功但列表为空）。请核对设备连接页「工具号」后重试；或在上方填写控制器上真实存在的参数 ID 后再「从设备读取」。新建参数请编辑后「下发到设备」(#100)。</system:String>
-    <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备列表</system:String>
+    <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备参数列表</system:String>
     <system:String x:Key="S.ControllerParam.ImportAllFromDevice">全部导入 (#160→#150)</system:String>
     <system:String x:Key="S.ControllerParam.ImportFromDevice">导入选中 (#150)</system:String>
     <system:String x:Key="S.ControllerParam.StatusImportAllProgress">正在从设备批量导入参数…</system:String>

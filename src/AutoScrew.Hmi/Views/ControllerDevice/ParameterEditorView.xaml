@@ -20,8 +20,8 @@
                        Content="{DynamicResource S.ControllerParam.New}" />
             <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
+            <!--<ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />-->
             <Separator Margin="8,0" Width="1" Height="24" />
             <ui:Button Margin="0,0,8,8" Command="{Binding RefreshDeviceListCommand}" Content="{DynamicResource S.ControllerParam.RefreshDeviceList}" />
             <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding ImportAllFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportAllFromDevice}" />
@@ -184,7 +184,15 @@
                                             <TextBlock Text="{Binding Title}" />
                                         </DataTemplate>
                                     </TabControl.ItemTemplate>
+                                    <!-- Header-only tabs: body binds CurrentStageItem so rebuild always refreshes. -->
                                     <TabControl.ContentTemplate>
+                                        <DataTemplate>
+                                            <Border Height="0" />
+                                        </DataTemplate>
+                                    </TabControl.ContentTemplate>
+                                </TabControl>
+                                <ContentControl Content="{Binding CurrentStageItem}">
+                                    <ContentControl.ContentTemplate>
                                         <DataTemplate DataType="{x:Type vm:ControllerParameterStageItem}">
                                             <Grid Margin="0,8,0,0">
                                                 <Grid.ColumnDefinitions>
@@ -208,19 +216,19 @@
                                                     <ComboBoxItem Content="{DynamicResource S.Workbench.Param.ModeClampAngle}" />
                                                 </ComboBox>
                                                 <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.SpeedRpm}" />
-                                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding Stage.SpeedRpm, Mode=TwoWay}" />
+                                                <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding SpeedRpm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                 <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.TargetTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding TargetTorqueNm, Mode=TwoWay}" />
+                                                <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding TargetTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                 <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.ControllerParam.TargetAngle}" />
-                                                <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding Stage.TargetAngleDeg, Mode=TwoWay}" />
+                                                <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TargetAngleDeg, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                 <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MaxTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="2" Grid.Column="1" Value="{Binding MaxTorqueNm, Mode=TwoWay}" />
+                                                <ui:NumberBox Grid.Row="2" Grid.Column="1" Value="{Binding MaxTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                                 <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Param.MinTorqueNm}" />
-                                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Value="{Binding MinTorqueNm, Mode=TwoWay}" />
+                                                <ui:NumberBox Grid.Row="2" Grid.Column="3" Value="{Binding MinTorqueNm, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                             </Grid>
                                         </DataTemplate>
-                                    </TabControl.ContentTemplate>
-                                </TabControl>
+                                    </ContentControl.ContentTemplate>
+                                </ContentControl>
                             </StackPanel>
                         </TabItem>
                         <TabItem Header="{DynamicResource S.ControllerParam.Loosen}">

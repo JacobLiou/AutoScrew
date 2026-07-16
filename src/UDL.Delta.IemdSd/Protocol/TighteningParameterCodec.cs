@@ -76,12 +76,13 @@ public static class TighteningParameterCodec
 
     public static string ReadName(int[] raw)
     {
+        // Device HMI packs ASCII with low-byte-first within each Modbus word (same as SequenceCodec).
         var bytes = new List<byte>(TighteningParameterRegisterMap.NameWordCount * 2);
         for (var i = 0; i < TighteningParameterRegisterMap.NameWordCount; i++)
         {
             var word = (ushort)raw[TighteningParameterRegisterMap.NameStart + i];
-            bytes.Add((byte)(word >> 8));
             bytes.Add((byte)(word & 0xFF));
+            bytes.Add((byte)(word >> 8));
         }
 
         var length = bytes.IndexOf((byte)0);
@@ -100,8 +101,8 @@ public static class TighteningParameterCodec
         var bytes = Encoding.ASCII.GetBytes(text);
         for (var i = 0; i < TighteningParameterRegisterMap.NameWordCount; i++)
         {
-            var hi = i * 2 < bytes.Length ? bytes[i * 2] : (byte)0;
-            var lo = i * 2 + 1 < bytes.Length ? bytes[i * 2 + 1] : (byte)0;
+            var lo = i * 2 < bytes.Length ? bytes[i * 2] : (byte)0;
+            var hi = i * 2 + 1 < bytes.Length ? bytes[i * 2 + 1] : (byte)0;
             raw[TighteningParameterRegisterMap.NameStart + i] = (hi << 8) | lo;
         }
     }

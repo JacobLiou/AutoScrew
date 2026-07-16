@@ -25,7 +25,7 @@ internal sealed class ModbusTransport : IModbusTransport
         _readWindowSize = options.ReadWindowSize;
     }
 
-    public bool IsConnected => _tcpClient?.Connected == true;
+    public bool IsConnected => _tcpClient?.Connected == true && _master is not null;
 
     public void Invalidate()
     {

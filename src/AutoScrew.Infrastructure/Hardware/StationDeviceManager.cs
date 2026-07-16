@@ -149,10 +149,36 @@ public sealed class StationDeviceManager : IStationDeviceService, IAsyncDisposab
         if (_useSimulatedHardware)
             return;
 
-        if (_client is not null && _client.IsConnected)
-            return;
+        var needApply = false;
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_client is null || !_client.IsConnected)
+            {
+                needApply = true;
+            }
+            else
+            {
+                try
+                {
+                    await _client.ProbeConnectionAsync(cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "IEMD-SD connection probe failed; reconnecting.");
+                    await DisposeClientCoreAsync().ConfigureAwait(false);
+                    needApply = true;
+                }
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
 
-        await ApplyDeviceAsync(cancellationToken).ConfigureAwait(false);
+        if (needApply)
+            await ApplyDeviceAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()

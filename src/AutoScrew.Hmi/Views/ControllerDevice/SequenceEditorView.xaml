@@ -37,8 +37,8 @@
             <ui:Button Margin="0,0,8,8" Command="{Binding NewPresetCommand}" Content="{DynamicResource S.ControllerSeq.New}" />
             <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding DeleteLocalCommand}" Content="{DynamicResource S.ControllerParam.Delete}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />
+            <!--<ui:Button Margin="0,0,8,8" Command="{Binding ImportJsonCommand}" Content="{DynamicResource S.ControllerParam.Import}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ExportJsonCommand}" Content="{DynamicResource S.ControllerParam.Export}" />-->
             <Separator Margin="8,0" Width="1" Height="24" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
             <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />

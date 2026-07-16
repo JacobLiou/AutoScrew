@@ -137,6 +137,7 @@ public sealed class ControllerTraceServiceTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
         public Task ConnectAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task ProbeConnectionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task InitializeAsync(IemdSdInitOptions? initOptions = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<uint> GetCurrentReportIdAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ModbusCommandResult> ExecuteModbusCommandAsync(ModbusCommandInvocation invocation, CancellationToken cancellationToken = default) => throw new NotImplementedException();
