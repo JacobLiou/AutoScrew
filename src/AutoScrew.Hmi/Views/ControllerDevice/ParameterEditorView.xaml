@@ -193,6 +193,7 @@
                         <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
                     </ui:CardControl.Header>
                     <ListBox MinHeight="0"
+                             MinWidth="153"
                              VerticalAlignment="Stretch"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -356,12 +357,14 @@
                                                            Text="{DynamicResource S.ControllerParam.Basic.Advanced}" />
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="160" />
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="160" />
                                                         <ColumnDefinition Width="*" />
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
@@ -378,6 +381,16 @@
                                                               IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
                                                     <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
                                                     <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.ToolPrecisionComp}" />
+                                                    <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="0,0,12,8" Value="{Binding ToolPrecisionCompTenthPercent, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.SeatAngleStartTorqueRate}" />
+                                                    <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding SeatAngleStartTorqueRate, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.CurveSampleStartTorque}" />
+                                                    <ui:NumberBox Grid.Row="3" Grid.Column="1" Margin="0,0,12,8" Value="{Binding CurveSampleStartTorqueMilliNm, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TorqueRateAngleDelay}" />
+                                                    <ui:NumberBox Grid.Row="3" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TorqueRateAngleDelayTenthDeg, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.SeatPointAngleCorrection}" />
+                                                    <ui:NumberBox Grid.Row="4" Grid.Column="1" Margin="0,0,12,0" Value="{Binding SeatPointAngleCorrectionTenthDeg, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>
                                         </DockPanel>
@@ -811,10 +824,12 @@
                                             <StackPanel>
                                                 <Grid Margin="0,0,0,10">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="120" />
                                                         <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Grid.Column="0"
+                                                               Foreground="Black"
                                                                VerticalAlignment="Center"
                                                                Text="{DynamicResource S.ControllerParam.Loosen.ProductionLog}" />
                                                     <ToggleButton Grid.Column="1"

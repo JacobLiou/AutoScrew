@@ -15,12 +15,16 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerSequenceListItem : ObservableObject
 {
-    public ControllerSequenceListItem(int sequenceId, string name)
+    public ControllerSequenceListItem(int sequenceId, string name, string? displayText = null)
     {
         SequenceId = sequenceId;
         Name = name;
-        DisplayText = $"{sequenceId:D3} · {name}";
+        DisplayText = displayText ?? $"{sequenceId:D3} · {name}";
     }
+
+    /// <summary>设备侧顺序仅有 ID，无名称；展示为「001 1」。</summary>
+    public static ControllerSequenceListItem ForDeviceSlot(int sequenceId) =>
+        new(sequenceId, sequenceId.ToString(), displayText: $"{sequenceId:D3} {sequenceId}");
 
     public int SequenceId { get; }
     public string Name { get; }
@@ -364,7 +368,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             var ids = await _presetService.ListDeviceSequenceIdsAsync().ConfigureAwait(true);
             DeviceSequences.Clear();
             foreach (var id in ids)
-                DeviceSequences.Add(new ControllerSequenceListItem(id, Loc.Format("S.ControllerSeq.DeviceSlotName", id)));
+                DeviceSequences.Add(ControllerSequenceListItem.ForDeviceSlot(id));
 
             DeviceHasConfiguredSequences = DeviceSequences.Count > 0;
             DeviceListStatus = DeviceHasConfiguredSequences
@@ -377,8 +381,11 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             DeviceHasConfiguredSequences = false;
         }
 
+        RefreshDeviceListCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        WriteToDeviceCommand.NotifyCanExecuteChanged();
+        ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanImportFromDevice))]
@@ -697,7 +704,9 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         }
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
+    // 仅按「设备已配置/可用」启用；忙闲由底层会话互斥与异常提示处理。
+    // 勿把 IsDeviceBusy 放进 CanExecute：忙闲变化无事件，会导致按钮卡在禁用态。
+    private bool CanUseDevice() => IsDeviceAvailable;
 
     private bool CanReadFromDevice() => CanUseDevice() && ResolveDeviceSequenceId() is not null;
 
@@ -803,7 +812,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 foreach (var id in deviceIds)
                 {
                     if (seen.Add(id))
-                        ParameterCatalog.Add(new ControllerParameterListItem(id, Loc.Format("S.ControllerParam.DeviceSlotName", id)));
+                        ParameterCatalog.Add(ControllerParameterListItem.ForDeviceSlot(id));
                 }
             }
             catch

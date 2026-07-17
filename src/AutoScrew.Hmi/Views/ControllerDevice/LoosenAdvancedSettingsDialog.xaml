@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="{DynamicResource S.ControllerParam.LoosenAdvancedTitle}"
         Width="400"
-        Height="280"
+        Height="350"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="#F5F7FA">
@@ -35,6 +35,7 @@
         <Button DockPanel.Dock="Bottom"
                 Margin="16"
                 Height="40"
+                HorizontalAlignment="Right"
                 Content="{DynamicResource S.Common.Confirm}"
                 Click="Close_Click" />
         <StackPanel Margin="16,12">

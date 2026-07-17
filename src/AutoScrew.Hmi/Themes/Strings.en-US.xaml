@@ -341,7 +341,7 @@
     <system:String x:Key="S.ControllerParam.StatusWriteDevice">Wrote parameter #{0} to device.</system:String>
     <system:String x:Key="S.ControllerParam.StatusActivated">Activated parameter #{0} on device.</system:String>
     <system:String x:Key="S.ControllerParam.DevicePresets">Device parameters (#160)</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceSlotName">Device #{0}</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceSlotName">{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">{0} parameter(s) configured on controller.</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 returned no configured IDs (link may be OK but list empty). Check Tool Index on Device Connection, enter a real parameter ID and Read, or Write (#100) to create one.</system:String>
     <system:String x:Key="S.ControllerParam.ImportAllFromDevice">Import all (#160→#150)</system:String>
@@ -400,7 +400,7 @@
     <system:String x:Key="S.ControllerSeq.Activate">Activate (#303)</system:String>
     <system:String x:Key="S.ControllerSeq.SequenceId">Sequence ID</system:String>
     <system:String x:Key="S.ControllerSeq.DevicePresets">Device sequences</system:String>
-    <system:String x:Key="S.ControllerSeq.DeviceSlotName">Device #{0}</system:String>
+    <system:String x:Key="S.ControllerSeq.DeviceSlotName">{0}</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListCount">Controller has {0} configured sequence(s).</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListEmpty">#260 returned no sequence IDs. Refresh after connecting, or enter an ID and Read.</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListHint">Connect the device, then refresh the sequence list (#260).</system:String>
@@ -497,6 +497,11 @@
     <system:String x:Key="S.Workbench.Param.TightenStartDelay">Tighten start delay (×0.01s)</system:String>
     <system:String x:Key="S.Workbench.Param.LoosenStartDelay">Loosen start delay (×0.01s)</system:String>
     <system:String x:Key="S.Workbench.Param.FeederDelay">Feeder result delay (×0.1s)</system:String>
+    <system:String x:Key="S.Workbench.Param.ToolPrecisionComp">Tool precision compensation (×0.1%)</system:String>
+    <system:String x:Key="S.Workbench.Param.SeatAngleStartTorqueRate">Seat angle start torque rate</system:String>
+    <system:String x:Key="S.Workbench.Param.CurveSampleStartTorque">Curve sample start torque (mNm)</system:String>
+    <system:String x:Key="S.Workbench.Param.TorqueRateAngleDelay">Torque rate angle interval (×0.1°)</system:String>
+    <system:String x:Key="S.Workbench.Param.SeatPointAngleCorrection">Seat point angle correction (×0.1°)</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStartDone">Quick Start 3-stage template applied.</system:String>
     <system:String x:Key="S.Workbench.Seq.StepTitle">Step {0}</system:String>
     <system:String x:Key="S.Workbench.Seq.ParameterPreset">Parameter preset</system:String>

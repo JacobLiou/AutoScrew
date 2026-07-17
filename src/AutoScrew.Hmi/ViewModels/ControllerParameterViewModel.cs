@@ -26,15 +26,20 @@ public sealed partial class ControllerParameterListItem : ObservableObject
         int parameterId,
         string name,
         double? stage1Torque = null,
-        string? torqueUnitSymbol = null)
+        string? torqueUnitSymbol = null,
+        string? displayText = null)
     {
         ParameterId = parameterId;
         Name = name;
         Stage1TorqueKgfCm = stage1Torque;
-        DisplayText = stage1Torque is double torque
+        DisplayText = displayText ?? (stage1Torque is double torque
             ? $"{parameterId:D3} · {name} · {torque:F3} {torqueUnitSymbol ?? "lbf.in"}"
-            : $"{parameterId:D3} · {name}";
+            : $"{parameterId:D3} · {name}");
     }
+
+    /// <summary>#160 等设备侧仅有 ID，无名称；展示为「001 1」。</summary>
+    public static ControllerParameterListItem ForDeviceSlot(int parameterId) =>
+        new(parameterId, parameterId.ToString(), displayText: $"{parameterId:D3} {parameterId}");
 
     public int ParameterId { get; }
     public string Name { get; }
@@ -170,6 +175,21 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     [ObservableProperty]
     private int _feederResultDelayTenthSec;
+
+    [ObservableProperty]
+    private int _curveSampleStartTorqueMilliNm;
+
+    [ObservableProperty]
+    private int _seatAngleStartTorqueRate;
+
+    [ObservableProperty]
+    private int _seatPointAngleCorrectionTenthDeg;
+
+    [ObservableProperty]
+    private int _toolPrecisionCompTenthPercent;
+
+    [ObservableProperty]
+    private int _torqueRateAngleDelayTenthDeg;
 
     public double MaxRunTimeSeconds
     {
@@ -362,7 +382,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             var ids = await _presetService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
             DeviceParameters.Clear();
             foreach (var id in ids)
-                DeviceParameters.Add(new ControllerParameterListItem(id, Loc.Format("S.ControllerParam.DeviceSlotName", id)));
+                DeviceParameters.Add(ControllerParameterListItem.ForDeviceSlot(id));
 
             DeviceHasConfiguredParameters = DeviceParameters.Count > 0;
             DeviceListStatus = DeviceHasConfiguredParameters
@@ -375,9 +395,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             DeviceHasConfiguredParameters = false;
         }
 
-        WriteToDeviceCommand.NotifyCanExecuteChanged();
-        ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
-        ImportAllFromDeviceCommand.NotifyCanExecuteChanged();
+        NotifyDeviceCommandsCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanImportAllFromDevice))]
@@ -777,7 +795,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
+    // 仅按「设备已配置/可用」启用；忙闲由底层会话互斥与异常提示处理。
+    // 勿把 IsDeviceBusy 放进 CanExecute：忙闲变化无事件，会导致按钮卡在禁用态。
+    private bool CanUseDevice() => IsDeviceAvailable;
 
     private bool CanReadFromDevice() => CanUseDevice() && ResolveDeviceParameterId() is not null;
 
@@ -843,6 +863,11 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         LoosenStartDelayCentiSec = template.Core.LoosenStartDelayCentiSec;
         FinalCurrentJudgeEnabled = template.Core.FinalCurrentJudgeEnabled;
         FeederResultDelayTenthSec = template.Core.FeederResultDelayTenthSec;
+        CurveSampleStartTorqueMilliNm = template.Core.CurveSampleStartTorqueMilliNm;
+        SeatAngleStartTorqueRate = template.Core.SeatAngleStartTorqueRate;
+        SeatPointAngleCorrectionTenthDeg = template.Core.SeatPointAngleCorrectionTenthDeg;
+        ToolPrecisionCompTenthPercent = template.Core.ToolPrecisionCompTenthPercent;
+        TorqueRateAngleDelayTenthDeg = template.Core.TorqueRateAngleDelayTenthDeg;
         RebuildStageItems();
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
@@ -891,6 +916,11 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _working.Core.LoosenStartDelayCentiSec = LoosenStartDelayCentiSec;
         _working.Core.FinalCurrentJudgeEnabled = FinalCurrentJudgeEnabled;
         _working.Core.FeederResultDelayTenthSec = FeederResultDelayTenthSec;
+        _working.Core.CurveSampleStartTorqueMilliNm = CurveSampleStartTorqueMilliNm;
+        _working.Core.SeatAngleStartTorqueRate = SeatAngleStartTorqueRate;
+        _working.Core.SeatPointAngleCorrectionTenthDeg = SeatPointAngleCorrectionTenthDeg;
+        _working.Core.ToolPrecisionCompTenthPercent = ToolPrecisionCompTenthPercent;
+        _working.Core.TorqueRateAngleDelayTenthDeg = TorqueRateAngleDelayTenthDeg;
         _working.ApplyCoreToRaw();
         return _working;
     }

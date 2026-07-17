@@ -322,7 +322,9 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         StatusMessage = Loc.Get("S.Workbench.Source.AdvancedSavedLocal");
     }
 
-    private bool CanUseDevice() => IsDeviceAvailable && !_devices.IsDeviceBusy;
+    // 仅按「设备已配置/可用」启用；忙闲由底层会话互斥与异常提示处理。
+    // 勿把 IsDeviceBusy 放进 CanExecute：忙闲变化无事件，会导致按钮卡在禁用态。
+    private bool CanUseDevice() => IsDeviceAvailable;
 
     private bool CanDeploy() => CanUseDevice() && IsDeviceProgram && HasSequences;
 

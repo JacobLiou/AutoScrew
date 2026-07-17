@@ -355,7 +355,7 @@
     <system:String x:Key="S.ControllerParam.StatusWriteDevice">已下发参数 #{0} 到设备。</system:String>
     <system:String x:Key="S.ControllerParam.StatusActivated">已在设备激活参数 #{0}。</system:String>
     <system:String x:Key="S.ControllerParam.DevicePresets">设备参数</system:String>
-    <system:String x:Key="S.ControllerParam.DeviceSlotName">设备 #{0}</system:String>
+    <system:String x:Key="S.ControllerParam.DeviceSlotName">{0}</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListCount">控制器已配置 {0} 组参数。</system:String>
     <system:String x:Key="S.ControllerParam.DeviceListEmpty">#160 未返回已配置 ID（通信可能已成功但列表为空）。请核对设备连接页「工具号」后重试；或在上方填写控制器上真实存在的参数 ID 后再「从设备读取」。新建参数请编辑后「下发到设备」(#100)。</system:String>
     <system:String x:Key="S.ControllerParam.RefreshDeviceList">刷新设备参数列表</system:String>
@@ -414,7 +414,7 @@
     <system:String x:Key="S.ControllerSeq.Activate">激活 (#303)</system:String>
     <system:String x:Key="S.ControllerSeq.SequenceId">顺序 ID</system:String>
     <system:String x:Key="S.ControllerSeq.DevicePresets">设备顺序</system:String>
-    <system:String x:Key="S.ControllerSeq.DeviceSlotName">设备 #{0}</system:String>
+    <system:String x:Key="S.ControllerSeq.DeviceSlotName">{0}</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListCount">控制器已配置 {0} 组顺序。</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListEmpty">#260 未返回已配置顺序 ID。请确认设备已连接后点「刷新设备顺序列表」；或直接填写顺序 ID 后「读取」。</system:String>
     <system:String x:Key="S.ControllerSeq.DeviceListHint">连接设备后可刷新顺序列表 (#260)。</system:String>
@@ -511,6 +511,11 @@
     <system:String x:Key="S.Workbench.Param.TightenStartDelay">拧紧启动延时 (×0.01s)</system:String>
     <system:String x:Key="S.Workbench.Param.LoosenStartDelay">拧松启动延时 (×0.01s)</system:String>
     <system:String x:Key="S.Workbench.Param.FeederDelay">供料结果延时 (×0.1s)</system:String>
+    <system:String x:Key="S.Workbench.Param.ToolPrecisionComp">工具精度补偿 (×0.1%)</system:String>
+    <system:String x:Key="S.Workbench.Param.SeatAngleStartTorqueRate">贴合起始扭矩率</system:String>
+    <system:String x:Key="S.Workbench.Param.CurveSampleStartTorque">曲线取样起始扭矩 (mNm)</system:String>
+    <system:String x:Key="S.Workbench.Param.TorqueRateAngleDelay">扭矩率角度间隔 (×0.1°)</system:String>
+    <system:String x:Key="S.Workbench.Param.SeatPointAngleCorrection">贴合点角度修正 (×0.1°)</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStartDone">已应用 Quick Start 三阶段模板。</system:String>
     <system:String x:Key="S.Workbench.Seq.StepTitle">步骤 {0}</system:String>
     <system:String x:Key="S.Workbench.Seq.ParameterPreset">参数预设</system:String>

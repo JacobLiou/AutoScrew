@@ -175,6 +175,7 @@
                         <ui:TextBlock FontTypography="BodyStrong" Text="{DynamicResource S.ControllerParam.LocalPresets}" />
                     </ui:CardControl.Header>
                     <ListBox MinHeight="0"
+                             MinWidth="153"
                              VerticalAlignment="Stretch"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
