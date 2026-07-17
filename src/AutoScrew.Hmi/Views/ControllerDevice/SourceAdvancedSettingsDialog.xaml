@@ -8,11 +8,11 @@
         d:DataContext="{d:DesignInstance Type=cfg:SourceAdvancedSettingsCore, IsDesignTimeCreatable=False}"
         mc:Ignorable="d"
         Title="{DynamicResource S.Workbench.Source.AdvancedTitle}"
-        Width="520"
+        Width="580"
         Height="640"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
-        MinWidth="480"
+        MinWidth="530"
         MinHeight="480"
         Background="#F5F7FA">
     <Window.Resources>
@@ -132,7 +132,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="135" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Width="28" Foreground="#789" Text="3." />
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Source.Adv.LimitTightenNg}" />
@@ -144,7 +144,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="135" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Width="28" Foreground="#789" Text="4." />
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Source.Adv.LimitLoosenNg}" />
@@ -206,7 +206,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="135" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Width="28" Foreground="#789" Text="10." />
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource S.Workbench.Source.Adv.LimitRunTime}" />

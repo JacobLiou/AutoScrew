@@ -2,7 +2,11 @@ using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Application.Abstractions;
 
-public sealed record ControllerSequencePresetSummary(int SequenceId, string Name, int StepCount);
+public sealed record ControllerSequencePresetSummary(
+    int SequenceId,
+    string Name,
+    int StepCount,
+    int BitId = 0);
 
 public interface IControllerSequencePresetService
 {

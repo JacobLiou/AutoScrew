@@ -10,18 +10,26 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolVis" />
-        <Style x:Key="IemdTabControl" TargetType="TabControl">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
+        <Style x:Key="IemdTabControl"
+               TargetType="TabControl">
+            <Setter Property="Background"
+                    Value="Transparent" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Padding"
+                    Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabControl">
                         <DockPanel>
-                            <Border DockPanel.Dock="Top" Background="#4A5563" Padding="0">
-                                <TabPanel IsItemsHost="True" Background="Transparent" />
+                            <Border DockPanel.Dock="Top"
+                                    Background="#4A5563"
+                                    Padding="0">
+                                <TabPanel IsItemsHost="True"
+                                          Background="Transparent" />
                             </Border>
-                            <Border Background="#F5F7FA" Padding="0,8,0,0">
+                            <Border Background="#F5F7FA"
+                                    Padding="0,8,0,0">
                                 <ContentPresenter ContentSource="SelectedContent" />
                             </Border>
                         </DockPanel>
@@ -29,14 +37,20 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="IemdTabItem" TargetType="TabItem">
-            <Setter Property="Foreground" Value="#DDD" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="20,10" />
+        <Style x:Key="IemdTabItem"
+               TargetType="TabItem">
+            <Setter Property="Foreground"
+                    Value="#DDD" />
+            <Setter Property="FontSize"
+                    Value="14" />
+            <Setter Property="Padding"
+                    Value="20,10" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Bd"
+                                Background="Transparent"
+                                Padding="{TemplateBinding Padding}">
                             <StackPanel>
                                 <ContentPresenter HorizontalAlignment="Center"
                                                   ContentSource="Header"
@@ -48,51 +62,72 @@
                             </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Foreground" Value="White" />
-                                <Setter TargetName="Underline" Property="Background" Value="#1E88E5" />
+                            <Trigger Property="IsSelected"
+                                     Value="True">
+                                <Setter Property="Foreground"
+                                        Value="White" />
+                                <Setter TargetName="Underline"
+                                        Property="Background"
+                                        Value="#1E88E5" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="TableHeader" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
+        <Style x:Key="TableHeader"
+               TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="White" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Center" />
         </Style>
     </UserControl.Resources>
-
     <Grid Margin="0,0,0,12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" MinHeight="0" />
+            <RowDefinition Height="*"
+                           MinHeight="0" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
-        <WrapPanel Grid.Row="0" Margin="0,0,0,12">
-            <ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding SaveLocalCommand}" Content="{DynamicResource S.ControllerParam.SaveLocal}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding WriteToDeviceCommand}" Content="{DynamicResource S.ControllerParam.WriteDevice}" />
-            <ui:Button Margin="0,0,8,8" Appearance="Caution" Command="{Binding DeployToDeviceCommand}" Content="{DynamicResource S.Workbench.Source.Deploy}" />
-            <ui:Button Margin="0,0,8,8" Command="{Binding ActivateSequenceOnDeviceCommand}" Content="{DynamicResource S.ControllerSource.ActivateSequence}" />
+        <WrapPanel Grid.Row="0"
+                   Margin="0,0,0,12">
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Primary"
+                       Command="{Binding SaveLocalCommand}"
+                       Content="{DynamicResource S.ControllerParam.SaveLocal}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ReadFromDeviceCommand}"
+                       Content="{DynamicResource S.ControllerParam.ReadDevice}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding WriteToDeviceCommand}"
+                       Content="{DynamicResource S.ControllerParam.WriteDevice}" />
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Caution"
+                       Command="{Binding DeployToDeviceCommand}"
+                       Content="{DynamicResource S.Workbench.Source.Deploy}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ActivateSequenceOnDeviceCommand}"
+                       Content="{DynamicResource S.ControllerSource.ActivateSequence}" />
         </WrapPanel>
-
-        <StackPanel Grid.Row="1" Margin="0,0,0,12">
-            <ui:InfoBar Margin="0,0,0,8" IsOpen="{Binding IsHostGuided}"
+        <StackPanel Grid.Row="1"
+                    Margin="0,0,0,12">
+            <ui:InfoBar Margin="0,0,0,8"
+                        IsOpen="{Binding IsHostGuided}"
                         Message="{DynamicResource S.Workbench.Source.HostGuidedHint}"
                         Severity="Informational"
                         Title="{DynamicResource S.ControllerSource.ProductionMode}" />
-            <ui:InfoBar IsOpen="{Binding ShowNoSequenceHint}"
-                        Message="{DynamicResource S.Workbench.Source.NoSequenceHint}"
+            <ui:InfoBar IsOpen="{Binding ShowNoCatalogHint}"
+                        Message="{DynamicResource S.Workbench.Source.NoCatalogHint}"
                         Severity="Warning"
                         Title="{DynamicResource S.Workbench.Source.AssociationTitle}" />
         </StackPanel>
-
         <Border Grid.Row="2"
                 Background="#EEF2F6"
                 BorderBrush="#CFD8DC"
@@ -104,11 +139,13 @@
                     <TabControl Style="{StaticResource IemdTabControl}"
                                 SelectedIndex="{Binding OperatingModeIndex, Mode=TwoWay}"
                                 Margin="0,0,0,12">
-                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpSingle}" />
-                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpDualAlt}" />
-                        <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerSource.OpDualSync}" />
+                        <TabItem Style="{StaticResource IemdTabItem}"
+                                 Header="{DynamicResource S.ControllerSource.OpSingle}" />
+                        <TabItem Style="{StaticResource IemdTabItem}"
+                                 Header="{DynamicResource S.ControllerSource.OpDualAlt}" />
+                        <TabItem Style="{StaticResource IemdTabItem}"
+                                 Header="{DynamicResource S.ControllerSource.OpDualSync}" />
                     </TabControl>
-
                     <ItemsControl ItemsSource="{Binding BindingRows}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ControllerSourceBindingRowViewModel}">
@@ -123,9 +160,9 @@
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
-
                                         <DockPanel Margin="12,10,12,8">
-                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                            <StackPanel DockPanel.Dock="Right"
+                                                        Orientation="Horizontal">
                                                 <TextBlock Margin="0,0,8,0"
                                                            VerticalAlignment="Center"
                                                            Foreground="#546E7A"
@@ -143,7 +180,6 @@
                                                        Foreground="#1E3A5F"
                                                        Text="{Binding ToolLabel}" />
                                         </DockPanel>
-
                                         <StackPanel Grid.Row="1"
                                                     Margin="12,0,12,8"
                                                     Orientation="Horizontal">
@@ -157,7 +193,6 @@
                                                        Icon="{ui:SymbolIcon ArrowDownload24}"
                                                        ToolTip="{DynamicResource S.ControllerParam.ReadDevice}" />
                                         </StackPanel>
-
                                         <Border Grid.Row="2"
                                                 Margin="8,0,8,8"
                                                 BorderBrush="#CFD8DC"
@@ -167,46 +202,92 @@
                                                     <RowDefinition Height="Auto" />
                                                     <RowDefinition Height="Auto" />
                                                 </Grid.RowDefinitions>
-
-                                                <Border Background="#1E3A5F" Padding="8,8">
+                                                <Border Background="#1E3A5F"
+                                                        Padding="8,8">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" MinWidth="160" />
+                                                            <ColumnDefinition Width="2*" MinWidth="320" />
                                                             <ColumnDefinition Width="100" />
                                                             <ColumnDefinition Width="100" />
                                                             <ColumnDefinition Width="64" />
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Style="{StaticResource TableHeader}" Text="{DynamicResource S.Workbench.Source.SequenceName}" />
-                                                        <TextBlock Grid.Column="1" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ScrewCount}" />
-                                                        <TextBlock Grid.Column="2" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ColBit}" />
-                                                        <TextBlock Grid.Column="3" Style="{StaticResource TableHeader}" Text="{DynamicResource S.ControllerSource.ColSetting}" />
+                                                        <TextBlock Style="{StaticResource TableHeader}"
+                                                                   Text="{DynamicResource S.Workbench.Source.BindingName}" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Style="{StaticResource TableHeader}"
+                                                                   Text="{DynamicResource S.ControllerSource.ScrewCount}" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Style="{StaticResource TableHeader}"
+                                                                   Text="{DynamicResource S.ControllerSource.ColBit}" />
+                                                        <TextBlock Grid.Column="3"
+                                                                   Style="{StaticResource TableHeader}"
+                                                                   Text="{DynamicResource S.ControllerSource.ColSetting}" />
                                                     </Grid>
                                                 </Border>
-
-                                                <Border Grid.Row="1" Padding="8,6" Background="White">
+                                                <Border Grid.Row="1"
+                                                        Padding="8,6"
+                                                        Background="White">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" MinWidth="160" />
+                                                            <ColumnDefinition Width="*" MinWidth="280" />
                                                             <ColumnDefinition Width="100" />
                                                             <ColumnDefinition Width="100" />
                                                             <ColumnDefinition Width="64" />
                                                         </Grid.ColumnDefinitions>
-                                                        <ComboBox Margin="0,0,8,0"
-                                                                  ItemsSource="{Binding DataContext.SequenceCatalog, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                  SelectedItem="{Binding SelectedSequence, Mode=TwoWay}"
-                                                                  DisplayMemberPath="DisplayText" />
-                                                        <ui:NumberBox Grid.Column="1"
-                                                                      Margin="0,0,8,0"
-                                                                      Minimum="0"
-                                                                      Maximum="100"
-                                                                      SpinButtonPlacementMode="Hidden"
-                                                                      Value="{Binding ScrewCount, Mode=TwoWay}" />
-                                                        <ui:NumberBox Grid.Column="2"
-                                                                      Margin="0,0,8,0"
-                                                                      Minimum="0"
-                                                                      Maximum="99"
-                                                                      SpinButtonPlacementMode="Hidden"
-                                                                      Value="{Binding BitId, Mode=TwoWay}" />
+                                                        <Button Margin="0,0,8,0"
+                                                                MinWidth="280"
+                                                                MinHeight="32"
+                                                                HorizontalContentAlignment="Left"
+                                                                Padding="10,6"
+                                                                Background="White"
+                                                                BorderBrush="#B0BEC5"
+                                                                BorderThickness="1"
+                                                                Command="{Binding DataContext.OpenBindingPickerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="{DynamicResource S.ControllerSource.PickerHint}">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding BindingDisplayOrPlaceholder}"
+                                                                           VerticalAlignment="Center"
+                                                                           MinWidth="250"
+                                                                           TextTrimming="CharacterEllipsis">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Foreground"
+                                                                                    Value="#212121" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding HasBindingSelection}"
+                                                                                             Value="False">
+                                                                                    <Setter Property="Foreground"
+                                                                                            Value="#90A4AE" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style></TextBlock>
+                                                                <TextBlock Grid.Column="1"
+                                                                           Margin="8,0,0,0"
+                                                                           Width="35"
+                                                                           VerticalAlignment="Center"
+                                                                           HorizontalAlignment="Right"
+                                                                           Foreground="#607D8B"
+                                                                           Text="▾" />
+                                                            </Grid>
+                                                        </Button>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Margin="0,0,8,0"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center"
+                                                                   FontSize="14"
+                                                                   Text="{Binding ScrewCount}" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Margin="0,0,8,0"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center"
+                                                                   FontSize="14"
+                                                                   Text="{Binding BitId}" />
                                                         <ui:Button Grid.Column="3"
                                                                    HorizontalAlignment="Center"
                                                                    Appearance="Secondary"
@@ -223,7 +304,6 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
                     <ui:InfoBar Margin="0,8,0,0"
                                 IsOpen="True"
                                 IsClosable="False"
@@ -233,7 +313,6 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-
         <Border Grid.Row="3"
                 Margin="0,12,0,8"
                 Padding="12"
@@ -256,7 +335,7 @@
                 </ComboBox>
             </Grid>
         </Border>
-
-        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" />
+        <TextBlock Grid.Row="4"
+                   Text="{Binding StatusMessage}" />
     </Grid>
 </UserControl>

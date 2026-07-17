@@ -31,10 +31,13 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
             .Select(d =>
             {
                 var pkg = d.ToPackage();
+                var steps = pkg.Core.Steps;
+                var bitId = steps.Count > 0 ? steps[0].BitId : 0;
                 return new ControllerSequencePresetSummary(
                     pkg.SequenceId,
                     pkg.Core.Name,
-                    pkg.Core.Steps.Count);
+                    steps.Count,
+                    bitId);
             })
             .ToList();
     }

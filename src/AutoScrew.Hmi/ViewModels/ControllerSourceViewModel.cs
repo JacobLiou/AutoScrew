@@ -16,6 +16,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
 {
     private readonly IControllerSourceConfigService _sourceService;
     private readonly IControllerSequencePresetService _sequenceService;
+    private readonly IControllerParameterPresetService _parameterService;
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
     private readonly IUserAuditService _audit;
@@ -26,6 +27,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     public ControllerSourceViewModel(
         IControllerSourceConfigService sourceService,
         IControllerSequencePresetService sequenceService,
+        IControllerParameterPresetService parameterService,
         IStationDeviceService devices,
         ISnackbarService snackbarService,
         IUserAuditService audit,
@@ -34,12 +36,14 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     {
         _sourceService = sourceService;
         _sequenceService = sequenceService;
+        _parameterService = parameterService;
         _devices = devices;
         _snackbarService = snackbarService;
         _audit = audit;
         _appOptions = appOptions;
         _user = user;
         SequenceCatalog = new ObservableCollection<ControllerSequenceListItem>();
+        ParameterCatalog = new ObservableCollection<ControllerParameterListItem>();
         BindingRows = new ObservableCollection<ControllerSourceBindingRowViewModel>();
         DeviceStatusText = BuildDeviceStatusText();
         _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
@@ -59,6 +63,8 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
 
     public ObservableCollection<ControllerSequenceListItem> SequenceCatalog { get; }
 
+    public ObservableCollection<ControllerParameterListItem> ParameterCatalog { get; }
+
     public ObservableCollection<ControllerSourceBindingRowViewModel> BindingRows { get; }
 
     public bool IsDeviceAvailable => _sourceService.IsDeviceAvailable;
@@ -69,10 +75,14 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     [ObservableProperty] private int _operatingModeIndex;
     [ObservableProperty] private int _switchingMethodIndex;
     [ObservableProperty] private bool _hasSequences;
+    [ObservableProperty] private bool _hasParameters;
 
-    public bool ShowNoSequenceHint => !HasSequences;
+    public bool ShowNoCatalogHint => !HasSequences && !HasParameters;
 
-    partial void OnHasSequencesChanged(bool value) => OnPropertyChanged(nameof(ShowNoSequenceHint));
+    partial void OnHasSequencesChanged(bool value) => OnPropertyChanged(nameof(ShowNoCatalogHint));
+
+    partial void OnHasParametersChanged(bool value) => OnPropertyChanged(nameof(ShowNoCatalogHint));
+
     [ObservableProperty] private ControllerSourceBindingRowViewModel? _selectedBindingRow;
     [ObservableProperty] private SourceAdvancedSettingsCore _editingAdvanced = SourceAdvancedSettingsCore.CreateDefaults();
 
@@ -114,7 +124,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         var bindings = await _sourceService.LoadBindingsAsync().ConfigureAwait(true);
         OperatingModeIndex = (int)mode.OperatingMode;
         SwitchingMethodIndex = (int)mode.SwitchingMethod;
-        await RefreshSequenceCatalogAsync().ConfigureAwait(true);
+        await RefreshCatalogsAsync().ConfigureAwait(true);
         ApplyBindings(bindings);
     }
 
@@ -122,6 +132,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     {
         await _devices.LoadAsync().ConfigureAwait(true);
         RefreshDeviceConnectionState();
+        await RefreshCatalogsAsync().ConfigureAwait(true);
     }
 
     private void RefreshDeviceConnectionState()
@@ -134,32 +145,42 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         ActivateSequenceOnDeviceCommand.NotifyCanExecuteChanged();
     }
 
-    public async Task RefreshSequenceCatalogAsync()
+    public Task RefreshSequenceCatalogAsync() => RefreshCatalogsAsync();
+
+    public async Task RefreshCatalogsAsync()
     {
-        var items = await _sequenceService.ListLocalPresetsAsync().ConfigureAwait(true);
+        var sequences = await _sequenceService.ListLocalPresetsAsync().ConfigureAwait(true);
+        var parameters = await _parameterService.ListLocalPresetsAsync().ConfigureAwait(true);
+
         SequenceCatalog.Clear();
-        foreach (var item in items)
-            SequenceCatalog.Add(new ControllerSequenceListItem(item.SequenceId, item.Name));
+        foreach (var item in sequences)
+        {
+            SequenceCatalog.Add(new ControllerSequenceListItem(
+                item.SequenceId,
+                item.Name,
+                stepCount: item.StepCount,
+                bitId: item.BitId));
+        }
+
+        ParameterCatalog.Clear();
+        foreach (var item in parameters)
+            ParameterCatalog.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
 
         HasSequences = SequenceCatalog.Count > 0;
+        HasParameters = ParameterCatalog.Count > 0;
+        DeployToDeviceCommand.NotifyCanExecuteChanged();
+
         foreach (var row in BindingRows)
         {
-            var targetId = row.SelectedSequence?.SequenceId ?? 0;
             row.ApplyFromEntry(new ControllerSourceBindingEntry
             {
                 ToolIndex = row.ToolIndex,
-                TargetId = targetId,
+                BindingType = row.BindingType,
+                TargetId = row.TargetId,
                 ScrewCount = row.ScrewCount,
                 BitId = row.BitId,
                 Advanced = row.Advanced,
-            }, SequenceCatalog);
-
-            if (targetId > 0)
-            {
-                var summary = items.FirstOrDefault(i => i.SequenceId == targetId);
-                if (summary is not null && row.ScrewCount <= 0)
-                    row.ScrewCount = summary.StepCount;
-            }
+            }, SequenceCatalog, ParameterCatalog);
         }
     }
 
@@ -208,18 +229,6 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         {
             var mode = BuildMode();
             var bindings = BindingRows.Select(r => r.ToEntry()).ToList();
-            foreach (var row in BindingRows)
-            {
-                if (row.SelectedSequence is not null && row.ScrewCount <= 0)
-                {
-                    var summary = await _sequenceService.ListLocalPresetsAsync().ConfigureAwait(true);
-                    var match = summary.FirstOrDefault(s => s.SequenceId == row.SelectedSequence.SequenceId);
-                    if (match is not null)
-                        row.ScrewCount = match.StepCount;
-                }
-            }
-
-            bindings = BindingRows.Select(r => r.ToEntry()).ToList();
             await _sourceService.SaveBindingsAsync(bindings, mode).ConfigureAwait(true);
             await _sourceService.SaveProductionControlModeAsync((ProductionTighteningMode)ProductionControlModeIndex)
                 .ConfigureAwait(true);
@@ -241,11 +250,12 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             var (mode, content) = await _sourceService.ReadFromDeviceAsync().ConfigureAwait(true);
             OperatingModeIndex = (int)mode.OperatingMode;
             SwitchingMethodIndex = (int)mode.SwitchingMethod;
-            EnsureSequenceInCatalog(content.TargetId, content.BindingType);
+            EnsureTargetInCatalog(content.TargetId, content.BindingType);
+            var entryTool = content.ToolIndex > 0 ? content.ToolIndex : mode.ToolIndex;
             ApplyBindings([
                 new ControllerSourceBindingEntry
                 {
-                    ToolIndex = content.ToolIndex > 0 ? content.ToolIndex : mode.ToolIndex,
+                    ToolIndex = entryTool,
                     BindingType = (int)content.BindingType,
                     TargetId = content.TargetId,
                     ScrewCount = content.ScrewCount,
@@ -270,14 +280,24 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         }
     }
 
-    private void EnsureSequenceInCatalog(int targetId, TighteningSourceBindingType bindingType)
+    private void EnsureTargetInCatalog(int targetId, TighteningSourceBindingType bindingType)
     {
-        if (bindingType != TighteningSourceBindingType.Sequence || targetId <= 0)
+        if (targetId <= 0)
             return;
-        if (SequenceCatalog.Any(s => s.SequenceId == targetId))
+
+        if (bindingType == TighteningSourceBindingType.Sequence)
+        {
+            if (SequenceCatalog.Any(s => s.SequenceId == targetId))
+                return;
+            SequenceCatalog.Add(ControllerSequenceListItem.ForDeviceSlot(targetId));
+            HasSequences = SequenceCatalog.Count > 0;
             return;
-        SequenceCatalog.Add(ControllerSequenceListItem.ForDeviceSlot(targetId));
-        HasSequences = SequenceCatalog.Count > 0;
+        }
+
+        if (ParameterCatalog.Any(p => p.ParameterId == targetId))
+            return;
+        ParameterCatalog.Add(ControllerParameterListItem.ForDeviceSlot(targetId));
+        HasParameters = ParameterCatalog.Count > 0;
     }
 
     [RelayCommand(CanExecute = nameof(CanUseDevice))]
@@ -309,6 +329,9 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             var content = await _sourceService.LoadLocalContentAsync().ConfigureAwait(true);
             if (content.BindingType == TighteningSourceBindingType.Sequence && content.TargetId > 0)
                 await _sequenceService.ActivateOnDeviceAsync(content.TargetId).ConfigureAwait(true);
+            else if (content.BindingType == TighteningSourceBindingType.Parameter && content.TargetId > 0)
+                await _parameterService.ActivateOnDeviceAsync(content.TargetId, (uint)Math.Max(1, content.ScrewCount))
+                    .ConfigureAwait(true);
 
             StatusMessage = Loc.Get("S.Workbench.Source.Deployed");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
@@ -318,6 +341,157 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             StatusMessage = ex.Message;
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenBindingPickerAsync(ControllerSourceBindingRowViewModel? row)
+    {
+        if (row is null)
+            return;
+
+        if (!IsDeviceAvailable)
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.PickerNeedsDevice");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
+        IReadOnlyList<ControllerParameterListItem> parameters;
+        IReadOnlyList<ControllerSequenceListItem> sequences;
+        try
+        {
+            var paramIds = await _parameterService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
+            var seqIds = await _sequenceService.ListDeviceSequenceIdsAsync().ConfigureAwait(true);
+            parameters = paramIds.Select(ControllerParameterListItem.ForDeviceSlot).ToList();
+            sequences = seqIds.Select(ControllerSequenceListItem.ForDeviceSlot).ToList();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+            return;
+        }
+
+        if (parameters.Count == 0 && sequences.Count == 0)
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.PickerDeviceEmpty");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
+        var dialog = new Views.ControllerDevice.SourceBindingPickerDialog(
+            parameters,
+            sequences,
+            row.BindingType,
+            row.TargetId)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+
+        if (dialog.ShowDialog() != true || !dialog.Confirmed || dialog.SelectedRow is null)
+            return;
+
+        var pick = dialog.SelectedRow;
+        int screwCount;
+        int bitId;
+        try
+        {
+            (screwCount, bitId) = await ResolveCarryFromDeviceAsync(
+                    pick.BindingType,
+                    pick.TargetId)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+            return;
+        }
+
+        EnsureTargetInCatalog(pick.TargetId, (TighteningSourceBindingType)pick.BindingType);
+        row.ApplyPickerSelection(
+            pick.BindingType,
+            pick.TargetId,
+            pick.DisplayText,
+            screwCount,
+            bitId);
+        DeployToDeviceCommand.NotifyCanExecuteChanged();
+        StatusMessage = Loc.Format(
+            "S.ControllerSource.PickerApplied",
+            pick.TargetId,
+            screwCount,
+            bitId);
+    }
+
+    /// <summary>
+    /// 从设备关联对象带出螺钉总数与批头。
+    /// 优先：设备来源 #301/#351 中已绑定同一目标的条目（与「从设备读取」一致）；
+    /// 否则：顺序 → 各步 Quantity 之和 + 首个非 0 批头；参数 → 1 / 0。
+    /// </summary>
+    private async Task<(int ScrewCount, int BitId)> ResolveCarryFromDeviceAsync(
+        int bindingType,
+        int targetId)
+    {
+        if (bindingType == (int)TighteningSourceBindingType.Parameter)
+        {
+            var paramCarry = await TryReadExistingSourceCarryAsync(bindingType, targetId).ConfigureAwait(true);
+            return paramCarry ?? (1, 0);
+        }
+
+        var existing = await TryReadExistingSourceCarryAsync(bindingType, targetId).ConfigureAwait(true);
+        if (existing is not null)
+            return existing.Value;
+
+        var pkg = await _sequenceService.ReadFromDeviceAsync(targetId).ConfigureAwait(true);
+        var steps = pkg.Core.Steps;
+        if (steps.Count == 0)
+            return (1, 0);
+
+        var screwCount = steps.Sum(s => s.Quantity > 0 ? s.Quantity : 1);
+        if (screwCount <= 0)
+            screwCount = Math.Max(1, steps.Count);
+
+        var bitId = steps.Select(s => s.BitId).FirstOrDefault(b => b > 0);
+        if (bitId <= 0)
+        {
+            var local = (await _sequenceService.ListLocalPresetsAsync().ConfigureAwait(true))
+                .FirstOrDefault(s => s.SequenceId == targetId);
+            if (local is not null && local.BitId > 0)
+                bitId = local.BitId;
+        }
+
+        return (screwCount, bitId);
+    }
+
+    /// <summary>在来源槽 1 与 targetId 上查找已绑定同一目标的 #351 内容。</summary>
+    private async Task<(int ScrewCount, int BitId)?> TryReadExistingSourceCarryAsync(
+        int bindingType,
+        int targetId)
+    {
+        var slots = new HashSet<int> { 1 };
+        if (targetId > 0)
+            slots.Add(targetId);
+
+        foreach (var slot in slots)
+        {
+            try
+            {
+                var content = await _sourceService
+                    .ReadDeviceContentBySwitchingIdAsync(slot)
+                    .ConfigureAwait(true);
+                if ((int)content.BindingType != bindingType || content.TargetId != targetId)
+                    continue;
+
+                var screws = content.ScrewCount > 0 ? content.ScrewCount : 1;
+                return (screws, content.BitId);
+            }
+            catch
+            {
+                // 该槽无有效内容时跳过
+            }
+        }
+
+        return null;
     }
 
     [RelayCommand]
@@ -377,7 +551,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     // 勿把 IsDeviceBusy 放进 CanExecute：忙闲变化无事件，会导致按钮卡在禁用态。
     private bool CanUseDevice() => IsDeviceAvailable;
 
-    private bool CanDeploy() => CanUseDevice() && IsDeviceProgram && HasSequences;
+    private bool CanDeploy() =>
+        CanUseDevice()
+        && IsDeviceProgram
+        && BindingRows.Any(r => r.TargetId > 0);
 
     private TighteningSourceModeCore BuildMode() => new()
     {
@@ -395,7 +572,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             var entry = bindings.FirstOrDefault(b => b.ToolIndex == row.ToolIndex)
                         ?? bindings.FirstOrDefault();
             if (entry is not null)
-                row.ApplyFromEntry(entry, SequenceCatalog);
+                row.ApplyFromEntry(entry, SequenceCatalog, ParameterCatalog);
         }
     }
 
@@ -404,19 +581,11 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         var existing = BindingRows.ToDictionary(r => r.ToolIndex, r => r);
         BindingRows.Clear();
 
-        if (OperatingModeIndex == (int)TighteningOperatingMode.SingleTool)
-        {
-            BindingRows.Add(existing.GetValueOrDefault(0) ?? new ControllerSourceBindingRowViewModel(0));
+        // 单轴独立：仅工具 1；双工具交替/同步：工具 1 + 工具 2
+        BindingRows.Add(existing.GetValueOrDefault(0) ?? new ControllerSourceBindingRowViewModel(0));
+        if (OperatingModeIndex != (int)TighteningOperatingMode.SingleTool)
             BindingRows.Add(existing.GetValueOrDefault(1) ?? new ControllerSourceBindingRowViewModel(1));
-        }
-        else
-        {
-            BindingRows.Add(existing.GetValueOrDefault(0) ?? new ControllerSourceBindingRowViewModel(0));
-        }
     }
-
-    private static SourceAdvancedSettingsCore CloneAdvanced(SourceAdvancedSettingsCore source) =>
-        source.Clone();
 
     private string BuildDeviceStatusText()
     {

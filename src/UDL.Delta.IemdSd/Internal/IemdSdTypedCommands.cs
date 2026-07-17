@@ -109,13 +109,16 @@ internal sealed class IemdSdTypedCommands
 
     public async Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken ct)
     {
-        // 手册 #351：与 #301 同布局；mailbox word2=切换方式 ID
+        // 手册 #351：CA=工具号(0/1)，CB=切换方式 ID（手动=1）
         var wordCount = (uint)TighteningSequenceRegisterMap.SourceContentWordCount;
+        var toolIndex = _toolIndex is 0 or 1 ? _toolIndex : 0;
+        var switchingId = sourceId > 0 ? sourceId : 1;
         var result = await _executor.ExecuteAsync(
             ModbusCommandInvocation.WithReadPayload(
                 (int)ModbusFunctionCode.Read_contents_single_source,
                 wordCount,
-                word2: sourceId),
+                word2: toolIndex,
+                word3: switchingId),
             ct).ConfigureAwait(false);
 
         var raw = new int[TighteningSequenceRegisterMap.SourceContentWordCount];
@@ -123,8 +126,8 @@ internal sealed class IemdSdTypedCommands
         Array.Copy(payload, raw, Math.Min(payload.Length, raw.Length));
 
         var content = TighteningSourceCodec.ExtractContentFromRaw(raw);
-        content.SwitchingMethodId = sourceId > 0 ? sourceId : 1;
-        content.ToolIndex = _toolIndex;
+        content.SwitchingMethodId = switchingId;
+        content.ToolIndex = toolIndex;
         return TighteningSourceSnapshot.FromContent(content);
     }
 

@@ -1,0 +1,123 @@
+<Window x:Class="AutoScrew.Hmi.Views.ControllerDevice.SourceBindingPickerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="{DynamicResource S.ControllerSource.PickerTitle}"
+        Width="480"
+        Height="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        MinWidth="360"
+        MinHeight="360"
+        Background="#F5F7FA">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#1E88E5" Padding="12,10">
+            <Grid>
+                <TextBlock Text="{DynamicResource S.ControllerSource.PickerTitle}"
+                           Foreground="White"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Button HorizontalAlignment="Right"
+                        Width="28"
+                        Height="28"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="White"
+                        FontSize="16"
+                        Content="×"
+                        Click="Close_Click" />
+            </Grid>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="16">
+            <ui:Button MinWidth="120"
+                       Appearance="Secondary"
+                       Content="{DynamicResource S.Common.Cancel}"
+                       Click="Close_Click" />
+            <ui:Button Margin="12,0,0,0"
+                       MinWidth="120"
+                       Appearance="Primary"
+                       Content="{DynamicResource S.Common.Confirm}"
+                       Click="Select_Click" />
+        </StackPanel>
+
+        <TabControl x:Name="PickerTabs"
+                    Margin="12"
+                    SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+            <TabControl.Resources>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="8,6" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+            </TabControl.Resources>
+
+            <TabItem Header="{DynamicResource S.Nav.ControllerParams}">
+                <Border BorderBrush="#CFD8DC" BorderThickness="1" Background="White">
+                    <ListBox x:Name="ParameterList"
+                             ItemsSource="{Binding ParameterItems}"
+                             BorderThickness="0"
+                             MouseDoubleClick="ParameterList_OnMouseDoubleClick"
+                             KeyDown="ParameterList_OnKeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding IdText}"
+                                               VerticalAlignment="Center"
+                                               Foreground="#546E7A" />
+                                    <Border Grid.Column="1"
+                                            Background="#FAFBFC"
+                                            BorderBrush="#B0BEC5"
+                                            BorderThickness="1"
+                                            Padding="8,4"
+                                            CornerRadius="2">
+                                        <TextBlock Text="{Binding DisplayText}" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="{DynamicResource S.Nav.ControllerSequence}">
+                <Border BorderBrush="#CFD8DC" BorderThickness="1" Background="White">
+                    <ListBox x:Name="SequenceList"
+                             ItemsSource="{Binding SequenceItems}"
+                             BorderThickness="0"
+                             MouseDoubleClick="SequenceList_OnMouseDoubleClick"
+                             KeyDown="SequenceList_OnKeyDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding IdText}"
+                                               VerticalAlignment="Center"
+                                               Foreground="#546E7A" />
+                                    <Border Grid.Column="1"
+                                            Background="#FAFBFC"
+                                            BorderBrush="#B0BEC5"
+                                            BorderThickness="1"
+                                            Padding="8,4"
+                                            CornerRadius="2">
+                                        <TextBlock Text="{Binding DisplayText}" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

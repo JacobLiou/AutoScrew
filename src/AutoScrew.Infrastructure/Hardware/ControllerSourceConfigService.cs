@@ -99,6 +99,16 @@ public sealed class ControllerSourceConfigService : IControllerSourceConfigServi
         return (modeSnap.ToModeCore(), contentSnap.ToContentCore());
     }
 
+    public async Task<TighteningSourceContentCore> ReadDeviceContentBySwitchingIdAsync(
+        int switchingMethodId,
+        CancellationToken cancellationToken = default)
+    {
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var sourceId = switchingMethodId > 0 ? switchingMethodId : 1;
+        var contentSnap = await client.ReadSourceContentAsync(sourceId, cancellationToken).ConfigureAwait(false);
+        return contentSnap.ToContentCore();
+    }
+
     public async Task WriteToDeviceAsync(
         TighteningSourceModeCore mode,
         TighteningSourceContentCore content,

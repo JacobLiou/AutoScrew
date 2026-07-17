@@ -1,6 +1,7 @@
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Hmi.ViewModels;
 
@@ -22,7 +23,19 @@ public sealed partial class ControllerSourceBindingRowViewModel : ObservableObje
 
     public string ToolLabel { get; }
 
-    [ObservableProperty] private ControllerSequenceListItem? _selectedSequence;
+    /// <summary>0 = 参数，1 = 顺序。</summary>
+    [ObservableProperty] private int _bindingType = (int)TighteningSourceBindingType.Sequence;
+
+    [ObservableProperty] private int _targetId;
+
+    [ObservableProperty] private string _bindingDisplayText = string.Empty;
+
+    public string BindingDisplayOrPlaceholder =>
+        string.IsNullOrWhiteSpace(BindingDisplayText)
+            ? Loc.Get("S.ControllerSource.PickerPlaceholder")
+            : BindingDisplayText;
+
+    public bool HasBindingSelection => !string.IsNullOrWhiteSpace(BindingDisplayText);
 
     [ObservableProperty] private int _screwCount = 1;
 
@@ -32,31 +45,55 @@ public sealed partial class ControllerSourceBindingRowViewModel : ObservableObje
 
     [ObservableProperty] private SourceAdvancedSettingsCore _advanced;
 
-    partial void OnSelectedSequenceChanged(ControllerSequenceListItem? value)
-    {
-        if (value is null)
-        {
-            SummaryText = string.Empty;
-            return;
-        }
+    partial void OnScrewCountChanged(int value) => RefreshSummary();
 
-        SummaryText = Loc.Format("S.Workbench.Source.SequenceSummary", value.SequenceId, value.Name, ScrewCount);
+    partial void OnBindingDisplayTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(BindingDisplayOrPlaceholder));
+        OnPropertyChanged(nameof(HasBindingSelection));
     }
 
-    partial void OnScrewCountChanged(int value)
+    /// <summary>从本地/设备条目恢复；保留条目内螺钉数与批头。</summary>
+    public void ApplyFromEntry(
+        ControllerSourceBindingEntry entry,
+        IReadOnlyList<ControllerSequenceListItem> sequences,
+        IReadOnlyList<ControllerParameterListItem> parameters)
     {
-        if (SelectedSequence is not null)
-            SummaryText = Loc.Format("S.Workbench.Source.SequenceSummary", SelectedSequence.SequenceId, SelectedSequence.Name, value);
-    }
-
-    public void ApplyFromEntry(ControllerSourceBindingEntry entry, IReadOnlyList<ControllerSequenceListItem> sequences)
-    {
+        BindingType = entry.BindingType;
+        TargetId = entry.TargetId;
         ScrewCount = entry.ScrewCount;
         BitId = entry.BitId;
         Advanced = entry.Advanced ?? SourceAdvancedSettingsCore.CreateDefaults();
-        SelectedSequence = sequences.FirstOrDefault(s => s.SequenceId == entry.TargetId);
-        if (SelectedSequence is null && entry.TargetId > 0)
-            SummaryText = Loc.Format("S.Workbench.Source.MissingSequence", entry.TargetId);
+
+        if (entry.BindingType == (int)TighteningSourceBindingType.Parameter)
+        {
+            var param = parameters.FirstOrDefault(p => p.ParameterId == entry.TargetId);
+            BindingDisplayText = param?.DisplayText
+                ?? (entry.TargetId > 0
+                    ? Loc.Format("S.Workbench.Source.MissingParameter", entry.TargetId)
+                    : string.Empty);
+        }
+        else
+        {
+            var seq = sequences.FirstOrDefault(s => s.SequenceId == entry.TargetId);
+            BindingDisplayText = seq?.DisplayText
+                ?? (entry.TargetId > 0
+                    ? Loc.Format("S.Workbench.Source.MissingSequence", entry.TargetId)
+                    : string.Empty);
+        }
+
+        RefreshSummary();
+    }
+
+    /// <summary>弹窗选定参数或顺序后应用；顺序时携带步数与批头。</summary>
+    public void ApplyPickerSelection(int bindingType, int targetId, string displayText, int screwCount, int bitId)
+    {
+        BindingType = bindingType;
+        TargetId = targetId;
+        BindingDisplayText = displayText;
+        ScrewCount = screwCount > 0 ? screwCount : 1;
+        BitId = bitId;
+        RefreshSummary();
     }
 
     public ControllerSourceBindingEntry ToEntry()
@@ -64,11 +101,29 @@ public sealed partial class ControllerSourceBindingRowViewModel : ObservableObje
         return new ControllerSourceBindingEntry
         {
             ToolIndex = ToolIndex,
-            BindingType = 1,
-            TargetId = SelectedSequence?.SequenceId ?? 0,
+            BindingType = BindingType,
+            TargetId = TargetId,
             ScrewCount = ScrewCount,
             BitId = BitId,
             Advanced = Advanced,
         };
+    }
+
+    private void RefreshSummary()
+    {
+        if (TargetId <= 0)
+        {
+            SummaryText = string.Empty;
+            return;
+        }
+
+        var kind = BindingType == (int)TighteningSourceBindingType.Parameter
+            ? Loc.Get("S.ControllerSource.BindParameter")
+            : Loc.Get("S.ControllerSource.BindSequence");
+        SummaryText = Loc.Format(
+            "S.Workbench.Source.BindingSummary",
+            kind,
+            TargetId,
+            ScrewCount);
     }
 }

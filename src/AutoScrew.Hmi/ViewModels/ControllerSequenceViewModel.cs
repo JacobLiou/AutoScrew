@@ -15,11 +15,18 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class ControllerSequenceListItem : ObservableObject
 {
-    public ControllerSequenceListItem(int sequenceId, string name, string? displayText = null)
+    public ControllerSequenceListItem(
+        int sequenceId,
+        string name,
+        string? displayText = null,
+        int stepCount = 0,
+        int bitId = 0)
     {
         SequenceId = sequenceId;
         Name = name;
         DisplayText = displayText ?? $"{sequenceId:D3} · {name}";
+        StepCount = stepCount;
+        BitId = bitId;
     }
 
     /// <summary>设备侧顺序仅有 ID，无名称；展示为「001 1」。</summary>
@@ -29,6 +36,8 @@ public sealed partial class ControllerSequenceListItem : ObservableObject
     public int SequenceId { get; }
     public string Name { get; }
     public string DisplayText { get; }
+    public int StepCount { get; }
+    public int BitId { get; }
 }
 
 public sealed class SequenceToolOption
@@ -727,7 +736,11 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         var items = await _presetService.ListLocalPresetsAsync().ConfigureAwait(true);
         Presets.Clear();
         foreach (var item in items)
-            Presets.Add(new ControllerSequenceListItem(item.SequenceId, item.Name));
+            Presets.Add(new ControllerSequenceListItem(
+                item.SequenceId,
+                item.Name,
+                stepCount: item.StepCount,
+                bitId: item.BitId));
     }
 
     private async Task LoadPresetAsync(int sequenceId)

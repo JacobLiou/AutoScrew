@@ -21,6 +21,11 @@ public interface IControllerSourceConfigService
     Task<(TighteningSourceModeCore Mode, TighteningSourceContentCore Content)> ReadFromDeviceAsync(
         CancellationToken cancellationToken = default);
 
+    /// <summary>#351 按切换方式 ID（来源槽）读取单条来源内容。</summary>
+    Task<TighteningSourceContentCore> ReadDeviceContentBySwitchingIdAsync(
+        int switchingMethodId,
+        CancellationToken cancellationToken = default);
+
     Task WriteToDeviceAsync(
         TighteningSourceModeCore mode,
         TighteningSourceContentCore content,
