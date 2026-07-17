@@ -224,26 +224,12 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <Expander Header="{DynamicResource S.Workbench.Source.AdvancedPanel}" IsExpanded="False">
-                        <StackPanel Margin="8" DataContext="{Binding EditingAdvanced}">
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenOk}" IsChecked="{Binding ProhibitLoosenAfterTightenOk, Mode=TwoWay}" />
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitLoosenNg}" IsChecked="{Binding ProhibitLoosenAfterTightenNg, Mode=TwoWay}" />
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitTightenNg}" IsChecked="{Binding LimitMaxTightenNgPerScrew, Mode=TwoWay}" />
-                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxTightenNgPerScrew, Mode=TwoWay}" />
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitLoosenNg}" IsChecked="{Binding LimitMaxLoosenNgPerScrew, Mode=TwoWay}" />
-                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxLoosenNgPerScrew, Mode=TwoWay}" />
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.ProhibitEmptyBarcode}" IsChecked="{Binding ProhibitStartWhenBarcodeEmpty, Mode=TwoWay}" />
-                            <CheckBox Margin="0,0,0,6" Content="{DynamicResource S.Workbench.Source.Adv.LimitRunTime}" IsChecked="{Binding LimitMaxRunTime, Mode=TwoWay}" />
-                            <ui:NumberBox Margin="0,0,0,6" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
-                            <ui:Button HorizontalAlignment="Left"
-                                       Command="{Binding DataContext.ApplyAdvancedSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                       Content="{DynamicResource S.Workbench.Source.ApplyAdvanced}" />
-                            <TextBlock Margin="0,8,0,0"
-                                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                       Text="{DynamicResource S.Workbench.Source.AdvancedLocalOnly}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Expander>
+                    <ui:InfoBar Margin="0,8,0,0"
+                                IsOpen="True"
+                                IsClosable="False"
+                                Severity="Informational"
+                                Title="{DynamicResource S.Workbench.Source.AdvancedTitle}"
+                                Message="{DynamicResource S.Workbench.Source.AdvancedLocalOnly}" />
                 </StackPanel>
             </ScrollViewer>
         </Border>

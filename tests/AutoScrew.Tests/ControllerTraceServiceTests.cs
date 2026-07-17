@@ -158,7 +158,7 @@ public sealed class ControllerTraceServiceTests
         public Task WriteSourceModeAsync(int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task WriteSourceModeAsync(int toolIndex, int operatingMode, int switchingMethod, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task WriteSourceContentAsync(TighteningSourceContentCore content, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task SwitchSequenceUnderManualAsync(int sequenceId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<TighteningIndicatorStatus> ReadIndicatorStatusAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();

@@ -83,8 +83,10 @@ public interface IIemdSdClient : IAsyncDisposable
 
     Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default);
 
-    Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default);
+    /// <summary>#301 WriteThenMailbox：0xD2–0x14A 来源内容块 + mailbox word2=sourceId。</summary>
+    Task WriteSourceContentAsync(TighteningSourceContentCore content, CancellationToken cancellationToken = default);
 
+    /// <summary>#351 MailboxThenRead：读完整来源内容块（与 #301 同布局）。</summary>
     Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken cancellationToken = default);
 
     Task SwitchSequenceUnderManualAsync(int sequenceId, CancellationToken cancellationToken = default);

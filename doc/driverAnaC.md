@@ -339,10 +339,21 @@ AutoScrew 扫码换 PN 工艺时，应在 α 联调阶段单独验证此命令�
 | 0x137 | Parameter/Sequence ID |
 | 0x138–0x139 | 螺钉总数 L/H |
 | 0x13A | Bit ID |
+| 0x13B | 进阶设定(L) Bit0–12（禁止拧松、限 NG、扫码互锁、最大运行时间、重置数量、信号提早消失、条码长度等） |
+| 0x13C | 进阶设定(H) |
+| 0x13D–0x13E | 单颗拧紧 NG 次数 DWORD |
+| 0x13F–0x140 | 单颗拧松 NG 次数 DWORD |
+| 0x141–0x144 | 保留 |
+| 0x145–0x146 | 最大运行时间 DWORD（秒） |
+| 0x147 | 双轴交互工具参数选择 |
+| 0x148 | 扭矩单位 0=N.m / 1=kgf.cm / 2=lbf.ft / 3=lbf.in |
+| 0x149 / 0x14A | 工具1 / 工具2 启动条件 |
+
+mailbox：`#301` WriteThenMailbox word2=工具号、word3=切换方式 ID；`#351` MailboxThenRead 同布局。
 
 条码运行时写入 `#401`；扫码器高级 `#408`/`#452` 为来源子能力。
 
-**AutoScrew 落地**：`controller-source.json` + HMI **配置 → 拧紧来源**；产线 `HostGuided`（`#300`+#302）或 `DeviceProgram`（`#301`+#303）。
+**AutoScrew 落地**：`controller-source.json` + HMI **配置 → 拧紧来源**（含进阶弹窗 ↔ `#301`/`#351`）；产线 `HostGuided`（`#300`+#302）或 `DeviceProgram`（`#301`+#303）。
 
 ### 5.7 #406 / #533 与手册名称差异
 

@@ -24,4 +24,6 @@ public sealed class TighteningSourceContentCore
     public int ScrewCount { get; set; } = 1;
 
     public int BitId { get; set; }
+
+    public TighteningSourceAdvancedCore Advanced { get; set; } = TighteningSourceAdvancedCore.CreateDefaults();
 }

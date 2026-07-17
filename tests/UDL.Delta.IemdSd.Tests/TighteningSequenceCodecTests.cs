@@ -106,6 +106,22 @@ public class TighteningSequenceCodecTests
             TargetId = 5,
             ScrewCount = 12,
             BitId = 2,
+            Advanced = new TighteningSourceAdvancedCore
+            {
+                ProhibitLoosenAfterTightenOk = true,
+                LimitMaxTightenNgPerScrew = true,
+                MaxTightenNgPerScrew = 7,
+                LimitMaxLoosenNgPerScrew = false,
+                MaxLoosenNgPerScrew = 3,
+                AutoNextOnTightenNg = true,
+                ResetCountWhenScrewCountComplete = true,
+                LimitMaxRunTime = true,
+                MaxRunTimeSeconds = 3600,
+                ProhibitStartWhenBarcodeLengthMismatch = true,
+                TorqueUnit = DefaultTorqueUnit.LbfIn,
+                StartConditionTool1 = ToolStartCondition.DiOrPush,
+                StartConditionTool2 = ToolStartCondition.DigitalDi,
+            },
         };
 
         TighteningSourceCodec.ApplyContentToRaw(raw, core);
@@ -116,5 +132,24 @@ public class TighteningSequenceCodecTests
         Assert.Equal(5, decoded.TargetId);
         Assert.Equal(12, decoded.ScrewCount);
         Assert.Equal(2, decoded.BitId);
+        Assert.True(decoded.Advanced.ProhibitLoosenAfterTightenOk);
+        Assert.True(decoded.Advanced.LimitMaxTightenNgPerScrew);
+        Assert.Equal(7, decoded.Advanced.MaxTightenNgPerScrew);
+        Assert.False(decoded.Advanced.LimitMaxLoosenNgPerScrew);
+        Assert.Equal(3, decoded.Advanced.MaxLoosenNgPerScrew);
+        Assert.True(decoded.Advanced.AutoNextOnTightenNg);
+        Assert.True(decoded.Advanced.ResetCountWhenScrewCountComplete);
+        Assert.Equal(3600, decoded.Advanced.MaxRunTimeSeconds);
+        Assert.True(decoded.Advanced.ProhibitStartWhenBarcodeLengthMismatch);
+        Assert.Equal(DefaultTorqueUnit.LbfIn, decoded.Advanced.TorqueUnit);
+        Assert.Equal(ToolStartCondition.DiOrPush, decoded.Advanced.StartConditionTool1);
+        Assert.Equal(ToolStartCondition.DigitalDi, decoded.Advanced.StartConditionTool2);
+        Assert.Equal(1 << TighteningSequenceRegisterMap.AdvBitProhibitLoosenAfterTightenOk
+                     | 1 << TighteningSequenceRegisterMap.AdvBitLimitMaxTightenNg
+                     | 1 << TighteningSequenceRegisterMap.AdvBitAutoNextOnTightenNg
+                     | 1 << TighteningSequenceRegisterMap.AdvBitLimitMaxRunTime
+                     | 1 << TighteningSequenceRegisterMap.AdvBitResetCountWhenScrewComplete
+                     | 1 << TighteningSequenceRegisterMap.AdvBitProhibitStartWhenBarcodeLengthMismatch,
+            raw[TighteningSequenceRegisterMap.SourceAdvancedFlagsLow]);
     }
 }

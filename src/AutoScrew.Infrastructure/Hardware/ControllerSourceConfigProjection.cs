@@ -23,6 +23,7 @@ public static class ControllerSourceConfigProjection
             BitId = entry.BitId,
             Barcode = entry.Barcode,
             SwitchingMethodId = fallback?.SwitchingMethodId ?? 1,
+            Advanced = (entry.Advanced ?? SourceAdvancedSettingsCore.CreateDefaults()).ToProtocol(),
         };
     }
 
@@ -51,7 +52,21 @@ public static class ControllerSourceConfigProjection
             ScrewCount = content.ScrewCount,
             BitId = content.BitId,
             Barcode = content.Barcode,
-            Advanced = SourceAdvancedSettingsCore.CreateDefaults(),
+            Advanced = SourceAdvancedSettingsCore.FromProtocol(
+                content.Advanced ?? TighteningSourceAdvancedCore.CreateDefaults()),
         },
     ];
+
+    public static ControllerSourceBindingEntry ToBindingEntry(TighteningSourceContentCore content) =>
+        new()
+        {
+            ToolIndex = content.ToolIndex,
+            BindingType = (int)content.BindingType,
+            TargetId = content.TargetId,
+            ScrewCount = content.ScrewCount,
+            BitId = content.BitId,
+            Barcode = content.Barcode,
+            Advanced = SourceAdvancedSettingsCore.FromProtocol(
+                content.Advanced ?? TighteningSourceAdvancedCore.CreateDefaults()),
+        };
 }

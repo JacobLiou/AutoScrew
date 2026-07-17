@@ -22,6 +22,8 @@ public sealed class TighteningSourceSnapshot
 
     public int BitId { get; init; }
 
+    public TighteningSourceAdvancedCore Advanced { get; init; } = TighteningSourceAdvancedCore.CreateDefaults();
+
     public static TighteningSourceSnapshot FromMode(TighteningSourceModeCore mode) => new()
     {
         ToolIndex = mode.ToolIndex,
@@ -32,12 +34,14 @@ public sealed class TighteningSourceSnapshot
     public static TighteningSourceSnapshot FromContent(TighteningSourceContentCore content) => new()
     {
         SourceId = content.SwitchingMethodId,
+        ToolIndex = content.ToolIndex,
         ParameterId = content.BindingType == TighteningSourceBindingType.Parameter ? content.TargetId : 0,
         SequenceId = content.BindingType == TighteningSourceBindingType.Sequence ? content.TargetId : 0,
         ScrewCount = content.ScrewCount,
         BindingType = content.BindingType,
         Barcode = content.Barcode,
         BitId = content.BitId,
+        Advanced = content.Advanced ?? TighteningSourceAdvancedCore.CreateDefaults(),
     };
 
     public TighteningSourceModeCore ToModeCore() => new()
@@ -49,11 +53,13 @@ public sealed class TighteningSourceSnapshot
 
     public TighteningSourceContentCore ToContentCore() => new()
     {
+        ToolIndex = ToolIndex,
         SwitchingMethodId = SourceId > 0 ? SourceId : 1,
         Barcode = Barcode,
         BindingType = BindingType,
         TargetId = BindingType == TighteningSourceBindingType.Sequence ? SequenceId : ParameterId,
         ScrewCount = ScrewCount,
         BitId = BitId,
+        Advanced = Advanced ?? TighteningSourceAdvancedCore.CreateDefaults(),
     };
 }

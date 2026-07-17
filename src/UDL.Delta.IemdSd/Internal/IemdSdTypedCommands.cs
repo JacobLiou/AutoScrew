@@ -90,32 +90,42 @@ internal sealed class IemdSdTypedCommands
         };
     }
 
-    public Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken ct) =>
-        _executor.ExecuteAsync(
-            ModbusCommandInvocation.MailboxOnly(
+    public Task WriteSourceContentAsync(TighteningSourceContentCore content, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        // 手册 #301：CA=工具号，CB=切换方式 ID（来源 ID）
+        var toolIndex = content.ToolIndex is 0 or 1 ? content.ToolIndex : _toolIndex;
+        var sourceId = content.SwitchingMethodId > 0 ? content.SwitchingMethodId : 1;
+        var raw = new int[TighteningSequenceRegisterMap.SourceContentWordCount];
+        TighteningSourceCodec.ApplyContentToRaw(raw, content);
+        return _executor.ExecuteAsync(
+            ModbusCommandInvocation.WithWritePayload(
                 (int)ModbusFunctionCode.Write_contents_single_source,
-                word2: sourceId,
-                word3: parameterId,
-                word4: sequenceId,
-                word5: screwCount),
+                raw,
+                word2: toolIndex,
+                word3: sourceId),
             ct);
+    }
 
     public async Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken ct)
     {
+        // 手册 #351：与 #301 同布局；mailbox word2=切换方式 ID
+        var wordCount = (uint)TighteningSequenceRegisterMap.SourceContentWordCount;
         var result = await _executor.ExecuteAsync(
             ModbusCommandInvocation.WithReadPayload(
                 (int)ModbusFunctionCode.Read_contents_single_source,
-                8,
+                wordCount,
                 word2: sourceId),
             ct).ConfigureAwait(false);
-        var w = result.ReadPayload ?? [];
-        return new TighteningSourceSnapshot
-        {
-            SourceId = sourceId,
-            ParameterId = w.ElementAtOrDefault(0),
-            SequenceId = w.ElementAtOrDefault(1),
-            ScrewCount = w.ElementAtOrDefault(2),
-        };
+
+        var raw = new int[TighteningSequenceRegisterMap.SourceContentWordCount];
+        var payload = result.ReadPayload ?? [];
+        Array.Copy(payload, raw, Math.Min(payload.Length, raw.Length));
+
+        var content = TighteningSourceCodec.ExtractContentFromRaw(raw);
+        content.SwitchingMethodId = sourceId > 0 ? sourceId : 1;
+        content.ToolIndex = _toolIndex;
+        return TighteningSourceSnapshot.FromContent(content);
     }
 
     public Task SwitchSequenceUnderManualAsync(int sequenceId, CancellationToken ct) =>

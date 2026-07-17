@@ -241,15 +241,18 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             var (mode, content) = await _sourceService.ReadFromDeviceAsync().ConfigureAwait(true);
             OperatingModeIndex = (int)mode.OperatingMode;
             SwitchingMethodIndex = (int)mode.SwitchingMethod;
+            EnsureSequenceInCatalog(content.TargetId, content.BindingType);
             ApplyBindings([
                 new ControllerSourceBindingEntry
                 {
-                    ToolIndex = content.ToolIndex,
+                    ToolIndex = content.ToolIndex > 0 ? content.ToolIndex : mode.ToolIndex,
                     BindingType = (int)content.BindingType,
                     TargetId = content.TargetId,
                     ScrewCount = content.ScrewCount,
                     BitId = content.BitId,
                     Barcode = content.Barcode,
+                    Advanced = SourceAdvancedSettingsCore.FromProtocol(
+                        content.Advanced ?? TighteningSourceAdvancedCore.CreateDefaults()),
                 },
             ]);
             StatusMessage = Loc.Get("S.ControllerSource.StatusReadDevice");
@@ -260,6 +263,21 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             StatusMessage = ex.Message;
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
         }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    private void EnsureSequenceInCatalog(int targetId, TighteningSourceBindingType bindingType)
+    {
+        if (bindingType != TighteningSourceBindingType.Sequence || targetId <= 0)
+            return;
+        if (SequenceCatalog.Any(s => s.SequenceId == targetId))
+            return;
+        SequenceCatalog.Add(ControllerSequenceListItem.ForDeviceSlot(targetId));
+        HasSequences = SequenceCatalog.Count > 0;
     }
 
     [RelayCommand(CanExecute = nameof(CanUseDevice))]
@@ -303,13 +321,46 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenAdvancedSettings(ControllerSourceBindingRowViewModel? row)
+    private async Task OpenAdvancedSettings(ControllerSourceBindingRowViewModel? row)
     {
         if (row is null)
             return;
 
         SelectedBindingRow = row;
-        EditingAdvanced = CloneAdvanced(row.Advanced);
+        var draft = row.Advanced.Clone();
+        var dialog = new Views.ControllerDevice.SourceAdvancedSettingsDialog(draft)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        if (dialog.ShowDialog() != true || !dialog.Confirmed)
+            return;
+
+        row.Advanced = draft.Clone();
+        EditingAdvanced = draft.Clone();
+
+        try
+        {
+            var mode = BuildMode();
+            var bindings = BindingRows.Select(r => r.ToEntry()).ToList();
+            await _sourceService.SaveBindingsAsync(bindings, mode).ConfigureAwait(true);
+            if (IsDeviceAvailable)
+            {
+                var content = await _sourceService.LoadLocalContentAsync().ConfigureAwait(true);
+                await _sourceService.WriteToDeviceAsync(mode, content).ConfigureAwait(true);
+                StatusMessage = Loc.Get("S.Workbench.Source.AdvancedSavedDevice");
+                ShowSnackbar(StatusMessage, ControlAppearance.Success);
+            }
+            else
+            {
+                StatusMessage = Loc.Get("S.Workbench.Source.AdvancedSavedLocal");
+                ShowSnackbar(StatusMessage, ControlAppearance.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
     }
 
     [RelayCommand]
@@ -318,7 +369,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         if (SelectedBindingRow is null)
             return;
 
-        SelectedBindingRow.Advanced = CloneAdvanced(EditingAdvanced);
+        SelectedBindingRow.Advanced = EditingAdvanced.Clone();
         StatusMessage = Loc.Get("S.Workbench.Source.AdvancedSavedLocal");
     }
 
@@ -365,27 +416,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     }
 
     private static SourceAdvancedSettingsCore CloneAdvanced(SourceAdvancedSettingsCore source) =>
-        new()
-        {
-            SettingsId = source.SettingsId,
-            StartConditionTorqueUnitIndex = source.StartConditionTorqueUnitIndex,
-            StartConditionTriggerIndex = source.StartConditionTriggerIndex,
-            ProhibitLoosenAfterTightenOk = source.ProhibitLoosenAfterTightenOk,
-            ProhibitLoosenAfterTightenNg = source.ProhibitLoosenAfterTightenNg,
-            LimitMaxTightenNgPerScrew = source.LimitMaxTightenNgPerScrew,
-            MaxTightenNgPerScrew = source.MaxTightenNgPerScrew,
-            LimitMaxLoosenNgPerScrew = source.LimitMaxLoosenNgPerScrew,
-            MaxLoosenNgPerScrew = source.MaxLoosenNgPerScrew,
-            AutoNextOnTightenNg = source.AutoNextOnTightenNg,
-            GoBackOnLoosenOk = source.GoBackOnLoosenOk,
-            ProhibitStartWhenBarcodeEmpty = source.ProhibitStartWhenBarcodeEmpty,
-            ClearBarcodeWhenScrewCountComplete = source.ClearBarcodeWhenScrewCountComplete,
-            ProhibitScanWhenScrewCountIncomplete = source.ProhibitScanWhenScrewCountIncomplete,
-            LimitMaxRunTime = source.LimitMaxRunTime,
-            MaxRunTimeSeconds = source.MaxRunTimeSeconds,
-            ResetCountWhenScrewCountComplete = source.ResetCountWhenScrewCountComplete,
-            PromptWhenTightenSignalDisappearsEarly = source.PromptWhenTightenSignalDisappearsEarly,
-        };
+        source.Clone();
 
     private string BuildDeviceStatusText()
     {

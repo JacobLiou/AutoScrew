@@ -196,8 +196,8 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task<TighteningSourceSnapshot> ReadSourceModeAsync(CancellationToken cancellationToken = default) =>
         _typed.ReadSourceModeAsync(cancellationToken);
 
-    public Task WriteSourceContentAsync(int sourceId, int parameterId, int sequenceId, int screwCount, CancellationToken cancellationToken = default) =>
-        _typed.WriteSourceContentAsync(sourceId, parameterId, sequenceId, screwCount, cancellationToken);
+    public Task WriteSourceContentAsync(TighteningSourceContentCore content, CancellationToken cancellationToken = default) =>
+        _typed.WriteSourceContentAsync(content, cancellationToken);
 
     public Task<TighteningSourceSnapshot> ReadSourceContentAsync(int sourceId, CancellationToken cancellationToken = default) =>
         _typed.ReadSourceContentAsync(sourceId, cancellationToken);

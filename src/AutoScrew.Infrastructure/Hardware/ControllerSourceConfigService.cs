@@ -111,29 +111,17 @@ public sealed class ControllerSourceConfigService : IControllerSourceConfigServi
             (int)mode.SwitchingMethod,
             cancellationToken).ConfigureAwait(false);
 
-        if (content.BindingType == TighteningSourceBindingType.Sequence)
-        {
-            await client.WriteSourceContentAsync(
-                content.SwitchingMethodId,
-                0,
-                content.TargetId,
-                content.ScrewCount,
-                cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            await client.WriteSourceContentAsync(
-                content.SwitchingMethodId,
-                content.TargetId,
-                0,
-                content.ScrewCount,
-                cancellationToken).ConfigureAwait(false);
-        }
+        if (content.SwitchingMethodId <= 0)
+            content.SwitchingMethodId = 1;
+
+        await client.WriteSourceContentAsync(content, cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Wrote source mode/content to IEMD-SD binding={Binding} target={Target}",
+            "Wrote source mode/content to IEMD-SD binding={Binding} target={Target} screws={Screws} bit={Bit}",
             content.BindingType,
-            content.TargetId);
+            content.TargetId,
+            content.ScrewCount,
+            content.BitId);
     }
 
     private Task<IIemdSdClient> RequireClientAsync(CancellationToken cancellationToken) =>

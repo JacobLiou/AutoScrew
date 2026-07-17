@@ -33,5 +33,38 @@ public static class TighteningSequenceRegisterMap
     public const int SourceScrewCountLow = 0x138 - 0xD2;
     public const int SourceScrewCountHigh = 0x139 - 0xD2;
     public const int SourceBitId = 0x13A - 0xD2;
+
+    /// <summary>#301/#351 进阶设定标志(L) Bit0–15。</summary>
+    public const int SourceAdvancedFlagsLow = 0x13B - 0xD2;
+
+    /// <summary>#301/#351 进阶设定标志(H)。</summary>
+    public const int SourceAdvancedFlagsHigh = 0x13C - 0xD2;
+
+    public const int SourceMaxTightenNgLow = 0x13D - 0xD2;
+    public const int SourceMaxTightenNgHigh = 0x13E - 0xD2;
+    public const int SourceMaxLoosenNgLow = 0x13F - 0xD2;
+    public const int SourceMaxLoosenNgHigh = 0x140 - 0xD2;
+    public const int SourceReserved141 = 0x141 - 0xD2;
+    public const int SourceMaxRunTimeLow = 0x145 - 0xD2;
+    public const int SourceMaxRunTimeHigh = 0x146 - 0xD2;
+    public const int SourceDualToolParamSelect = 0x147 - 0xD2;
+    public const int SourceTorqueUnit = 0x148 - 0xD2;
+    public const int SourceStartConditionTool1 = 0x149 - 0xD2;
+    public const int SourceStartConditionTool2 = 0x14A - 0xD2;
+
     public const int SourceContentWordCount = 0x14A - 0xD2 + 1;
+
+    public const int AdvBitProhibitLoosenAfterTightenOk = 0;
+    public const int AdvBitProhibitLoosenAfterTightenNg = 1;
+    public const int AdvBitLimitMaxTightenNg = 2;
+    public const int AdvBitLimitMaxLoosenNg = 3;
+    public const int AdvBitAutoNextOnTightenNg = 4;
+    public const int AdvBitGoBackOnLoosenOk = 5;
+    public const int AdvBitProhibitStartWhenBarcodeEmpty = 6;
+    public const int AdvBitClearBarcodeWhenScrewComplete = 7;
+    public const int AdvBitProhibitScanWhenScrewIncomplete = 8;
+    public const int AdvBitLimitMaxRunTime = 9;
+    public const int AdvBitResetCountWhenScrewComplete = 10;
+    public const int AdvBitPromptTightenSignalEarly = 11;
+    public const int AdvBitProhibitStartWhenBarcodeLengthMismatch = 12;
 }
