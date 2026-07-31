@@ -6,96 +6,183 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              d:DataContext="{d:DesignInstance vm:MesViewModel, IsDesignTimeCreatable=False}"
-             d:DesignHeight="450"
+             d:DesignHeight="720"
              d:DesignWidth="800"
              d:Background="White"
              mc:Ignorable="d"
              Loaded="OnLoaded">
-    <StackPanel Margin="0,0,0,24">
-        <ui:CardControl Margin="0,0,0,12"
-                        Icon="{ui:SymbolIcon CloudSync24}">
-            <ui:CardControl.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <ui:TextBlock Grid.Row="0"
-                                  FontTypography="Body"
-                                  Text="{DynamicResource S.Mes.UseMock}" />
-                    <ui:TextBlock Grid.Row="1"
-                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.Mes.UseMockDesc}" />
-                </Grid>
-            </ui:CardControl.Header>
-            <ui:ToggleSwitch HorizontalAlignment="Right"
-                             OnContent="{DynamicResource S.Common.On}"
-                             OffContent="{DynamicResource S.Common.Off}"
-                             IsChecked="{Binding ViewModel.UseMockMes, Mode=TwoWay}" />
-        </ui:CardControl>
-        <ui:CardControl Margin="0,0,0,12"
-                        Icon="{ui:SymbolIcon Link24}">
-            <ui:CardControl.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <ui:TextBlock Grid.Row="0"
-                                  FontTypography="Body"
-                                  Text="{DynamicResource S.Mes.Address}" />
-                    <ui:TextBlock Grid.Row="1"
-                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.Mes.AddressDesc}" />
-                </Grid>
-            </ui:CardControl.Header>
-            <ui:TextBox MinWidth="360"
-                        PlaceholderText="{DynamicResource S.Mes.UrlPlaceholder}"
-                        Text="{Binding ViewModel.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-        </ui:CardControl>
-        <ui:CardControl Margin="0,0,0,12"
-                        Icon="{ui:SymbolIcon Key24}">
-            <ui:CardControl.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <ui:TextBlock Grid.Row="0"
-                                  FontTypography="Body"
-                                  Text="{DynamicResource S.Mes.ApiKey}" />
-                    <ui:TextBlock Grid.Row="1"
-                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.Mes.ApiKeyDesc}" />
-                </Grid>
-            </ui:CardControl.Header>
-            <ui:TextBox MinWidth="360"
-                        PlaceholderText="{DynamicResource S.Mes.ApiKeyPlaceholder}"
-                        Text="{Binding ViewModel.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-        </ui:CardControl>
-        <ui:CardControl Margin="0,0,0,12"
-                        Icon="{ui:SymbolIcon Timer24}">
-            <ui:CardControl.Header>
-                <ui:TextBlock FontTypography="Body"
-                              Text="{DynamicResource S.Mes.Timeout}" />
-            </ui:CardControl.Header>
-            <ui:TextBox MinWidth="120"
-                        Text="{Binding ViewModel.TimeoutSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-        </ui:CardControl>
-        <WrapPanel Margin="0,0,0,8">
-            <ui:Button Margin="0,0,8,8"
-                       Appearance="Primary"
-                       Command="{Binding ViewModel.SaveCommand}"
-                       Content="{DynamicResource S.Mes.Save}" />
-            <ui:Button Margin="0,0,8,8"
-                       Command="{Binding ViewModel.ApplyCommand}"
-                       Content="{DynamicResource S.Mes.Apply}" />
-            <ui:Button Margin="0,0,8,8"
-                       Command="{Binding ViewModel.TestConnectionCommand}"
-                       Content="{DynamicResource S.Mes.TestConnection}" />
-        </WrapPanel>
-        <TextBlock Text="{Binding ViewModel.StatusMessage}"
-                   TextWrapping="Wrap"
-                   Foreground="{DynamicResource ShellMutedForegroundBrush}" />
-    </StackPanel>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,0,24">
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon CloudSync24}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.Mode}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.ModeDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ComboBox MinWidth="280"
+                          ItemsSource="{Binding ViewModel.ModeOptions}"
+                          SelectedItem="{Binding ViewModel.SelectedMode, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:MesModeOption}">
+                            <TextBlock Text="{Binding Display}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon Link24}"
+                            Visibility="{Binding ViewModel.IsHttpMode, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.Address}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.AddressDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ui:TextBox MinWidth="360"
+                            PlaceholderText="{DynamicResource S.Mes.UrlPlaceholder}"
+                            Text="{Binding ViewModel.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon Key24}"
+                            Visibility="{Binding ViewModel.IsLegacyHttpMode, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.ApiKey}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.ApiKeyDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ui:TextBox MinWidth="360"
+                            PlaceholderText="{DynamicResource S.Mes.ApiKeyPlaceholder}"
+                            Text="{Binding ViewModel.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon ShieldTask24}"
+                            Visibility="{Binding ViewModel.IsProductKeyMode, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.AcceptAnyCert}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.AcceptAnyCertDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch HorizontalAlignment="Right"
+                                 OnContent="{DynamicResource S.Common.On}"
+                                 OffContent="{DynamicResource S.Common.Off}"
+                                 IsChecked="{Binding ViewModel.AcceptAnyServerCertificate, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon Search24}"
+                            Visibility="{Binding ViewModel.IsProductKeyMode, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.ProbeSn}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.ProbeSnDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ui:TextBox MinWidth="240"
+                            PlaceholderText="{DynamicResource S.Mes.ProbeSnPlaceholder}"
+                            Text="{Binding ViewModel.ProbeSerialNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon Timer24}"
+                            Visibility="{Binding ViewModel.IsHttpMode, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <ui:TextBlock FontTypography="Body"
+                                  Text="{DynamicResource S.Mes.Timeout}" />
+                </ui:CardControl.Header>
+                <ui:TextBox MinWidth="120"
+                            Text="{Binding ViewModel.TimeoutSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </ui:CardControl>
+
+            <ui:TextBlock Margin="0,8,0,8"
+                          FontTypography="BodyStrong"
+                          Text="{DynamicResource S.Mes.LanSection}" />
+
+            <ui:CardControl Margin="0,0,0,12"
+                            Icon="{ui:SymbolIcon Folder24}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock Grid.Row="0"
+                                      FontTypography="Body"
+                                      Text="{DynamicResource S.Mes.LanShareRoot}" />
+                        <ui:TextBlock Grid.Row="1"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.Mes.LanShareRootDesc}" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <ui:TextBox MinWidth="360"
+                            PlaceholderText="{DynamicResource S.Mes.LanShareRootPlaceholder}"
+                            Text="{Binding ViewModel.LanShareRoot, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </ui:CardControl>
+
+            <WrapPanel Margin="0,0,0,8">
+                <ui:Button Margin="0,0,8,8"
+                           Appearance="Primary"
+                           Command="{Binding ViewModel.SaveCommand}"
+                           Content="{DynamicResource S.Mes.Save}" />
+                <ui:Button Margin="0,0,8,8"
+                           Command="{Binding ViewModel.ApplyCommand}"
+                           Content="{DynamicResource S.Mes.Apply}" />
+                <ui:Button Margin="0,0,8,8"
+                           Command="{Binding ViewModel.TestConnectionCommand}"
+                           Content="{DynamicResource S.Mes.TestConnection}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding ViewModel.StatusMessage}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource ShellMutedForegroundBrush}" />
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

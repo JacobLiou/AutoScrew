@@ -230,15 +230,29 @@
 
     <system:String x:Key="S.Mes.UseMock">Use Mock MES</system:String>
     <system:String x:Key="S.Mes.UseMockDesc">When on, no HTTP calls (offline debug)</system:String>
+    <system:String x:Key="S.Mes.Mode">MES mode</system:String>
+    <system:String x:Key="S.Mes.ModeDesc">Mock offline; ProductKey = Opcenter getProductInfo; LegacyHttp = placeholder REST</system:String>
+    <system:String x:Key="S.Mes.ModeMock">Mock (offline)</system:String>
+    <system:String x:Key="S.Mes.ModeProductKey">ProductKey (getProductInfo)</system:String>
+    <system:String x:Key="S.Mes.ModeLegacyHttp">LegacyHttp (placeholder REST)</system:String>
     <system:String x:Key="S.Mes.Enable">Enable MES</system:String>
     <system:String x:Key="S.Mes.EnableDesc">When Mock is off, use the URL below</system:String>
     <system:String x:Key="S.Mes.Address">MES base URL</system:String>
-    <system:String x:Key="S.Mes.AddressDesc">e.g. http://localhost:5080/ (saved to mes-settings.json)</system:String>
+    <system:String x:Key="S.Mes.AddressDesc">ProductKey e.g. https://zuhaip.molex.com:9607/; LegacyHttp e.g. http://localhost:5080/</system:String>
     <system:String x:Key="S.Mes.ApiKey">API key (optional)</system:String>
-    <system:String x:Key="S.Mes.ApiKeyDesc">Sent as header X-Api-Key when set</system:String>
+    <system:String x:Key="S.Mes.ApiKeyDesc">LegacyHttp only: sent as X-Api-Key when set</system:String>
     <system:String x:Key="S.Mes.ApiKeyPlaceholder">Optional</system:String>
+    <system:String x:Key="S.Mes.AcceptAnyCert">Accept any server certificate</system:String>
+    <system:String x:Key="S.Mes.AcceptAnyCertDesc">Enable for internal CA (matches ConsoleApp1)</system:String>
+    <system:String x:Key="S.Mes.ProbeSn">Probe SN</system:String>
+    <system:String x:Key="S.Mes.ProbeSnDesc">Container used by Test connection for getProductInfo</system:String>
+    <system:String x:Key="S.Mes.ProbeSnPlaceholder">e.g. K5431912</system:String>
     <system:String x:Key="S.Mes.Timeout">Timeout (seconds)</system:String>
-    <system:String x:Key="S.Mes.UrlPlaceholder">http://localhost:5080/</system:String>
+    <system:String x:Key="S.Mes.UrlPlaceholder">https://zuhaip.molex.com:9607/</system:String>
+    <system:String x:Key="S.Mes.LanSection">LAN SN archive</system:String>
+    <system:String x:Key="S.Mes.LanShareRoot">LAN share root</system:String>
+    <system:String x:Key="S.Mes.LanShareRootDesc">UNC e.g. \\server\AutoScrew; archives under {SN}\. Uses built-in secure credentials; empty = local only</system:String>
+    <system:String x:Key="S.Mes.LanShareRootPlaceholder">\\server\share\AutoScrew</system:String>
     <system:String x:Key="S.Mes.Save">Save</system:String>
     <system:String x:Key="S.Mes.Apply">Apply</system:String>
     <system:String x:Key="S.Mes.TestConnection">Test connection</system:String>

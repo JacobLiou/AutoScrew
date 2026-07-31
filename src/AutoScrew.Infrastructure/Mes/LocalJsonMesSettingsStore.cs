@@ -44,6 +44,7 @@ public sealed class LocalJsonMesSettingsStore
     {
         ArgumentNullException.ThrowIfNull(settings);
         Normalize(settings);
+        // 重写文件时不再写出历史 LanUser/LanPassword 等字段（类型上已移除）。
         await using var stream = File.Create(_settingsPath);
         await JsonSerializer.SerializeAsync(stream, settings, JsonOptions, cancellationToken).ConfigureAwait(false);
     }
@@ -52,21 +53,34 @@ public sealed class LocalJsonMesSettingsStore
     {
         var app = _configuration.GetSection(AutoScrewAppOptions.SectionName).Get<AutoScrewAppOptions>()
                   ?? new AutoScrewAppOptions();
-        return new MesRuntimeSettings
+        var settings = new MesRuntimeSettings
         {
             UseMockMes = app.UseMockMes,
+            MesMode = app.UseMockMes ? MesProviderMode.Mock : MesProviderMode.LegacyHttp,
             BaseUrl = app.MesBaseUrl,
             TimeoutSeconds = 15,
+            AcceptAnyServerCertificate = true,
         };
+        Normalize(settings);
+        return settings;
     }
 
     private static void Normalize(MesRuntimeSettings settings)
     {
+        settings.MesMode = MesProviderMode.Normalize(settings.MesMode, settings.UseMockMes);
+        settings.UseMockMes = settings.MesMode == MesProviderMode.Mock;
+
         if (string.IsNullOrWhiteSpace(settings.BaseUrl))
-            settings.BaseUrl = "https://localhost/";
+        {
+            settings.BaseUrl = settings.MesMode == MesProviderMode.ProductKey
+                ? "https://zuhaip.molex.com:9607/"
+                : "https://localhost/";
+        }
+
         if (!settings.BaseUrl.EndsWith('/'))
             settings.BaseUrl += "/";
+
         if (settings.TimeoutSeconds <= 0)
-            settings.TimeoutSeconds = 15;
+            settings.TimeoutSeconds = settings.MesMode == MesProviderMode.ProductKey ? 100 : 15;
     }
 }

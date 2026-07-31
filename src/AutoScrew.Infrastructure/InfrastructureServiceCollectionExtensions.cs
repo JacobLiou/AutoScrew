@@ -6,6 +6,7 @@ using AutoScrew.Infrastructure.Authentication;
 using AutoScrew.Infrastructure.Background;
 using AutoScrew.Infrastructure.Files;
 using AutoScrew.Infrastructure.Hardware;
+using AutoScrew.Infrastructure.Lan;
 using AutoScrew.Infrastructure.Mes;
 using AutoScrew.Infrastructure.Persistence;
 using AutoScrew.Infrastructure.Templates;
@@ -33,6 +34,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<SessionCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<SessionCurrentUser>());
         services.AddSingleton<ITemplateLayoutLoader, TemplateLayoutJsonLoader>();
+        services.AddSingleton<ISnWorkArchiveSync, SnWorkArchiveSync>();
         services.AddSingleton<ICurveArchive, LocalCurveArchive>();
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
@@ -74,6 +76,9 @@ public static class InfrastructureServiceCollectionExtensions
             .AddPolicyHandler(HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(200 * attempt)));
+
+        // ProductKey 使用自建 SocketsHttpHandler（证书策略随 mes-settings），不走此命名客户端。
+        services.AddHttpClient("mes-product-key");
 
         services.AddSingleton<LocalJsonRecipeStore>();
         services.AddSingleton<LocalRecipeMesClient>();

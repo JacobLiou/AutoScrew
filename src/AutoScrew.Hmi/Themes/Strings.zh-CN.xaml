@@ -239,15 +239,29 @@
     <!-- MES -->
     <system:String x:Key="S.Mes.UseMock">使用 Mock MES</system:String>
     <system:String x:Key="S.Mes.UseMockDesc">开启时不访问 HTTP，用于脱机调试</system:String>
+    <system:String x:Key="S.Mes.Mode">MES 模式</system:String>
+    <system:String x:Key="S.Mes.ModeDesc">Mock 脱机；ProductKey = Opcenter getProductInfo；LegacyHttp = 占位 REST</system:String>
+    <system:String x:Key="S.Mes.ModeMock">Mock（脱机）</system:String>
+    <system:String x:Key="S.Mes.ModeProductKey">ProductKey（getProductInfo）</system:String>
+    <system:String x:Key="S.Mes.ModeLegacyHttp">LegacyHttp（占位 REST）</system:String>
     <system:String x:Key="S.Mes.Enable">启用 MES 对接</system:String>
     <system:String x:Key="S.Mes.EnableDesc">关闭 Mock 后按下方地址访问真 MES</system:String>
     <system:String x:Key="S.Mes.Address">MES 基址</system:String>
-    <system:String x:Key="S.Mes.AddressDesc">例如 http://localhost:5080/（保存至 mes-settings.json）</system:String>
+    <system:String x:Key="S.Mes.AddressDesc">ProductKey 例 https://zuhaip.molex.com:9607/；LegacyHttp 例 http://localhost:5080/</system:String>
     <system:String x:Key="S.Mes.ApiKey">API Key（可选）</system:String>
-    <system:String x:Key="S.Mes.ApiKeyDesc">非空时发送 Header: X-Api-Key</system:String>
+    <system:String x:Key="S.Mes.ApiKeyDesc">仅 LegacyHttp：非空时发送 Header: X-Api-Key</system:String>
     <system:String x:Key="S.Mes.ApiKeyPlaceholder">可选</system:String>
+    <system:String x:Key="S.Mes.AcceptAnyCert">接受任意服务端证书</system:String>
+    <system:String x:Key="S.Mes.AcceptAnyCertDesc">现场非公有 CA 时开启（对齐 ConsoleApp1）</system:String>
+    <system:String x:Key="S.Mes.ProbeSn">探测 SN</system:String>
+    <system:String x:Key="S.Mes.ProbeSnDesc">「测试连接」调用 getProductInfo 时使用的容器号</system:String>
+    <system:String x:Key="S.Mes.ProbeSnPlaceholder">例如 K5431912</system:String>
     <system:String x:Key="S.Mes.Timeout">超时（秒）</system:String>
-    <system:String x:Key="S.Mes.UrlPlaceholder">http://localhost:5080/</system:String>
+    <system:String x:Key="S.Mes.UrlPlaceholder">https://zuhaip.molex.com:9607/</system:String>
+    <system:String x:Key="S.Mes.LanSection">局域网 SN 归档</system:String>
+    <system:String x:Key="S.Mes.LanShareRoot">局域网根路径</system:String>
+    <system:String x:Key="S.Mes.LanShareRootDesc">UNC，如 \\server\AutoScrew；其下按 {SN}\ 归档。使用内置安全凭证连接；留空则只写本地</system:String>
+    <system:String x:Key="S.Mes.LanShareRootPlaceholder">\\server\share\AutoScrew</system:String>
     <system:String x:Key="S.Mes.Save">保存配置</system:String>
     <system:String x:Key="S.Mes.Apply">应用</system:String>
     <system:String x:Key="S.Mes.TestConnection">测试连接</system:String>

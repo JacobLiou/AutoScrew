@@ -17,4 +17,3 @@ public partial class MesPage : INavigableView<MesViewModel>
     private async void OnLoaded(object sender, System.Windows.RoutedEventArgs e) =>
         await ViewModel.InitializeAsync().ConfigureAwait(true);
 }
-

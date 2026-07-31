@@ -13,8 +13,9 @@
 - 工作根：`%LocalAppData%\AutoScrew\work\{SN}\`（可通过 `AutoScrew:DataDirectory` 覆盖）。
 - 曲线文件：`torque_curve_{positionIndex}_{timestamp}.csv`
 - 锁附日志：`lock_log_{timestamp}.json`
-- 可选网络镜像：`AutoScrew:OptionalNetworkArchiveRoot`（复制失败不阻塞产线）。
-- **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。
+- 可选网络镜像：`AutoScrew:OptionalNetworkArchiveRoot`（复制失败不阻塞产线；无凭证，兼容旧配置）。
+- **局域网 SN 归档（ProductKey / Fusion 路径）**：`mes-settings.json` 的 `LanShareRoot`（Mes 页可配）→ `{LanShareRoot}\{SN}\`，镜像本地 `work\{SN}`（曲线 CSV、`lock_log_*.json`）。服务账号与口令**不在 HMI 展示**：账号固定于代码；口令为 `AutoScrew:LanSharePasswordAes256`（`aes256:` 密文，用 `tools/EncryptMimsConnectionString` 生成）。连接用 `WNetUseConnection`；失败不阻塞产线。
+- **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。一期 UNC `{PN}` 模板同步见 [FusionTodo.md](FusionTodo.md) F-05（未强制）。
 
 ## SQLite 实体（Infrastructure）
 
@@ -64,18 +65,49 @@
 
 ## HTTPS
 
-- 生产环境 MES 基址使用 HTTPS（TLS 1.2+），见 `MesHttpClient` 与现场证书策略。
+- 生产环境 MES 基址使用 HTTPS（TLS 1.2+）。ProductKey 模式见 `ProductKeyHttp`（`SocketsHttpHandler`；现场非公有 CA 时可 `AcceptAnyServerCertificate=true`）。占位 REST 见 `MesHttpClient`。
 
-## MES HTTP v1（占位）
+## ProductKey / Opcenter SN→PN（现场路径）
 
-> **说明**：正式 MES 规范未定稿；下列路径与 JSON 形状与 [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs) 一致，供 FAT 与 `tools/MesMockServer` 联调。IT 定稿后先改本节再改实现。
+> **说明**：与公司 Opcenter 容器查询对齐；实现见 [`MesProductApi`](../src/AutoScrew.Infrastructure/Mes/ProductKey/MesProductApi.cs) / [`ProductKeyMesClient`](../src/AutoScrew.Infrastructure/Mes/ProductKeyMesClient.cs)。**一期不做** MoveIn、工序校验、ATMS `GetProdTestTemplate`、TAS 结果上传。总方案见 [FusionTodo.md](FusionTodo.md)。
+
+| 项 | 约定 |
+|----|------|
+| HTTP | `GET {BaseUrl}api/v2/container/query/getProductInfo?container={SN}` |
+| 默认主机 | `https://zuhaip.molex.com:9607/` |
+| 鉴权 | 无（接口本身不带 Basic/Bearer） |
+| PN | 首个非空：`Product` / `OplinkPN` / `topPN` |
+| Spec / WO / 工序 | `Spec`（经 ProcessNameMap）、`MfgOrder`、`Operation` 或 `Spec` |
+| 可用 | `Status == "1"` 且 `IsOnHold` 不为 true |
+| Recipe | 仅返回 PN；模板仍本地 `Templates/{PN}` |
+| UploadResult | 不调 TAS；触发局域网 `{LanShareRoot}\{SN}` 归档 |
+
+### mes-settings.json（扩展）
+
+| 字段 | 含义 |
+|------|------|
+| `MesMode` | `Mock` \| `LegacyHttp` \| `ProductKey`（优先于旧布尔） |
+| `UseMockMes` | 兼容旧文件：`true` ↔ `MesMode=Mock` |
+| `BaseUrl` | ProductKey / LegacyHttp 基址（以 `/` 结尾） |
+| `AcceptAnyServerCertificate` | ProductKey 默认 `true` |
+| `ApiKey` | 仅 LegacyHttp |
+| `TimeoutSeconds` | 超时 |
+| `ProbeSerialNumber` | Mes 页「测试连接」用的探测 SN（可空） |
+| `LanShareRoot` | UNC 根（Mes 页可配）；凭证不在此文件 |
+
+另见 `appsettings` → `AutoScrew:LanSharePasswordAes256`（密文）、可选 `LanShareDomain`（默认空）。
+
+HMI **应用** 刷新内存快照；扫码走 `ConfigurableMesClient` → Mock / LegacyHttp / ProductKey。
+
+## MES HTTP v1（占位 LegacyHttp）
+
+> **说明**：正式 MES 规范未定稿；下列路径与 JSON 形状与 [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs) 一致，供 FAT 与 `tools/MesMockServer` 联调。IT 定稿后先改本节再改实现。现场产线优先用上一节 **ProductKey**。
 
 ### 运行时配置
 
 - 持久化文件：`{DataDirectory}/mes-settings.json`（HMI Mes 页 **保存**）。
-- 字段：`UseMockMes`（`true` = 内存 Mock，不发 HTTP）、`BaseUrl`（须以 `/` 结尾）、`ApiKey`（可选）、`TimeoutSeconds`。
-- 首次无文件时从 `appsettings` 的 `AutoScrew:UseMockMes`、`AutoScrew:MesBaseUrl` 种子。
-- HMI **应用** 刷新内存快照，无需重启；出站与扫码走 `ConfigurableMesClient` → `MockMesClient` 或 `MesHttpClient`。
+- `MesMode=LegacyHttp` 时使用占位 REST：`BaseUrl`、`ApiKey`（可选）、`TimeoutSeconds`。
+- 首次无文件时从 `appsettings` 的 `AutoScrew:UseMockMes`、`AutoScrew:MesBaseUrl` 种子（通常为 Mock）。
 - 所有请求 query 带 `stationId`（`AutoScrew:StationId`）；`ApiKey` 非空时 Header `X-Api-Key`。
 
 ### 端点

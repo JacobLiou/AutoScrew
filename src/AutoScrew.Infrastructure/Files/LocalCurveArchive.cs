@@ -3,17 +3,32 @@ using System.Text;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Domain.Curves;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AutoScrew.Infrastructure.Files;
 
-public sealed class LocalCurveArchive(IOptions<AutoScrewAppOptions> options) : ICurveArchive
+public sealed class LocalCurveArchive : ICurveArchive
 {
+    private readonly IOptions<AutoScrewAppOptions> _options;
+    private readonly ISnWorkArchiveSync _archiveSync;
+    private readonly ILogger<LocalCurveArchive> _logger;
+
+    public LocalCurveArchive(
+        IOptions<AutoScrewAppOptions> options,
+        ISnWorkArchiveSync archiveSync,
+        ILogger<LocalCurveArchive> logger)
+    {
+        _options = options;
+        _archiveSync = archiveSync;
+        _logger = logger;
+    }
+
     private string WorkRoot => ResolveDataRoot();
 
     private string ResolveDataRoot()
     {
-        var configured = options.Value.DataDirectory;
+        var configured = _options.Value.DataDirectory;
         if (!string.IsNullOrWhiteSpace(configured))
             return Path.GetFullPath(configured);
 
@@ -55,7 +70,8 @@ public sealed class LocalCurveArchive(IOptions<AutoScrewAppOptions> options) : I
         var file = Path.Combine(dir, $"lock_log_{ts}.json");
         await File.WriteAllTextAsync(file, json, cancellationToken).ConfigureAwait(false);
 
-        var netRoot = options.Value.OptionalNetworkArchiveRoot;
+        // 兼容无凭证的 OptionalNetworkArchiveRoot 快速复制
+        var netRoot = _options.Value.OptionalNetworkArchiveRoot;
         if (!string.IsNullOrWhiteSpace(netRoot))
         {
             try
@@ -70,6 +86,19 @@ public sealed class LocalCurveArchive(IOptions<AutoScrewAppOptions> options) : I
                 // network optional; ignore failures
             }
         }
+
+        // pred-testing / LanShareRoot：整目录异步镜像（失败不阻塞）
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _archiveSync.SyncSerialFolderAsync(serialNumber, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Background LAN archive after lock_log failed for {Serial}", serialNumber);
+            }
+        }, CancellationToken.None);
     }
 
     private static string Sanitize(string sn) =>

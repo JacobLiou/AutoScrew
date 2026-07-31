@@ -19,7 +19,10 @@
     "StationId": "STATION-01",
     "UiCulture": "zh-CN",
     "AuditLogEnabled": true,
-    "AuditDirectory": ""
+    "AuditDirectory": "",
+    "_LanSharePasswordAes256_comment": "Set AutoScrew:LanSharePasswordAes256 to aes256:... from tools/EncryptMimsConnectionString (see DATA_AND_TRACE).",
+    "LanSharePasswordAes256": "",
+    "LanShareDomain": ""
   },
   "IemdSd": {
     "_comment": "Legacy seed for first-run migration to DataDirectory/stations/{StationId}/devices.json. Device connection is managed in HMI.",

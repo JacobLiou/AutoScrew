@@ -72,13 +72,13 @@ flowchart LR
 
 ### 3.1 适配层
 
-新增 `FusionMesClient : IMesClient`（挂到现有 [`ConfigurableMesClient`](../src/AutoScrew.Infrastructure/Mes/ConfigurableMesClient.cs) 路由，例如 `MesMode = Mock | Http | Fusion` 或 `UseFusion`）：
+新增 `ProductKeyMesClient : IMesClient`（挂到 [`ConfigurableMesClient`](../src/AutoScrew.Infrastructure/Mes/ConfigurableMesClient.cs)，`MesMode = Mock | LegacyHttp | ProductKey`）：
 
-| `IMesClient` 方法 | Fusion 行为 |
-|-------------------|-------------|
-| `ValidateSnAsync` | `GetProductKeyInfo(SN)` → `SnValidationResult(true, partNumber, …)` |
-| `GetRecipeAsync` | **不**调 `GetProdTestTemplate`；返回 PN，由 [`RecipeProvisioningService`](../src/AutoScrew.Application/Services/RecipeProvisioningService.cs) 解析本地/UNC 的 `{PN}` 模板 |
-| `UploadResultAsync` | 一期：可空实现，或仅触发局域网 `{SN}` 归档；**不**默认接 TAS 上传 |
+| `IMesClient` 方法 | ProductKey 行为 |
+|-------------------|-----------------|
+| `ValidateSnAsync` | HTTP `getProductInfo` → 归一化 PN（兼容旧名 GetProductKeyInfo） |
+| `GetRecipeAsync` | **不**调 `GetProdTestTemplate`；返回 PN，由 [`RecipeProvisioningService`](../src/AutoScrew.Application/Services/RecipeProvisioningService.cs) 解析本地 `{PN}` 模板 |
+| `UploadResultAsync` | 触发局域网 `{SN}` 归档；**不**接 TAS 上传 |
 
 扫码主路径仍为：`MainViewModel` → `OperatorSessionController.SubmitSerialNumberAsync` → `ValidateSnAsync` → `LoadRecipeAndTemplateAsync`（见现有实现）。
 
@@ -127,16 +127,16 @@ AutoScrew 拟定：
 
 说明（`Welcome.txt` / `verList.txt`）：提升权限曾通过模拟登录获得 **PRED-TESTING** 权限。
 
-### 4.2 AutoScrew 配置草案
+### 4.2 AutoScrew 配置（已落地）
 
-| 配置键（草案） | 含义 | 默认/示例 |
-|----------------|------|-----------|
-| `LanShareRoot` | UNC 根 | `\\server\AutoScrew` |
-| `LanUser` | 共享账号 | `pred-testing` |
-| `LanDomain` | 域 | 现场域（如配置中的 ElevationDomain） |
-| 口令 | 加密文件路径或 UserSecrets / 本地 `mes-settings` 扩展字段 | **禁止提交明文密码到 git** |
+| 配置键 | 含义 | 说明 |
+|--------|------|------|
+| `mes-settings` → `LanShareRoot` | UNC 根 | Mes 页可配；其下 `{SN}\` |
+| 账号 | 固定服务账号 | 代码内常量，**不进 HMI** |
+| `AutoScrew:LanShareDomain` | 域 | 可选，默认空；不进 HMI |
+| `AutoScrew:LanSharePasswordAes256` | 口令密文 | `aes256:`（`tools/EncryptMimsConnectionString`）；**禁止明文入库** |
 
-实现阶段可将 `NetworkShareConnect` / `SharedTool` 思路移植到 `AutoScrew.Infrastructure`（见 TODO F-04）。
+实现：`NetworkShareConnect` + `SnWorkArchiveSync`（见 F-04 / F-06）。
 
 ---
 
@@ -161,12 +161,12 @@ AutoScrew 拟定：
 
 | ID | 状态 | 任务 | 说明 |
 |----|------|------|------|
-| F-01 | [ ] | 契约草案写入 [DATA_AND_TRACE.md](DATA_AND_TRACE.md) | Fusion SN→PN 最小字段；局域网 `{PN}`/`{SN}` 目录 |
-| F-02 | [ ] | 引入 USL 依赖 + x86/STA 冒烟 | 仅验证 `GetProductKeyInfo`；带 `USL.SYS.dll.config` |
-| F-03 | [ ] | 实现 `FusionMesClient` + Mes 页/配置切换 | `ValidateSnAsync`；`GetRecipeAsync` 不拉 ATMS XML |
-| F-04 | [ ] | 局域网连接 | 参考 UUIStarter：`pred-testing` + 加密凭证 + `WNetUseConnection` / 模拟登录 |
+| F-01 | [x] 2026-07-31 | 契约草案写入 [DATA_AND_TRACE.md](DATA_AND_TRACE.md) | ProductKey HTTP SN→PN；局域网 `{SN}`；`pred-testing` |
+| F-02 | [x] 2026-07-31 | HTTP GetProductKeyInfo 冒烟路径 | 以 ConsoleApp1 `getProductInfo` 为准（非 USL.TAS DLL） |
+| F-03 | [x] 2026-07-31 | 实现 `ProductKeyMesClient` + Mes 页/配置切换 | `ValidateSnAsync`；`GetRecipeAsync` 不拉 ATMS XML |
+| F-04 | [x] 2026-07-31 | 局域网连接 | 固定服务账号 + `LanSharePasswordAes256` + `WNetUseConnection`；Mes 页仅根路径 |
 | F-05 | [ ] | PN 模板同步 | 技术员保存 → 同步到 `{LanShareRoot}\{PN}\`；启动/扫码可读 UNC |
-| F-06 | [ ] | SN 作业数据异步归档 | `work\{SN}` → `{LanShareRoot}\{SN}`；失败不堵产线 |
+| F-06 | [x] 2026-07-31 | SN 作业数据异步归档 | `work\{SN}` → `{LanShareRoot}\{SN}`；失败不堵产线 |
 | F-07 | [ ] | FAT | 真 SN 查 PN；Fusion 失败提示/fallback；断网归档策略 |
 | F-08 | [ ] | （可选）IT 确认后 | TAS 结果上传或正式 REST MES；再改 DATA_AND_TRACE |
 
@@ -174,9 +174,9 @@ AutoScrew 拟定：
 
 ## 7. 安全约定
 
-- **禁止**将 PRED-TESTING / `pred-testing` 的口令明文写入仓库、本文件或公开配置样例。
-- 口令优先：加密文件（UUIStarter 模式）、UserSecrets、或仅本机 `mes-settings.json`（已在 `.gitignore` / 用户数据目录）。
-- 审计日志不得记录完整口令；可记「局域网连接成功/失败」与账号名。
+- **禁止**将局域网服务账号口令明文写入仓库、本文件或公开配置样例；仅允许 `aes256:` 密文（`AutoScrew:LanSharePasswordAes256`）。
+- Mes 页**不展示**账号与口令；仅配置 `LanShareRoot`。
+- 审计日志不得记录完整口令；可记「局域网连接成功/失败」。
 
 ---
 

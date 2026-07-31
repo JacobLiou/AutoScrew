@@ -18,6 +18,15 @@ public sealed class AutoScrewAppOptions
 
     public string? OptionalNetworkArchiveRoot { get; set; }
 
+    /// <summary>
+    /// 局域网服务账号口令的 aes256 密文（见 tools/EncryptMimsConnectionString）。
+    /// 运行时解密用于 WNet；界面与 mes-settings 不保存明文。
+    /// </summary>
+    public string? LanSharePasswordAes256 { get; set; }
+
+    /// <summary>可选域；空则仅用固定服务账号名连接 UNC。</summary>
+    public string? LanShareDomain { get; set; }
+
     public string StationId { get; set; } = "STATION-01";
 
     /// <summary>UI 默认语言：zh-CN 或 en-US。</summary>
