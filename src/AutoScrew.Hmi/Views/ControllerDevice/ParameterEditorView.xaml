@@ -246,6 +246,7 @@
                                     BorderThickness="1"
                                     Padding="6,2">
                                 <ui:TextBox BorderThickness="0"
+                                            InputMethod.IsInputMethodEnabled="False"
                                             PlaceholderText="{DynamicResource S.ControllerParam.Name}"
                                             Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </Border>
@@ -288,15 +289,22 @@
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
                                                     </Grid.RowDefinitions>
-                                                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
-                                                    <ui:NumberBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MinAngle}" />
-                                                    <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
-                                                    <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
-                                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.Direction}" />
+                                                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,0,12,8"
+                                                              SelectedIndex="{Binding DirectionIndex, Mode=TwoWay}">
+                                                        <ComboBoxItem Content="{DynamicResource S.ControllerParam.DirectionCw}" />
+                                                        <ComboBoxItem Content="{DynamicResource S.ControllerParam.DirectionCcw}" />
+                                                    </ComboBox>
+                                                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MaxAngle}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxAngleDeg, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.ControllerParam.MinAngle}" />
+                                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding MinAngleDeg, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.MaxRunTimeSec}" />
+                                                    <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
+                                                    <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>
                                         </DockPanel>
@@ -357,9 +365,9 @@
                                                            Text="{DynamicResource S.ControllerParam.Basic.Advanced}" />
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="160" />
+                                                        <ColumnDefinition Width="180" />
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="160" />
+                                                        <ColumnDefinition Width="180" />
                                                         <ColumnDefinition Width="*" />
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>

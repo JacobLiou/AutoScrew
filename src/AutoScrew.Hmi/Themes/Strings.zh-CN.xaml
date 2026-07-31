@@ -344,7 +344,7 @@
     <system:String x:Key="S.ControllerParam.Loosen.Stage1Accel">第一段加速度时间</system:String>
     <system:String x:Key="S.ControllerParam.Loosen.Stage2Accel">第二段加速度时间</system:String>
     <system:String x:Key="S.ControllerParam.DetectTorque">侦测扭矩 (mNm)</system:String>
-    <system:String x:Key="S.ControllerParam.DefaultName">参数 {0}</system:String>
+    <system:String x:Key="S.ControllerParam.DefaultName">{0}</system:String>
     <system:String x:Key="S.ControllerParam.StatusNew">已创建新预设草稿。</system:String>
     <system:String x:Key="S.ControllerParam.StatusSavedLocal">已保存到本地。</system:String>
     <system:String x:Key="S.ControllerParam.StatusDeleted">已删除本地预设。</system:String>

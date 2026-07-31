@@ -224,6 +224,7 @@
                                 BorderThickness="1"
                                 Padding="6,2">
                             <ui:TextBox BorderThickness="0"
+                                        InputMethod.IsInputMethodEnabled="False"
                                         PlaceholderText="{DynamicResource S.ControllerParam.Name}"
                                         Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </Border>

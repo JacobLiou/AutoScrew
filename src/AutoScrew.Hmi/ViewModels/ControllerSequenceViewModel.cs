@@ -271,6 +271,8 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     private bool _suppressArmTeachSync;
     private bool _suppressDeviceSelection;
+    private bool _sanitizingName;
+    private bool _suppressIdNameSync;
 
     public bool IsNavigatorGuideEnabled
     {
@@ -325,8 +327,28 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             _ = LoadPresetAsync(value.SequenceId);
     }
 
-    partial void OnSequenceIdChanged(int value)
+    partial void OnNameChanged(string value)
     {
+        if (_sanitizingName)
+            return;
+
+        var sanitized = ControllerAsciiName.Sanitize(value);
+        if (string.Equals(value, sanitized, StringComparison.Ordinal))
+            return;
+
+        _sanitizingName = true;
+        try { Name = sanitized; }
+        finally { _sanitizingName = false; }
+    }
+
+    partial void OnSequenceIdChanged(int oldValue, int newValue)
+    {
+        if (!_suppressIdNameSync
+            && (string.IsNullOrEmpty(Name) || string.Equals(Name, oldValue.ToString(), StringComparison.Ordinal)))
+        {
+            Name = newValue.ToString();
+        }
+
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
     }
@@ -758,7 +780,12 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
     private void StartNewPreset()
     {
-        _working = new TighteningSequencePackage { SequenceId = NextFreeId(), Core = new TighteningSequenceCore() };
+        var nextId = NextFreeId();
+        _working = new TighteningSequencePackage
+        {
+            SequenceId = nextId,
+            Core = new TighteningSequenceCore { Name = nextId.ToString() },
+        };
         ApplyPackage(_working);
     }
 
@@ -773,8 +800,17 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     private void ApplyPackage(TighteningSequencePackage pkg)
     {
         _working = pkg;
-        SequenceId = pkg.SequenceId;
-        Name = pkg.Core.Name;
+        _suppressIdNameSync = true;
+        try
+        {
+            SequenceId = pkg.SequenceId;
+            Name = ControllerAsciiName.SanitizeOrDefault(pkg.Core.Name, pkg.SequenceId);
+        }
+        finally
+        {
+            _suppressIdNameSync = false;
+        }
+
         NavigatorModeIndex = (int)pkg.Core.NavigatorMode;
         PositioningArmEnabled = pkg.Core.PositioningArmEnabled;
         RebuildStepItems();

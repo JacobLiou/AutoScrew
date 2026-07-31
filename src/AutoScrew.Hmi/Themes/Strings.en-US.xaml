@@ -330,7 +330,7 @@
     <system:String x:Key="S.ControllerParam.Loosen.Stage1Accel">1st stage accel time</system:String>
     <system:String x:Key="S.ControllerParam.Loosen.Stage2Accel">2nd stage accel time</system:String>
     <system:String x:Key="S.ControllerParam.DetectTorque">Detect torque (mNm)</system:String>
-    <system:String x:Key="S.ControllerParam.DefaultName">Param {0}</system:String>
+    <system:String x:Key="S.ControllerParam.DefaultName">{0}</system:String>
     <system:String x:Key="S.ControllerParam.StatusNew">New preset draft created.</system:String>
     <system:String x:Key="S.ControllerParam.StatusSavedLocal">Saved locally.</system:String>
     <system:String x:Key="S.ControllerParam.StatusDeleted">Local preset deleted.</system:String>

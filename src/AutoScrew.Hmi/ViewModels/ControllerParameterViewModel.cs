@@ -140,6 +140,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     [ObservableProperty]
     private int _maxAngleDeg;
 
+    /// <summary>基本设定旋转方向：0=顺时针，1=逆时针（同步到各拧紧阶段）。</summary>
+    [ObservableProperty]
+    private int _directionIndex;
+
     [ObservableProperty]
     private int _maxTighteningTimeTenthSec;
 
@@ -228,10 +232,33 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     public const int MaxStageCount = 6;
 
-    partial void OnNameChanged(string value) => NotifySummary();
+    private bool _sanitizingName;
+    private bool _suppressIdNameSync;
 
-    partial void OnParameterIdChanged(int value)
+    partial void OnNameChanged(string value)
     {
+        if (!_sanitizingName)
+        {
+            var sanitized = ControllerAsciiName.Sanitize(value);
+            if (!string.Equals(value, sanitized, StringComparison.Ordinal))
+            {
+                _sanitizingName = true;
+                try { Name = sanitized; }
+                finally { _sanitizingName = false; }
+            }
+        }
+
+        NotifySummary();
+    }
+
+    partial void OnParameterIdChanged(int oldValue, int newValue)
+    {
+        if (!_suppressIdNameSync
+            && (string.IsNullOrEmpty(Name) || string.Equals(Name, oldValue.ToString(), StringComparison.Ordinal)))
+        {
+            Name = newValue.ToString();
+        }
+
         NotifySummary();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
         DeleteFromDeviceCommand.NotifyCanExecuteChanged();
@@ -241,6 +268,22 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     partial void OnMaxTighteningTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxRunTimeSeconds));
 
     partial void OnMaxLoosenTimeTenthSecChanged(int value) => OnPropertyChanged(nameof(MaxLoosenTimeSeconds));
+
+    partial void OnDirectionIndexChanged(int value)
+    {
+        if (value is not (0 or 1))
+            return;
+
+        var direction = (TighteningDirection)value;
+        foreach (var stage in _working.Core.Stages)
+            stage.Direction = direction;
+
+        foreach (var item in StageItems)
+        {
+            if (item.DirectionIndex != value)
+                item.DirectionIndex = value;
+        }
+    }
 
     partial void OnSelectedDeviceParameterChanged(ControllerParameterListItem? value)
     {
@@ -841,7 +884,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         ApplyTemplate(new TighteningParameterTemplate
         {
             ParameterId = nextId,
-            Core = new TighteningParameterCore { Name = Loc.Format("S.ControllerParam.DefaultName", nextId) },
+            Core = new TighteningParameterCore { Name = nextId.ToString() },
         });
         SelectedPreset = null;
     }
@@ -849,8 +892,16 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private void ApplyTemplate(TighteningParameterTemplate template)
     {
         _working = template;
-        ParameterId = template.ParameterId;
-        Name = template.Core.Name;
+        _suppressIdNameSync = true;
+        try
+        {
+            ParameterId = template.ParameterId;
+            Name = ControllerAsciiName.SanitizeOrDefault(template.Core.Name, template.ParameterId);
+        }
+        finally
+        {
+            _suppressIdNameSync = false;
+        }
         MinAngleDeg = template.Core.MinAngleDeg;
         MaxAngleDeg = template.Core.MaxAngleDeg;
         MaxTighteningTimeTenthSec = template.Core.MaxTighteningTimeTenthSec;
@@ -869,6 +920,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         ToolPrecisionCompTenthPercent = template.Core.ToolPrecisionCompTenthPercent;
         TorqueRateAngleDelayTenthDeg = template.Core.TorqueRateAngleDelayTenthDeg;
         RebuildStageItems();
+        DirectionIndex = template.Core.Stages.Count > 0
+            ? (int)template.Core.Stages[0].Direction
+            : (int)TighteningDirection.Clockwise;
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
         NotifySummary();
