@@ -41,7 +41,8 @@ internal sealed class ParameterBlockReader
 
     internal static void ValidateParameterId(int parameterId)
     {
-        if (parameterId is < 1 or > 500)
-            throw new ArgumentOutOfRangeException(nameof(parameterId), "Parameter ID must be 1-500.");
+        // 手册常见 1–500；现场工艺卡「参数：00」使用槽位 0，故放宽为 0–500。
+        if (parameterId is < 0 or > 500)
+            throw new ArgumentOutOfRangeException(nameof(parameterId), "Parameter ID must be 0-500.");
     }
 }

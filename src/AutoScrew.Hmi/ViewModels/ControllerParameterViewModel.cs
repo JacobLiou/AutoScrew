@@ -2,6 +2,7 @@ using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
+using AutoScrew.Hmi.Views.ControllerDevice;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -50,6 +51,7 @@ public sealed partial class ControllerParameterListItem : ObservableObject
 public sealed partial class ControllerParameterViewModel : ObservableObject
 {
     private readonly IControllerParameterPresetService _presetService;
+    private readonly IProcessLibraryService _processLibrary;
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
     private readonly IUserAuditService _audit;
@@ -60,6 +62,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     public ControllerParameterViewModel(
         IControllerParameterPresetService presetService,
+        IProcessLibraryService processLibrary,
         IStationDeviceService devices,
         ISnackbarService snackbarService,
         IUserAuditService audit,
@@ -67,6 +70,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         ICurrentUser user)
     {
         _presetService = presetService;
+        _processLibrary = processLibrary;
         _devices = devices;
         _snackbarService = snackbarService;
         _audit = audit;
@@ -803,6 +807,42 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             var template = await _presetService.ImportFromFileAsync(dialog.FileName).ConfigureAwait(true);
             ApplyTemplate(template);
             StatusMessage = Loc.Get("S.ControllerParam.StatusImported");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportFromProcessLibraryAsync()
+    {
+        var picker = new ProcessLibrarySlotPickerDialog(_processLibrary)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        if (picker.ShowDialog() != true || !picker.Confirmed ||
+            string.IsNullOrWhiteSpace(picker.ConfirmedProductPn))
+            return;
+
+        var productPn = picker.ConfirmedProductPn;
+        var slotId = picker.ConfirmedSlotId;
+        AuditConfig(
+            "Configuration.ParamImportProcessLibrary",
+            $"product={productPn};slot={slotId}");
+        try
+        {
+            var parsed = await _processLibrary
+                .LoadProductSlotAsync(productPn, slotId)
+                .ConfigureAwait(true);
+            ApplyTemplate(parsed.Template);
+            SelectedPreset = null;
+            StatusMessage = Loc.Format(
+                "S.ControllerParam.StatusImportedProcessLibrary",
+                parsed.SlotId.ToString("D2"),
+                parsed.ScrewPn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
         {

@@ -43,6 +43,7 @@
     <system:String x:Key="S.Nav.ControllerParams">拧紧参数</system:String>
     <system:String x:Key="S.Nav.ControllerSequence">拧紧顺序</system:String>
     <system:String x:Key="S.Nav.ControllerSource">拧紧来源</system:String>
+    <system:String x:Key="S.Nav.ProcessLibrary">工艺参数库</system:String>
     <system:String x:Key="S.Nav.DeviceConnection">设备连接</system:String>
     <system:String x:Key="S.Nav.Settings">设置</system:String>
     <system:String x:Key="S.Nav.BreadcrumbDefault">作业台</system:String>
@@ -311,12 +312,44 @@
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
     <system:String x:Key="S.Logs.SnackbarTitle">日志</system:String>
 
+    <!-- Process library (A) -->
+    <system:String x:Key="S.ProcessLibrary.Title">工艺参数库</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（TXT），一键下发到设备参数槽。</system:String>
+    <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.Load">加载槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.RefreshList">刷新产品列表</system:String>
+    <system:String x:Key="S.ProcessLibrary.Upload">上传工艺卡</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeleteSlot">删除选中槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.Deploy">下发到设备</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColSlot">槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColScrewPn">螺钉 PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColFile">文件</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeviceOnline">控制器可用，可下发工艺参数。</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeviceOffline">控制器不可用（仿真或未连接），无法下发。</system:String>
+    <system:String x:Key="S.ProcessLibrary.NeedProductPn">请先输入产品 PN。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusRefreshed">已刷新产品列表。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusProductEmpty">该产品下暂无工艺卡。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSlotsLoaded">已加载 {0} 个槽位。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusUploaded">已上传 {0} 张工艺卡。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusDeleted">已删除槽位。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusDeployOk">已下发 {0} 个槽位到设备，并保存本机预设。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusDeployPartial">已写入 {0} 个槽位后失败（槽位 {1}）：{2}</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeleteTitle">删除工艺卡</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeleteBody">确定删除槽位 {0:D2}（螺钉 {1}）？仅删除工艺库文件，不影响设备当前参数。</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeployTitle">下发工艺参数</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeployBody">将产品 {0} 的 {1} 个槽位写入控制器？遇错将停止后续槽位。</system:String>
+
     <!-- Controller parameters -->
     <system:String x:Key="S.ControllerParam.Title">拧紧参数</system:String>
     <system:String x:Key="S.ControllerParam.New">新建</system:String>
     <system:String x:Key="S.ControllerParam.SaveLocal">保存到本地</system:String>
     <system:String x:Key="S.ControllerParam.Delete">删除</system:String>
     <system:String x:Key="S.ControllerParam.Import">导入 JSON</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibrary">从工艺库导入</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryTitle">从工艺参数库导入</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryHint">选择产品 PN 与槽位后，将解析工艺卡并填充当前参数编辑器（不会自动下发设备）。</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibrary">已从工艺库导入槽位 {0}（{1}），请核对后下发到设备。</system:String>
     <system:String x:Key="S.ControllerParam.Export">导出 JSON</system:String>
     <system:String x:Key="S.ControllerParam.ReadDevice">读取当前参数</system:String>
     <system:String x:Key="S.ControllerParam.DeleteDevice">删除设备参数</system:String>

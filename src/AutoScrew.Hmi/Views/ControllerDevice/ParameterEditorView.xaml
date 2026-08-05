@@ -134,6 +134,10 @@
             <ui:Button Margin="0,0,8,8" Command="{Binding RefreshDeviceListCommand}" Content="{DynamicResource S.ControllerParam.RefreshDeviceList}" />
             <!--<ui:Button Margin="0,0,8,8" Appearance="Primary" Command="{Binding ImportAllFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportAllFromDevice}" />-->
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportSelectedFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ImportFromDevice}" />
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Primary"
+                       Command="{Binding ImportFromProcessLibraryCommand}"
+                       Content="{DynamicResource S.ControllerParam.ImportProcessLibrary}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
             <ui:Button Margin="0,0,8,8"
                        Appearance="Danger"

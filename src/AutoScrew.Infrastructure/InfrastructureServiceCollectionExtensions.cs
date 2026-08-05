@@ -9,6 +9,7 @@ using AutoScrew.Infrastructure.Hardware;
 using AutoScrew.Infrastructure.Lan;
 using AutoScrew.Infrastructure.Mes;
 using AutoScrew.Infrastructure.Persistence;
+using AutoScrew.Infrastructure.ProcessLibrary;
 using AutoScrew.Infrastructure.Templates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +36,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<SessionCurrentUser>());
         services.AddSingleton<ITemplateLayoutLoader, TemplateLayoutJsonLoader>();
         services.AddSingleton<ISnWorkArchiveSync, SnWorkArchiveSync>();
+        services.AddSingleton<LanShareAccess>();
+        services.AddSingleton<ProcessLibraryStore>();
+        services.AddSingleton<IProcessLibraryService, ProcessLibraryService>();
         services.AddSingleton<ICurveArchive, LocalCurveArchive>();
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();

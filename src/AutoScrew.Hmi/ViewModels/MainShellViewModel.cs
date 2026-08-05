@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
@@ -9,11 +8,10 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Wpf.Ui;
@@ -30,6 +28,7 @@ public enum MainAppSection
     ControllerParameter,
     ControllerSequence,
     ControllerSource,
+    ProcessLibrary,
     DeviceConnection,
     Settings
 }
@@ -214,6 +213,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.ControllerSequence;
         else if (pageType == typeof(ControllerSourcePage))
             SelectedSection = MainAppSection.ControllerSource;
+        else if (pageType == typeof(ProcessLibraryPage))
+            SelectedSection = MainAppSection.ProcessLibrary;
         else if (pageType == typeof(DeviceConnectionPage))
             SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
@@ -255,6 +256,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.ControllerParameter => typeof(ControllerParameterPage),
             MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
             MainAppSection.ControllerSource => typeof(ControllerSourcePage),
+            MainAppSection.ProcessLibrary => typeof(ProcessLibraryPage),
             MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
@@ -410,7 +412,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private static bool IsDeviceConfigurationSection(MainAppSection section) =>
         section is MainAppSection.ControllerParameter
             or MainAppSection.ControllerSequence
-            or MainAppSection.ControllerSource;
+            or MainAppSection.ControllerSource
+            or MainAppSection.ProcessLibrary;
 
     private void RebuildMenuItems()
     {
@@ -447,6 +450,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.WrenchScrewdriver24 },
                 IsExpanded = true
             };
+
+            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.ProcessLibrary"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Library24 },
+                TargetPageType = typeof(ProcessLibraryPage),
+                TargetPageTag = "process-library"
+            });
 
             deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
