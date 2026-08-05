@@ -9,8 +9,9 @@ namespace AutoScrew.Infrastructure.ProcessLibrary;
 /// <summary>工艺卡 TXT → <see cref="TighteningParameterTemplate"/>（扭矩默认 lbf.in）。</summary>
 public static class ProcessCardTxtParser
 {
+    /// <summary>允许值为空（如最终模板「参数ID：」仅注释）。</summary>
     private static readonly Regex HeaderKv = new(
-        @"^(?<k>[^：:]+)[：:]\s*(?<v>.+?)\s*(?:<.*)?$",
+        @"^(?<k>[^：:]+)[：:]\s*(?<v>.*?)\s*$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex StageHeader = new(
@@ -104,7 +105,6 @@ public static class ProcessCardTxtParser
                     _ => "",
                 };
                 loosenMap[prefix + key] = value;
-                // 无段前缀的键（生产履历、最小扭矩）也保留裸键
                 if (loosenSegment == 0 || key.Contains("生产履历", StringComparison.Ordinal) ||
                     key.Contains("最小扭矩", StringComparison.Ordinal))
                     loosenMap[key] = value;
@@ -114,19 +114,7 @@ public static class ProcessCardTxtParser
             map[key] = value;
         }
 
-        if (!TryGetInt(map, "参数", out var slotId) && !TryGetInt(map, "参数：", out slotId))
-        {
-            // 「参数：00」键规范化后为「参数」
-            throw new InvalidDataException("工艺卡缺少「参数：NN」槽位号。");
-        }
-
-        var screwPn = GetString(map, "参数ID") ?? GetString(map, "参数Id") ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(screwPn))
-            throw new InvalidDataException("工艺卡缺少「参数ID」（螺钉 PN）。");
-
-        screwPn = SanitizeAscii(screwPn);
-        if (string.IsNullOrEmpty(screwPn))
-            throw new InvalidDataException("参数ID 需包含 ASCII 字母或数字（用作控制器参数名）。");
+        var (screwPn, slotId) = ParseParameterIdentity(map);
 
         TryGetInt(map, "阶段有效", out var stageCount);
         if (stageCount <= 0)
@@ -184,6 +172,43 @@ public static class ProcessCardTxtParser
         return Parse(text);
     }
 
+    /// <summary>
+    /// 最终模板：<c>参数：螺钉PN-槽位</c>（如 1830330479-00）；
+    /// 兼容旧卡：<c>参数：00</c> + <c>参数ID：螺钉PN</c>。
+    /// </summary>
+    private static (string ScrewPn, int SlotId) ParseParameterIdentity(IReadOnlyDictionary<string, string> map)
+    {
+        var paramRaw = GetString(map, "参数")?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(paramRaw))
+            throw new InvalidDataException("工艺卡缺少「参数：螺钉PN-槽位」或「参数：NN」。");
+
+        var dash = paramRaw.LastIndexOf('-');
+        if (dash > 0 && dash < paramRaw.Length - 1)
+        {
+            var screwPart = SanitizeAscii(paramRaw[..dash]);
+            var slotPart = paramRaw[(dash + 1)..].Trim();
+            if (string.IsNullOrEmpty(screwPart))
+                throw new InvalidDataException($"「参数」中螺钉 PN 无效：{paramRaw}");
+            if (!int.TryParse(slotPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out var slotId))
+                throw new InvalidDataException($"「参数」中槽位号无效：{paramRaw}");
+            return (screwPart, slotId);
+        }
+
+        // 旧格式：参数 = 槽位；参数ID = 螺钉 PN
+        if (!int.TryParse(
+                paramRaw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0],
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var legacySlot))
+            throw new InvalidDataException($"工艺卡「参数」无法识别为槽位或 螺钉PN-槽位：{paramRaw}");
+
+        var legacyScrew = SanitizeAscii(GetString(map, "参数ID") ?? GetString(map, "参数Id") ?? string.Empty);
+        if (string.IsNullOrEmpty(legacyScrew))
+            throw new InvalidDataException("旧格式工艺卡缺少「参数ID」（螺钉 PN）。");
+
+        return (legacyScrew, legacySlot);
+    }
+
     private static void ApplyStage(
         TighteningStageCore stage,
         int index,
@@ -199,13 +224,13 @@ public static class ProcessCardTxtParser
         var clampTorqueLbf = GetDouble(block, "夹紧扭矩", 0);
         var clampAngle = GetInt(block, "夹紧角度", 0);
 
-        var torqueJudge = ParseOnOff(GetString(block, "扭矩判断"));
-        var angleJudge = ParseOnOff(GetString(block, "角度判断"));
-
         var maxTorqueLbf = GetDouble(block, "最大扭矩", 0);
         var minTorqueLbf = GetDouble(block, "最小扭矩", 0);
         var maxAngle = GetInt(block, "最大角度", 0);
         var minAngle = GetInt(block, "最小角度", 0);
+
+        var torqueJudge = ResolveJudgeEnabled(block, "扭矩判断", maxTorqueLbf > 0 || minTorqueLbf > 0);
+        var angleJudge = ResolveJudgeEnabled(block, "角度判断", maxAngle > 0 || minAngle > 0);
 
         stage.ControlMode = ResolveControlMode(index, tightenAngle, torqueLbf, torqueRate, clampTorqueLbf, clampAngle);
 
@@ -263,6 +288,32 @@ public static class ProcessCardTxtParser
         }
     }
 
+    /// <summary>
+    /// 显式 OFF → false；显式 ON → true；键缺失且有正值上下限 → true。
+    /// </summary>
+    private static bool ResolveJudgeEnabled(
+        IReadOnlyDictionary<string, string> block,
+        string key,
+        bool hasPositiveLimits)
+    {
+        if (!block.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
+            return hasPositiveLimits;
+
+        if (IsExplicitOff(raw))
+            return false;
+
+        return ParseOnOff(raw) || hasPositiveLimits;
+    }
+
+    private static bool IsExplicitOff(string value)
+    {
+        var v = value.Trim();
+        return v.Equals("OFF", StringComparison.OrdinalIgnoreCase)
+               || v.Equals("关", StringComparison.Ordinal)
+               || v.Equals("否", StringComparison.Ordinal)
+               || v.Equals("0", StringComparison.Ordinal);
+    }
+
     private static TighteningControlMode ResolveControlMode(
         int index,
         int tightenAngle,
@@ -285,9 +336,11 @@ public static class ProcessCardTxtParser
             return TighteningControlMode.Torque;
         }
 
-        // 预紧：2 选 1
+        // 预紧：最终模板为扭矩/扭矩率；兼容旧卡夹紧扭矩
         if (index == 2)
         {
+            if (torqueRate > 0)
+                return TighteningControlMode.TorqueRate;
             if (clampTorqueLbf > 0)
                 return TighteningControlMode.ClampTorque;
             return TighteningControlMode.Torque;
@@ -316,21 +369,9 @@ public static class ProcessCardTxtParser
 
         loosen.Stage1AngleDeg = GetInt(map, "一段角度", GetInt(map, "角度", 0));
         loosen.Stage1SpeedRpm = GetInt(map, "一段速度", 0);
-        // 第二段可能先写速度再写角度；一段角度可能被「角度」覆盖，优先一段/二段前缀
-        if (map.ContainsKey("二段角度") || map.ContainsKey("二段速度"))
-        {
-            loosen.Stage2AngleDeg = GetInt(map, "二段角度", 0);
-            loosen.Stage2SpeedRpm = GetInt(map, "二段速度", 0);
-        }
-        else
-        {
-            // 宽松：无前缀时第二段角度键仍可能是「角度」——已在一段消费；用末次「角度」不可靠。
-            // 样例结构：第一段 角度/速度，第二段 速度/角度 → 解析时已加前缀。
-            loosen.Stage2AngleDeg = GetInt(map, "二段角度", 0);
-            loosen.Stage2SpeedRpm = GetInt(map, "二段速度", 0);
-        }
+        loosen.Stage2AngleDeg = GetInt(map, "二段角度", 0);
+        loosen.Stage2SpeedRpm = GetInt(map, "二段速度", 0);
 
-        // 若一段速度为 0，尝试裸「速度」（仅一段场景）
         if (loosen.Stage1SpeedRpm == 0)
             loosen.Stage1SpeedRpm = GetInt(map, "速度", 0);
 
@@ -347,7 +388,6 @@ public static class ProcessCardTxtParser
     private static string NormalizeKey(string key)
     {
         key = key.Trim();
-        // 去掉单位括号：最大总角度（°） / 速度（转/分钟） / 扭矩（lbf.in）
         var paren = key.IndexOf('（');
         if (paren < 0)
             paren = key.IndexOf('(');
@@ -362,16 +402,15 @@ public static class ProcessCardTxtParser
     private static bool TryGetInt(IReadOnlyDictionary<string, string> map, string key, out int value)
     {
         value = 0;
-        if (!map.TryGetValue(key, out var raw))
+        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
             return false;
-        // 「4 阶段有效」取首个整数；「00」十进制
         var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
         return int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
     }
 
     private static int GetInt(IReadOnlyDictionary<string, string> map, string key, int fallback)
     {
-        if (!map.TryGetValue(key, out var raw))
+        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
             return fallback;
         var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
         return int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : fallback;
@@ -379,7 +418,7 @@ public static class ProcessCardTxtParser
 
     private static double GetDouble(IReadOnlyDictionary<string, string> map, string key, double fallback)
     {
-        if (!map.TryGetValue(key, out var raw))
+        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
             return fallback;
         var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
         return double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : fallback;
