@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "defaultId": 3,
+  "types": [
+    { "id": 1, "code": "M1.0", "displayName": "M1.0 / 极小", "diameterPx": 18 },
+    { "id": 2, "code": "M1.4", "displayName": "M1.4 / 很小", "diameterPx": 22 },
+    { "id": 3, "code": "M2", "displayName": "M2（默认）", "diameterPx": 26 },
+    { "id": 4, "code": "M2.5", "displayName": "M2.5", "diameterPx": 30 },
+    { "id": 5, "code": "M3", "displayName": "M3", "diameterPx": 34 },
+    { "id": 6, "code": "M4", "displayName": "M4 / 较大", "diameterPx": 40 }
+  ]
+}

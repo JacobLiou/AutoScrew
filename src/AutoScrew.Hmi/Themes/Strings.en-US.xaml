@@ -289,12 +289,6 @@
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">Exit the application?</system:String>
 
     <system:String x:Key="S.Screw.TypeMenu">Screw type (circle size)</system:String>
-    <system:String x:Key="S.Screw.M10">M1.0 / tiny (18px)</system:String>
-    <system:String x:Key="S.Screw.M14">M1.4 / very small (22px)</system:String>
-    <system:String x:Key="S.Screw.M2Default">M2 (default) (26px)</system:String>
-    <system:String x:Key="S.Screw.M25">M2.5 (30px)</system:String>
-    <system:String x:Key="S.Screw.M3">M3 (34px)</system:String>
-    <system:String x:Key="S.Screw.M4">M4 / large (40px)</system:String>
     <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew password reset</system:String>
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
     <system:String x:Key="S.Logs.SnackbarTitle">Logs</system:String>

@@ -5,6 +5,7 @@ using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Infrastructure;
+using AutoScrew.Hmi.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Hmi.Views.Pages;
@@ -12,6 +13,8 @@ using AutoScrew.Infrastructure.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
@@ -135,7 +138,10 @@ public partial class App : System.Windows.Application
         await _host.StartAsync().ConfigureAwait(true);
 
         var localization = _host.Services.GetRequiredService<LocalizationService>();
-        var appOptions = _host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AutoScrewAppOptions>>().Value;
+        var appOptions = _host.Services.GetRequiredService<IOptions<AutoScrewAppOptions>>().Value;
+        ScrewTypeCatalog.LoadFromDataDirectory(
+            appOptions,
+            _host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("ScrewTypeCatalog"));
         localization.Initialize(appOptions.UiCulture);
         Loc.Initialize(localization);
 

@@ -113,7 +113,7 @@
 |------|------|------|
 | `index` | int | **面内**位号，从 1 起，面内唯一 |
 | `centerX` / `centerY` | number | 圆心坐标 |
-| `screwTypeId` | int | 1..6，对应 `ScrewTypeCatalog` |
+| `screwTypeId` | int | 对应 `{DataDirectory}/screw-types.json`（见 [samples/screw-types.json](samples/screw-types.json)；运行时由 `ScrewTypeCatalog` 加载，无界面编辑） |
 | `circleDiameter` | number | 可选，覆盖面级默认 |
 | `partNo` | string | 可选，螺钉料号（与 MES 工艺对齐） |
 | `globalIndex` | int | **可选**；若省略则由运行时按 §5 计算 |

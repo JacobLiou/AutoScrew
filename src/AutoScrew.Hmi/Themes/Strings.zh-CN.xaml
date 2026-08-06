@@ -302,12 +302,6 @@
 
     <!-- Screw marker -->
     <system:String x:Key="S.Screw.TypeMenu">螺钉类型（圆圈大小）</system:String>
-    <system:String x:Key="S.Screw.M10">M1.0 / 极小 (18px)</system:String>
-    <system:String x:Key="S.Screw.M14">M1.4 / 很小 (22px)</system:String>
-    <system:String x:Key="S.Screw.M2Default">M2（默认）(26px)</system:String>
-    <system:String x:Key="S.Screw.M25">M2.5 (30px)</system:String>
-    <system:String x:Key="S.Screw.M3">M3 (34px)</system:String>
-    <system:String x:Key="S.Screw.M4">M4 / 较大 (40px)</system:String>
     <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew 忘记密码</system:String>
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
     <system:String x:Key="S.Logs.SnackbarTitle">日志</system:String>

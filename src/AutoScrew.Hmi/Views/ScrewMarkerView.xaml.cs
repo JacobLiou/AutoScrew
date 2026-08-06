@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ public partial class ScrewMarkerView
     private ScrewMarkerViewModel? _vm;
     private Point _pressCanvasPoint;
     private bool _isDragging;
+    private bool _typeMenuBuilt;
 
     public ScrewMarkerView()
     {
@@ -36,6 +38,35 @@ public partial class ScrewMarkerView
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachVm();
+        EnsureScrewTypeMenuItems();
+    }
+
+    private void OnScrewTypeContextMenuOpened(object sender, RoutedEventArgs e) =>
+        EnsureScrewTypeMenuItems();
+
+    private void EnsureScrewTypeMenuItems()
+    {
+        if (_typeMenuBuilt || ScrewTypeContextMenu is null)
+            return;
+
+        ScrewTypeCatalog.EnsureLoaded();
+
+        // 保留标题 + 分隔线，其后按配置生成
+        while (ScrewTypeContextMenu.Items.Count > 2)
+            ScrewTypeContextMenu.Items.RemoveAt(2);
+
+        foreach (var preset in ScrewTypeCatalog.All)
+        {
+            var item = new MenuItem
+            {
+                Header = $"{preset.DisplayName} ({preset.DiameterPx:0}px)",
+                Tag = preset.Id,
+            };
+            item.Click += OnScrewTypeMenuClick;
+            ScrewTypeContextMenu.Items.Add(item);
+        }
+
+        _typeMenuBuilt = true;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -156,7 +187,16 @@ public partial class ScrewMarkerView
 
     private void OnScrewTypeMenuClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not MenuItem { Tag: string s } || !int.TryParse(s, out var id))
+        if (sender is not MenuItem item)
+            return;
+
+        var id = item.Tag switch
+        {
+            int i => i,
+            string s when int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => -1,
+        };
+        if (id <= 0)
             return;
 
         if (DataContext is not ScrewMarkerViewModel vm)

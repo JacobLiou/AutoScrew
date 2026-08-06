@@ -34,7 +34,7 @@ public sealed class MarkerRecord
 
     public double CenterY { get; set; }
 
-    /// <summary>螺钉类型 Id，1..6，与 <see cref="ScrewTypeCatalog"/> 对应。</summary>
+    /// <summary>螺钉类型 Id，见 <c>{DataDirectory}/screw-types.json</c> / <see cref="ScrewTypeCatalog"/>。</summary>
     public int? ScrewTypeId { get; set; }
 
     /// <summary>圆圈直径（像素）。若缺省则使用文档级 <see cref="TemplateDocument.CircleDiameter"/>。</summary>
