@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Hmi.Services;
+using AutoScrew.Hmi.Views.ControllerDevice;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -182,6 +183,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 {
     private readonly IControllerSequencePresetService _presetService;
     private readonly IControllerParameterPresetService _parameterPresetService;
+    private readonly IProcessLibraryService _processLibrary;
     private readonly IStationDeviceService _devices;
     private readonly ISnackbarService _snackbarService;
     private readonly IUserAuditService _audit;
@@ -192,6 +194,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     public ControllerSequenceViewModel(
         IControllerSequencePresetService presetService,
         IControllerParameterPresetService parameterPresetService,
+        IProcessLibraryService processLibrary,
         IStationDeviceService devices,
         ISnackbarService snackbarService,
         IUserAuditService audit,
@@ -200,6 +203,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     {
         _presetService = presetService;
         _parameterPresetService = parameterPresetService;
+        _processLibrary = processLibrary;
         _devices = devices;
         _snackbarService = snackbarService;
         _audit = audit;
@@ -703,6 +707,41 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             var pkg = await _presetService.ImportFromFileAsync(dialog.FileName).ConfigureAwait(true);
             ApplyPackage(pkg);
             StatusMessage = Loc.Get("S.ControllerSeq.StatusImported");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportFromProcessLibraryAsync()
+    {
+        var picker = new ProcessLibrarySequencePickerDialog(_processLibrary)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        if (picker.ShowDialog() != true || !picker.Confirmed ||
+            string.IsNullOrWhiteSpace(picker.ConfirmedProductPn))
+            return;
+
+        var productPn = picker.ConfirmedProductPn;
+        var sequenceId = picker.ConfirmedSequenceId;
+        AuditConfig(
+            "Configuration.SequenceImportProcessLibrary",
+            $"product={productPn};sequenceId={sequenceId}");
+        try
+        {
+            var pkg = await _processLibrary
+                .LoadProductSequenceAsync(productPn, sequenceId)
+                .ConfigureAwait(true);
+            ApplyPackage(pkg);
+            StatusMessage = Loc.Format(
+                "S.ControllerSeq.StatusImportedProcessLibrary",
+                pkg.SequenceId,
+                productPn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
         {

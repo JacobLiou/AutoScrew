@@ -43,7 +43,7 @@
     <system:String x:Key="S.Nav.ControllerParams">拧紧参数</system:String>
     <system:String x:Key="S.Nav.ControllerSequence">拧紧顺序</system:String>
     <system:String x:Key="S.Nav.ControllerSource">拧紧来源</system:String>
-    <system:String x:Key="S.Nav.ProcessLibrary">工艺参数库</system:String>
+    <system:String x:Key="S.Nav.ProcessLibrary">工艺库</system:String>
     <system:String x:Key="S.Nav.DeviceConnection">设备连接</system:String>
     <system:String x:Key="S.Nav.Settings">设置</system:String>
     <system:String x:Key="S.Nav.BreadcrumbDefault">作业台</system:String>
@@ -307,32 +307,49 @@
     <system:String x:Key="S.Logs.SnackbarTitle">日志</system:String>
 
     <!-- Process library (A) -->
-    <system:String x:Key="S.ProcessLibrary.Title">工艺参数库</system:String>
-    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（TXT），一键下发到设备参数槽。</system:String>
+    <system:String x:Key="S.ProcessLibrary.Title">工艺库</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 JSON），并可下发到设备。</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
-    <system:String x:Key="S.ProcessLibrary.Load">加载槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.Load">加载产品内容</system:String>
     <system:String x:Key="S.ProcessLibrary.RefreshList">刷新产品列表</system:String>
+    <system:String x:Key="S.ProcessLibrary.TabParams">参数槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.TabSequences">拧紧顺序</system:String>
     <system:String x:Key="S.ProcessLibrary.Upload">上传工艺卡</system:String>
+    <system:String x:Key="S.ProcessLibrary.UploadSequence">上传顺序 JSON</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSlot">删除选中槽位</system:String>
-    <system:String x:Key="S.ProcessLibrary.Deploy">下发到设备</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeleteSequence">删除选中顺序</system:String>
+    <system:String x:Key="S.ProcessLibrary.Deploy">下发参数到设备</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeploySequences">下发顺序到设备</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSlot">槽位</system:String>
     <system:String x:Key="S.ProcessLibrary.ColScrewPn">螺钉 PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColSequenceId">顺序 ID</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColSequenceName">名称</system:String>
     <system:String x:Key="S.ProcessLibrary.ColFile">文件</system:String>
-    <system:String x:Key="S.ProcessLibrary.DeviceOnline">控制器可用，可下发工艺参数。</system:String>
+    <system:String x:Key="S.ProcessLibrary.DeviceOnline">控制器可用，可下发工艺。</system:String>
     <system:String x:Key="S.ProcessLibrary.DeviceOffline">控制器不可用（仿真或未连接），无法下发。</system:String>
     <system:String x:Key="S.ProcessLibrary.NeedProductPn">请先输入产品 PN。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusRefreshed">已刷新产品列表。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusProductEmpty">该产品下暂无工艺卡。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceEmpty">该产品下暂无拧紧顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSlotsLoaded">已加载 {0} 个槽位。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusProductLoaded">已加载 {0} 个参数槽、{1} 条拧紧顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusUploaded">已上传 {0} 张工艺卡。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceUploaded">已上传 {0} 条拧紧顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusDeleted">已删除槽位。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceDeleted">已删除顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusDeployOk">已下发 {0} 个槽位到设备，并保存本机预设。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusDeployPartial">已写入 {0} 个槽位后失败（槽位 {1}）：{2}</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusDeploySequenceOk">已下发 {0} 条顺序到设备，并保存本机预设。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusDeploySequencePartial">已写入 {0} 条顺序后失败（顺序 {1}）：{2}</system:String>
     <system:String x:Key="S.ProcessLibrary.ConfirmDeleteTitle">删除工艺卡</system:String>
     <system:String x:Key="S.ProcessLibrary.ConfirmDeleteBody">确定删除槽位 {0:D2}（螺钉 {1}）？仅删除工艺库文件，不影响设备当前参数。</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeleteSequenceTitle">删除拧紧顺序</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeleteSequenceBody">确定删除顺序 {0:D2}（{1}）？仅删除工艺库文件，不影响设备当前顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.ConfirmDeployTitle">下发工艺参数</system:String>
     <system:String x:Key="S.ProcessLibrary.ConfirmDeployBody">将产品 {0} 的 {1} 个槽位写入控制器？遇错将停止后续槽位。</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeploySequenceTitle">下发拧紧顺序</system:String>
+    <system:String x:Key="S.ProcessLibrary.ConfirmDeploySequenceBody">将产品 {0} 的 {1} 条顺序覆盖写入控制器？遇错将停止后续顺序。</system:String>
 
     <!-- Controller parameters -->
     <system:String x:Key="S.ControllerParam.Title">拧紧参数</system:String>
@@ -461,6 +478,10 @@
     <system:String x:Key="S.ControllerSeq.DeviceListHint">连接设备后可刷新顺序列表 (#260)。</system:String>
     <system:String x:Key="S.ControllerSeq.RefreshDeviceList">刷新设备顺序列表</system:String>
     <system:String x:Key="S.ControllerSeq.ImportFromDevice">导入选中 (#250)</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibrary">从工艺库导入</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryTitle">从工艺库导入顺序</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryHint">选择产品 PN 与顺序后，将填充当前顺序编辑器（不会自动下发设备）。</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibrary">已从工艺库导入顺序 #{0}（产品 {1}）。请核对后再下发到设备。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedDevice">已从设备导入顺序 #{0} 到本地。</system:String>
     <system:String x:Key="S.ControllerSeq.NavigatorMode">导航模式</system:String>
     <system:String x:Key="S.ControllerSeq.ModeGeneral">一般</system:String>

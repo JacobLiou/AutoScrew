@@ -2,9 +2,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Infrastructure.Hardware;
 using AutoScrew.Infrastructure.Lan;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Infrastructure.ProcessLibrary;
 
@@ -15,6 +17,12 @@ public sealed class ProcessLibraryStore
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    private static readonly JsonSerializerOptions SequenceJsonOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     private readonly LanShareAccess _lan;
@@ -86,6 +94,8 @@ public sealed class ProcessLibraryStore
         if (doc is null)
             return null;
 
+        doc.Sequences ??= [];
+        doc.Slots ??= [];
         return ToSummary(doc);
     }
 
@@ -100,9 +110,7 @@ public sealed class ProcessLibraryStore
         if (string.IsNullOrWhiteSpace(safePn))
             throw new ArgumentException("产品 PN 无效。", nameof(productPn));
 
-        var connectErr = _lan.EnsureConnected();
-        if (connectErr is not null && !string.IsNullOrWhiteSpace(_lan.ResolveLanRoot()))
-            throw new IOException($"无法连接局域网工艺库：{connectErr}");
+        EnsureLanConnected();
 
         var productDir = Path.Combine(ResolveProcessRoot(), safePn);
         var screwsDir = Path.Combine(productDir, "screws");
@@ -127,11 +135,7 @@ public sealed class ProcessLibraryStore
         doc.Slots.Add(slot);
         doc.Slots.Sort(static (a, b) => a.SlotId.CompareTo(b.SlotId));
 
-        var manifestPath = Path.Combine(productDir, "product.json");
-        await using (var stream = File.Create(manifestPath))
-        {
-            await JsonSerializer.SerializeAsync(stream, doc, JsonOptions, cancellationToken).ConfigureAwait(false);
-        }
+        await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "Process card saved product={ProductPn} slot={SlotId} screw={ScrewPn}",
@@ -153,9 +157,7 @@ public sealed class ProcessLibraryStore
                 File.Delete(path);
             doc.Slots.RemoveAll(s => s.SlotId == slotId);
             doc.UpdatedUtc = DateTimeOffset.UtcNow;
-            var manifestPath = Path.Combine(productDir, "product.json");
-            await using var stream = File.Create(manifestPath);
-            await JsonSerializer.SerializeAsync(stream, doc, JsonOptions, cancellationToken).ConfigureAwait(false);
+            await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -164,6 +166,110 @@ public sealed class ProcessLibraryStore
         var safePn = SanitizeFileName(productPn);
         var productDir = Path.Combine(ResolveProcessRoot(), safePn);
         return Path.Combine(productDir, slot.FileName.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    public async Task<ProcessLibrarySequenceInfo> SaveSequenceAsync(
+        string productPn,
+        TighteningSequencePackage package,
+        CancellationToken cancellationToken)
+    {
+        EnsureRoot();
+        var safePn = SanitizeFileName(productPn);
+        if (string.IsNullOrWhiteSpace(safePn))
+            throw new ArgumentException("产品 PN 无效。", nameof(productPn));
+
+        EnsureLanConnected();
+
+        ArgumentNullException.ThrowIfNull(package);
+        package.ApplyCoreToRaw();
+
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        var seqDir = Path.Combine(productDir, "sequences");
+        Directory.CreateDirectory(seqDir);
+
+        var fileName = $"sequences/{package.SequenceId:D2}.json";
+        var destPath = Path.Combine(productDir, fileName.Replace('/', Path.DirectorySeparatorChar));
+        var docFile = ControllerSequencePresetDocument.FromPackage(package);
+        cancellationToken.ThrowIfCancellationRequested();
+        await using (var stream = File.Create(destPath))
+        {
+            await JsonSerializer.SerializeAsync(stream, docFile, SequenceJsonOptions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var displayName = string.IsNullOrWhiteSpace(package.Core.Name)
+            ? package.SequenceId.ToString()
+            : package.Core.Name.Trim();
+
+        var doc = LoadOrCreateManifest(safePn, productDir);
+        doc.ProductPn = safePn;
+        doc.UpdatedUtc = DateTimeOffset.UtcNow;
+        doc.Sequences.RemoveAll(s => s.SequenceId == package.SequenceId);
+        var entry = new ProcessSequenceDocument
+        {
+            SequenceId = package.SequenceId,
+            FileName = fileName,
+            DisplayName = displayName,
+        };
+        doc.Sequences.Add(entry);
+        doc.Sequences.Sort(static (a, b) => a.SequenceId.CompareTo(b.SequenceId));
+
+        await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "Process sequence saved product={ProductPn} sequenceId={SequenceId}",
+            safePn, package.SequenceId);
+
+        return new ProcessLibrarySequenceInfo(entry.SequenceId, entry.FileName, entry.DisplayName);
+    }
+
+    public async Task RemoveSequenceAsync(string productPn, int sequenceId, CancellationToken cancellationToken)
+    {
+        var safePn = SanitizeFileName(productPn);
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        var doc = LoadOrCreateManifest(safePn, productDir);
+        var existing = doc.Sequences.FirstOrDefault(s => s.SequenceId == sequenceId);
+        if (existing is not null)
+        {
+            var path = Path.Combine(productDir, existing.FileName.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(path))
+                File.Delete(path);
+            doc.Sequences.RemoveAll(s => s.SequenceId == sequenceId);
+            doc.UpdatedUtc = DateTimeOffset.UtcNow;
+            await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public string ResolveSequenceFilePath(string productPn, ProcessLibrarySequenceInfo sequence)
+    {
+        var safePn = SanitizeFileName(productPn);
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        return Path.Combine(productDir, sequence.FileName.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    public TighteningSequencePackage LoadSequencePackage(string filePath)
+    {
+        var json = File.ReadAllText(filePath);
+        var doc = JsonSerializer.Deserialize<ControllerSequencePresetDocument>(json, SequenceJsonOptions)
+            ?? throw new InvalidDataException($"Sequence file {filePath} is empty.");
+        return doc.ToPackage();
+    }
+
+    private void EnsureLanConnected()
+    {
+        var connectErr = _lan.EnsureConnected();
+        if (connectErr is not null && !string.IsNullOrWhiteSpace(_lan.ResolveLanRoot()))
+            throw new IOException($"无法连接局域网工艺库：{connectErr}");
+    }
+
+    private async Task SaveManifestAsync(
+        string productDir,
+        ProcessProductManifestDocument doc,
+        CancellationToken cancellationToken)
+    {
+        var manifestPath = Path.Combine(productDir, "product.json");
+        await using var stream = File.Create(manifestPath);
+        await JsonSerializer.SerializeAsync(stream, doc, JsonOptions, cancellationToken).ConfigureAwait(false);
     }
 
     private ProcessProductManifestDocument LoadOrCreateManifest(string safePn, string productDir)
@@ -175,16 +281,20 @@ public sealed class ProcessLibraryStore
             var doc = JsonSerializer.Deserialize<ProcessProductManifestDocument>(
                 File.ReadAllText(manifestPath), JsonOptions);
             if (doc is not null)
+            {
+                doc.Slots ??= [];
+                doc.Sequences ??= [];
                 return doc;
+            }
         }
 
-        return new ProcessProductManifestDocument { ProductPn = safePn, Slots = [] };
+        return new ProcessProductManifestDocument { ProductPn = safePn, Slots = [], Sequences = [] };
     }
 
     private ProcessLibraryProductSummary RebuildManifestFromFiles(string safePn, string dir)
     {
-        var screws = Path.Combine(dir, "screws");
         var slots = new List<ProcessLibrarySlotInfo>();
+        var screws = Path.Combine(dir, "screws");
         if (Directory.Exists(screws))
         {
             foreach (var file in Directory.EnumerateFiles(screws, "*.txt"))
@@ -203,8 +313,31 @@ public sealed class ProcessLibraryStore
             }
         }
 
+        var sequences = new List<ProcessLibrarySequenceInfo>();
+        var seqDir = Path.Combine(dir, "sequences");
+        if (Directory.Exists(seqDir))
+        {
+            foreach (var file in Directory.EnumerateFiles(seqDir, "*.json"))
+            {
+                try
+                {
+                    var pkg = LoadSequencePackage(file);
+                    var relative = Path.GetRelativePath(dir, file).Replace('\\', '/');
+                    var name = string.IsNullOrWhiteSpace(pkg.Core.Name)
+                        ? pkg.SequenceId.ToString()
+                        : pkg.Core.Name.Trim();
+                    sequences.Add(new ProcessLibrarySequenceInfo(pkg.SequenceId, relative, name));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Skip unreadable sequence {File}", file);
+                }
+            }
+        }
+
         slots.Sort(static (a, b) => a.SlotId.CompareTo(b.SlotId));
-        return new ProcessLibraryProductSummary(safePn, null, slots);
+        sequences.Sort(static (a, b) => a.SequenceId.CompareTo(b.SequenceId));
+        return new ProcessLibraryProductSummary(safePn, null, slots, sequences);
     }
 
     private static ProcessLibraryProductSummary ToSummary(ProcessProductManifestDocument doc) =>
@@ -214,6 +347,10 @@ public sealed class ProcessLibraryStore
             doc.Slots
                 .OrderBy(s => s.SlotId)
                 .Select(s => new ProcessLibrarySlotInfo(s.SlotId, s.ScrewPn, s.FileName, s.DisplayName))
+                .ToList(),
+            (doc.Sequences ?? [])
+                .OrderBy(s => s.SequenceId)
+                .Select(s => new ProcessLibrarySequenceInfo(s.SequenceId, s.FileName, s.DisplayName))
                 .ToList());
 
     private static string SanitizeFileName(string name)

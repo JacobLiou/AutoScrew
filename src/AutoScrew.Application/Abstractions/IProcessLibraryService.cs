@@ -8,10 +8,16 @@ public sealed record ProcessLibrarySlotInfo(
     string FileName,
     string DisplayName);
 
+public sealed record ProcessLibrarySequenceInfo(
+    int SequenceId,
+    string FileName,
+    string DisplayName);
+
 public sealed record ProcessLibraryProductSummary(
     string ProductPn,
     DateTimeOffset? UpdatedUtc,
-    IReadOnlyList<ProcessLibrarySlotInfo> Slots);
+    IReadOnlyList<ProcessLibrarySlotInfo> Slots,
+    IReadOnlyList<ProcessLibrarySequenceInfo> Sequences);
 
 public sealed record ProcessCardParseResult(
     TighteningParameterTemplate Template,
@@ -25,7 +31,14 @@ public sealed record ProcessLibraryDeployResult(
 
 public sealed record ProcessLibraryDeployFailure(int SlotId, string Message);
 
-/// <summary>按产品 PN 管理工艺卡（TXT）并下发到设备参数槽。</summary>
+public sealed record ProcessLibrarySequenceDeployResult(
+    string ProductPn,
+    IReadOnlyList<int> WrittenSequenceIds,
+    IReadOnlyList<ProcessLibrarySequenceDeployFailure> Failures);
+
+public sealed record ProcessLibrarySequenceDeployFailure(int SequenceId, string Message);
+
+/// <summary>按产品 PN 管理工艺卡（参数 TXT / 顺序 JSON）并下发到设备。</summary>
 public interface IProcessLibraryService
 {
     /// <summary>当前工艺库根路径（局域网优先，否则本机 DataDirectory/process）。</summary>
@@ -57,11 +70,34 @@ public interface IProcessLibraryService
     /// <summary>删除产品下某一槽位工艺卡。</summary>
     Task RemoveSlotAsync(string productPn, int slotId, CancellationToken cancellationToken = default);
 
-    /// <summary>按产品 PN 将全部槽位写入设备，并回写本机参数预设。</summary>
+    /// <summary>按产品 PN 将全部参数槽写入设备，并回写本机参数预设。</summary>
     Task<ProcessLibraryDeployResult> DeployProductToDeviceAsync(
         string productPn,
         CancellationToken cancellationToken = default);
 
     /// <summary>将单张工艺卡解析后写入设备与本机预设。</summary>
     Task DeployTemplateToDeviceAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
+
+    /// <summary>上传顺序 JSON 到产品目录并更新 product.json。</summary>
+    Task<ProcessLibrarySequenceInfo> UploadSequenceAsync(
+        string productPn,
+        string sourceFilePath,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>按产品 PN + 顺序 ID 读取顺序包。</summary>
+    Task<TighteningSequencePackage> LoadProductSequenceAsync(
+        string productPn,
+        int sequenceId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>删除产品下某一顺序。</summary>
+    Task RemoveSequenceAsync(string productPn, int sequenceId, CancellationToken cancellationToken = default);
+
+    /// <summary>按产品 PN 将全部顺序覆盖写入设备，并回写本机顺序预设。</summary>
+    Task<ProcessLibrarySequenceDeployResult> DeployProductSequencesToDeviceAsync(
+        string productPn,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>将单条顺序写入设备与本机预设。</summary>
+    Task DeploySequenceToDeviceAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default);
 }

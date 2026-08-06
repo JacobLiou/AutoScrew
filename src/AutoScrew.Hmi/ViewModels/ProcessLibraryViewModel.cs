@@ -22,6 +22,7 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
 
     public ObservableCollection<string> ProductPns { get; } = [];
     public ObservableCollection<ProcessLibrarySlotRow> Slots { get; } = [];
+    public ObservableCollection<ProcessLibrarySequenceRow> Sequences { get; } = [];
 
     [ObservableProperty]
     private string _productPn = string.Empty;
@@ -37,6 +38,9 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private ProcessLibrarySlotRow? _selectedSlot;
+
+    [ObservableProperty]
+    private ProcessLibrarySequenceRow? _selectedSequence;
 
     [ObservableProperty]
     private bool _isBusy;
@@ -63,7 +67,7 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             : Loc.Get("S.ProcessLibrary.DeviceOffline");
         await RefreshProductListAsync().ConfigureAwait(true);
         if (!string.IsNullOrWhiteSpace(ProductPn))
-            await RefreshSlotsAsync().ConfigureAwait(true);
+            await RefreshProductContentAsync().ConfigureAwait(true);
     }
 
     [RelayCommand]
@@ -91,11 +95,15 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task RefreshSlotsAsync()
+    private Task RefreshSlotsAsync() => RefreshProductContentAsync();
+
+    [RelayCommand]
+    private async Task RefreshProductContentAsync()
     {
         if (string.IsNullOrWhiteSpace(ProductPn))
         {
             Slots.Clear();
+            Sequences.Clear();
             return;
         }
 
@@ -104,6 +112,7 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             IsBusy = true;
             var product = await _library.GetProductAsync(ProductPn.Trim()).ConfigureAwait(true);
             Slots.Clear();
+            Sequences.Clear();
             if (product is null)
             {
                 StatusMessage = Loc.Get("S.ProcessLibrary.StatusProductEmpty");
@@ -112,9 +121,12 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
 
             foreach (var s in product.Slots)
                 Slots.Add(new ProcessLibrarySlotRow(s));
+            foreach (var s in product.Sequences)
+                Sequences.Add(new ProcessLibrarySequenceRow(s));
             StatusMessage = string.Format(
-                Loc.Get("S.ProcessLibrary.StatusSlotsLoaded"),
-                product.Slots.Count);
+                Loc.Get("S.ProcessLibrary.StatusProductLoaded"),
+                product.Slots.Count,
+                product.Sequences.Count);
         }
         catch (Exception ex)
         {
@@ -157,11 +169,55 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
                 count++;
             }
 
-            if (!ProductPns.Contains(pn, StringComparer.OrdinalIgnoreCase))
-                ProductPns.Add(pn);
-
-            await RefreshSlotsAsync().ConfigureAwait(true);
+            EnsureProductInList(pn);
+            await RefreshProductContentAsync().ConfigureAwait(true);
             StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusUploaded"), count);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task UploadSequenceAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Sequence JSON (*.json)|*.json|All files (*.*)|*.*",
+            RestoreDirectory = true,
+            Multiselect = true,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            IsBusy = true;
+            var pn = ProductPn.Trim();
+            var count = 0;
+            foreach (var file in dialog.FileNames)
+            {
+                Audit("Configuration.ProcessLibraryUploadSequence", $"product={pn};file={file}");
+                await _library.UploadSequenceAsync(pn, file).ConfigureAwait(true);
+                count++;
+            }
+
+            EnsureProductInList(pn);
+            await RefreshProductContentAsync().ConfigureAwait(true);
+            StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusSequenceUploaded"), count);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
@@ -194,8 +250,44 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             var slotId = SelectedSlot.SlotId;
             Audit("Configuration.ProcessLibraryDelete", $"product={pn};slot={slotId}");
             await _library.RemoveSlotAsync(pn, slotId).ConfigureAwait(true);
-            await RefreshSlotsAsync().ConfigureAwait(true);
+            await RefreshProductContentAsync().ConfigureAwait(true);
             StatusMessage = Loc.Get("S.ProcessLibrary.StatusDeleted");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemoveSelectedSequenceAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn) || SelectedSequence is null)
+            return;
+
+        if (!ConfirmTips.ShowDialog(
+                string.Format(
+                    Loc.Get("S.ProcessLibrary.ConfirmDeleteSequenceBody"),
+                    SelectedSequence.SequenceId,
+                    SelectedSequence.DisplayName),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ProcessLibrary.ConfirmDeleteSequenceTitle")))
+            return;
+
+        try
+        {
+            IsBusy = true;
+            var pn = ProductPn.Trim();
+            var id = SelectedSequence.SequenceId;
+            Audit("Configuration.ProcessLibraryDeleteSequence", $"product={pn};sequenceId={id}");
+            await _library.RemoveSequenceAsync(pn, id).ConfigureAwait(true);
+            await RefreshProductContentAsync().ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ProcessLibrary.StatusSequenceDeleted");
         }
         catch (Exception ex)
         {
@@ -273,11 +365,89 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            DeviceStatusText = _library.IsDeviceAvailable
-                ? Loc.Get("S.ProcessLibrary.DeviceOnline")
-                : Loc.Get("S.ProcessLibrary.DeviceOffline");
+            RefreshDeviceStatus();
         }
     }
+
+    [RelayCommand]
+    private async Task DeploySequencesAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        if (Sequences.Count == 0)
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.StatusSequenceEmpty"), ControlAppearance.Caution);
+            return;
+        }
+
+        if (!_library.IsDeviceAvailable)
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.DeviceOffline"), ControlAppearance.Caution);
+            return;
+        }
+
+        var pn = ProductPn.Trim();
+        if (!ConfirmTips.ShowDialog(
+                string.Format(Loc.Get("S.ProcessLibrary.ConfirmDeploySequenceBody"), pn, Sequences.Count),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ProcessLibrary.ConfirmDeploySequenceTitle")))
+            return;
+
+        try
+        {
+            IsBusy = true;
+            Audit("Configuration.ProcessLibraryDeploySequences", $"product={pn};count={Sequences.Count}");
+            var result = await _library.DeployProductSequencesToDeviceAsync(pn).ConfigureAwait(true);
+            if (result.Failures.Count > 0)
+            {
+                var fail = result.Failures[0];
+                StatusMessage = string.Format(
+                    Loc.Get("S.ProcessLibrary.StatusDeploySequencePartial"),
+                    result.WrittenSequenceIds.Count,
+                    fail.SequenceId,
+                    fail.Message);
+                ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            }
+            else
+            {
+                StatusMessage = string.Format(
+                    Loc.Get("S.ProcessLibrary.StatusDeploySequenceOk"),
+                    result.WrittenSequenceIds.Count);
+                ShowSnackbar(StatusMessage, ControlAppearance.Success);
+            }
+
+            Audit(
+                "Configuration.ProcessLibraryDeploySequencesResult",
+                $"product={pn};written={result.WrittenSequenceIds.Count};failures={result.Failures.Count}",
+                success: result.Failures.Count == 0);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+            Audit("Configuration.ProcessLibraryDeploySequencesResult", ex.Message, success: false);
+        }
+        finally
+        {
+            IsBusy = false;
+            RefreshDeviceStatus();
+        }
+    }
+
+    private void EnsureProductInList(string pn)
+    {
+        if (!ProductPns.Contains(pn, StringComparer.OrdinalIgnoreCase))
+            ProductPns.Add(pn);
+    }
+
+    private void RefreshDeviceStatus() =>
+        DeviceStatusText = _library.IsDeviceAvailable
+            ? Loc.Get("S.ProcessLibrary.DeviceOnline")
+            : Loc.Get("S.ProcessLibrary.DeviceOffline");
 
     private void Audit(string action, string? detail, bool success = true) =>
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, target: null, detail: detail, success: success);
@@ -301,4 +471,19 @@ public sealed class ProcessLibrarySlotRow
     public string FileName { get; }
     public string DisplayName { get; }
     public string SlotLabel => SlotId.ToString("D2");
+}
+
+public sealed class ProcessLibrarySequenceRow
+{
+    public ProcessLibrarySequenceRow(ProcessLibrarySequenceInfo info)
+    {
+        SequenceId = info.SequenceId;
+        FileName = info.FileName;
+        DisplayName = info.DisplayName;
+    }
+
+    public int SequenceId { get; }
+    public string FileName { get; }
+    public string DisplayName { get; }
+    public string IdLabel => SequenceId.ToString("D2");
 }

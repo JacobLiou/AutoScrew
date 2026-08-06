@@ -13,7 +13,6 @@
     <Grid Margin="0,0,0,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -42,7 +41,7 @@
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
                         <ui:Button Margin="0,0,8,0"
                                    Appearance="Secondary"
-                                   Command="{Binding ViewModel.RefreshSlotsCommand}"
+                                   Command="{Binding ViewModel.RefreshProductContentCommand}"
                                    Content="{DynamicResource S.ProcessLibrary.Load}" />
                         <ui:Button Appearance="Secondary"
                                    Command="{Binding ViewModel.RefreshProductListCommand}"
@@ -53,51 +52,103 @@
                               ItemsSource="{Binding ViewModel.ProductPns}"
                               Text="{Binding ViewModel.ProductPn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </DockPanel>
+                <ui:TextBlock Margin="0,8,0,0"
+                              Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                              Text="{Binding ViewModel.DeviceStatusText}" />
             </StackPanel>
         </ui:CardControl>
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,12" Orientation="Horizontal">
-            <ui:Button Margin="0,0,8,0"
-                       Appearance="Primary"
-                       Command="{Binding ViewModel.UploadCardCommand}"
-                       Content="{DynamicResource S.ProcessLibrary.Upload}"
-                       Icon="{ui:SymbolIcon ArrowUpload24}" />
-            <ui:Button Margin="0,0,8,0"
-                       Appearance="Secondary"
-                       Command="{Binding ViewModel.RemoveSelectedSlotCommand}"
-                       Content="{DynamicResource S.ProcessLibrary.DeleteSlot}"
-                       Icon="{ui:SymbolIcon Delete24}" />
-            <ui:Button Appearance="Primary"
-                       Command="{Binding ViewModel.DeployProductCommand}"
-                       Content="{DynamicResource S.ProcessLibrary.Deploy}"
-                       Icon="{ui:SymbolIcon ArrowDownload24}" />
-            <ui:TextBlock Margin="16,0,0,0"
-                          VerticalAlignment="Center"
-                          Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                          Text="{Binding ViewModel.DeviceStatusText}" />
-        </StackPanel>
+        <TabControl Grid.Row="1">
+            <TabItem Header="{DynamicResource S.ProcessLibrary.TabParams}">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Primary"
+                                   Command="{Binding ViewModel.UploadCardCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.Upload}"
+                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Secondary"
+                                   Command="{Binding ViewModel.RemoveSelectedSlotCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.DeleteSlot}"
+                                   Icon="{ui:SymbolIcon Delete24}" />
+                        <ui:Button Appearance="Primary"
+                                   Command="{Binding ViewModel.DeployProductCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.Deploy}"
+                                   Icon="{ui:SymbolIcon ArrowDownload24}" />
+                    </StackPanel>
+                    <DataGrid Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              IsReadOnly="True"
+                              SelectedItem="{Binding ViewModel.SelectedSlot, Mode=TwoWay}"
+                              ItemsSource="{Binding ViewModel.Slots}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding SlotLabel}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColSlot}" />
+                            <DataGridTextColumn Width="160"
+                                                Binding="{Binding ScrewPn}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColScrewPn}" />
+                            <DataGridTextColumn Width="*"
+                                                Binding="{Binding FileName}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColFile}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
 
-        <DataGrid Grid.Row="2"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  SelectedItem="{Binding ViewModel.SelectedSlot, Mode=TwoWay}"
-                  ItemsSource="{Binding ViewModel.Slots}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Width="80"
-                                    Binding="{Binding SlotLabel}"
-                                    Header="{DynamicResource S.ProcessLibrary.ColSlot}" />
-                <DataGridTextColumn Width="160"
-                                    Binding="{Binding ScrewPn}"
-                                    Header="{DynamicResource S.ProcessLibrary.ColScrewPn}" />
-                <DataGridTextColumn Width="*"
-                                    Binding="{Binding FileName}"
-                                    Header="{DynamicResource S.ProcessLibrary.ColFile}" />
-            </DataGrid.Columns>
-        </DataGrid>
+            <TabItem Header="{DynamicResource S.ProcessLibrary.TabSequences}">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Primary"
+                                   Command="{Binding ViewModel.UploadSequenceCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.UploadSequence}"
+                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Secondary"
+                                   Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.DeleteSequence}"
+                                   Icon="{ui:SymbolIcon Delete24}" />
+                        <ui:Button Appearance="Primary"
+                                   Command="{Binding ViewModel.DeploySequencesCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.DeploySequences}"
+                                   Icon="{ui:SymbolIcon ArrowDownload24}" />
+                    </StackPanel>
+                    <DataGrid Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              IsReadOnly="True"
+                              SelectedItem="{Binding ViewModel.SelectedSequence, Mode=TwoWay}"
+                              ItemsSource="{Binding ViewModel.Sequences}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80"
+                                                Binding="{Binding IdLabel}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColSequenceId}" />
+                            <DataGridTextColumn Width="200"
+                                                Binding="{Binding DisplayName}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColSequenceName}" />
+                            <DataGridTextColumn Width="*"
+                                                Binding="{Binding FileName}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColFile}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
 
-        <ui:TextBlock Grid.Row="3"
+        <ui:TextBlock Grid.Row="2"
                       Margin="0,12,0,0"
                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                       Text="{Binding ViewModel.StatusMessage}"
