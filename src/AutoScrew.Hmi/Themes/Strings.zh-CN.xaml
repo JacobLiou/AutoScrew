@@ -133,6 +133,16 @@
     <system:String x:Key="S.Operation.StatusEnterSn">请输入 SN 并确认。</system:String>
     <system:String x:Key="S.Operation.StatusValidating">正在校验 SN…</system:String>
     <system:String x:Key="S.Operation.StatusRecipeLoaded">配方已加载。</system:String>
+    <system:String x:Key="S.Operation.DeviceProcessPn">设备工艺 PN：{0}</system:String>
+    <system:String x:Key="S.Operation.DeviceProcessPnNone">设备工艺 PN：未下发</system:String>
+    <system:String x:Key="S.Operation.ChangeoverTitle">换产警告</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyFirst">首次将产品工艺 PN「{0}」覆盖写入控制器（参数 + 拧紧顺序）。确认后继续；取消则中止本次扫码。</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyPnChanged">产品 PN 已变更：设备当前「{0}」→ 新批次「{1}」。将覆盖写入控制器参数与拧紧顺序。确认后继续；取消则中止本次扫码。</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyVersion">产品 PN「{0}」工艺库版本已更新，需重新覆盖写入控制器。确认后继续；取消则中止本次扫码。</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyMissing">工艺库中未找到产品 PN「{0}」。确认将尝试下发并可能失败；取消则中止本次扫码。请先在工艺库上传参数与顺序。</system:String>
+    <system:String x:Key="S.Operation.ChangeoverCancelled">已取消换产，请重新扫描 SN。</system:String>
+    <system:String x:Key="S.Operation.ChangeoverDeploying">正在换产下发工艺到设备…</system:String>
+    <system:String x:Key="S.Operation.LogChangeoverDeploy">换产下发工艺 PN {0}（参数 + 顺序）…</system:String>
     <system:String x:Key="S.Operation.StatusPickTighten">取钉 + 拧紧（模拟）…</system:String>
     <system:String x:Key="S.Operation.StatusWaitTrigger">取钉完成，请按电批扳机拧紧…</system:String>
     <system:String x:Key="S.Operation.StatusStepDone">本步完成。</system:String>

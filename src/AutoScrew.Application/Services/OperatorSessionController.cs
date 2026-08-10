@@ -204,23 +204,32 @@ public sealed class OperatorSessionController
         NotifyChanged();
     }
 
-    public async Task SubmitSerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default)
+    public sealed record SerialAcceptResult(bool Accepted, string? SerialNumber, string? PartNumber, string? ErrorMessage);
+
+    /// <summary>MES 校验并进入 LoadingRecipe；不写条码、不加载配方（供换产确认插入）。</summary>
+    public async Task<SerialAcceptResult> AcceptSerialNumberAsync(
+        string serialNumber,
+        CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serialNumber);
         _lastErrorMessage = null;
 
-        if (_phase != JobSessionPhase.SnPending && _phase != JobSessionPhase.SnRejected)
+        if (_phase == JobSessionPhase.SnRejected)
+            TryApply(JobSessionTrigger.RequestScan);
+
+        if (_phase != JobSessionPhase.SnPending)
             throw new InvalidOperationException("Not awaiting SN.");
 
         var validation = await _mesClient.ValidateSnAsync(serialNumber.Trim(), cancellationToken).ConfigureAwait(false);
         if (!validation.IsValid || string.IsNullOrWhiteSpace(validation.PartNumber))
         {
             _serialNumber = serialNumber.Trim();
+            _partNumber = null;
             TryApply(JobSessionTrigger.SnRejected);
             _lastErrorMessage = validation.Message ?? "SN invalid.";
             AuditOperation("Operation.SnRejected", $"sn={_serialNumber}", success: false, _serialNumber);
             NotifyChanged();
-            return;
+            return new SerialAcceptResult(false, _serialNumber, null, _lastErrorMessage);
         }
 
         _serialNumber = serialNumber.Trim();
@@ -229,6 +238,35 @@ public sealed class OperatorSessionController
             throw new InvalidOperationException("State error after SN validation.");
 
         AuditOperation("Operation.SnAccepted", $"sn={_serialNumber};pn={_partNumber}");
+        NotifyChanged();
+        return new SerialAcceptResult(true, _serialNumber, _partNumber, null);
+    }
+
+    /// <summary>换产取消或下发失败：清空刚接受的 SN/PN，回到 SnPending。</summary>
+    public void AbortAcceptedSerial(string? errorMessage = null)
+    {
+        if (_phase != JobSessionPhase.LoadingRecipe)
+            return;
+
+        TryApply(JobSessionTrigger.Abort);
+        _serialNumber = null;
+        _partNumber = null;
+        _lastErrorMessage = errorMessage;
+        AuditOperation(
+            "Operation.SnAcceptAborted",
+            errorMessage is null ? "changeover cancelled" : errorMessage,
+            success: false);
+        NotifyChanged();
+    }
+
+    /// <summary>写条码并加载配方/模板（换产跳过或下发成功后调用）。</summary>
+    public async Task ContinueAfterSerialAcceptedAsync(CancellationToken cancellationToken = default)
+    {
+        if (_phase != JobSessionPhase.LoadingRecipe ||
+            string.IsNullOrWhiteSpace(_serialNumber) ||
+            string.IsNullOrWhiteSpace(_partNumber))
+            throw new InvalidOperationException("No accepted SN to continue.");
+
         try
         {
             await _controllerTrace.WriteSerialNumberAsync(_serialNumber!, cancellationToken).ConfigureAwait(false);
@@ -238,13 +276,21 @@ public sealed class OperatorSessionController
         {
             _logger.LogWarning(ex, "Write barcode to controller failed for SN={SerialNumber}", _serialNumber);
             AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber};error={ex.Message}", success: false, _serialNumber);
-            _lastErrorMessage = ex.Message;
-            TryApply(JobSessionTrigger.SnRejected);
-            NotifyChanged();
+            AbortAcceptedSerial(ex.Message);
             return;
         }
 
         await LoadRecipeAndTemplateAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>无换产确认的兼容路径：Accept → Continue。</summary>
+    public async Task SubmitSerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default)
+    {
+        var accepted = await AcceptSerialNumberAsync(serialNumber, cancellationToken).ConfigureAwait(false);
+        if (!accepted.Accepted)
+            return;
+
+        await ContinueAfterSerialAcceptedAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task LoadRecipeAndTemplateAsync(CancellationToken cancellationToken)

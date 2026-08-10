@@ -17,37 +17,42 @@
     </UserControl.Resources>
     <Grid>
     <DockPanel Margin="0">
-        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-            <ui:TextBox x:Name="SnInputBox"
-                        Width="220"
-                        Margin="0,0,8,8"
-                        VerticalAlignment="Center"
-                        PlaceholderText="{DynamicResource S.Operation.SnPlaceholder}"
-                        IsEnabled="{Binding IsSnInputEnabled}"
-                        Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"
-                        KeyDown="SnInputBox_OnKeyDown"/>
-            <ui:Button Content="{DynamicResource S.Operation.SubmitSn}"
-                       Margin="0,0,8,8"
-                       Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding SubmitSnCommand}"/>
-            <ui:Button Content="{DynamicResource S.Operation.RunScrew}"
-                       Margin="0,0,8,8"
-                       Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding RunCurrentScrewCommand}"
-                       Visibility="{Binding ShowRunScrewButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            <ui:Button Content="{DynamicResource S.Operation.ConfirmFlip}"
-                       Margin="0,0,8,8"
-                       Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding ConfirmFlipCommand}"/>
-            <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
-                       Margin="0,0,8,8"
-                       Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding UnlockNgCommand}"/>
-            <ui:Button Content="{DynamicResource S.Operation.ResetSession}"
-                       Margin="0,0,8,8"
-                       Style="{StaticResource ShellSecondaryButtonStyle}"
-                       Command="{Binding ResetSessionCommand}"/>
-        </WrapPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <WrapPanel>
+                <ui:TextBox x:Name="SnInputBox"
+                            Width="220"
+                            Margin="0,0,8,8"
+                            VerticalAlignment="Center"
+                            PlaceholderText="{DynamicResource S.Operation.SnPlaceholder}"
+                            IsEnabled="{Binding IsSnInputEnabled}"
+                            Text="{Binding SerialNumberInput, UpdateSourceTrigger=PropertyChanged}"
+                            KeyDown="SnInputBox_OnKeyDown"/>
+                <ui:Button Content="{DynamicResource S.Operation.SubmitSn}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding SubmitSnCommand}"/>
+                <ui:Button Content="{DynamicResource S.Operation.RunScrew}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding RunCurrentScrewCommand}"
+                           Visibility="{Binding ShowRunScrewButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <ui:Button Content="{DynamicResource S.Operation.ConfirmFlip}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding ConfirmFlipCommand}"/>
+                <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding UnlockNgCommand}"/>
+                <ui:Button Content="{DynamicResource S.Operation.ResetSession}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding ResetSessionCommand}"/>
+            </WrapPanel>
+            <TextBlock Margin="0,0,0,0"
+                       Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                       Text="{Binding DeviceProcessPnText}" />
+        </StackPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ShellCardBrush}"
                 BorderBrush="{DynamicResource ShellBorderBrush}"

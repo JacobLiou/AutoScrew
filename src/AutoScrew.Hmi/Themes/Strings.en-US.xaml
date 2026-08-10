@@ -126,6 +126,16 @@
     <system:String x:Key="S.Operation.StatusEnterSn">Enter SN and confirm.</system:String>
     <system:String x:Key="S.Operation.StatusValidating">Validating SN…</system:String>
     <system:String x:Key="S.Operation.StatusRecipeLoaded">Recipe loaded.</system:String>
+    <system:String x:Key="S.Operation.DeviceProcessPn">Device process PN: {0}</system:String>
+    <system:String x:Key="S.Operation.DeviceProcessPnNone">Device process PN: not deployed</system:String>
+    <system:String x:Key="S.Operation.ChangeoverTitle">Changeover warning</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyFirst">First-time overwrite of process PN "{0}" to the controller (parameters + sequences). Confirm to continue; Cancel aborts this scan.</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyPnChanged">Product PN changed: device "{0}" → new batch "{1}". Controller parameters and sequences will be overwrite-written. Confirm to continue; Cancel aborts this scan.</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyVersion">Process library version for PN "{0}" changed; controller must be refreshed. Confirm to continue; Cancel aborts this scan.</system:String>
+    <system:String x:Key="S.Operation.ChangeoverBodyMissing">Product PN "{0}" was not found in the process library. Confirm will attempt deploy and may fail; Cancel aborts this scan. Upload parameters and sequences first.</system:String>
+    <system:String x:Key="S.Operation.ChangeoverCancelled">Changeover cancelled. Scan SN again.</system:String>
+    <system:String x:Key="S.Operation.ChangeoverDeploying">Deploying process to device (changeover)…</system:String>
+    <system:String x:Key="S.Operation.LogChangeoverDeploy">Changeover deploy process PN {0} (parameters + sequences)…</system:String>
     <system:String x:Key="S.Operation.StatusPickTighten">Pick + tighten (simulated)…</system:String>
     <system:String x:Key="S.Operation.StatusWaitTrigger">Screw picked; pull the driver trigger to tighten…</system:String>
     <system:String x:Key="S.Operation.StatusStepDone">Step done.</system:String>

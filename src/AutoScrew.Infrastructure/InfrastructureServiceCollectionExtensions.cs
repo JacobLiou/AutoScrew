@@ -39,6 +39,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<LanShareAccess>();
         services.AddSingleton<ProcessLibraryStore>();
         services.AddSingleton<IProcessLibraryService, ProcessLibraryService>();
+        services.AddSingleton<IStationProcessStateStore, JsonStationProcessStateStore>();
+        services.AddSingleton<IProcessChangeoverService, ProcessChangeoverService>();
         services.AddSingleton<ICurveArchive, LocalCurveArchive>();
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();

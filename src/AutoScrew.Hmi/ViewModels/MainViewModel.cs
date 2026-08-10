@@ -17,6 +17,7 @@ namespace AutoScrew.Hmi.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly OperatorSessionController _session;
+    private readonly IProcessChangeoverService _changeover;
     private readonly LocalizationService _localization;
     private readonly IUserAuditService _audit;
     private readonly IOperationActivityLogService _activityLog;
@@ -29,6 +30,7 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel(
         OperatorSessionController session,
+        IProcessChangeoverService changeover,
         LocalizationService localization,
         IUserAuditService audit,
         IOperationActivityLogService activityLog,
@@ -37,6 +39,7 @@ public partial class MainViewModel : ObservableObject
         ICurrentUser user)
     {
         _session = session;
+        _changeover = changeover;
         _localization = localization;
         _audit = audit;
         _activityLog = activityLog;
@@ -50,6 +53,7 @@ public partial class MainViewModel : ObservableObject
         ProgressTreeRoot = new OperatorProgressRootViewModel();
         ProgressTreeRoots.Add(ProgressTreeRoot);
         GuideHint = BuildGuideHint();
+        RefreshDeviceProcessPn();
     }
 
     public OperatorSessionController Session => _session;
@@ -75,6 +79,9 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusMessage = "";
+
+    [ObservableProperty]
+    private string _deviceProcessPnText = "";
 
     [ObservableProperty]
     private string _guideHint = "";
@@ -210,9 +217,85 @@ public partial class MainViewModel : ObservableObject
         {
             EnsureAwaitingSn();
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
+            var accept = await _session.AcceptSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
+            if (!accept.Accepted)
+            {
+                StatusMessage = accept.ErrorMessage ?? Loc.Get("S.Operation.GuideSnRejected");
+                return;
+            }
+
+            var pn = accept.PartNumber!;
+            var decision = await _changeover.EvaluateAsync(pn).ConfigureAwait(true);
+            if (decision.NeedsChangeover)
+            {
+                if (!ConfirmChangeover(decision))
+                {
+                    _session.AbortAcceptedSerial(Loc.Get("S.Operation.ChangeoverCancelled"));
+                    StatusMessage = Loc.Get("S.Operation.ChangeoverCancelled");
+                    AuditHelper.Log(
+                        _audit,
+                        _appOptions,
+                        _user,
+                        AuditCategory.Operation,
+                        "Operation.ChangeoverPrompt",
+                        detail: $"cancelled;new={decision.NewProductPn};old={decision.PreviousProductPn}",
+                        success: false);
+                    return;
+                }
+
+                AuditHelper.Log(
+                    _audit,
+                    _appOptions,
+                    _user,
+                    AuditCategory.Operation,
+                    "Operation.ChangeoverPrompt",
+                    detail: $"confirmed;reason={decision.Reason};new={decision.NewProductPn};old={decision.PreviousProductPn}");
+
+                StatusMessage = Loc.Get("S.Operation.ChangeoverDeploying");
+                AddLog(Loc.Format("S.Operation.LogChangeoverDeploy", decision.NewProductPn));
+                try
+                {
+                    await _changeover.DeployAndCommitAsync(pn).ConfigureAwait(true);
+                    RefreshDeviceProcessPn();
+                    AuditHelper.Log(
+                        _audit,
+                        _appOptions,
+                        _user,
+                        AuditCategory.Operation,
+                        "Operation.ChangeoverDeploy",
+                        detail: $"pn={pn};updatedUtc={decision.LibraryUpdatedUtc}");
+                }
+                catch (Exception ex)
+                {
+                    _session.AbortAcceptedSerial(ex.Message);
+                    StatusMessage = ex.Message;
+                    AuditHelper.Log(
+                        _audit,
+                        _appOptions,
+                        _user,
+                        AuditCategory.Operation,
+                        "Operation.ChangeoverDeploy",
+                        detail: $"pn={pn};error={ex.Message}",
+                        success: false);
+                    return;
+                }
+            }
+            else
+            {
+                AuditHelper.Log(
+                    _audit,
+                    _appOptions,
+                    _user,
+                    AuditCategory.Operation,
+                    "Operation.ChangeoverSkipped",
+                    detail: $"pn={pn}");
+            }
+
+            StatusMessage = Loc.Get("S.Operation.LogLoadingRecipe");
             AddLog(Loc.Get("S.Operation.LogLoadingRecipe"));
-            await _session.SubmitSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
-            if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage))
+            await _session.ContinueAfterSerialAcceptedAsync().ConfigureAwait(true);
+            if (!string.IsNullOrWhiteSpace(_session.LastErrorMessage) &&
+                _session.Phase != JobSessionPhase.Running)
                 StatusMessage = _session.LastErrorMessage;
             else if (_session.Phase == JobSessionPhase.Running)
             {
@@ -223,11 +306,6 @@ public partial class MainViewModel : ObservableObject
                     _session.PartNumber!,
                     _session.TemplateSurfaceCount));
             }
-
-            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
-                or JobSessionPhase.SnRejected
-                or JobSessionPhase.Idle
-                or JobSessionPhase.Completed;
         }
         catch (Exception ex)
         {
@@ -235,8 +313,50 @@ public partial class MainViewModel : ObservableObject
         }
         finally
         {
+            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
+                or JobSessionPhase.SnRejected
+                or JobSessionPhase.Idle
+                or JobSessionPhase.Completed;
             NotifyCommandStates();
         }
+    }
+
+    private bool ConfirmChangeover(ChangeoverDecision decision)
+    {
+        var title = Loc.Get("S.Operation.ChangeoverTitle");
+        var body = decision.Reason switch
+        {
+            ChangeoverReason.FirstDeploy => Loc.Format(
+                "S.Operation.ChangeoverBodyFirst",
+                decision.NewProductPn),
+            ChangeoverReason.ProductPnChanged => Loc.Format(
+                "S.Operation.ChangeoverBodyPnChanged",
+                decision.PreviousProductPn ?? "—",
+                decision.NewProductPn),
+            ChangeoverReason.ProcessVersionChanged => Loc.Format(
+                "S.Operation.ChangeoverBodyVersion",
+                decision.NewProductPn),
+            ChangeoverReason.ProductMissing => Loc.Format(
+                "S.Operation.ChangeoverBodyMissing",
+                decision.NewProductPn),
+            _ => Loc.Format(
+                "S.Operation.ChangeoverBodyPnChanged",
+                decision.PreviousProductPn ?? "—",
+                decision.NewProductPn),
+        };
+
+        return ConfirmTips.ShowDialog(
+            body,
+            System.Windows.Application.Current?.MainWindow,
+            title);
+    }
+
+    private void RefreshDeviceProcessPn()
+    {
+        var state = _changeover.GetStationState();
+        DeviceProcessPnText = state is null || string.IsNullOrWhiteSpace(state.ProductPn)
+            ? Loc.Get("S.Operation.DeviceProcessPnNone")
+            : Loc.Format("S.Operation.DeviceProcessPn", state.ProductPn);
     }
 
     private void EnsureAwaitingSn()
@@ -371,6 +491,7 @@ public partial class MainViewModel : ObservableObject
         ProductImagePath = _session.ResolvedProductImagePath;
         BoardWidth = _session.BoardWidth;
         BoardHeight = _session.BoardHeight;
+        RefreshDeviceProcessPn();
         IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
             or JobSessionPhase.SnRejected
             or JobSessionPhase.Idle

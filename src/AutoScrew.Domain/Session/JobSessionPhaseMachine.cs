@@ -62,6 +62,13 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
+                // 换产取消 / 下发失败：回到可重扫，不清成 Idle
+                if (trigger == JobSessionTrigger.Abort)
+                {
+                    next = JobSessionPhase.SnPending;
+                    return true;
+                }
+
                 break;
 
             case JobSessionPhase.Running:
