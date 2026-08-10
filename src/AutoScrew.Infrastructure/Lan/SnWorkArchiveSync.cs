@@ -14,16 +14,19 @@ public sealed class SnWorkArchiveSync : ISnWorkArchiveSync
 
     private readonly IMesSettingsService _mesSettings;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
+    private readonly IHostIdentity _hostIdentity;
     private readonly ILogger<SnWorkArchiveSync> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     public SnWorkArchiveSync(
         IMesSettingsService mesSettings,
         IOptions<AutoScrewAppOptions> appOptions,
+        IHostIdentity hostIdentity,
         ILogger<SnWorkArchiveSync> logger)
     {
         _mesSettings = mesSettings;
         _appOptions = appOptions;
+        _hostIdentity = hostIdentity;
         _logger = logger;
     }
 
@@ -88,7 +91,10 @@ public sealed class SnWorkArchiveSync : ISnWorkArchiveSync
 
         try
         {
-            var destDir = Path.Combine(lanRoot.TrimEnd('\\', '/'), safeSn);
+            var macFolder = Sanitize(_hostIdentity.MacFolderName);
+            if (string.IsNullOrWhiteSpace(macFolder))
+                macFolder = "UNKNOWN-HOST";
+            var destDir = Path.Combine(lanRoot.TrimEnd('\\', '/'), macFolder, safeSn);
             Directory.CreateDirectory(destDir);
             foreach (var file in Directory.EnumerateFiles(localDir, "*", SearchOption.AllDirectories))
             {

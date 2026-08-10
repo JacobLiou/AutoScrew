@@ -37,6 +37,12 @@ public sealed class LockJobResultPayload
 
     public string StationId { get; set; } = "";
 
+    /// <summary>本机首选 IPv4；可空。</summary>
+    public string? HostIp { get; set; }
+
+    /// <summary>本机 MAC，规范化 AA-BB-CC-DD-EE-FF；可空。</summary>
+    public string? HostMac { get; set; }
+
     public string OperatorId { get; set; } = "";
 
     public bool IsRework { get; set; }

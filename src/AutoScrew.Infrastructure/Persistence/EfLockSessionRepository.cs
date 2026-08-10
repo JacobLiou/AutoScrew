@@ -185,6 +185,8 @@ public sealed class EfLockSessionRepository(IDbContextFactory<AppDbContext> fact
             SerialNumber = payload.SerialNumber,
             PartNumber = payload.PartNumber,
             StationId = payload.StationId,
+            HostIp = payload.HostIp,
+            HostMac = payload.HostMac,
             OperatorId = payload.OperatorId,
             StartedAt = payload.StartedAt,
             EndedAt = payload.CompletedAt,

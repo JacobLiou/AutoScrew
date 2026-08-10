@@ -112,6 +112,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<SettingsViewModel>();
         builder.Services.AddSingleton<MesViewModel>();
         builder.Services.AddSingleton<LogsViewModel>();
+        builder.Services.AddSingleton<HistoryDashboardViewModel>();
         builder.Services.AddSingleton<DeviceConnectionViewModel>();
         builder.Services.AddSingleton<ControllerParameterViewModel>();
         builder.Services.AddSingleton<ControllerSequenceViewModel>();
@@ -122,6 +123,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<SettingsPage>();
         builder.Services.AddSingleton<MesPage>();
         builder.Services.AddSingleton<LogsPage>();
+        builder.Services.AddSingleton<HistoryDashboardPage>();
         builder.Services.AddSingleton<ControllerParameterPage>();
         builder.Services.AddSingleton<ControllerSequencePage>();
         builder.Services.AddSingleton<ControllerSourcePage>();

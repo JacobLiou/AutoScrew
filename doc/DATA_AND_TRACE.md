@@ -14,12 +14,13 @@
 - 曲线文件：`torque_curve_{positionIndex}_{timestamp}.csv`
 - 锁附日志：`lock_log_{timestamp}.json`
 - 可选网络镜像：`AutoScrew:OptionalNetworkArchiveRoot`（复制失败不阻塞产线；无凭证，兼容旧配置）。
-- **局域网 SN 归档（ProductKey / Fusion 路径）**：`mes-settings.json` 的 `LanShareRoot`（Mes 页可配）→ `{LanShareRoot}\{SN}\`，镜像本地 `work\{SN}`（曲线 CSV、`lock_log_*.json`）。服务账号与口令**不在 HMI 展示**：账号固定于代码；口令为 `AutoScrew:LanSharePasswordAes256`（`aes256:` 密文，用 `tools/EncryptMimsConnectionString` 生成）。连接用 `WNetUseConnection`；失败不阻塞产线。
+- **局域网 SN 归档（ProductKey / Fusion / 无 MES）**：`mes-settings.json` 的 `LanShareRoot`（Mes 页可配）→ `{LanShareRoot}\{MAC}\{SN}\`，镜像本地 `work\{SN}`（曲线 CSV、`lock_log_*.json`）。`MAC` 为本机网卡地址规范化名（`AA-BB-CC-DD-EE-FF`）；取不到时用 `UNKNOWN-HOST`。服务账号与口令**不在 HMI 展示**：账号固定于代码；口令为 `AutoScrew:LanSharePasswordAes256`（`aes256:` 密文，用 `tools/EncryptMimsConnectionString` 生成）。连接用 `WNetUseConnection`；失败不阻塞产线。有 LAN 根即镜像，与是否 HTTP MES 无关。
 - **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。一期 UNC `{PN}` 模板同步见 [FusionTodo.md](FusionTodo.md) F-05（未强制）。
 
 ## SQLite 实体（Infrastructure）
 
 - `lock_records` / `screw_details` / `error_logs`：表已建；**T-08**：作业完成时 [`SaveLockRecordAsync`](../src/AutoScrew.Application/Abstractions/ILockSessionRepository.cs) 写入 `lock_records` + `screw_details`（`PositionIndex` = 全局位号）。
+- **`lock_records` 工位身份（T-25～T-27）**：`HostIp`、`HostMac`（与 `StationId` 一并落库）；历史回顾 Dashboard 只读本机 SQLite，无 HMI 删除。
 - `session_checkpoints`：旧单槽断电 checkpoint（兼容迁移源）；新逻辑见 `SnJobMemories`。
 - **`SnJobMemories`（按 SN 作业记忆）**：主键 `SerialNumber`；`Status`=`InProgress` / `NgPaused` / `Completed`；`PayloadJson` 复用原 checkpoint 结构（phase、面进度、螺钉状态）；`UpdatedAt` / `CompletedAt`。
   - 未完成或 NG：按 SN upsert 保留；复位会话挂起记忆、不删除。
@@ -87,7 +88,7 @@
 | Spec / WO / 工序 | `Spec`（经 ProcessNameMap）、`MfgOrder`、`Operation` 或 `Spec` |
 | 可用 | `Status == "1"` 且 `IsOnHold` 不为 true |
 | Recipe | 仅返回 PN；模板仍本地 `Templates/{PN}` |
-| UploadResult | 不调 TAS；触发局域网 `{LanShareRoot}\{SN}` 归档 |
+| UploadResult | 不调 TAS；触发局域网 `{LanShareRoot}\{MAC}\{SN}` 归档 |
 
 ### mes-settings.json（扩展）
 
@@ -127,7 +128,15 @@ HMI **应用** 刷新内存快照；扫码走 `ConfigurableMesClient` → Mock /
 | GET | `api/templates/{pn}/package` | 模板工程整包 zip（含 `{PN}.product-template.json` 与 `images/` 等；FAT / MesMockServer） |
 | GET | `api/templates?stationId=` | 远端模板目录：`[{ partNumber, contentHash, modifiedUtc, packageUrl }]`；`contentHash` 为 PN 文件夹整包指纹 |
 | POST | `api/templates/{pn}/package` | Body = `application/zip`（整包上传）；响应 `{ accepted, revision, contentHash }` |
-| POST | `api/results` | Body = [`LockJobResultPayload`](../src/AutoScrew.Application/Abstractions/IMesClient.cs)；成功 2xx |
+| POST | `api/results` | Body = [`LockJobResultPayload`](../src/AutoScrew.Application/Abstractions/IMesClient.cs)（含 `stationId`、`hostIp`、`hostMac`）；成功 2xx；MES 靠结果流聚合，上位机不做远程 Dashboard |
+
+### LockJobResultPayload 工位字段
+
+| 字段 | 说明 |
+|------|------|
+| `stationId` | 配置 `AutoScrew:StationId` |
+| `hostIp` | 本机首选 IPv4（可空） |
+| `hostMac` | 本机 MAC，规范化 `AA-BB-CC-DD-EE-FF`（可空） |
 
 ### 本地 Mock
 

@@ -167,6 +167,7 @@ public sealed class CheckpointRestoreTests
                 Options.Create(new AutoScrewAppOptions { TemplateDirectory = tempDir, StationId = "T-01" }),
                 Options.Create(new SimulationOptions()),
                 new NoOpUserAuditService(),
+                new StubHostIdentity(),
                 NullLogger<OperatorSessionController>.Instance);
 
         public ValueTask DisposeAsync()
@@ -291,6 +292,13 @@ public sealed class CheckpointRestoreTests
         public int? MimsPersonId => null;
         public int? MimsRoleId => null;
         public int? MimsRoleType => null;
+    }
+
+    private sealed class StubHostIdentity : IHostIdentity
+    {
+        public string? IpAddress => "192.168.1.10";
+        public string? MacAddress => "AA-BB-CC-DD-EE-FF";
+        public string MacFolderName => "AA-BB-CC-DD-EE-FF";
     }
 
     private sealed class NoOpUserAuditService : IUserAuditService

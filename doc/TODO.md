@@ -5,6 +5,7 @@
 | 1.0 | 2026-06-11 | 初版：基于 [PRD.md](PRD.md) 单工位单设备半自动化差距梳理 |
 | 1.1 | 2026-06-11 | 对齐 PRD V1.1：**程控供料器**纳入 In-Scope；T-06 升级为 P0 真驱动；更新双设备数据流 |
 | 1.2 | 2026-06-22 | 工艺工作台 P0+P1 落地；同步 §1/§4/§5/§6；新增 T-24（工作台 P2） |
+| 1.3 | 2026-08-10 | 历史回顾 Dashboard：T-25～T-32（本地 SQLite + IP/MAC + LAN `{MAC}/{SN}`） |
 
 **权威追溯**
 
@@ -139,6 +140,14 @@ flowchart LR
 | T-11 | [x] | 拧紧过程 **实时曲线**刷新（非仅周期结束后） | HMI+业务 | PRD §3.2.1 | `TighteningProgress` + ScottPlot 增量刷新 |
 | T-12 | [ ] | 设备 NG 时 `ClearErrorsAsync`；返修 `REWORK` UI | 业务+HMI | PRD §3.2.3；[`SetReworkMode`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) 无 HMI |
 | T-13 | [ ] | 歪斜/斜锁：曲线或设备字段提供 `AxisSkewDeg` | 判定+驱动 | PRD §3.2.1、验收 SKEW_003 |
+| T-25 | [x] | **追溯契约**：`hostIp`/`hostMac`；`lock_records` 列；LAN `{MAC}/{SN}` | 文档 | [DATA_AND_TRACE.md](DATA_AND_TRACE.md)（2026-08-10） |
+| T-26 | [x] | **本机身份**：解析 IP/MAC；MAC 文件夹名规范化（`AA-BB-…`） | Common | `HostIdentity` + `CachedHostIdentity` |
+| T-27 | [x] | **结果落库/上传带 IP·MAC**：扩展 payload + SQLite；`CompleteSession` 填入 | 业务+Infra | 沿用 `POST api/results` |
+| T-28 | [x] | **LAN 归档改路径**：`{LanShareRoot}/{MAC}/{SN}`（可无 MES） | Infra | `SnWorkArchiveSync` |
+| T-29 | [x] | **历史查询**：按日期/SN/PN/结果筛选 + 分页列表 | Infra | `ILockHistoryQuery` |
+| T-30 | [x] | **Dashboard 汇总**：今日/历史作业与螺钉 OK·NG | 业务+HMI | 只读本地 SQLite |
+| T-31 | [x] | **Dashboard 页**：作业列表 + 点开螺钉明细；导航（技术员） | HMI | `HistoryDashboardPage` |
+| T-32 | [x] | **单测**：IP/MAC 保存、汇总筛选、MAC 路径拼接 | 测试 | `LockRecordRepositoryTests` / `HostIdentityTests` |
 
 ### P2 — 配置 / 权限 / 任务管理
 

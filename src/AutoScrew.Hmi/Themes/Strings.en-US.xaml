@@ -37,6 +37,7 @@
     <system:String x:Key="S.Nav.Production">Production</system:String>
     <system:String x:Key="S.Nav.Logs">Logs</system:String>
     <system:String x:Key="S.Nav.MesConnection">MES Connection</system:String>
+    <system:String x:Key="S.Nav.History">History</system:String>
     <system:String x:Key="S.Nav.ControllerParams">Tightening Params</system:String>
     <system:String x:Key="S.Nav.ControllerSequence">Tightening Sequence</system:String>
     <system:String x:Key="S.Nav.ControllerSource">Tightening Source</system:String>
@@ -270,7 +271,7 @@
     <system:String x:Key="S.Mes.UrlPlaceholder">https://zuhaip.molex.com:9607/</system:String>
     <system:String x:Key="S.Mes.LanSection">LAN SN archive</system:String>
     <system:String x:Key="S.Mes.LanShareRoot">LAN share root</system:String>
-    <system:String x:Key="S.Mes.LanShareRootDesc">UNC e.g. \\server\AutoScrew; archives under {SN}\. Uses built-in secure credentials; empty = local only</system:String>
+    <system:String x:Key="S.Mes.LanShareRootDesc">UNC e.g. \\server\AutoScrew; archives under {MAC}\{SN}\. Uses built-in secure credentials; empty = local only</system:String>
     <system:String x:Key="S.Mes.LanShareRootPlaceholder">\\server\share\AutoScrew</system:String>
     <system:String x:Key="S.Mes.Save">Save</system:String>
     <system:String x:Key="S.Mes.Apply">Apply</system:String>
@@ -298,6 +299,31 @@
     <system:String x:Key="S.Logs.PreviewDesc">Up to 8000 characters</system:String>
     <system:String x:Key="S.Logs.OpenFolderFailed">Could not open log folder.</system:String>
     <system:String x:Key="S.Logs.OpenFileFailed">Could not open log file.</system:String>
+
+    <system:String x:Key="S.History.From">From</system:String>
+    <system:String x:Key="S.History.To">To</system:String>
+    <system:String x:Key="S.History.Serial">SN</system:String>
+    <system:String x:Key="S.History.Part">PN</system:String>
+    <system:String x:Key="S.History.Result">Result</system:String>
+    <system:String x:Key="S.History.Today">Today</system:String>
+    <system:String x:Key="S.History.JobTotal">Jobs</system:String>
+    <system:String x:Key="S.History.JobOk">Jobs OK</system:String>
+    <system:String x:Key="S.History.JobNg">Jobs NG</system:String>
+    <system:String x:Key="S.History.ScrewTotal">Screws</system:String>
+    <system:String x:Key="S.History.ScrewOk">Screws OK</system:String>
+    <system:String x:Key="S.History.ScrewNg">Screws NG</system:String>
+    <system:String x:Key="S.History.TotalCount">Rows</system:String>
+    <system:String x:Key="S.History.Col.Started">Started</system:String>
+    <system:String x:Key="S.History.Col.Serial">SN</system:String>
+    <system:String x:Key="S.History.Col.Part">PN</system:String>
+    <system:String x:Key="S.History.Col.Result">Result</system:String>
+    <system:String x:Key="S.History.Col.Screws">Screws</system:String>
+    <system:String x:Key="S.History.Col.Operator">Operator</system:String>
+    <system:String x:Key="S.History.Col.HostMac">MAC</system:String>
+    <system:String x:Key="S.History.Col.Pos">Pos</system:String>
+    <system:String x:Key="S.History.Col.Torque">Torque</system:String>
+    <system:String x:Key="S.History.Col.Angle">Angle</system:String>
+    <system:String x:Key="S.History.Col.Curve">Curve</system:String>
 
     <system:String x:Key="S.Dialog.Logout">Sign out</system:String>
     <system:String x:Key="S.Dialog.LogoutConfirm">Sign out and return to login?</system:String>

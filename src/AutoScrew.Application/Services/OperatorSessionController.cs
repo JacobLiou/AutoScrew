@@ -29,6 +29,7 @@ public sealed class OperatorSessionController
     private readonly IOptions<AutoScrewAppOptions> _options;
     private readonly IOptions<SimulationOptions> _simulation;
     private readonly IUserAuditService _audit;
+    private readonly IHostIdentity _hostIdentity;
     private readonly ILogger<OperatorSessionController> _logger;
 
     private JobSessionPhase _phase = JobSessionPhase.Idle;
@@ -67,6 +68,7 @@ public sealed class OperatorSessionController
         IOptions<AutoScrewAppOptions> options,
         IOptions<SimulationOptions> simulation,
         IUserAuditService audit,
+        IHostIdentity hostIdentity,
         ILogger<OperatorSessionController> logger)
     {
         _mesClient = mesClient;
@@ -81,6 +83,7 @@ public sealed class OperatorSessionController
         _options = options;
         _simulation = simulation;
         _audit = audit;
+        _hostIdentity = hostIdentity;
         _logger = logger;
     }
 
@@ -829,6 +832,8 @@ public sealed class OperatorSessionController
             SerialNumber = _serialNumber!,
             PartNumber = _partNumber!,
             StationId = _options.Value.StationId,
+            HostIp = _hostIdentity.IpAddress,
+            HostMac = _hostIdentity.MacAddress,
             OperatorId = _currentUser.UserId,
             IsRework = _isRework,
             StartedAt = started,

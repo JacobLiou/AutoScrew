@@ -6,6 +6,7 @@ using AutoScrew.Infrastructure.Authentication;
 using AutoScrew.Infrastructure.Background;
 using AutoScrew.Infrastructure.Files;
 using AutoScrew.Infrastructure.Hardware;
+using AutoScrew.Infrastructure.Host;
 using AutoScrew.Infrastructure.Lan;
 using AutoScrew.Infrastructure.Mes;
 using AutoScrew.Infrastructure.Persistence;
@@ -35,6 +36,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<SessionCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<SessionCurrentUser>());
         services.AddSingleton<ITemplateLayoutLoader, TemplateLayoutJsonLoader>();
+        services.AddSingleton<IHostIdentity, CachedHostIdentity>();
         services.AddSingleton<ISnWorkArchiveSync, SnWorkArchiveSync>();
         services.AddSingleton<LanShareAccess>();
         services.AddSingleton<ProcessLibraryStore>();
@@ -43,6 +45,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IProcessChangeoverService, ProcessChangeoverService>();
         services.AddSingleton<ICurveArchive, LocalCurveArchive>();
         services.AddSingleton<ILockSessionRepository, EfLockSessionRepository>();
+        services.AddSingleton<ILockHistoryQuery, EfLockHistoryQuery>();
         services.AddSingleton<IOutboundMesQueue, EfOutboundMesQueue>();
         services.AddSingleton<JsonlUserAuditStore>();
         services.AddSingleton<IOperationActivityLogService, OperationActivityLogService>();

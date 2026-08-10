@@ -25,6 +25,7 @@ public enum MainAppSection
     Template,
     Mes,
     Logs,
+    History,
     ControllerParameter,
     ControllerSequence,
     ControllerSource,
@@ -207,6 +208,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.Mes;
         else if (pageType == typeof(LogsPage))
             SelectedSection = MainAppSection.Logs;
+        else if (pageType == typeof(HistoryDashboardPage))
+            SelectedSection = MainAppSection.History;
         else if (pageType == typeof(ControllerParameterPage))
             SelectedSection = MainAppSection.ControllerParameter;
         else if (pageType == typeof(ControllerSequencePage))
@@ -253,6 +256,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.Template => typeof(TemplateNavPage),
             MainAppSection.Mes => typeof(MesPage),
             MainAppSection.Logs => typeof(LogsPage),
+            MainAppSection.History => typeof(HistoryDashboardPage),
             MainAppSection.ControllerParameter => typeof(ControllerParameterPage),
             MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
             MainAppSection.ControllerSource => typeof(ControllerSourcePage),
@@ -407,7 +411,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private static bool IsSystemSection(MainAppSection section) =>
         section is MainAppSection.Mes
             or MainAppSection.DeviceConnection
-            or MainAppSection.Logs;
+            or MainAppSection.Logs
+            or MainAppSection.History;
 
     private static bool IsDeviceConfigurationSection(MainAppSection section) =>
         section is MainAppSection.ControllerParameter
@@ -507,6 +512,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.CloudSync24 },
                 TargetPageType = typeof(MesPage),
                 TargetPageTag = "mes"
+            });
+
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.History"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DataHistogram24 },
+                TargetPageType = typeof(HistoryDashboardPage),
+                TargetPageTag = "history"
             });
 
             // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）

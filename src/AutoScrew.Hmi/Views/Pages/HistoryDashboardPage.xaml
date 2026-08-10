@@ -1,0 +1,186 @@
+<UserControl x:Class="AutoScrew.Hmi.Views.Pages.HistoryDashboardPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             d:DataContext="{d:DesignInstance vm:HistoryDashboardViewModel, IsDesignTimeCreatable=False}"
+             d:DesignHeight="720"
+             d:DesignWidth="1100"
+             d:Background="White"
+             mc:Ignorable="d"
+             Loaded="OnLoaded">
+    <Grid Margin="0,0,0,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <WrapPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Margin="0,0,16,8" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Text="{DynamicResource S.History.From}" />
+                <DatePicker Width="140"
+                            SelectedDate="{Binding ViewModel.FromDate, Mode=TwoWay}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Text="{DynamicResource S.History.To}" />
+                <DatePicker Width="140"
+                            SelectedDate="{Binding ViewModel.ToDate, Mode=TwoWay}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Text="{DynamicResource S.History.Serial}" />
+                <TextBox Width="140"
+                         Text="{Binding ViewModel.SerialFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Text="{DynamicResource S.History.Part}" />
+                <TextBox Width="140"
+                         Text="{Binding ViewModel.PartFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,8" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Text="{DynamicResource S.History.Result}" />
+                <ComboBox Width="100"
+                          ItemsSource="{Binding ViewModel.ResultFilterOptions}"
+                          SelectedItem="{Binding ViewModel.ResultFilter, Mode=TwoWay}" />
+            </StackPanel>
+            <ui:Button Margin="0,0,8,8"
+                       Appearance="Primary"
+                       Command="{Binding ViewModel.RefreshCommand}"
+                       Content="{DynamicResource S.Common.Refresh}" />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ViewModel.TodayCommand}"
+                       Content="{DynamicResource S.History.Today}" />
+        </WrapPanel>
+
+        <UniformGrid Grid.Row="1"
+                     Columns="6"
+                     Margin="0,0,0,12">
+            <ui:CardControl Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.JobTotal}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.JobTotal}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.JobOk}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.JobOk}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.JobNg}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.JobNg}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.ScrewTotal}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.ScrewTotal}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.ScrewOk}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.ScrewOk}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:CardControl>
+                <StackPanel>
+                    <TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.History.ScrewNg}" />
+                    <TextBlock FontSize="22" Text="{Binding ViewModel.ScrewNg}" />
+                </StackPanel>
+            </ui:CardControl>
+        </UniformGrid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid Grid.Column="0"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding ViewModel.Jobs}"
+                      SelectedItem="{Binding ViewModel.SelectedJob, Mode=TwoWay}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Started}"
+                                        Binding="{Binding StartedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                        Width="140" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Serial}"
+                                        Binding="{Binding SerialNumber}"
+                                        Width="*" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Part}"
+                                        Binding="{Binding PartNumber}"
+                                        Width="*" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Result}"
+                                        Binding="{Binding Result}"
+                                        Width="70" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Screws}"
+                                        Binding="{Binding ScrewCount}"
+                                        Width="60" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Operator}"
+                                        Binding="{Binding OperatorId}"
+                                        Width="90" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.HostMac}"
+                                        Binding="{Binding HostMac}"
+                                        Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <DataGrid Grid.Column="2"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      ItemsSource="{Binding ViewModel.Screws}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Pos}"
+                                        Binding="{Binding PositionIndex}"
+                                        Width="50" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Result}"
+                                        Binding="{Binding Result}"
+                                        Width="60" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Torque}"
+                                        Binding="{Binding FinalTorqueNm, StringFormat={}{0:F3}}"
+                                        Width="70" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Angle}"
+                                        Binding="{Binding FinalAngleDeg, StringFormat={}{0:F1}}"
+                                        Width="70" />
+                    <DataGridTextColumn Header="{DynamicResource S.History.Col.Curve}"
+                                        Binding="{Binding CurvePath}"
+                                        Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <TextBlock Grid.Row="3"
+                   Margin="0,8,0,0"
+                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}">
+            <Run Text="{DynamicResource S.History.TotalCount}" />
+            <Run Text="{Binding ViewModel.TotalCount}" />
+            <Run Text="  " />
+            <Run Text="{Binding ViewModel.StatusMessage}" />
+        </TextBlock>
+    </Grid>
+</UserControl>

@@ -10,6 +10,10 @@ public sealed class LockRecordEntity
 
     public string StationId { get; set; } = "";
 
+    public string? HostIp { get; set; }
+
+    public string? HostMac { get; set; }
+
     public string OperatorId { get; set; } = "";
 
     public DateTimeOffset StartedAt { get; set; }
