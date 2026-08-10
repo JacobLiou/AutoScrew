@@ -173,14 +173,34 @@ public sealed class OperatorSessionMultiSurfaceTests
     {
         public SessionCheckpointData? Last { get; private set; }
 
-        public Task SaveCheckpointAsync(SessionCheckpointData data, CancellationToken cancellationToken = default)
+        public Task SaveJobMemoryAsync(SessionCheckpointData data, SnJobMemoryStatus status, CancellationToken cancellationToken = default)
         {
             Last = data;
             return Task.CompletedTask;
         }
 
-        public Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default) =>
+        public Task<SessionCheckpointData?> LoadJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Last is not null && string.Equals(Last.SerialNumber, serialNumber, StringComparison.OrdinalIgnoreCase) ? Last : null);
+
+        public Task<SnJobMemoryStatus?> GetJobMemoryStatusAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Last is null ? (SnJobMemoryStatus?)null : SnJobMemoryStatus.InProgress);
+
+        public Task<SessionCheckpointData?> LoadLatestRestorableAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(Last);
+
+        public Task MarkJobCompletedAsync(string serialNumber, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task RemoveJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default)
+        {
+            Last = null;
+            return Task.CompletedTask;
+        }
+
+        public Task SaveCheckpointAsync(SessionCheckpointData data, CancellationToken cancellationToken = default) =>
+            SaveJobMemoryAsync(data, SnJobMemoryStatus.InProgress, cancellationToken);
+
+        public Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default) =>
+            LoadLatestRestorableAsync(cancellationToken);
 
         public Task ClearCheckpointAsync(CancellationToken cancellationToken = default)
         {

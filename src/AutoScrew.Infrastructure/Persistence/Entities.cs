@@ -83,6 +83,23 @@ public sealed class SessionCheckpointEntity
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
+/// <summary>按 SN 的作业本地记忆（未完成 / NG / 已成功）。</summary>
+public sealed class SnJobMemoryEntity
+{
+    public string SerialNumber { get; set; } = "";
+
+    public string PartNumber { get; set; } = "";
+
+    /// <summary>See <see cref="AutoScrew.Application.Abstractions.SnJobMemoryStatus"/>.</summary>
+    public int Status { get; set; }
+
+    public string PayloadJson { get; set; } = "";
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
 public sealed class UserAuditLogEntity
 {
     public long Id { get; set; }

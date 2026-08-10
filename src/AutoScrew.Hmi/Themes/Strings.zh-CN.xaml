@@ -148,6 +148,14 @@
     <system:String x:Key="S.Operation.StatusStepDone">本步完成。</system:String>
     <system:String x:Key="S.Operation.StatusUnlocked">已解锁，请继续。</system:String>
     <system:String x:Key="S.Operation.StatusReset">会话已复位。</system:String>
+    <system:String x:Key="S.Operation.StatusResetParked">会话已复位，进度已保存；再扫同一 SN 可恢复。</system:String>
+    <system:String x:Key="S.Operation.ActiveJobTitle">当前作业进行中</system:String>
+    <system:String x:Key="S.Operation.ActiveJobSameSn">当前正在作业此 SN，请继续锁附或先「复位会话」。</system:String>
+    <system:String x:Key="S.Operation.ActiveJobMustReset">当前正在作业 SN「{0}」。请先「复位会话」保存进度后，再扫描 SN「{1}」。</system:String>
+    <system:String x:Key="S.Operation.ActiveJobBlocked">请先复位会话后再扫描其它 SN。</system:String>
+    <system:String x:Key="S.Operation.RestoreMemoryTitle">恢复作业记忆</system:String>
+    <system:String x:Key="S.Operation.RestoreMemoryPrompt">检测到 SN「{0}」未完成作业（PN={1}，阶段={2}，已完成 {3}/{4} 钉）。是否恢复进度？选「否」将重新开始该 SN。</system:String>
+    <system:String x:Key="S.Operation.LogRestoringMemory">正在恢复 SN {0} 的作业记忆…</system:String>
     <system:String x:Key="S.Operation.NgOverlayTitle">拧紧 NG — 作业已暂停</system:String>
     <system:String x:Key="S.Operation.NgScrewTitle">拧紧 NG — 作业已暂停</system:String>
     <system:String x:Key="S.Operation.NgFeedTitle">供料异常 — 作业已暂停</system:String>
@@ -306,6 +314,8 @@
     <system:String x:Key="S.Dialog.Logout">登出</system:String>
     <system:String x:Key="S.Dialog.LogoutConfirm">确定要登出并返回登录界面吗？</system:String>
     <system:String x:Key="S.Dialog.AbortSession">确定放弃当前作业？</system:String>
+    <system:String x:Key="S.Dialog.AbortSessionTitle">复位会话</system:String>
+    <system:String x:Key="S.Dialog.AbortSessionPark">确定复位当前作业？进度将保存到本地，再扫同一 SN 可恢复；然后可扫描其它 SN。</system:String>
     <system:String x:Key="S.Dialog.Exception">运行异常</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Title">确认退出</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">确定要退出程序吗？</system:String>

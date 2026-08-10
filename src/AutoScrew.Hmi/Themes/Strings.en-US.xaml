@@ -141,6 +141,14 @@
     <system:String x:Key="S.Operation.StatusStepDone">Step done.</system:String>
     <system:String x:Key="S.Operation.StatusUnlocked">Unlocked; continue.</system:String>
     <system:String x:Key="S.Operation.StatusReset">Session reset.</system:String>
+    <system:String x:Key="S.Operation.StatusResetParked">Session reset; progress saved. Rescan the same SN to resume.</system:String>
+    <system:String x:Key="S.Operation.ActiveJobTitle">Job in progress</system:String>
+    <system:String x:Key="S.Operation.ActiveJobSameSn">This SN is already active. Continue tightening or Reset session first.</system:String>
+    <system:String x:Key="S.Operation.ActiveJobMustReset">Job in progress for SN "{0}". Reset session to park progress, then scan SN "{1}".</system:String>
+    <system:String x:Key="S.Operation.ActiveJobBlocked">Reset the session before scanning another SN.</system:String>
+    <system:String x:Key="S.Operation.RestoreMemoryTitle">Resume job memory</system:String>
+    <system:String x:Key="S.Operation.RestoreMemoryPrompt">Unfinished job for SN "{0}" (PN={1}, phase={2}, {3}/{4} screws OK). Resume progress? Choose No to restart this SN.</system:String>
+    <system:String x:Key="S.Operation.LogRestoringMemory">Restoring job memory for SN {0}…</system:String>
     <system:String x:Key="S.Operation.NgOverlayTitle">Tightening NG — job paused</system:String>
     <system:String x:Key="S.Operation.NgScrewTitle">Tightening NG — job paused</system:String>
     <system:String x:Key="S.Operation.NgFeedTitle">Feed fault — job paused</system:String>
@@ -294,6 +302,8 @@
     <system:String x:Key="S.Dialog.Logout">Sign out</system:String>
     <system:String x:Key="S.Dialog.LogoutConfirm">Sign out and return to login?</system:String>
     <system:String x:Key="S.Dialog.AbortSession">Abort current job?</system:String>
+    <system:String x:Key="S.Dialog.AbortSessionTitle">Reset session</system:String>
+    <system:String x:Key="S.Dialog.AbortSessionPark">Reset current job? Progress is saved locally; rescan the same SN to resume, or scan another SN.</system:String>
     <system:String x:Key="S.Dialog.Exception">Runtime error</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Title">Confirm exit</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">Exit the application?</system:String>

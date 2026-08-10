@@ -138,20 +138,54 @@ public sealed class OperatorSessionController
 
     public IReadOnlyList<TorqueAngleSample> LastTighteningSamples { get; private set; } = Array.Empty<TorqueAngleSample>();
 
-    public sealed record CheckpointRestoreOffer(string SerialNumber, string PartNumber, JobSessionPhase Phase);
+    public sealed record CheckpointRestoreOffer(
+        string SerialNumber,
+        string PartNumber,
+        JobSessionPhase Phase,
+        int CompletedScrewCount,
+        int TotalScrewCount);
+
+    public bool IsActiveJobPhase =>
+        _phase is JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked;
 
     public async Task<CheckpointRestoreOffer?> GetCheckpointRestoreOfferAsync(CancellationToken cancellationToken = default)
     {
-        var data = await _checkpointStore.LoadLatestCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        var data = await _checkpointStore.LoadLatestRestorableAsync(cancellationToken).ConfigureAwait(false);
+        return data is null ? null : ToRestoreOffer(data);
+    }
+
+    public async Task<CheckpointRestoreOffer?> TryGetRestorableMemoryAsync(
+        string serialNumber,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(serialNumber))
+            return null;
+
+        var status = await _checkpointStore.GetJobMemoryStatusAsync(serialNumber.Trim(), cancellationToken)
+            .ConfigureAwait(false);
+        if (status is null or SnJobMemoryStatus.Completed)
+            return null;
+
+        var data = await _checkpointStore.LoadJobMemoryAsync(serialNumber.Trim(), cancellationToken)
+            .ConfigureAwait(false);
         if (data is null || !IsRestorablePhase(data.Phase))
             return null;
 
-        return new CheckpointRestoreOffer(data.SerialNumber, data.PartNumber, data.Phase);
+        return ToRestoreOffer(data);
     }
 
-    public async Task<bool> RestoreFromCheckpointAsync(CancellationToken cancellationToken = default)
+    /// <summary>按 SN 恢复作业记忆（可在 Accept 后的 LoadingRecipe 调用）。</summary>
+    public async Task<bool> RestoreJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default)
     {
-        var data = await _checkpointStore.LoadLatestCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(serialNumber))
+            return false;
+
+        var sn = serialNumber.Trim();
+        var status = await _checkpointStore.GetJobMemoryStatusAsync(sn, cancellationToken).ConfigureAwait(false);
+        if (status is null or SnJobMemoryStatus.Completed)
+            return false;
+
+        var data = await _checkpointStore.LoadJobMemoryAsync(sn, cancellationToken).ConfigureAwait(false);
         if (data is null || !IsRestorablePhase(data.Phase))
             return false;
 
@@ -177,17 +211,55 @@ public sealed class OperatorSessionController
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to restore checkpoint for SN={SerialNumber}", data.SerialNumber);
+            _logger.LogError(ex, "Failed to restore job memory for SN={SerialNumber}", data.SerialNumber);
             _lastErrorMessage = ex.Message;
             ClearSession();
-            await _checkpointStore.ClearCheckpointAsync(cancellationToken).ConfigureAwait(false);
             NotifyChanged();
             return false;
         }
     }
 
+    public async Task<bool> RestoreFromCheckpointAsync(CancellationToken cancellationToken = default)
+    {
+        var data = await _checkpointStore.LoadLatestRestorableAsync(cancellationToken).ConfigureAwait(false);
+        if (data is null)
+            return false;
+        return await RestoreJobMemoryAsync(data.SerialNumber, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>启动时拒绝恢复：保留按 SN 记忆供再扫恢复。</summary>
     public Task DiscardCheckpointAsync(CancellationToken cancellationToken = default) =>
-        _checkpointStore.ClearCheckpointAsync(cancellationToken);
+        Task.CompletedTask;
+
+    /// <summary>写条码后按记忆恢复（Accept + 换产之后）。</summary>
+    public async Task ContinueRestoreAfterSerialAcceptedAsync(
+        string serialNumber,
+        CancellationToken cancellationToken = default)
+    {
+        if (_phase != JobSessionPhase.LoadingRecipe ||
+            string.IsNullOrWhiteSpace(_serialNumber) ||
+            string.IsNullOrWhiteSpace(_partNumber))
+            throw new InvalidOperationException("No accepted SN to restore.");
+
+        try
+        {
+            await _controllerTrace.WriteSerialNumberAsync(_serialNumber!, cancellationToken).ConfigureAwait(false);
+            AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber}", serialNumber: _serialNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Write barcode to controller failed for SN={SerialNumber}", _serialNumber);
+            AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber};error={ex.Message}", success: false, _serialNumber);
+            AbortAcceptedSerial(ex.Message);
+            return;
+        }
+
+        var ok = await RestoreJobMemoryAsync(serialNumber, cancellationToken).ConfigureAwait(false);
+        if (!ok)
+        {
+            AbortAcceptedSerial(_lastErrorMessage ?? "Restore job memory failed.");
+        }
+    }
 
     public void RequestScanDialog()
     {
@@ -213,6 +285,25 @@ public sealed class OperatorSessionController
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serialNumber);
         _lastErrorMessage = null;
+
+        if (IsActiveJobPhase)
+        {
+            var input = serialNumber.Trim();
+            if (string.Equals(_serialNumber, input, StringComparison.OrdinalIgnoreCase))
+            {
+                return new SerialAcceptResult(
+                    false,
+                    _serialNumber,
+                    _partNumber,
+                    "ActiveJobSameSn");
+            }
+
+            return new SerialAcceptResult(
+                false,
+                _serialNumber,
+                _partNumber,
+                "ActiveJobMustReset");
+        }
 
         if (_phase == JobSessionPhase.SnRejected)
             TryApply(JobSessionTrigger.RequestScan);
@@ -763,7 +854,24 @@ public sealed class OperatorSessionController
         if (!upload.Accepted)
             await _outbox.EnqueueAsync(payload, upload.Message, cancellationToken).ConfigureAwait(false);
 
-        await _checkpointStore.ClearCheckpointAsync(cancellationToken).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(_serialNumber))
+        {
+            var surfaceCheckpoints = _surfaces.Select(s => new SurfaceCheckpointSurface(
+                s.SurfaceId,
+                s.ProgressState,
+                s.States.ToList())).ToList();
+            var data = new SessionCheckpointData(
+                JobSessionPhase.Completed,
+                _serialNumber!,
+                _partNumber ?? "",
+                _activeSurfaceOrdinal,
+                _currentIndex,
+                surfaceCheckpoints,
+                DateTimeOffset.UtcNow);
+            await _checkpointStore
+                .SaveJobMemoryAsync(data, SnJobMemoryStatus.Completed, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 
     private Task LogErrorAsync(
@@ -816,8 +924,14 @@ public sealed class OperatorSessionController
         NotifyChanged();
     }
 
-    public void ResetToIdle()
+    public void ResetToIdle() =>
+        ResetToIdleAsync().GetAwaiter().GetResult();
+
+    public async Task ResetToIdleAsync(CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrWhiteSpace(_serialNumber) && IsActiveJobPhase)
+            await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+
         if (!TryApply(JobSessionTrigger.ResetToIdle))
             TryApply(JobSessionTrigger.Abort);
 
@@ -826,8 +940,16 @@ public sealed class OperatorSessionController
         NotifyChanged();
     }
 
-    public void AbortToIdle()
+    public void AbortToIdle() =>
+        AbortToIdleAsync().GetAwaiter().GetResult();
+
+    public async Task AbortToIdleAsync(CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrWhiteSpace(_serialNumber) &&
+            _phase is JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked
+                or JobSessionPhase.LoadingRecipe)
+            await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
+
         TryApply(JobSessionTrigger.Abort);
         ClearSession();
         NotifyChanged();
@@ -1023,6 +1145,10 @@ public sealed class OperatorSessionController
         if (_serialNumber is null)
             return;
 
+        // 完成后由 MarkJobCompleted 保留成功记录，勿再写成可恢复记忆
+        if (_phase == JobSessionPhase.Completed || _phase == JobSessionPhase.Idle)
+            return;
+
         var surfaceCheckpoints = _surfaces.Select(s => new SurfaceCheckpointSurface(
             s.SurfaceId,
             s.ProgressState,
@@ -1037,7 +1163,33 @@ public sealed class OperatorSessionController
             surfaceCheckpoints,
             DateTimeOffset.UtcNow);
 
-        await _checkpointStore.SaveCheckpointAsync(data, cancellationToken).ConfigureAwait(false);
+        var status = _phase == JobSessionPhase.NgLocked
+            ? SnJobMemoryStatus.NgPaused
+            : SnJobMemoryStatus.InProgress;
+
+        await _checkpointStore.SaveJobMemoryAsync(data, status, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static CheckpointRestoreOffer ToRestoreOffer(SessionCheckpointData data)
+    {
+        var total = 0;
+        var completed = 0;
+        foreach (var surface in data.Surfaces)
+        {
+            foreach (var st in surface.ScrewStates)
+            {
+                total++;
+                if (st == StationScrewState.Ok)
+                    completed++;
+            }
+        }
+
+        return new CheckpointRestoreOffer(
+            data.SerialNumber,
+            data.PartNumber,
+            data.Phase,
+            completed,
+            total);
     }
 
     private void AuditOperation(string action, string? detail, bool success = true, string? serialNumber = null) =>

@@ -96,10 +96,31 @@ public sealed class SimulatedFeedFailureTests
 
     private sealed class NoOpCheckpointStore : ILockSessionRepository
     {
+        public Task SaveJobMemoryAsync(SessionCheckpointData data, SnJobMemoryStatus status, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<SessionCheckpointData?> LoadJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult<SessionCheckpointData?>(null);
+
+        public Task<SnJobMemoryStatus?> GetJobMemoryStatusAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult<SnJobMemoryStatus?>(null);
+
+        public Task<SessionCheckpointData?> LoadLatestRestorableAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<SessionCheckpointData?>(null);
+
+        public Task MarkJobCompletedAsync(string serialNumber, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task RemoveJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
         public Task SaveCheckpointAsync(SessionCheckpointData data, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default) => Task.FromResult<SessionCheckpointData?>(null);
+
+        public Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<SessionCheckpointData?>(null);
+
         public Task ClearCheckpointAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default) => Task.FromResult(1L);
+
+        public Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default) =>
+            Task.FromResult(1L);
     }
 
     private sealed class NoOpOutbox : IOutboundMesQueue

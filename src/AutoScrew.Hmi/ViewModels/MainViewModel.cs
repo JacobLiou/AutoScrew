@@ -174,6 +174,9 @@ public partial class MainViewModel : ObservableObject
             or JobSessionPhase.SnPending
             or JobSessionPhase.SnRejected
             or JobSessionPhase.Completed
+            or JobSessionPhase.Running
+            or JobSessionPhase.AwaitFlip
+            or JobSessionPhase.NgLocked
         && !string.IsNullOrWhiteSpace(SerialNumberInput);
 
     private bool CanRunScrew() =>
@@ -206,21 +209,47 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSubmitSn))]
     private async Task SubmitSnAsync()
     {
+        var inputSn = SerialNumberInput.Trim();
         AuditHelper.Log(
             _audit,
             _appOptions,
             _user,
             AuditCategory.Operation,
             "Operation.SubmitSn",
-            detail: $"sn={SerialNumberInput.Trim()}");
+            detail: $"sn={inputSn}");
         try
         {
+            if (_session.IsActiveJobPhase)
+            {
+                if (string.Equals(_session.SerialNumber, inputSn, StringComparison.OrdinalIgnoreCase))
+                {
+                    StatusMessage = Loc.Get("S.Operation.ActiveJobSameSn");
+                    MessageTips.ShowDialog(
+                        Loc.Get("S.Operation.ActiveJobSameSn"),
+                        System.Windows.Application.Current?.MainWindow,
+                        Loc.Get("S.Operation.ActiveJobTitle"));
+                    return;
+                }
+
+                MessageTips.ShowDialog(
+                    Loc.Format("S.Operation.ActiveJobMustReset", _session.SerialNumber ?? "—", inputSn),
+                    System.Windows.Application.Current?.MainWindow,
+                    Loc.Get("S.Operation.ActiveJobTitle"));
+                StatusMessage = Loc.Get("S.Operation.ActiveJobBlocked");
+                return;
+            }
+
             EnsureAwaitingSn();
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
-            var accept = await _session.AcceptSerialNumberAsync(SerialNumberInput).ConfigureAwait(true);
+            var accept = await _session.AcceptSerialNumberAsync(inputSn).ConfigureAwait(true);
             if (!accept.Accepted)
             {
-                StatusMessage = accept.ErrorMessage ?? Loc.Get("S.Operation.GuideSnRejected");
+                StatusMessage = accept.ErrorMessage switch
+                {
+                    "ActiveJobMustReset" => Loc.Get("S.Operation.ActiveJobBlocked"),
+                    "ActiveJobSameSn" => Loc.Get("S.Operation.ActiveJobSameSn"),
+                    _ => accept.ErrorMessage ?? Loc.Get("S.Operation.GuideSnRejected"),
+                };
                 return;
             }
 
@@ -291,6 +320,47 @@ public partial class MainViewModel : ObservableObject
                     detail: $"pn={pn}");
             }
 
+            var memory = await _session.TryGetRestorableMemoryAsync(inputSn).ConfigureAwait(true);
+            if (memory is not null)
+            {
+                var restore = ConfirmTips.ShowDialog(
+                    Loc.Format(
+                        "S.Operation.RestoreMemoryPrompt",
+                        memory.SerialNumber,
+                        memory.PartNumber,
+                        memory.Phase,
+                        memory.CompletedScrewCount,
+                        memory.TotalScrewCount),
+                    System.Windows.Application.Current?.MainWindow,
+                    Loc.Get("S.Operation.RestoreMemoryTitle"));
+                if (restore)
+                {
+                    StatusMessage = Loc.Get("S.Operation.StatusRestoring");
+                    AddLog(Loc.Format("S.Operation.LogRestoringMemory", memory.SerialNumber));
+                    await _session.ContinueRestoreAfterSerialAcceptedAsync(inputSn).ConfigureAwait(true);
+                    if (_session.IsActiveJobPhase || _session.Phase == JobSessionPhase.Running)
+                    {
+                        StatusMessage = Loc.Format("S.Operation.StatusRestored", _session.SerialNumber!);
+                        AddLog(Loc.Format("S.Operation.LogRestored", _session.SerialNumber!));
+                        RefreshFromSession();
+                    }
+                    else
+                    {
+                        StatusMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.RestoreFailed");
+                    }
+
+                    return;
+                }
+
+                AuditHelper.Log(
+                    _audit,
+                    _appOptions,
+                    _user,
+                    AuditCategory.Operation,
+                    "Operation.RestoreMemoryDeclined",
+                    detail: $"sn={inputSn}");
+            }
+
             StatusMessage = Loc.Get("S.Operation.LogLoadingRecipe");
             AddLog(Loc.Get("S.Operation.LogLoadingRecipe"));
             await _session.ContinueAfterSerialAcceptedAsync().ConfigureAwait(true);
@@ -313,13 +383,19 @@ public partial class MainViewModel : ObservableObject
         }
         finally
         {
-            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
-                or JobSessionPhase.SnRejected
-                or JobSessionPhase.Idle
-                or JobSessionPhase.Completed;
+            RefreshSnInputEnabled();
             NotifyCommandStates();
         }
     }
+
+    private void RefreshSnInputEnabled() =>
+        IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
+            or JobSessionPhase.SnRejected
+            or JobSessionPhase.Idle
+            or JobSessionPhase.Completed
+            or JobSessionPhase.Running
+            or JobSessionPhase.AwaitFlip
+            or JobSessionPhase.NgLocked;
 
     private bool ConfirmChangeover(ChangeoverDecision decision)
     {
@@ -406,21 +482,24 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ResetSession()
+    private async Task ResetSessionAsync()
     {
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.ResetSession", serialNumber: _session.SerialNumber);
         if (_session.Phase != JobSessionPhase.Idle
             && _session.Phase != JobSessionPhase.SnPending
-            && !ConfirmTips.ShowDialog(Loc.Get("S.Dialog.AbortSession"), System.Windows.Application.Current.MainWindow))
+            && !ConfirmTips.ShowDialog(
+                Loc.Get("S.Dialog.AbortSessionPark"),
+                System.Windows.Application.Current.MainWindow,
+                Loc.Get("S.Dialog.AbortSessionTitle")))
             return;
 
-        _session.ResetToIdle();
+        await _session.ResetToIdleAsync().ConfigureAwait(true);
         SerialNumberInput = "";
         _activityLog.ClearRecent();
         IsSnInputEnabled = true;
         IsNgOverlayVisible = false;
         IsOperationLocked = false;
-        StatusMessage = Loc.Get("S.Operation.StatusReset");
+        StatusMessage = Loc.Get("S.Operation.StatusResetParked");
         try
         {
             _session.RequestScanDialog();
@@ -431,6 +510,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         CurveChanged?.Invoke(this, EventArgs.Empty);
+        NotifyCommandStates();
     }
 
     public async Task TryRestoreCheckpointOnStartupAsync()
@@ -442,8 +522,14 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var message = Loc.Format("S.Operation.RestoreCheckpointPrompt", offer.SerialNumber, offer.PartNumber, offer.Phase);
-        if (ConfirmTips.ShowDialog(message, System.Windows.Application.Current.MainWindow, Loc.Get("S.Operation.RestoreCheckpointTitle")))
+        var message = Loc.Format(
+            "S.Operation.RestoreMemoryPrompt",
+            offer.SerialNumber,
+            offer.PartNumber,
+            offer.Phase,
+            offer.CompletedScrewCount,
+            offer.TotalScrewCount);
+        if (ConfirmTips.ShowDialog(message, System.Windows.Application.Current.MainWindow, Loc.Get("S.Operation.RestoreMemoryTitle")))
         {
             StatusMessage = Loc.Get("S.Operation.StatusRestoring");
             var ok = await _session.RestoreFromCheckpointAsync().ConfigureAwait(true);
@@ -472,10 +558,7 @@ public partial class MainViewModel : ObservableObject
         {
             if (_session.Phase == JobSessionPhase.Idle)
                 _session.RequestScanDialog();
-            IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
-                or JobSessionPhase.SnRejected
-                or JobSessionPhase.Idle
-                or JobSessionPhase.Completed;
+            RefreshSnInputEnabled();
             StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
         }
         catch
@@ -492,10 +575,7 @@ public partial class MainViewModel : ObservableObject
         BoardWidth = _session.BoardWidth;
         BoardHeight = _session.BoardHeight;
         RefreshDeviceProcessPn();
-        IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
-            or JobSessionPhase.SnRejected
-            or JobSessionPhase.Idle
-            or JobSessionPhase.Completed;
+        RefreshSnInputEnabled();
 
         var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
         if (ngLocked)

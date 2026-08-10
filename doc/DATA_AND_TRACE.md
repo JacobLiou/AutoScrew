@@ -20,7 +20,14 @@
 ## SQLite 实体（Infrastructure）
 
 - `lock_records` / `screw_details` / `error_logs`：表已建；**T-08**：作业完成时 [`SaveLockRecordAsync`](../src/AutoScrew.Application/Abstractions/ILockSessionRepository.cs) 写入 `lock_records` + `screw_details`（`PositionIndex` = 全局位号）。
-- `session_checkpoints`：作业断电恢复 checkpoint（JSON）；**T-07** 启动时 HMI 提示恢复，重载模板并合并螺钉状态（不含 `_screwRecords` 扭矩/曲线路径）。
+- `session_checkpoints`：旧单槽断电 checkpoint（兼容迁移源）；新逻辑见 `SnJobMemories`。
+- **`SnJobMemories`（按 SN 作业记忆）**：主键 `SerialNumber`；`Status`=`InProgress` / `NgPaused` / `Completed`；`PayloadJson` 复用原 checkpoint 结构（phase、面进度、螺钉状态）；`UpdatedAt` / `CompletedAt`。
+  - 未完成或 NG：按 SN upsert 保留；复位会话挂起记忆、不删除。
+  - 再扫同一 SN：确认框（阶段 + 已完成/总钉数）后恢复；取消则全新开工并覆盖记忆。
+  - 全部成功：`Status=Completed` 保留成功记录，不再作为可恢复项。
+  - 启动：提示最近一条可恢复记忆（非 Completed）；拒绝恢复不删记忆。
+  - 活跃作业时扫其它 SN：弹框拦截，须先复位。
+  - 不含 `_screwRecords` 扭矩/曲线路径（与原先 T-07 一致）。
 - `outbox_uploads`：MES 上传重试队列。
 - `user_audit_logs`：用户操作审计（仅追加 INSERT，HMI 无删除 API）。
 - **`product_template_sync`（V1.2）**：PN、`LocalRelativePath`、`SyncState`（`LocalOnly` / `DownloadedFromMes` / `PendingUpload` / `Synced` / `Failed`）、`LocalFileHash`、`LastMesPullUtc` / `LastMesPushUtc`、`LastError`。
@@ -49,7 +56,7 @@
 - **Phase 1（已实现）**：HMI 技术员侧 v2 整包编辑（左树 + 右画板）；`LoadProductAsync` 加载完整产品包。
 - **Phase 2（已实现 · 作业台）**：
   - `OperatorSessionController` 多面 runtime（`ActiveSurfaceOrdinal`、按面 `SurfaceCheckpointSurface`）。
-  - `session_checkpoints` JSON 含 `activeSurfaceOrdinal` + 每面 `surfaceId` / `progressState` / `screwStates`。
+  - `SnJobMemories` / checkpoint JSON 含 `activeSurfaceOrdinal` + 每面 `surfaceId` / `progressState` / `screwStates`。
   - 曲线文件仍用 `torque_curve_{globalPositionIndex}_{timestamp}.csv`（global 按 `surfaceOrderThenLocalIndex`）。
   - **MES 待定稿**：`ScrewResultDto` 暂不增加 `surface_id` / `local_index` 上报字段；本地 checkpoint 与 `_screwRecords` 已按 `surfaceId` + `localIndex` 区分。
 - **Phase 3（V1.2 · 已实现）**：

@@ -14,6 +14,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<SessionCheckpointEntity> SessionCheckpoints => Set<SessionCheckpointEntity>();
 
+    public DbSet<SnJobMemoryEntity> SnJobMemories => Set<SnJobMemoryEntity>();
+
     public DbSet<UserAuditLogEntity> UserAuditLogs => Set<UserAuditLogEntity>();
 
     public DbSet<ProductTemplateSyncEntity> ProductTemplateSyncs => Set<ProductTemplateSyncEntity>();
@@ -47,6 +49,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         });
 
         modelBuilder.Entity<SessionCheckpointEntity>(e => { e.HasKey(x => x.Id); });
+
+        modelBuilder.Entity<SnJobMemoryEntity>(e =>
+        {
+            e.HasKey(x => x.SerialNumber);
+            e.HasIndex(x => x.Status);
+            e.HasIndex(x => x.UpdatedAt);
+        });
 
         modelBuilder.Entity<UserAuditLogEntity>(e =>
         {

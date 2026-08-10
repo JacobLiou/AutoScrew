@@ -26,9 +26,9 @@ public sealed class CheckpointRestoreTests
         await controller.RunCurrentScrewCycleAsync();
 
         Assert.Equal(JobSessionPhase.Running, controller.Phase);
-        Assert.NotNull(store.Last);
+        Assert.NotNull(store.Get("SN-CP-001"));
 
-        var saved = store.Last!;
+        var saved = store.Get("SN-CP-001")!;
         var controller2 = env.CreateFreshController(store);
 
         var offer = await controller2.GetCheckpointRestoreOfferAsync();
@@ -40,6 +40,78 @@ public sealed class CheckpointRestoreTests
         Assert.Equal(saved.Phase, controller2.Phase);
         Assert.Equal(saved.ActiveSurfaceOrdinal, controller2.ActiveSurfaceOrdinal);
         Assert.Equal("SN-CP-001", controller2.SerialNumber);
+    }
+
+    [Fact]
+    public async Task Reset_ParksMemory_OtherSnDoesNotOverwrite_RescanRestores()
+    {
+        await using var env = await RestoreEnv.CreateAsync();
+        var a = env.Controller;
+        var store = env.CheckpointStore;
+
+        a.RequestScanDialog();
+        await a.SubmitSerialNumberAsync("SN-A");
+        await a.RunCurrentScrewCycleAsync();
+        Assert.Equal(JobSessionPhase.Running, a.Phase);
+        Assert.NotNull(store.Get("SN-A"));
+
+        await a.ResetToIdleAsync();
+        Assert.Equal(JobSessionPhase.Idle, a.Phase);
+        Assert.NotNull(store.Get("SN-A"));
+        Assert.Equal(SnJobMemoryStatus.InProgress, store.GetStatus("SN-A"));
+
+        a.RequestScanDialog();
+        await a.SubmitSerialNumberAsync("SN-B");
+        Assert.Equal(JobSessionPhase.Running, a.Phase);
+        Assert.NotNull(store.Get("SN-B"));
+        Assert.NotNull(store.Get("SN-A"));
+
+        await a.ResetToIdleAsync();
+        a.RequestScanDialog();
+        var accept = await a.AcceptSerialNumberAsync("SN-A");
+        Assert.True(accept.Accepted);
+        var offer = await a.TryGetRestorableMemoryAsync("SN-A");
+        Assert.NotNull(offer);
+        Assert.True(offer!.CompletedScrewCount >= 1);
+
+        await a.ContinueRestoreAfterSerialAcceptedAsync("SN-A");
+        Assert.True(a.IsActiveJobPhase || a.Phase == JobSessionPhase.Running);
+        Assert.Equal("SN-A", a.SerialNumber);
+    }
+
+    [Fact]
+    public async Task ActiveJob_RejectsDifferentSn()
+    {
+        await using var env = await RestoreEnv.CreateAsync();
+        var controller = env.Controller;
+        controller.RequestScanDialog();
+        await controller.SubmitSerialNumberAsync("SN-A");
+        Assert.True(controller.IsActiveJobPhase);
+
+        var blocked = await controller.AcceptSerialNumberAsync("SN-B");
+        Assert.False(blocked.Accepted);
+        Assert.Equal("ActiveJobMustReset", blocked.ErrorMessage);
+        Assert.Equal("SN-A", controller.SerialNumber);
+    }
+
+    [Fact]
+    public async Task Completed_IsNotRestorable()
+    {
+        await using var env = await RestoreEnv.CreateAsync();
+        var store = env.CheckpointStore;
+        store.SetCompleted("SN-DONE", new SessionCheckpointData(
+            JobSessionPhase.Completed,
+            "SN-DONE",
+            "PN-CP",
+            0,
+            0,
+            [new SurfaceCheckpointSurface("S1", SurfaceProgressState.Complete, [StationScrewState.Ok])],
+            DateTimeOffset.UtcNow));
+
+        var controller = env.CreateFreshController(store);
+        var offer = await controller.TryGetRestorableMemoryAsync("SN-DONE");
+        Assert.Null(offer);
+        Assert.Null(await controller.GetCheckpointRestoreOfferAsync());
     }
 
     private sealed class RestoreEnv : IAsyncDisposable
@@ -107,22 +179,77 @@ public sealed class CheckpointRestoreTests
 
     private sealed class MemoryCheckpointStore : ILockSessionRepository
     {
-        public SessionCheckpointData? Last { get; private set; }
+        private readonly Dictionary<string, (SessionCheckpointData Data, SnJobMemoryStatus Status)> _bySn = new(StringComparer.OrdinalIgnoreCase);
+
+        public SessionCheckpointData? Get(string sn) =>
+            _bySn.TryGetValue(sn, out var row) ? row.Data : null;
+
+        public SnJobMemoryStatus? GetStatus(string sn) =>
+            _bySn.TryGetValue(sn, out var row) ? row.Status : null;
+
+        public void SetCompleted(string sn, SessionCheckpointData data) =>
+            _bySn[sn] = (data, SnJobMemoryStatus.Completed);
+
+        public Task SaveJobMemoryAsync(
+            SessionCheckpointData data,
+            SnJobMemoryStatus status,
+            CancellationToken cancellationToken = default)
+        {
+            _bySn[data.SerialNumber] = (data, status);
+            return Task.CompletedTask;
+        }
+
+        public Task<SessionCheckpointData?> LoadJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Get(serialNumber));
+
+        public Task<SnJobMemoryStatus?> GetJobMemoryStatusAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult(GetStatus(serialNumber));
+
+        public Task<SessionCheckpointData?> LoadLatestRestorableAsync(CancellationToken cancellationToken = default)
+        {
+            SessionCheckpointData? best = null;
+            DateTimeOffset bestAt = default;
+            foreach (var (_, row) in _bySn)
+            {
+                if (row.Status == SnJobMemoryStatus.Completed)
+                    continue;
+                if (row.Data.Phase is not (JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked))
+                    continue;
+                if (best is null || row.Data.UpdatedAt >= bestAt)
+                {
+                    best = row.Data;
+                    bestAt = row.Data.UpdatedAt;
+                }
+            }
+
+            return Task.FromResult(best);
+        }
+
+        public Task MarkJobCompletedAsync(string serialNumber, CancellationToken cancellationToken = default)
+        {
+            if (_bySn.TryGetValue(serialNumber, out var row))
+                _bySn[serialNumber] = (row.Data, SnJobMemoryStatus.Completed);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveJobMemoryAsync(string serialNumber, CancellationToken cancellationToken = default)
+        {
+            _bySn.Remove(serialNumber);
+            return Task.CompletedTask;
+        }
 
         public Task SaveCheckpointAsync(SessionCheckpointData data, CancellationToken cancellationToken = default)
         {
-            Last = data;
-            return Task.CompletedTask;
+            var status = data.Phase == JobSessionPhase.NgLocked
+                ? SnJobMemoryStatus.NgPaused
+                : SnJobMemoryStatus.InProgress;
+            return SaveJobMemoryAsync(data, status, cancellationToken);
         }
 
         public Task<SessionCheckpointData?> LoadLatestCheckpointAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(Last);
+            LoadLatestRestorableAsync(cancellationToken);
 
-        public Task ClearCheckpointAsync(CancellationToken cancellationToken = default)
-        {
-            Last = null;
-            return Task.CompletedTask;
-        }
+        public Task ClearCheckpointAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public Task<long> SaveLockRecordAsync(LockJobResultPayload payload, CancellationToken cancellationToken = default) =>
             Task.FromResult(1L);
