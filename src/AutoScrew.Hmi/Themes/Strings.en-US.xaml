@@ -343,12 +343,19 @@
     <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence JSON) by product PN on LAN/local storage, then deploy to the controller.</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">Library root</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">Product PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① Select product PN first</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHint">Lists clear when no PN is selected. Pick or type a PN, then click Load product.</system:String>
+    <system:String x:Key="S.ProcessLibrary.SelectProductHint">Select a product PN first</system:String>
     <system:String x:Key="S.ProcessLibrary.Load">Load product</system:String>
     <system:String x:Key="S.ProcessLibrary.RefreshList">Refresh products</system:String>
     <system:String x:Key="S.ProcessLibrary.TabParams">Parameter slots</system:String>
     <system:String x:Key="S.ProcessLibrary.TabSequences">Sequences</system:String>
     <system:String x:Key="S.ProcessLibrary.Upload">Upload card</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequence">Upload sequence JSON</system:String>
+    <system:String x:Key="S.ProcessLibrary.UploadSequenceExcel">Upload sequence Excel</system:String>
+    <system:String x:Key="S.ProcessLibrary.SequenceIdLabel">Sequence ID</system:String>
+    <system:String x:Key="S.ProcessLibrary.InvalidSequenceId">Sequence ID must be an integer from 1 to 500.</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceExcelUploaded">Imported Excel sequence (ID={0}). Ensure process-card slots exist first.</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSlot">Delete selected slot</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSequence">Delete selected sequence</system:String>
     <system:String x:Key="S.ProcessLibrary.Deploy">Deploy parameters</system:String>

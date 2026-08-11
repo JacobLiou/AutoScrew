@@ -358,12 +358,19 @@
     <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 JSON），并可下发到设备。</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① 先选择产品 PN</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHint">未选择产品时下方列表会清空，请勿对残留数据操作。从列表选择或输入 PN 后点「加载产品内容」。</system:String>
+    <system:String x:Key="S.ProcessLibrary.SelectProductHint">请先选择产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.Load">加载产品内容</system:String>
     <system:String x:Key="S.ProcessLibrary.RefreshList">刷新产品列表</system:String>
     <system:String x:Key="S.ProcessLibrary.TabParams">参数槽位</system:String>
     <system:String x:Key="S.ProcessLibrary.TabSequences">拧紧顺序</system:String>
     <system:String x:Key="S.ProcessLibrary.Upload">上传工艺卡</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequence">上传顺序 JSON</system:String>
+    <system:String x:Key="S.ProcessLibrary.UploadSequenceExcel">上传顺序 Excel</system:String>
+    <system:String x:Key="S.ProcessLibrary.SequenceIdLabel">顺序 ID</system:String>
+    <system:String x:Key="S.ProcessLibrary.InvalidSequenceId">顺序 ID 须为 1–500 的整数。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceExcelUploaded">已导入 Excel 顺序（ID={0}）。请先确保工艺卡槽位齐全。</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSlot">删除选中槽位</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSequence">删除选中顺序</system:String>
     <system:String x:Key="S.ProcessLibrary.Deploy">下发参数到设备</system:String>

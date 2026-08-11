@@ -5,11 +5,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+             xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
              d:DataContext="{d:DesignInstance vm:ProcessLibraryViewModel, IsDesignTimeCreatable=False}"
              d:DesignHeight="720"
              d:DesignWidth="960"
              mc:Ignorable="d"
              IsVisibleChanged="OnIsVisibleChanged">
+    <UserControl.Resources>
+        <conv:InverseBooleanToVisibilityConverter x:Key="BoolToVisInverse" />
+    </UserControl.Resources>
     <Grid Margin="0,0,0,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -33,32 +37,55 @@
                               Text="{DynamicResource S.ProcessLibrary.RootPath}" />
                 <ui:TextBlock Margin="0,0,0,12"
                               Text="{Binding ViewModel.ProcessRootPath}"
-                              TextWrapping="Wrap" />
-                <DockPanel LastChildFill="True">
-                    <ui:TextBlock Margin="0,0,8,0"
-                                  VerticalAlignment="Center"
-                                  Text="{DynamicResource S.ProcessLibrary.ProductPn}" />
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Secondary"
-                                   Command="{Binding ViewModel.RefreshProductContentCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.Load}" />
-                        <ui:Button Appearance="Secondary"
-                                   Command="{Binding ViewModel.RefreshProductListCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.RefreshList}" />
+                              TextWrapping="Wrap"
+                              FontSize="12"
+                              Opacity="0.85" />
+
+                <Border Padding="12"
+                        Margin="0,0,0,8"
+                        CornerRadius="6"
+                        BorderThickness="1"
+                        BorderBrush="{ui:ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Background="{ui:ThemeResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <ui:TextBlock Margin="0,0,0,6"
+                                      FontTypography="BodyStrong"
+                                      Text="{DynamicResource S.ProcessLibrary.ProductPnRequired}" />
+                        <ui:TextBlock Margin="0,0,0,10"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.ProcessLibrary.ProductPnHint}"
+                                      TextWrapping="Wrap" />
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
+                                <ui:Button Margin="0,0,8,0"
+                                           MinHeight="36"
+                                           Appearance="Primary"
+                                           Command="{Binding ViewModel.RefreshProductContentCommand}"
+                                           Content="{DynamicResource S.ProcessLibrary.Load}"
+                                           Icon="{ui:SymbolIcon ArrowSync24}" />
+                                <ui:Button MinHeight="36"
+                                           Appearance="Secondary"
+                                           Command="{Binding ViewModel.RefreshProductListCommand}"
+                                           Content="{DynamicResource S.ProcessLibrary.RefreshList}" />
+                            </StackPanel>
+                            <ComboBox MinWidth="280"
+                                      MinHeight="36"
+                                      FontSize="16"
+                                      IsEditable="True"
+                                      ItemsSource="{Binding ViewModel.ProductPns}"
+                                      Text="{Binding ViewModel.ProductPn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
                     </StackPanel>
-                    <ComboBox MinWidth="220"
-                              IsEditable="True"
-                              ItemsSource="{Binding ViewModel.ProductPns}"
-                              Text="{Binding ViewModel.ProductPn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                </DockPanel>
-                <ui:TextBlock Margin="0,8,0,0"
+                </Border>
+
+                <ui:TextBlock Margin="0,4,0,0"
                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                               Text="{Binding ViewModel.DeviceStatusText}" />
             </StackPanel>
         </ui:CardControl>
 
-        <TabControl Grid.Row="1">
+        <Grid Grid.Row="1">
+            <TabControl IsEnabled="{Binding ViewModel.HasProductPn}">
             <TabItem Header="{DynamicResource S.ProcessLibrary.TabParams}">
                 <Grid Margin="0,12,0,0">
                     <Grid.RowDefinitions>
@@ -115,6 +142,17 @@
                                    Command="{Binding ViewModel.UploadSequenceCommand}"
                                    Content="{DynamicResource S.ProcessLibrary.UploadSequence}"
                                    Icon="{ui:SymbolIcon ArrowUpload24}" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Margin="8,0,4,0"
+                                   Text="{DynamicResource S.ProcessLibrary.SequenceIdLabel}" />
+                        <TextBox Width="56"
+                                 Margin="0,0,8,0"
+                                 VerticalAlignment="Center"
+                                 Text="{Binding ViewModel.UploadSequenceIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Primary"
+                                   Command="{Binding ViewModel.UploadSequenceExcelCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceExcel}" />
                         <ui:Button Margin="0,0,8,0"
                                    Appearance="Secondary"
                                    Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"
@@ -147,6 +185,26 @@
                 </Grid>
             </TabItem>
         </TabControl>
+
+            <Border HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="{ui:ThemeResource SolidBackgroundFillColorBaseBrush}"
+                    Opacity="0.92"
+                    Visibility="{Binding ViewModel.HasProductPn, Converter={StaticResource BoolToVisInverse}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                    <ui:SymbolIcon Symbol="Search24" FontSize="40" Margin="0,0,0,12" />
+                    <ui:TextBlock FontTypography="BodyStrong"
+                                  HorizontalAlignment="Center"
+                                  Text="{DynamicResource S.ProcessLibrary.SelectProductHint}" />
+                    <ui:TextBlock Margin="0,8,0,0"
+                                  HorizontalAlignment="Center"
+                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                  Text="{DynamicResource S.ProcessLibrary.ProductPnHint}"
+                                  TextWrapping="Wrap"
+                                  TextAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <ui:TextBlock Grid.Row="2"
                       Margin="0,12,0,0"

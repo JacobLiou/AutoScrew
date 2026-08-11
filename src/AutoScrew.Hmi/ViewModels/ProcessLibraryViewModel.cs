@@ -45,6 +45,10 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBusy;
 
+    /// <summary>上传顺序 Excel 时使用的顺序 ID（默认 1）。</summary>
+    [ObservableProperty]
+    private string _uploadSequenceIdText = "1";
+
     public ProcessLibraryViewModel(
         IProcessLibraryService library,
         ISnackbarService snackbar,
@@ -59,6 +63,8 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
         _user = user;
     }
 
+    public bool HasProductPn => !string.IsNullOrWhiteSpace(ProductPn);
+
     public async Task OnAppearingAsync()
     {
         ProcessRootPath = _library.ProcessRootPath;
@@ -66,8 +72,25 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             ? Loc.Get("S.ProcessLibrary.DeviceOnline")
             : Loc.Get("S.ProcessLibrary.DeviceOffline");
         await RefreshProductListAsync().ConfigureAwait(true);
-        if (!string.IsNullOrWhiteSpace(ProductPn))
-            await RefreshProductContentAsync().ConfigureAwait(true);
+        // ComboBox 刷新 ItemsSource 后可能清空 Text；始终同步下方列表，避免残留上一 PN。
+        await RefreshProductContentAsync().ConfigureAwait(true);
+    }
+
+    partial void OnProductPnChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasProductPn));
+        if (string.IsNullOrWhiteSpace(value))
+            ClearProductContent(Loc.Get("S.ProcessLibrary.SelectProductHint"));
+    }
+
+    private void ClearProductContent(string? status = null)
+    {
+        Slots.Clear();
+        Sequences.Clear();
+        SelectedSlot = null;
+        SelectedSequence = null;
+        if (status is not null)
+            StatusMessage = status;
     }
 
     [RelayCommand]
@@ -76,11 +99,24 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
         try
         {
             IsBusy = true;
+            var previous = ProductPn?.Trim() ?? string.Empty;
             var list = await _library.ListProductPnsAsync().ConfigureAwait(true);
             ProductPns.Clear();
             foreach (var pn in list)
                 ProductPns.Add(pn);
             ProcessRootPath = _library.ProcessRootPath;
+
+            // 可编辑 ComboBox 清空 ItemsSource 后 Text 常被置空；尽量恢复仍存在的上一选择。
+            if (!string.IsNullOrEmpty(previous)
+                && ProductPns.Any(p => string.Equals(p, previous, StringComparison.OrdinalIgnoreCase)))
+            {
+                ProductPn = previous;
+            }
+            else if (string.IsNullOrWhiteSpace(ProductPn))
+            {
+                ClearProductContent(Loc.Get("S.ProcessLibrary.SelectProductHint"));
+            }
+
             StatusMessage = Loc.Get("S.ProcessLibrary.StatusRefreshed");
         }
         catch (Exception ex)
@@ -102,8 +138,7 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(ProductPn))
         {
-            Slots.Clear();
-            Sequences.Clear();
+            ClearProductContent(Loc.Get("S.ProcessLibrary.SelectProductHint"));
             return;
         }
 
@@ -113,6 +148,8 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             var product = await _library.GetProductAsync(ProductPn.Trim()).ConfigureAwait(true);
             Slots.Clear();
             Sequences.Clear();
+            SelectedSlot = null;
+            SelectedSequence = null;
             if (product is null)
             {
                 StatusMessage = Loc.Get("S.ProcessLibrary.StatusProductEmpty");
@@ -130,7 +167,7 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = ex.Message;
+            ClearProductContent(ex.Message);
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
         }
         finally
@@ -218,6 +255,58 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             EnsureProductInList(pn);
             await RefreshProductContentAsync().ConfigureAwait(true);
             StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusSequenceUploaded"), count);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task UploadSequenceExcelAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        if (!int.TryParse(UploadSequenceIdText?.Trim(), out var sequenceId) || sequenceId is < 1 or > 500)
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.InvalidSequenceId"), ControlAppearance.Caution);
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Sequence Excel (*.xlsx)|*.xlsx|All files (*.*)|*.*",
+            RestoreDirectory = true,
+            Multiselect = false,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            IsBusy = true;
+            var pn = ProductPn.Trim();
+            var file = dialog.FileName;
+            Audit(
+                "Configuration.ProcessLibraryUploadSequenceExcel",
+                $"product={pn};sequenceId={sequenceId};file={file}");
+            await _library.UploadSequenceExcelAsync(pn, file, sequenceId).ConfigureAwait(true);
+
+            EnsureProductInList(pn);
+            await RefreshProductContentAsync().ConfigureAwait(true);
+            StatusMessage = string.Format(
+                Loc.Get("S.ProcessLibrary.StatusSequenceExcelUploaded"),
+                sequenceId);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)

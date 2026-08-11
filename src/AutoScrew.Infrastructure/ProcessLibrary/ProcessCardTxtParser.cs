@@ -185,28 +185,19 @@ public static class ProcessCardTxtParser
         var dash = paramRaw.LastIndexOf('-');
         if (dash > 0 && dash < paramRaw.Length - 1)
         {
-            var screwPart = SanitizeAscii(paramRaw[..dash]);
-            var slotPart = paramRaw[(dash + 1)..].Trim();
-            if (string.IsNullOrEmpty(screwPart))
-                throw new InvalidDataException($"「参数」中螺钉 PN 无效：{paramRaw}");
-            if (!int.TryParse(slotPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out var slotId))
-                throw new InvalidDataException($"「参数」中槽位号无效：{paramRaw}");
-            return (screwPart, slotId);
+            try
+            {
+                return ProcessParameterCode.Parse(paramRaw);
+            }
+            catch (InvalidDataException ex)
+            {
+                throw new InvalidDataException(ex.Message.Replace("参数码", "「参数」", StringComparison.Ordinal), ex);
+            }
         }
 
-        // 旧格式：参数 = 槽位；参数ID = 螺钉 PN
-        if (!int.TryParse(
-                paramRaw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0],
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var legacySlot))
-            throw new InvalidDataException($"工艺卡「参数」无法识别为槽位或 螺钉PN-槽位：{paramRaw}");
-
-        var legacyScrew = SanitizeAscii(GetString(map, "参数ID") ?? GetString(map, "参数Id") ?? string.Empty);
-        if (string.IsNullOrEmpty(legacyScrew))
-            throw new InvalidDataException("旧格式工艺卡缺少「参数ID」（螺钉 PN）。");
-
-        return (legacyScrew, legacySlot);
+        return ProcessParameterCode.ParseLegacySlotAndScrew(
+            paramRaw,
+            GetString(map, "参数ID") ?? GetString(map, "参数Id"));
     }
 
     private static void ApplyStage(
@@ -450,10 +441,5 @@ public static class ProcessCardTxtParser
         return TighteningDirection.Clockwise;
     }
 
-    private static string SanitizeAscii(string value)
-    {
-        var chars = value.Where(static c =>
-            c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9')).ToArray();
-        return new string(chars);
-    }
+    private static string SanitizeAscii(string value) => ProcessParameterCode.SanitizeAscii(value);
 }

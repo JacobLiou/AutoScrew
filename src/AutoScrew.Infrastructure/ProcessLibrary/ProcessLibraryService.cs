@@ -147,6 +147,95 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         return await _store.SaveSequenceAsync(productPn, package, cancellationToken).ConfigureAwait(false);
     }
 
+    public SequenceExcelParseResult ParseSequenceExcelFile(string filePath) =>
+        SequenceExcelParser.ParseFile(filePath);
+
+    public async Task<ProcessLibrarySequenceInfo> UploadSequenceExcelAsync(
+        string productPn,
+        string sourceFilePath,
+        int sequenceId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(productPn))
+            throw new ArgumentException("产品 PN 不能为空。", nameof(productPn));
+        if (sequenceId is < 1 or > 500)
+            throw new ArgumentOutOfRangeException(nameof(sequenceId), sequenceId, "顺序 ID 须为 1–500。");
+        if (string.IsNullOrWhiteSpace(sourceFilePath) || !File.Exists(sourceFilePath))
+            throw new FileNotFoundException("顺序 Excel 文件不存在。", sourceFilePath);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var parsed = SequenceExcelParser.ParseFile(sourceFilePath);
+        if (!parsed.IsSuccess)
+            throw new InvalidDataException(string.Join(Environment.NewLine, parsed.Errors));
+
+        var product = _store.LoadProduct(productPn)
+            ?? throw new DirectoryNotFoundException(
+                $"未找到产品工艺库：{productPn}。请先上传拧紧参数工艺卡。");
+
+        if (product.Slots.Count == 0)
+            throw new InvalidOperationException($"产品 {productPn} 下没有工艺卡，无法关联拧紧顺序。");
+
+        var slotLookup = product.Slots
+            .GroupBy(s => s.SlotId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var missing = new List<string>();
+        var steps = new List<TighteningSequenceStepCore>();
+
+        foreach (var row in parsed.Steps)
+        {
+            if (!slotLookup.TryGetValue(row.SlotId, out var candidates))
+            {
+                missing.Add($"第 {row.ExcelRowNumber} 行：槽位 {row.SlotId:D2}（{row.ParameterCode}）不在工艺库中。");
+                continue;
+            }
+
+            var match = candidates.FirstOrDefault(s =>
+                string.Equals(s.ScrewPn, row.ScrewPnFromCode, StringComparison.OrdinalIgnoreCase));
+            if (match is null)
+            {
+                missing.Add(
+                    $"第 {row.ExcelRowNumber} 行：槽位 {row.SlotId:D2} 存在，但螺钉 PN「{row.ScrewPnFromCode}」与工艺库不匹配。");
+                continue;
+            }
+
+            steps.Add(new TighteningSequenceStepCore
+            {
+                ToolId = 0,
+                ParameterId = match.SlotId,
+                Quantity = row.Quantity,
+                BitId = row.BitId,
+            });
+        }
+
+        if (missing.Count > 0)
+            throw new InvalidDataException(string.Join(Environment.NewLine, missing));
+
+        var displayName = Path.GetFileNameWithoutExtension(sourceFilePath);
+        if (string.IsNullOrWhiteSpace(displayName))
+            displayName = $"{productPn.Trim()}-顺序{sequenceId}";
+
+        var package = new TighteningSequencePackage
+        {
+            SequenceId = sequenceId,
+            Core = new TighteningSequenceCore
+            {
+                Name = displayName.Trim(),
+                NavigatorMode = TighteningSequenceNavigatorMode.General,
+                PositioningArmEnabled = false,
+                Steps = steps,
+            },
+        };
+        package.ApplyCoreToRaw();
+
+        _logger.LogInformation(
+            "Sequence Excel imported product={Product} sequenceId={SequenceId} steps={Steps}",
+            productPn, sequenceId, steps.Count);
+
+        return await _store.SaveSequenceAsync(productPn, package, cancellationToken).ConfigureAwait(false);
+    }
+
     public Task<TighteningSequencePackage> LoadProductSequenceAsync(
         string productPn,
         int sequenceId,
