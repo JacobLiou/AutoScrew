@@ -65,11 +65,10 @@
   - 扫码：`IRecipeProvisioningService` — MES recipe + `templatePackageUrl` 下载 zip → 失败则本地 fallback。
   - 技术员保存 → `product_template_sync.PendingUpload`；MES 下载成功 → `DownloadedFromMes`。
 
-## 程控供料（PRD V1.1 — 占位）
+## 供料（PRD V1.4 — 手动，不上报）
 
-- 契约草案：[FEEDER_CONTROL.md](FEEDER_CONTROL.md)
-- 实现前不在 MES 载荷中上报供料字段；本地 `_screwRecords` / 审计可先记录 `Operation.Feed*` 动作
-- 定稿后在本节增补：`ScrewResultDto.feed_*`、供料失败 `error_code` 枚举（如 `FEED_001`）
+- **现场手动取钉**；上位机不做程控供料驱动/调度（[FEEDER_CONTROL.md](FEEDER_CONTROL.md) 已作废）。
+- MES 载荷**不要求** `feed_*` 字段；仿真路径残留的 `Operation.Feed*` / `FEED_*` 非产线验收项。
 
 ## HTTPS
 
@@ -151,16 +150,13 @@ dotnet run --project tools/MesMockServer
 - SN MES 校验成功后，若 `AutoScrew:WriteSnToController=true` 且非仿真硬件，经 [`IemdSdControllerTraceService`](../src/AutoScrew.Infrastructure/Hardware/IemdSdControllerTraceService.cs) 写 IEMD-SD `#401`（`WriteBarcodeAsync`）。
 - `StrictSnToController=false`（默认）：写失败仅日志，不阻断配方加载；`true` 时抛错拒绝作业。
 
-## 供料失败码（T-06b · 仿真已用）
+## 供料失败码（历史仿真 · T-06b 已作废）
 
-| 错误码 | 含义 | 解锁 |
+| 错误码 | 含义 | 说明 |
 |--------|------|------|
-| `FEED_TIMEOUT` | 供料超时 | 技术员 `UnlockNgContinue` |
-| `FEED_EMPTY` | 缺料 | 同上 |
-| `FEED_JAM` | 卡料 | 同上 |
+| `FEED_TIMEOUT` / `FEED_EMPTY` / `FEED_JAM` | 原程控供料仿真 | **非 α 验收**；Development 仿真仍可能触发 |
 
-- 作业流：`PickScrewAsync` 抛 [`FeedFaultException`](../src/AutoScrew.Application/Abstractions/FeedFaultException.cs) → `NgLocked` + 审计 `Operation.FeedNg`。
-- 无真机验收：Development 下 `AutoScrew:Simulation:FeedFailureMode` / `FeedFailureOnScrewIndex`（见 [DVT_GUI_TEST_BASIS.md](DVT_GUI_TEST_BASIS.md)）。
+- 产线：手动供料，无上位机供料失败验收义务。
 
 ## 无真机仿真（Development）
 

@@ -6,6 +6,7 @@
 | 1.1 | 2026-06-11 | 对齐 PRD V1.1：**程控供料器**纳入 In-Scope；T-06 升级为 P0 真驱动；更新双设备数据流 |
 | 1.2 | 2026-06-22 | 工艺工作台 P0+P1 落地；同步 §1/§4/§5/§6；新增 T-24（工作台 P2） |
 | 1.3 | 2026-08-10 | 历史回顾 Dashboard：T-25～T-32（本地 SQLite + IP/MAC + LAN `{MAC}/{SN}`） |
+| 1.4 | 2026-08-11 | **供料器改为现场手动**：取消程控供料自动化/调度；T-06/T-06a/T-06b 作废；α 仅控 IEMD-SD |
 
 **权威追溯**
 
@@ -14,7 +15,7 @@
 | [PRD.md](PRD.md) | 操作员旅程、功能需求、验收场景 |
 | [driverAnaC.md](driverAnaC.md) | IEMD-SD Modbus 通信、联机步骤 |
 | [IEMD_SD_MODBUS_COMMANDS.md](IEMD_SD_MODBUS_COMMANDS.md) | 附录功能码目录（149 条） |
-| [FEEDER_CONTROL.md](FEEDER_CONTROL.md) | 程控供料器控制契约（协议定稿前占位） |
+| [FEEDER_CONTROL.md](FEEDER_CONTROL.md) | ~~程控供料契约~~（**已作废**，供料改手动） |
 | [DATA_AND_TRACE.md](DATA_AND_TRACE.md) | MES/本地追溯字段、SQLite、Outbox |
 | [MULTI_SURFACE_TEMPLATE.md](MULTI_SURFACE_TEMPLATE.md) | 多面产品模板 v2 |
 | [DVT_GUI_TEST_BASIS.md](DVT_GUI_TEST_BASIS.md) | GUI 与 PRD 双轨测试基线 |
@@ -23,14 +24,15 @@
 
 ## 范围边界
 
-**In（本期自动化目标 — PRD V1.1）**
+**In（本期自动化目标 — 2026-08-11 修订）**
 
-- 单工位 `AutoScrew:StationId`、**双受控设备**：IEMD-SD 电批 + **程控供料/上料设备**
-- 操作员：扫码 SN → MES 拉 PN/模板 → 产品图引导 → **软件触发供料** → 拧紧 → 判定 → 本地归档 + MES 出站
-- 技术员：本地模板编辑、拧紧参数读写、**供料器与电批**设备连接配置
+- 单工位 `AutoScrew:StationId`、**单一受控设备**：**IEMD-SD 智能电批**（锁附 / 曲线 / 参数·顺序·来源）
+- 操作员：扫码 SN → MES/本地拉 PN 模板 → 产品图引导 → **手动取钉/供料** → 拧紧 → 判定 → 本地归档 + MES/LAN 出站
+- 技术员：本地模板编辑、拧紧参数/顺序/来源、电批设备连接、工艺库
 
 **Out（不在此清单标为 α 必达）**
 
+- **程控供料器上位机驱动、供料调度、供料器独立配置页**（现场确认：**手动供料**）
 - 多工位调度与多设备并行
 - 视觉引导二期
 - 50 组任务库完整产品化、规则引擎「与/或」配置 UI
@@ -42,26 +44,23 @@
 
 | 层级 | 完成度 | 说明 |
 |------|--------|------|
-| 驱动 `UDL.Delta.IemdSd` | ~85%（Modbus） | 149 功能码目录、`ExecuteModbusCommandAsync`、产线相关强类型 API；**无 FTP 包** |
-| 驱动 **程控供料器** | ~0% | **新增设备**；协议/寄存器待厂商定稿；需 `IFeeder` + Infrastructure 适配 |
-| 硬件适配 `IemdSdLockStationHardware` | ~55% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；**取钉仍走 `_feederSim`** |
-| 业务 `OperatorSessionController` | ~80% | SN→Recipe→自动拧紧调度→判定→归档；checkpoint 恢复、漏锁校验已有；**供料仍为仿真** |
-| HMI | ~80% | 作业台/模板/**工艺工作台 Hub**（参数/顺序/来源/FAT）/设备页；NG 模态、自动拧紧已有；**无供料器配置页** |
-| MES | ~70% | 占位 HTTP v1 + `mes-settings.json` 持久化；Mock 可热切换；Outbox 重传已有 |
+| 驱动 `UDL.Delta.IemdSd` | ~85%（Modbus） | 149 功能码目录、产线相关强类型 API；**无 FTP 包** |
+| 驱动程控供料器 | **N/A** | **已取消**：现场手动供料，不做自动化/调度 |
+| 硬件适配 `IemdSdLockStationHardware` | ~75% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；取钉路径可为空操作/跳过 |
+| 业务 `OperatorSessionController` | ~85% | SN→Recipe→拧紧调度→判定→归档；checkpoint、漏锁已有 |
+| HMI | ~85% | 作业台/模板/工艺工作台/工艺库/历史回顾/设备·MES；**无供料器页（不需要）** |
+| MES | ~70% | 占位 REST / ProductKey + Outbox；字段仍有待 IT 定稿项 |
 
 ```mermaid
 flowchart LR
   subgraph done [已实现主路径]
     SN[扫码SN] --> MES[MockMES或Recipe]
     MES --> UI[作业台引导]
-    UI --> FeedSim[PickScrew仿真]
-    FeedSim --> HW[IemdSd拧紧]
+    UI --> Manual[操作员手动取钉]
+    Manual --> HW[IemdSd拧紧]
     HW --> Judge[曲线加设备判定]
     Judge --> Archive[本地CSV与lock_log]
-    Archive --> Outbox[MES_Outbox]
-  end
-  subgraph gap [主要缺口]
-    Feeder[程控供料器真驱动]
+    Archive --> Outbox[MES_或_LAN]
   end
 ```
 
@@ -96,7 +95,7 @@ flowchart LR
 - [x] 会话状态机：[`OperatorSessionController.cs`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) + [`JobSessionPhaseMachine`](../src/AutoScrew.Domain/Session/JobSessionPhaseMachine.cs)
 - [x] SN → MES 校验 → Recipe + v2 产品模板加载
 - [x] 多面 runtime：`ActiveSurfaceOrdinal`、`AwaitFlip`、按面 checkpoint 字段
-- [x] 单钉周期：[`RunCurrentScrewCycleAsync`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)（取钉 → 拧紧 → 曲线判定 ∪ 设备 NG）
+- [x] 单钉周期：[`RunCurrentScrewCycleAsync`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)（拧紧 → 曲线判定 ∪ 设备 NG；取钉现场手动）
 - [x] 曲线判定：[`LockCurveEvaluator.cs`](../src/AutoScrew.Domain/Curves/LockCurveEvaluator.cs)（浮锁/滑牙等启发式）
 - [x] NG 锁定 + 技术员 [`UnlockNgContinue`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)
 - [x] 本地曲线归档 + `lock_log` JSON
@@ -125,9 +124,9 @@ flowchart LR
 | T-03 | [x] | **SN 写控制器 `#401`**（现场若要求控制器侧条码追溯） | 业务 | §3.3 | `SubmitSerialNumberAsync` 成功后 [`WriteBarcodeAsync`](../src/UDL.Delta.IemdSd/IIemdSdClient.cs) |
 | T-04 | [x] | **真 MES 联调**：关 `UseMockMes`、占位 REST、[`MesPage`](../src/AutoScrew.Hmi/Views/Pages/MesPage.xaml) 持久化 + 连通测试 | 业务+Infra | §3.3、§5.1 | [`MesHttpClient`](../src/AutoScrew.Infrastructure/Mes/MesHttpClient.cs)、[`MesViewModel`](../src/AutoScrew.Hmi/ViewModels/MesViewModel.cs)、`tools/MesMockServer` |
 | T-05 | [x] | **NG 模态锁定**：NG 时弹窗 + 错误码/处理建议，仅技术员可解锁 | HMI | §3.2.2 | `OperationPageView` 全屏遮罩 + `ScrewNgAdvisor` |
-| T-06 | [ ] | **程控供料器驱动与接线**：实现 `IFeeder`（或等效端口），替换 `_feederSim`；每钉 `PickScrewAsync` 触发真上料/供料指令 | 硬件+Infra | PRD §3.2.1a | 新驱动项目 + [`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)；HMI 供料器连接页 |
-| T-06a | [ ] | **供料协议定稿文档**：寄存器/程序号、完成信号、超时与 error_code 枚举（**先文档后代码**） | 文档 | PRD V1.1 | [FEEDER_CONTROL.md](FEEDER_CONTROL.md)（待厂商资料回填） |
-| T-06b | [x] | **供料失败处理**：超时/缺料/卡料 → 暂停 + 错误码 + 技术员解锁（复用 NgLocked） | 业务+HMI | PRD 验收供料场景 | `FeedFaultException`、`ScrewNgAdvisor` FEED_xxx；仿真 `AutoScrew:Simulation` |
+| T-06 | — | ~~程控供料器驱动与接线~~ | **作废** | 2026-08-11：供料改**现场手动**，不做上位机自动化/调度 |
+| T-06a | — | ~~供料协议定稿文档~~ | **作废** | 同上；[FEEDER_CONTROL.md](FEEDER_CONTROL.md) 仅作历史草案 |
+| T-06b | — | ~~供料失败处理（自动化路径）~~ | **作废** | 手动供料后不再作为 α 验收项；代码中仿真 FEED_* 可保留不强制 |
 
 ### P1 — 品质 / 追溯 / 恢复
 
@@ -192,8 +191,8 @@ flowchart LR
 | 拧紧周期 | `ExecuteTighteningCycleAsync` | **已接线** |
 | 报告/曲线 | `ReadReportAsync` / `ReadCurveAsync` | **已接线** |
 | 单颗 BIN 导出 | `SetPerScrewExportAsync` (#517) | 未接线（BIN+FTP 方案才需要） |
-| 清错 / 运行状态 | `ClearErrorsAsync` / `ReadOperatingStatusAsync` | 未接线 |
-| 取钉/供料 | `IFeeder.FeedAsync` / `PickScrewAsync` | **仿真**（待 T-06 程控供料器） |
+| 清错 / 运行状态 | `ClearErrorsAsync` / `ReadOperatingStatusAsync` | 未接线（见 T-12） |
+| 取钉/供料 | — | **现场手动**；上位机不做供料器驱动（T-06 作废） |
 
 **顺序/来源 HMI**：`#200`–`#253`、`#300`/`#301` 已实现（见 PRD V1.3）；**系统设置 `#500+` 全套界面** α 不必做。
 
@@ -201,18 +200,18 @@ flowchart LR
 
 ---
 
-## 5. 产线接线对照（单工位双设备 — PRD V1.1）
+## 5. 产线接线对照（单工位 · 仅 IEMD — 2026-08-11）
 
-| PRD 步骤 | 软件职责 | 当前状态 |
-|----------|----------|----------|
-| 拿起电批 → 弹窗扫码 SN | DI/握持检测 → 模态扫码 | 作业页内嵌 TextBox，无弹窗 |
-| SN 校验 → 加载 PN 模板 | MES + 本地 v2 模板 | Mock MES 默认可用 |
+| 步骤 | 软件职责 | 当前状态 |
+|------|----------|----------|
+| 拿起电批 → 扫码 SN | 作业页 SN 输入 | 内嵌 TextBox（无握持弹窗） |
+| SN 校验 → 加载 PN 模板 | MES + 本地 v2 模板 | Mock / ProductKey / 本地可用 |
 | 黄闪待打位置 | Marker Pending 闪烁 | 已实现 |
-| **程控供料/上料** | `PickScrewAsync` → **供料器指令** | **仿真 Delay**（T-06） |
-| 按指引锁附 | `AutoRunScrewCycle` + Manual 扳机 | **已实现**（T-01） |
-| 实时曲线判定 | `LockCurveEvaluator` + 设备 Status | **拧紧中增量刷新**（T-11）；周期结束仍保留完整曲线 |
-| OK/NG 反馈 | Marker 绿/红 + NgLocked 模态 | **已实现**（T-05） |
-| 完成 → Log + MES | `lock_log` + Outbox | 已实现（Mock 上传） |
+| **取钉/供料** | **操作员手动** | 上位机**不调度**供料器 |
+| 按指引锁附 | `AutoRunScrewCycle` + 扳机 | **已实现**（T-01） |
+| 实时曲线判定 | `LockCurveEvaluator` + 设备 Status | **已实现**（T-11） |
+| OK/NG 反馈 | Marker 绿/红 + NgLocked | **已实现**（T-05） |
+| 完成 → Log + MES/LAN | `lock_log` + Outbox / MAC 归档 | 已实现 |
 
 ---
 
@@ -220,19 +219,17 @@ flowchart LR
 
 | 阶段 | 任务 ID | 目标 |
 |------|---------|------|
-| Week 1 | T-01、T-02、T-05 | 真机拧紧半自动闭环 + NG 体验（**已完成**） |
-| Week 2 | T-04、T-03（**T-06/T-06a 跳过**）（**已完成**） | 真 MES 占位 REST、控制器条码 #401 |
-| Week 3 | T-07、T-08、T-06b、T-10、T-11（**已完成**） | 供料异常、追溯、漏锁、实时曲线 + 仿真增强 |
-| — | **工艺工作台 P0+P1**（**已完成**，2026-06） | Hub + 四步骤；原三页导航已移除 |
-| Week 4 | T-14、T-15/T-16、T-24（视优先级） | 权限、任务/MES 模板、工作台 P2 |
+| Week 1–3 | T-01～T-05、T-07/08/10/11 等 | 电批半自动闭环（**已完成**；供料自动化已取消） |
+| — | **工艺工作台 / 工艺库** | 参数·顺序·来源 + Excel 顺序导入（持续） |
+| 下一优先 | T-12、T-14、T-18 | 返修/清错、操作员菜单、完成引导 |
+| 视需要 | T-09、T-13、T-15/16、T-24 | MES 面号、歪斜、任务库、工作台 P2 |
 
-**联机最小路径**（见 [driverAnaC.md](driverAnaC.md) §8 + PRD §3.2.1a）：
+**联机最小路径**（见 [driverAnaC.md](driverAnaC.md) §8、[IEMD_SD_MANUAL_FEED_COMMISSIONING.md](IEMD_SD_MANUAL_FEED_COMMISSIONING.md)）：
 
-1. `UseSimulatedHardware=false`，HMI **设备连接** Apply（电批）
-2. **供料器**连接配置 Apply，单钉手动/自动触发 `Feed` 验证（T-06）
-3. **拧紧参数**：#150 回读 → 修改 → #100 写入
-4. 作业：扫码 → #300 手动来源 → `#302` → **供料** → 拧紧 → `#750`/`#751`
-5. 关 Mock MES，验证出站（T-04）
+1. `UseSimulatedHardware=false`，HMI **设备连接** Apply（仅电批）
+2. **拧紧参数**：#150 回读 → 修改 → #100 写入
+3. 作业：扫码 → #300 手动来源 → `#302` → **操作员手动取钉** → 拧紧 → `#750`/`#751`
+4. 关 Mock MES / 配 LAN，验证出站或归档（T-04 / ProductKey）
 
 ---
 
