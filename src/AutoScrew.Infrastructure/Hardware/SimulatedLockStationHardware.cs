@@ -48,6 +48,9 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
         return Task.CompletedTask;
     }
 
+    public Task ClearErrorsAsync(CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+
     public async IAsyncEnumerable<TorqueAngleSample> RunTighteningAsync(
         TighteningContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

@@ -18,6 +18,17 @@
     <Grid>
     <DockPanel Margin="0">
         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <Border Margin="0,0,0,8"
+                    Padding="10,6"
+                    Background="#33E6A23C"
+                    BorderBrush="{DynamicResource BrushNg}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Visibility="{Binding IsReworkMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{DynamicResource S.Operation.ReworkBanner}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource BrushNg}" />
+            </Border>
             <WrapPanel>
                 <ui:TextBox x:Name="SnInputBox"
                             Width="220"
@@ -43,7 +54,13 @@
                 <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
                            Margin="0,0,8,8"
                            Style="{StaticResource ShellSecondaryButtonStyle}"
-                           Command="{Binding UnlockNgCommand}"/>
+                           Command="{Binding UnlockNgCommand}"
+                           Visibility="{Binding CanUnlockNgOverlay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <ui:Button Content="{DynamicResource S.Operation.EnterRework}"
+                           Margin="0,0,8,8"
+                           Style="{StaticResource ShellSecondaryButtonStyle}"
+                           Command="{Binding EnterReworkCommand}"
+                           Visibility="{Binding ShowTechnicianNgActions, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <ui:Button Content="{DynamicResource S.Operation.ResetSession}"
                            Margin="0,0,8,8"
                            Style="{StaticResource ShellSecondaryButtonStyle}"
@@ -245,15 +262,32 @@
                 <TextBlock Text="{Binding NgErrorAdvice}"
                            TextWrapping="Wrap"
                            Margin="0,0,0,16"/>
-                <TextBlock Text="{DynamicResource S.Operation.NgOverlayOperatorHint}"
-                           TextWrapping="Wrap"
-                           Foreground="{DynamicResource ShellMutedForegroundBrush}"
-                           Margin="0,0,0,12"/>
-                <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
-                           HorizontalAlignment="Center"
-                           Appearance="Primary"
-                           Command="{Binding UnlockNgCommand}"
-                           IsEnabled="{Binding CanUnlockNgOverlay}"/>
+                <StackPanel Visibility="{Binding ShowOperatorNgActions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{DynamicResource S.Operation.NgOverlayOperatorHint}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                               Margin="0,0,0,12"/>
+                    <ui:Button Content="{DynamicResource S.Operation.EmergencyUnlock}"
+                               HorizontalAlignment="Center"
+                               Appearance="Secondary"
+                               Command="{Binding EmergencyUnlockNgCommand}"/>
+                </StackPanel>
+                <StackPanel Visibility="{Binding ShowTechnicianNgActions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{DynamicResource S.Operation.NgOverlayTechnicianHint}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource ShellMutedForegroundBrush}"
+                               Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <ui:Button Content="{DynamicResource S.Operation.UnlockNg}"
+                                   Appearance="Secondary"
+                                   Margin="0,0,8,0"
+                                   Command="{Binding UnlockNgCommand}"
+                                   IsEnabled="{Binding CanUnlockNgOverlay}"/>
+                        <ui:Button Content="{DynamicResource S.Operation.EnterRework}"
+                                   Appearance="Primary"
+                                   Command="{Binding EnterReworkCommand}"/>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </Border>
     </Border>

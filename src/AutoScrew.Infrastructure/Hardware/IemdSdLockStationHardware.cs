@@ -42,6 +42,27 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
     public Task PickScrewAsync(CancellationToken cancellationToken = default) =>
         _feederSim.PickScrewAsync(cancellationToken);
 
+    public async Task ClearErrorsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
+            var client = _devices.GetClient();
+            if (client is null)
+            {
+                _logger.LogWarning("ClearErrors skipped: IEMD-SD client is not connected.");
+                return;
+            }
+
+            await client.ClearErrorsAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("IEMD-SD ClearErrors completed.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ClearErrors failed; unlock may still proceed.");
+        }
+    }
+
     public async Task PrepareForJobAsync(CancellationToken cancellationToken = default)
     {
         await _devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);

@@ -128,7 +128,11 @@ public partial class MainWindow : FluentWindow
     private void RootNavigationView_OnSelectionChanged(NavigationView sender, RoutedEventArgs e)
     {
         if (DataContext is MainShellViewModel shell)
+        {
             shell.OnNavigationViewSelectionChanged(sender);
+            if (shell.IsOperatorRole && shell.SelectedSection != MainAppSection.Operation)
+                shell.NavigateToDefaultPage();
+        }
 
         // 对齐 Wpf.Ui.Gallery：默认页（类似 Dashboard）隐藏 Header，其它页面显示 Header。
         var targetPageType = (sender.SelectedItem as INavigationViewItem)?.TargetPageType;
@@ -152,6 +156,16 @@ public partial class MainWindow : FluentWindow
     {
         if (_isPaneOpenedOrClosedFromCode)
             return;
+
+        if (_shellViewModel.IsOperatorRole)
+        {
+            _isPaneOpenedOrClosedFromCode = true;
+            NavigationView.SetCurrentValue(NavigationView.IsPaneOpenProperty, false);
+            _shellViewModel.IsSidebarVisible = false;
+            _isPaneOpenedOrClosedFromCode = false;
+            _isUserClosedPane = true;
+            return;
+        }
 
         _isUserClosedPane = false;
     }

@@ -81,7 +81,19 @@
     <system:String x:Key="S.Operation.SubmitSn">Submit SN</system:String>
     <system:String x:Key="S.Operation.RunScrew">Pick + tighten</system:String>
     <system:String x:Key="S.Operation.ConfirmFlip">Confirm flip</system:String>
-    <system:String x:Key="S.Operation.UnlockNg">Unlock NG</system:String>
+    <system:String x:Key="S.Operation.UnlockNg">Unlock and retry</system:String>
+    <system:String x:Key="S.Operation.EnterRework">Mark rework and retry</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlock">Emergency unlock…</system:String>
+    <system:String x:Key="S.Operation.ReworkBanner">REWORK mode — this SN will be marked as rework</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockTitle">Emergency NG unlock</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockUserLabel">Current operator</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonLabel">Reason (required)</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonPlaceholder">Describe why you need an emergency unlock (min {0} characters)</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonTooShort">Enter a reason of at least {0} characters.</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockWarn">This action is audited (operator identity and reason). Call a technician unless this is an emergency.</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockConfirm">Confirm emergency unlock</system:String>
+    <system:String x:Key="S.Operation.LogEnterRework">Marked rework and unlocked; continue job</system:String>
+    <system:String x:Key="S.Operation.LogEmergencyUnlock">Operator emergency-unlocked NG; continue job</system:String>
     <system:String x:Key="S.Operation.ResetSession">Reset session</system:String>
     <system:String x:Key="S.Operation.ProgressTree">Progress</system:String>
     <system:String x:Key="S.Operation.CurveTitle">Torque–angle (last step)</system:String>
@@ -98,7 +110,7 @@
     <system:String x:Key="S.Operation.GuideRunningScrew">Fasten [{0}] screw #{1}</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">Fasten surface [{0}]</system:String>
     <system:String x:Key="S.Operation.GuideAwaitFlip">[{0}] complete. Flip to [{1}], then Confirm flip.</system:String>
-    <system:String x:Key="S.Operation.GuideNgLocked">Screw NG. Unlock to continue.</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">Screw NG — call a technician, or use emergency unlock if needed.</system:String>
     <system:String x:Key="S.Operation.GuideCompleted">Job complete. Scan next SN.</system:String>
     <system:String x:Key="S.Operation.CurrentSurface">current surface</system:String>
     <system:String x:Key="S.Operation.NextSurface">next surface</system:String>
@@ -162,7 +174,8 @@
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
-    <system:String x:Key="S.Operation.NgOverlayOperatorHint">After clearing the controller fault, tap Unlock NG below to continue.</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">Call a technician to unlock or clear the device fault. Use Emergency unlock only when necessary.</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">After the device is ready, unlock and retry, or mark rework and retry (clears controller errors).</system:String>
 
     <system:String x:Key="S.Template.Title">Screw template</system:String>
     <system:String x:Key="S.Template.TitleWithProduct">Screw template · {0}{1}</system:String>

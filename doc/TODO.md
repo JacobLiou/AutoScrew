@@ -137,7 +137,7 @@ flowchart LR
 | T-09 | [ ] | MES 上报 **面号/位号**（`surface_id`、`local_index`） | 契约+业务 | DATA_AND_TRACE §多面 Phase 2 待定稿 |
 | T-10 | [x] | **漏锁**规则：全部螺钉位完成校验 | 业务 | PRD §3.2.1 | `ValidateSurfaceAllOk` / 翻面与完成前校验 |
 | T-11 | [x] | 拧紧过程 **实时曲线**刷新（非仅周期结束后） | HMI+业务 | PRD §3.2.1 | `TighteningProgress` + ScottPlot 增量刷新 |
-| T-12 | [ ] | 设备 NG 时 `ClearErrorsAsync`；返修 `REWORK` UI | 业务+HMI | PRD §3.2.3；[`SetReworkMode`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) 无 HMI |
+| T-12 | [x] | 设备 NG 时 `ClearErrorsAsync`；返修 `REWORK` UI；操作员紧急解除（理由+审计） | 业务+HMI | 2026-08-11：NG 遮罩分角色；`ClearErrorsAsync` / `BeginReworkAndUnlock` / `EmergencyUnlockNg` |
 | T-13 | [ ] | 歪斜/斜锁：曲线或设备字段提供 `AxisSkewDeg` | 判定+驱动 | PRD §3.2.1、验收 SKEW_003 |
 | T-25 | [x] | **追溯契约**：`hostIp`/`hostMac`；`lock_records` 列；LAN `{MAC}/{SN}` | 文档 | [DATA_AND_TRACE.md](DATA_AND_TRACE.md)（2026-08-10） |
 | T-26 | [x] | **本机身份**：解析 IP/MAC；MAC 文件夹名规范化（`AA-BB-…`） | Common | `HostIdentity` + `CachedHostIdentity` |
@@ -152,7 +152,7 @@ flowchart LR
 
 | ID | 状态 | 任务 | 层级 | 依据 |
 |----|------|------|------|------|
-| T-14 | [ ] | 操作员菜单裁剪（仅作业台） | HMI | PRD §3.2.3；[`MainShellViewModel`](../src/AutoScrew.Hmi/ViewModels/MainShellViewModel.cs) |
+| T-14 | [x] | 操作员菜单裁剪（仅作业台） | HMI | 2026-08-11：禁侧栏 toggle、强制回作业台；[`MainShellViewModel`](../src/AutoScrew.Hmi/ViewModels/MainShellViewModel.cs) |
 | T-15 | [ ] | 50 组任务预存 + PN 一键关联 | 业务+HMI | PRD §3.2.3 |
 | T-16 | [ ] | 技术员模板 **上传 MES**（PN 结构图） | HMI+MES | PRD 技术员配置 |
 | T-17 | [ ] | 吸头外径 vs 螺钉头 **运行时防错**（≤ 头径 +0.6 mm） | 业务 | PRD §3.2.1 |
@@ -191,7 +191,7 @@ flowchart LR
 | 拧紧周期 | `ExecuteTighteningCycleAsync` | **已接线** |
 | 报告/曲线 | `ReadReportAsync` / `ReadCurveAsync` | **已接线** |
 | 单颗 BIN 导出 | `SetPerScrewExportAsync` (#517) | 未接线（BIN+FTP 方案才需要） |
-| 清错 / 运行状态 | `ClearErrorsAsync` / `ReadOperatingStatusAsync` | 未接线（见 T-12） |
+| 清错 / 运行状态 | `ClearErrorsAsync` / `ReadOperatingStatusAsync` | **清错已接线**（解锁/返修/紧急解除）；运行状态仍未接线 |
 | 取钉/供料 | — | **现场手动**；上位机不做供料器驱动（T-06 作废） |
 
 **顺序/来源 HMI**：`#200`–`#253`、`#300`/`#301` 已实现（见 PRD V1.3）；**系统设置 `#500+` 全套界面** α 不必做。
@@ -221,7 +221,7 @@ flowchart LR
 |------|---------|------|
 | Week 1–3 | T-01～T-05、T-07/08/10/11 等 | 电批半自动闭环（**已完成**；供料自动化已取消） |
 | — | **工艺工作台 / 工艺库** | 参数·顺序·来源 + Excel 顺序导入（持续） |
-| 下一优先 | T-12、T-14、T-18 | 返修/清错、操作员菜单、完成引导 |
+| 下一优先 | T-18、T-09、T-13 | 完成引导、MES 面号、歪斜（T-12/T-14 已完成） |
 | 视需要 | T-09、T-13、T-15/16、T-24 | MES 面号、歪斜、任务库、工作台 P2 |
 
 **联机最小路径**（见 [driverAnaC.md](driverAnaC.md) §8、[IEMD_SD_MANUAL_FEED_COMMISSIONING.md](IEMD_SD_MANUAL_FEED_COMMISSIONING.md)）：

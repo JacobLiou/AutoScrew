@@ -601,7 +601,11 @@ public sealed class OperatorSessionController
         if (_currentUser.Role < UserRole.Technician)
             throw new UnauthorizedAccessException("Rework flag requires technician.");
         _isRework = enabled;
+        NotifyChanged();
     }
+
+    /// <summary>Minimum trimmed length for emergency unlock reason.</summary>
+    public const int EmergencyUnlockReasonMinLength = 4;
 
     public async Task RunCurrentScrewCycleAsync(CancellationToken cancellationToken = default)
     {
@@ -904,11 +908,66 @@ public sealed class OperatorSessionController
         double? FinalAngleDeg,
         string? CurveRelativePath);
 
-    public void UnlockNgContinue()
+    /// <summary>技术员正式解锁并重打当前钉（清错后解锁）。</summary>
+    public async Task UnlockNgContinueAsync(CancellationToken cancellationToken = default)
     {
-        if (!_currentUser.CanUnlockNg)
-            throw new UnauthorizedAccessException("Cannot unlock NG.");
+        if (_currentUser.Role < UserRole.Technician)
+            throw new UnauthorizedAccessException("Unlock NG requires technician.");
 
+        await TryClearHardwareErrorsAsync(cancellationToken).ConfigureAwait(false);
+        ApplyUnlockNgCore("Operation.UnlockNg", $"sn={_serialNumber}");
+    }
+
+    /// <summary>技术员标记返修并解锁重打（会话级 IsRework）。</summary>
+    public async Task BeginReworkAndUnlockAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentUser.Role < UserRole.Technician)
+            throw new UnauthorizedAccessException("Rework requires technician.");
+
+        _isRework = true;
+        await TryClearHardwareErrorsAsync(cancellationToken).ConfigureAwait(false);
+        ApplyUnlockNgCore("Operation.EnterRework", $"sn={_serialNumber};rework=true");
+    }
+
+    /// <summary>操作员紧急解除：必填理由，审计身份后清错解锁（不设返修）。</summary>
+    public async Task EmergencyUnlockNgAsync(string reason, CancellationToken cancellationToken = default)
+    {
+        if (_currentUser.Role != UserRole.Operator)
+            throw new UnauthorizedAccessException("Emergency unlock is for operators only.");
+
+        var trimmed = (reason ?? string.Empty).Trim();
+        if (trimmed.Length < EmergencyUnlockReasonMinLength)
+            throw new ArgumentException(
+                $"Emergency unlock reason must be at least {EmergencyUnlockReasonMinLength} characters.",
+                nameof(reason));
+
+        var detail =
+            $"userId={_currentUser.UserId};displayName={_currentUser.DisplayName};role={_currentUser.Role};" +
+            $"sn={_serialNumber};reason={trimmed};errorCode={_lastErrorCode}";
+        AuditOperation("Operation.EmergencyUnlockNg", detail, serialNumber: _serialNumber);
+
+        await TryClearHardwareErrorsAsync(cancellationToken).ConfigureAwait(false);
+        ApplyUnlockNgCore(auditAction: null, auditDetail: null);
+    }
+
+    /// <summary>同步入口（兼容旧调用）；等价于技术员正式解锁且不等待清错完成。</summary>
+    public void UnlockNgContinue() =>
+        UnlockNgContinueAsync().GetAwaiter().GetResult();
+
+    private async Task TryClearHardwareErrorsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _hardware.ClearErrorsAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "ClearErrors before unlock failed; continuing unlock.");
+        }
+    }
+
+    private void ApplyUnlockNgCore(string? auditAction, string? auditDetail)
+    {
         if (!TryApply(JobSessionTrigger.TechUnlockContinue))
             throw new InvalidOperationException("Unlock not allowed in current phase.");
 
@@ -925,7 +984,9 @@ public sealed class OperatorSessionController
         _lastErrorMessage = null;
         _lastErrorCode = null;
 
-        AuditOperation("Operation.UnlockNg", $"sn={_serialNumber}");
+        if (!string.IsNullOrEmpty(auditAction))
+            AuditOperation(auditAction, auditDetail ?? $"sn={_serialNumber}");
+
         NotifyChanged();
     }
 
@@ -979,6 +1040,8 @@ public sealed class OperatorSessionController
         _activeSurfaceId = null;
         _activeSurfaceName = null;
         _lastErrorMessage = null;
+        _lastErrorCode = null;
+        _isRework = false;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
     }
 

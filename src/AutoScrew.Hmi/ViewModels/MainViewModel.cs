@@ -129,6 +129,16 @@ public partial class MainViewModel : ObservableObject
     public bool CanUnlockNgOverlay =>
         _session.Phase == JobSessionPhase.NgLocked && _user.CanUnlockNg;
 
+    public bool IsOperatorRole => _user.Role == UserRole.Operator;
+
+    public bool ShowTechnicianNgActions =>
+        _session.Phase == JobSessionPhase.NgLocked && _user.Role >= UserRole.Technician;
+
+    public bool ShowOperatorNgActions =>
+        _session.Phase == JobSessionPhase.NgLocked && _user.Role == UserRole.Operator;
+
+    public bool IsReworkMode => _session.IsRework;
+
     public ObservableCollection<ScrewMarkerVm> Markers { get; } = new();
 
     public ReadOnlyObservableCollection<OperationActivityLogEntry> ActivityLog => _activityLog.Entries;
@@ -152,6 +162,10 @@ public partial class MainViewModel : ObservableObject
         NotifyCommandStates();
         OnPropertyChanged(nameof(ShowRunScrewButton));
         OnPropertyChanged(nameof(CanUnlockNgOverlay));
+        OnPropertyChanged(nameof(IsOperatorRole));
+        OnPropertyChanged(nameof(ShowTechnicianNgActions));
+        OnPropertyChanged(nameof(ShowOperatorNgActions));
+        OnPropertyChanged(nameof(IsReworkMode));
         _ = TryAutoRunScrewCycleAsync();
     }
 
@@ -189,6 +203,12 @@ public partial class MainViewModel : ObservableObject
     private bool CanConfirmFlip() => !IsOperationLocked && _session.Phase == JobSessionPhase.AwaitFlip;
 
     private bool CanUnlockNg() => _session.Phase == JobSessionPhase.NgLocked && _user.CanUnlockNg;
+
+    private bool CanEnterRework() =>
+        _session.Phase == JobSessionPhase.NgLocked && _user.Role >= UserRole.Technician;
+
+    private bool CanEmergencyUnlockNg() =>
+        _session.Phase == JobSessionPhase.NgLocked && _user.Role == UserRole.Operator;
 
     [RelayCommand(CanExecute = nameof(CanOpenScan))]
     private void OpenScan()
@@ -463,22 +483,72 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanUnlockNg))]
-    private void UnlockNg()
+    private async Task UnlockNgAsync()
     {
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.UnlockNg", serialNumber: _session.SerialNumber);
         try
         {
-            _session.UnlockNgContinue();
-            IsNgOverlayVisible = false;
-            IsOperationLocked = false;
-            StatusMessage = Loc.Get("S.Operation.StatusUnlocked");
-            AddLog(Loc.Get("S.Operation.LogUnlock"));
-            OnPropertyChanged(nameof(CanUnlockNgOverlay));
+            await _session.UnlockNgContinueAsync().ConfigureAwait(true);
+            AfterNgUnlocked(Loc.Get("S.Operation.LogUnlock"));
         }
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEnterRework))]
+    private async Task EnterReworkAsync()
+    {
+        AuditHelper.Log(
+            _audit,
+            _appOptions,
+            _user,
+            AuditCategory.Operation,
+            "Operation.EnterRework",
+            serialNumber: _session.SerialNumber);
+        try
+        {
+            await _session.BeginReworkAndUnlockAsync().ConfigureAwait(true);
+            AfterNgUnlocked(Loc.Get("S.Operation.LogEnterRework"));
+            OnPropertyChanged(nameof(IsReworkMode));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEmergencyUnlockNg))]
+    private async Task EmergencyUnlockNgAsync()
+    {
+        if (!EmergencyUnlockDialog.TryPrompt(
+                out var reason,
+                System.Windows.Application.Current.MainWindow,
+                _user))
+            return;
+
+        try
+        {
+            await _session.EmergencyUnlockNgAsync(reason).ConfigureAwait(true);
+            AfterNgUnlocked(Loc.Get("S.Operation.LogEmergencyUnlock"));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
+
+    private void AfterNgUnlocked(string logMessage)
+    {
+        IsNgOverlayVisible = false;
+        IsOperationLocked = false;
+        StatusMessage = Loc.Get("S.Operation.StatusUnlocked");
+        AddLog(logMessage);
+        OnPropertyChanged(nameof(CanUnlockNgOverlay));
+        OnPropertyChanged(nameof(ShowTechnicianNgActions));
+        OnPropertyChanged(nameof(ShowOperatorNgActions));
+        OnPropertyChanged(nameof(IsReworkMode));
     }
 
     [RelayCommand]
@@ -916,6 +986,8 @@ public partial class MainViewModel : ObservableObject
         RunCurrentScrewCommand.NotifyCanExecuteChanged();
         ConfirmFlipCommand.NotifyCanExecuteChanged();
         UnlockNgCommand.NotifyCanExecuteChanged();
+        EnterReworkCommand.NotifyCanExecuteChanged();
+        EmergencyUnlockNgCommand.NotifyCanExecuteChanged();
     }
 }
 

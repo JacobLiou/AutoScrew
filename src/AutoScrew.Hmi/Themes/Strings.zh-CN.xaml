@@ -88,7 +88,19 @@
     <system:String x:Key="S.Operation.SubmitSn">提交 SN</system:String>
     <system:String x:Key="S.Operation.RunScrew">当前螺钉：取钉+拧紧</system:String>
     <system:String x:Key="S.Operation.ConfirmFlip">确认翻面</system:String>
-    <system:String x:Key="S.Operation.UnlockNg">解锁 NG</system:String>
+    <system:String x:Key="S.Operation.UnlockNg">解锁并重打</system:String>
+    <system:String x:Key="S.Operation.EnterRework">标记返修并重打</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlock">紧急解除…</system:String>
+    <system:String x:Key="S.Operation.ReworkBanner">返修模式 REWORK — 本 SN 结果将标记为返修</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockTitle">紧急解除 NG</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockUserLabel">当前操作员</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonLabel">解除理由（必填）</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonPlaceholder">请说明紧急解除原因（至少 {0} 个字符）</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockReasonTooShort">请填写至少 {0} 个字符的解除理由。</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockWarn">此操作将记入审计日志（含操作员身份与理由）。非紧急情况请联系技术员。</system:String>
+    <system:String x:Key="S.Operation.EmergencyUnlockConfirm">确认紧急解除</system:String>
+    <system:String x:Key="S.Operation.LogEnterRework">已标记返修并解锁，继续作业</system:String>
+    <system:String x:Key="S.Operation.LogEmergencyUnlock">操作员紧急解除 NG，继续作业</system:String>
     <system:String x:Key="S.Operation.ResetSession">复位会话</system:String>
     <system:String x:Key="S.Operation.ProgressTree">作业进度</system:String>
     <system:String x:Key="S.Operation.CurveTitle">扭矩–角度（最近一步）</system:String>
@@ -105,7 +117,7 @@
     <system:String x:Key="S.Operation.GuideRunningScrew">请锁附【{0}】第 {1} 钉</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">请锁附【{0}】</system:String>
     <system:String x:Key="S.Operation.GuideAwaitFlip">【{0}】已完成，请翻面至【{1}】后点击「确认翻面」。</system:String>
-    <system:String x:Key="S.Operation.GuideNgLocked">螺钉 NG，请解锁后继续。</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">螺钉 NG，请联系技术员解锁/返修；紧急时可紧急解除。</system:String>
     <system:String x:Key="S.Operation.GuideCompleted">本单完成，请扫描下一 SN。</system:String>
     <system:String x:Key="S.Operation.CurrentSurface">当前面</system:String>
     <system:String x:Key="S.Operation.NextSurface">下一面</system:String>
@@ -169,7 +181,8 @@
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">错误码</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">说明</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">处理建议</system:String>
-    <system:String x:Key="S.Operation.NgOverlayOperatorHint">请确认设备侧已清错后，点击下方「解锁 NG」继续作业。</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">请联系技术员解锁或处理设备故障。仅在紧急情况下使用「紧急解除」。</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">确认设备侧可继续后，选择解锁重打或标记返修后重打（将清错）。</system:String>
 
     <!-- Template -->
     <system:String x:Key="S.Template.Title">螺钉模板</system:String>

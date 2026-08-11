@@ -169,6 +169,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     public bool IsOperatorRole => _currentUser.Role == UserRole.Operator;
 
+    /// <summary>操作员隐藏侧栏汉堡按钮，避免展开导航。</summary>
+    public bool IsPaneToggleVisible => !IsOperatorRole;
+
     public bool CanUseOperation =>
         _currentUser.Role is UserRole.Operator or UserRole.Technician or UserRole.Administrator;
 
@@ -376,6 +379,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(CanUseSystemMenu));
             OnPropertyChanged(nameof(CanUseSettings));
             OnPropertyChanged(nameof(IsOperatorRole));
+            OnPropertyChanged(nameof(IsPaneToggleVisible));
             OnPropertyChanged(nameof(CanUseOperation));
             OnPropertyChanged(nameof(CanUseTemplateBoard));
             NavigateTemplateCommand.NotifyCanExecuteChanged();
@@ -396,6 +400,12 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void EnsureRoleAllowedSection()
     {
+        if (IsOperatorRole && SelectedSection != MainAppSection.Operation)
+        {
+            NavigateToDefaultPage();
+            return;
+        }
+
         if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
             NavigateToDefaultPage();
         else if (!CanUseConfiguration && IsDeviceConfigurationSection(SelectedSection))
@@ -551,7 +561,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void ApplyRoleBasedNavigationLayout()
     {
-        IsSidebarVisible = !IsOperatorRole;
+        if (IsOperatorRole)
+            IsSidebarVisible = false;
+        OnPropertyChanged(nameof(IsPaneToggleVisible));
     }
 
     private void UpdateSidebarSymbol() => OnPropertyChanged(nameof(SidebarSymbol));
