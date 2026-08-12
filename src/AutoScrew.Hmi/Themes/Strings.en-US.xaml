@@ -35,7 +35,7 @@
     <system:String x:Key="S.Nav.Configuration">Configuration</system:String>
     <system:String x:Key="S.Nav.DeviceConfiguration">Device Configuration</system:String>
     <system:String x:Key="S.Nav.Production">Production</system:String>
-    <system:String x:Key="S.Nav.Logs">Logs</system:String>
+    <system:String x:Key="S.Nav.Logs">Logs / Audit</system:String>
     <system:String x:Key="S.Nav.MesConnection">MES Connection</system:String>
     <system:String x:Key="S.Nav.History">History</system:String>
     <system:String x:Key="S.Nav.ControllerParams">Tightening Params</system:String>
@@ -176,6 +176,13 @@
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
     <system:String x:Key="S.Operation.NgOverlayOperatorHint">Call a technician to unlock or clear the device fault. Use Emergency unlock only when necessary.</system:String>
     <system:String x:Key="S.Operation.NgOverlayTechnicianHint">After the device is ready, unlock and retry, or mark rework and retry (clears controller errors).</system:String>
+    <system:String x:Key="S.Operation.CompletionTitle">Job complete</system:String>
+    <system:String x:Key="S.Operation.CompletionSummary">SN "{0}" · PN "{1}" is complete and ready for the next job.</system:String>
+    <system:String x:Key="S.Operation.CompletionStats">OK {0} · NG {1} · Pending {2} · Total {3}</system:String>
+    <system:String x:Key="S.Operation.CompletionHint">{0} You can scan the next SN directly, or use the button below to start the next job.</system:String>
+    <system:String x:Key="S.Operation.CompletionNextSn">Scan next SN</system:String>
+    <system:String x:Key="S.Operation.CompletionResultOk">Result OK</system:String>
+    <system:String x:Key="S.Operation.CompletionResultNg">Result includes NG; please confirm traceability and handling first</system:String>
 
     <system:String x:Key="S.Template.Title">Screw template</system:String>
     <system:String x:Key="S.Template.TitleWithProduct">Screw template · {0}{1}</system:String>
@@ -307,9 +314,11 @@
     <system:String x:Key="S.Logs.OpenFolder">Open log folder</system:String>
     <system:String x:Key="S.Logs.OpenFile">Open selected file</system:String>
     <system:String x:Key="S.Logs.FileList">Files</system:String>
-    <system:String x:Key="S.Logs.FileListDesc">Shows .log/.txt under Logs</system:String>
+    <system:String x:Key="S.Logs.FileListDesc">Shows runtime logs and audit exports under Logs, paged for large volumes</system:String>
     <system:String x:Key="S.Logs.Preview">Preview</system:String>
     <system:String x:Key="S.Logs.PreviewDesc">Up to 8000 characters</system:String>
+    <system:String x:Key="S.Logs.PageInfoSingle">{0} item(s)</system:String>
+    <system:String x:Key="S.Logs.PageInfo">Page {0}/{1} · {2} item(s)</system:String>
     <system:String x:Key="S.Logs.OpenFolderFailed">Could not open log folder.</system:String>
     <system:String x:Key="S.Logs.OpenFileFailed">Could not open log file.</system:String>
 
@@ -350,7 +359,7 @@
     <system:String x:Key="S.Screw.TypeMenu">Screw type (circle size)</system:String>
     <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew password reset</system:String>
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
-    <system:String x:Key="S.Logs.SnackbarTitle">Logs</system:String>
+    <system:String x:Key="S.Logs.SnackbarTitle">Logs / Audit</system:String>
 
     <system:String x:Key="S.ProcessLibrary.Title">Process library</system:String>
     <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence JSON) by product PN on LAN/local storage, then deploy to the controller.</system:String>

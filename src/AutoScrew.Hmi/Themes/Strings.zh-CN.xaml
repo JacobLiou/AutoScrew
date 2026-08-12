@@ -38,7 +38,7 @@
     <system:String x:Key="S.Nav.Configuration">配置</system:String>
     <system:String x:Key="S.Nav.DeviceConfiguration">设备配置</system:String>
     <system:String x:Key="S.Nav.Production">生产</system:String>
-    <system:String x:Key="S.Nav.Logs">日志</system:String>
+    <system:String x:Key="S.Nav.Logs">日志/审计</system:String>
     <system:String x:Key="S.Nav.MesConnection">MES连接</system:String>
     <system:String x:Key="S.Nav.History">历史回顾</system:String>
     <system:String x:Key="S.Nav.ControllerParams">拧紧参数</system:String>
@@ -183,6 +183,13 @@
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">处理建议</system:String>
     <system:String x:Key="S.Operation.NgOverlayOperatorHint">请联系技术员解锁或处理设备故障。仅在紧急情况下使用「紧急解除」。</system:String>
     <system:String x:Key="S.Operation.NgOverlayTechnicianHint">确认设备侧可继续后，选择解锁重打或标记返修后重打（将清错）。</system:String>
+    <system:String x:Key="S.Operation.CompletionTitle">本单已完成</system:String>
+    <system:String x:Key="S.Operation.CompletionSummary">SN「{0}」· PN「{1}」已完成，准备进入下一单。</system:String>
+    <system:String x:Key="S.Operation.CompletionStats">OK {0} · NG {1} · 待打 {2} · 总数 {3}</system:String>
+    <system:String x:Key="S.Operation.CompletionHint">{0} 可直接扫描下一 SN，或点击下方按钮开始下一单。</system:String>
+    <system:String x:Key="S.Operation.CompletionNextSn">扫描下一 SN</system:String>
+    <system:String x:Key="S.Operation.CompletionResultOk">结果 OK</system:String>
+    <system:String x:Key="S.Operation.CompletionResultNg">结果含 NG，请先确认追溯与异常处理</system:String>
 
     <!-- Template -->
     <system:String x:Key="S.Template.Title">螺钉模板</system:String>
@@ -311,16 +318,18 @@
     <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com</system:String>
     <system:String x:Key="S.Settings.TechStack">技术实现</system:String>
     <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
-    <system:String x:Key="S.Settings.BugReport">File a bug or request a new sample</system:String>
-    <system:String x:Key="S.Settings.Docs">Check out the docs</system:String>
+    <system:String x:Key="S.Settings.BugReport">递交Bug</system:String>
+    <system:String x:Key="S.Settings.Docs">阅读文档</system:String>
 
     <!-- Logs -->
     <system:String x:Key="S.Logs.OpenFolder">打开日志目录</system:String>
     <system:String x:Key="S.Logs.OpenFile">打开选中文件</system:String>
     <system:String x:Key="S.Logs.FileList">文件列表</system:String>
-    <system:String x:Key="S.Logs.FileListDesc">默认显示 Logs 目录下的 .log/.txt</system:String>
+    <system:String x:Key="S.Logs.FileListDesc">默认显示 Logs 目录下的运行日志与审计导出，支持分页浏览</system:String>
     <system:String x:Key="S.Logs.Preview">预览</system:String>
     <system:String x:Key="S.Logs.PreviewDesc">最多显示 8000 字符</system:String>
+    <system:String x:Key="S.Logs.PageInfoSingle">共 {0} 条</system:String>
+    <system:String x:Key="S.Logs.PageInfo">第 {0}/{1} 页 · 共 {2} 条</system:String>
 
     <!-- History dashboard -->
     <system:String x:Key="S.History.From">开始日期</system:String>
@@ -364,7 +373,7 @@
     <system:String x:Key="S.Screw.TypeMenu">螺钉类型（圆圈大小）</system:String>
     <system:String x:Key="S.Login.ForgotPasswordSubject">AutoScrew 忘记密码</system:String>
     <system:String x:Key="S.Mes.SnackbarTitle">MES</system:String>
-    <system:String x:Key="S.Logs.SnackbarTitle">日志</system:String>
+    <system:String x:Key="S.Logs.SnackbarTitle">日志/审计</system:String>
 
     <!-- Process library (A) -->
     <system:String x:Key="S.ProcessLibrary.Title">工艺库</system:String>

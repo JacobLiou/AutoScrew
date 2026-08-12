@@ -532,8 +532,13 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 TargetPageTag = "history"
             });
 
-            // 日志页暂不在导航中展示（可通过顶栏「打开程序日志」访问 Logs 目录）
-            // systemGroup.MenuItems.Add(new NavigationViewItem { ... });
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.Logs"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
+                TargetPageType = typeof(LogsPage),
+                TargetPageTag = "logs"
+            });
 
             if (deviceConfigurationGroup is not null)
                 items.Add(deviceConfigurationGroup);

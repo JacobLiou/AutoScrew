@@ -11,7 +11,10 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class LogsViewModel : ObservableObject
 {
+    private const int PageSize = 20;
+
     private readonly ISnackbarService _snackbarService;
+    private List<string> _allLogFiles = [];
 
     [ObservableProperty]
     private ObservableCollection<string> _logFiles = [];
@@ -21,6 +24,21 @@ public sealed partial class LogsViewModel : ObservableObject
 
     [ObservableProperty]
     private string _selectedLogPreview = string.Empty;
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private string _pageInfo = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasPreviousPage;
+
+    [ObservableProperty]
+    private bool _hasNextPage;
 
     public LogsViewModel(ISnackbarService snackbarService)
     {
@@ -34,17 +52,102 @@ public sealed partial class LogsViewModel : ObservableObject
         var dir = GetLogsDirectory();
         Directory.CreateDirectory(dir);
 
-        var files = Directory.EnumerateFiles(dir, "*.log", SearchOption.TopDirectoryOnly)
+        _allLogFiles = Directory.EnumerateFiles(dir, "*.log", SearchOption.TopDirectoryOnly)
             .Concat(Directory.EnumerateFiles(dir, "*.txt", SearchOption.TopDirectoryOnly))
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .ToList();
 
-        LogFiles = new ObservableCollection<string>(files);
-        SelectedLogFile = LogFiles.FirstOrDefault();
-        UpdatePreview();
+        var targetPage = CurrentPage;
+        if (_allLogFiles.Count == 0)
+        {
+            TotalPages = 1;
+            SetCurrentPage(1, preserveSelection: false);
+            return;
+        }
+
+        TotalPages = Math.Max(1, (int)Math.Ceiling(_allLogFiles.Count / (double)PageSize));
+        targetPage = Math.Clamp(targetPage, 1, TotalPages);
+        SetCurrentPage(targetPage, preserveSelection: true);
     }
 
     partial void OnSelectedLogFileChanged(string? value) => UpdatePreview();
+
+    partial void OnCurrentPageChanged(int value) => UpdatePagingState();
+
+    partial void OnTotalPagesChanged(int value) => UpdatePagingState();
+
+    private void SetCurrentPage(int page, bool preserveSelection)
+    {
+        CurrentPage = page;
+
+        var previousSelection = preserveSelection ? SelectedLogFile : null;
+        var pageFiles = _allLogFiles.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        LogFiles = new ObservableCollection<string>(pageFiles);
+
+        if (pageFiles.Count == 0)
+        {
+            SelectedLogFile = null;
+            SelectedLogPreview = string.Empty;
+            UpdatePagingState();
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousSelection) && pageFiles.Contains(previousSelection))
+        {
+            SelectedLogFile = previousSelection;
+        }
+        else
+        {
+            SelectedLogFile = pageFiles[0];
+        }
+
+        UpdatePagingState();
+    }
+
+    private void UpdatePagingState()
+    {
+        HasPreviousPage = CurrentPage > 1;
+        HasNextPage = CurrentPage < TotalPages;
+        PageInfo = TotalPages <= 1
+            ? Loc.Format("S.Logs.PageInfoSingle", _allLogFiles.Count)
+            : Loc.Format("S.Logs.PageInfo", CurrentPage, TotalPages, _allLogFiles.Count);
+    }
+
+    [RelayCommand]
+    private void PreviousPage()
+    {
+        if (!HasPreviousPage)
+            return;
+
+        SetCurrentPage(CurrentPage - 1, preserveSelection: true);
+    }
+
+    [RelayCommand]
+    private void NextPage()
+    {
+        if (!HasNextPage)
+            return;
+
+        SetCurrentPage(CurrentPage + 1, preserveSelection: true);
+    }
+
+    [RelayCommand]
+    private void FirstPage()
+    {
+        if (CurrentPage <= 1)
+            return;
+
+        SetCurrentPage(1, preserveSelection: true);
+    }
+
+    [RelayCommand]
+    private void LastPage()
+    {
+        if (CurrentPage >= TotalPages)
+            return;
+
+        SetCurrentPage(TotalPages, preserveSelection: true);
+    }
 
     private void UpdatePreview()
     {

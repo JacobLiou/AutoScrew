@@ -14,6 +14,7 @@
     <UserControl.Resources>
         <conv:PathToImageConverter x:Key="PathToImageConverter"/>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </UserControl.Resources>
     <Grid>
     <DockPanel Margin="0">
@@ -145,35 +146,95 @@
             </Border>
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
             <ui:Card Grid.Column="2" Style="{StaticResource ShellCardStyle}" Margin="0,0,12,0">
-                <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <Grid Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
-                            <Rectangle Fill="#F0F0F0"/>
-                            <Image Stretch="Fill"
-                                   Source="{Binding ProductImagePath, Converter={StaticResource PathToImageConverter}}"/>
-                            <ItemsControl ItemsSource="{Binding Markers}" IsHitTestVisible="False">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style TargetType="ContentPresenter">
-                                        <Setter Property="Canvas.Left" Value="{Binding CanvasLeft}"/>
-                                        <Setter Property="Canvas.Top" Value="{Binding CanvasTop}"/>
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:ScrewMarkerVm}">
-                                        <Grid Width="{Binding DiameterPx}" Height="{Binding DiameterPx}">
-                                            <Ellipse Style="{StaticResource ScrewMarkerStyle}"/>
-                                            <TextBlock Text="{Binding Index}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       FontSize="11" FontWeight="Bold" Foreground="#222"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                </Viewbox>
+                <Grid>
+                    <Grid Visibility="{Binding IsCompletionVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Grid Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
+                                <Rectangle Fill="#F0F0F0"/>
+                                <Image Stretch="Fill"
+                                       Source="{Binding ProductImagePath, Converter={StaticResource PathToImageConverter}}"/>
+                                <ItemsControl ItemsSource="{Binding Markers}" IsHitTestVisible="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding CanvasLeft}"/>
+                                            <Setter Property="Canvas.Top" Value="{Binding CanvasTop}"/>
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:ScrewMarkerVm}">
+                                            <Grid Width="{Binding DiameterPx}" Height="{Binding DiameterPx}">
+                                                <Ellipse Style="{StaticResource ScrewMarkerStyle}"/>
+                                                <TextBlock Text="{Binding Index}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           FontSize="11" FontWeight="Bold" Foreground="#222"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Viewbox>
+                    </Grid>
+
+                    <Grid Visibility="{Binding IsCompletionVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          Margin="20">
+                        <Border CornerRadius="16"
+                                Padding="28"
+                                Background="#F9FCF8"
+                                BorderBrush="#B7E4C7"
+                                BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        MaxWidth="560">
+                                <TextBlock Text="✓"
+                                           FontSize="56"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource BrushOk}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Text="{Binding CompletionTitle}"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding CompletionSummary}"
+                                           Margin="0,10,0,0"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                                <Border Margin="0,20,0,0"
+                                        Padding="16,10"
+                                        Background="#EAF7EF"
+                                        CornerRadius="10">
+                                    <TextBlock Text="{Binding CompletionStats}"
+                                               FontFamily="Consolas"
+                                               FontSize="14"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                                <TextBlock Text="{Binding CompletionHint}"
+                                           Margin="0,16,0,0"
+                                           FontSize="15"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource ShellMutedForegroundBrush}"/>
+                                <ui:Button Content="{DynamicResource S.Operation.CompletionNextSn}"
+                                           Margin="0,20,0,0"
+                                           HorizontalAlignment="Center"
+                                           Appearance="Primary"
+                                           Command="{Binding StartNextSnCommand}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
             </ui:Card>
             <ui:Card Grid.Column="3" Style="{StaticResource ShellCardStyle}">
                 <Grid>

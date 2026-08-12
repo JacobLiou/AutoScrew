@@ -28,6 +28,28 @@
                 <ui:Button Command="{Binding ViewModel.OpenSelectedCommand}"
                            Content="{DynamicResource S.Logs.OpenFile}" />
             </StackPanel>
+            <StackPanel Margin="0,10,0,0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <ui:Button Margin="0,0,8,0"
+                           Command="{Binding ViewModel.FirstPageCommand}"
+                           IsEnabled="{Binding ViewModel.HasPreviousPage}"
+                           Content="|&lt;" />
+                <ui:Button Margin="0,0,8,0"
+                           Command="{Binding ViewModel.PreviousPageCommand}"
+                           IsEnabled="{Binding ViewModel.HasPreviousPage}"
+                           Content="&lt;" />
+                <ui:TextBlock Margin="0,0,12,0"
+                              VerticalAlignment="Center"
+                              Text="{Binding ViewModel.PageInfo}" />
+                <ui:Button Margin="0,0,8,0"
+                           Command="{Binding ViewModel.NextPageCommand}"
+                           IsEnabled="{Binding ViewModel.HasNextPage}"
+                           Content="&gt;" />
+                <ui:Button Command="{Binding ViewModel.LastPageCommand}"
+                           IsEnabled="{Binding ViewModel.HasNextPage}"
+                           Content="&gt;|" />
+            </StackPanel>
         </StackPanel>
         <Grid Grid.Row="1"
               HorizontalAlignment="Center"

@@ -99,6 +99,20 @@ public partial class MainViewModel : ObservableObject
     private bool _isSnInputEnabled = true;
 
     [ObservableProperty]
+    private bool _isCompletionVisible;
+
+    [ObservableProperty]
+    private string _completionTitle = "";
+
+    [ObservableProperty]
+    private string _completionSummary = "";
+
+    [ObservableProperty]
+    private string _completionStats = "";
+
+    [ObservableProperty]
+    private string _completionHint = "";
+    [ObservableProperty]
     private bool _isNgOverlayVisible;
 
     [ObservableProperty]
@@ -646,6 +660,10 @@ public partial class MainViewModel : ObservableObject
         BoardHeight = _session.BoardHeight;
         RefreshDeviceProcessPn();
         RefreshSnInputEnabled();
+        RefreshCompletionState();
+
+        if (_session.Phase == JobSessionPhase.Completed)
+            StatusMessage = Loc.Get("S.Operation.GuideCompleted");
 
         var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
         if (ngLocked)
@@ -681,6 +699,39 @@ public partial class MainViewModel : ObservableObject
         }
 
         RefreshProgressTree();
+    }
+
+    private void RefreshCompletionState()
+    {
+        var completed = _session.Phase == JobSessionPhase.Completed;
+        IsCompletionVisible = completed;
+
+        if (!completed)
+        {
+            CompletionTitle = string.Empty;
+            CompletionSummary = string.Empty;
+            CompletionStats = string.Empty;
+            CompletionHint = string.Empty;
+            return;
+        }
+
+        var total = _session.ScrewStates.Count;
+        var ok = _session.ScrewStates.Count(static state => state == StationScrewState.Ok);
+        var ng = _session.ScrewStates.Count(static state => state == StationScrewState.Ng);
+        var pending = _session.ScrewStates.Count(static state => state == StationScrewState.Pending);
+        var resultKey = ng == 0
+            ? "S.Operation.CompletionResultOk"
+            : "S.Operation.CompletionResultNg";
+
+        CompletionTitle = Loc.Get("S.Operation.CompletionTitle");
+        CompletionSummary = Loc.Format(
+            "S.Operation.CompletionSummary",
+            _session.SerialNumber ?? "—",
+            _session.PartNumber ?? "—");
+        CompletionStats = Loc.Format("S.Operation.CompletionStats", ok, ng, pending, total);
+        CompletionHint = Loc.Format(
+            "S.Operation.CompletionHint",
+            Loc.Get(resultKey));
     }
 
     private async Task TryAutoRunScrewCycleAsync()
@@ -809,6 +860,21 @@ public partial class MainViewModel : ObservableObject
         var done = completedName ?? _session.ActiveSurfaceName ?? Loc.Get("S.Operation.CurrentSurface");
         var next = nextName ?? Loc.Get("S.Operation.NextSurface");
         return Loc.Format("S.Operation.GuideAwaitFlip", done, next);
+    }
+
+    [RelayCommand]
+    private void StartNextSn()
+    {
+        try
+        {
+            SerialNumberInput = string.Empty;
+            EnsureAwaitingSn();
+            StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
     }
 
     private void RefreshProgressTree()
