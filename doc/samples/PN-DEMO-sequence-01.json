@@ -1,0 +1,25 @@
+{
+  "sequenceId": 1,
+  "core": {
+    "name": "PN-DEMO-SEQ-01",
+    "navigatorMode": 0,
+    "positioningArmEnabled": false,
+    "steps": [
+      {
+        "toolId": 0,
+        "parameterId": 0,
+        "quantity": 1,
+        "bitId": 0
+      }
+    ]
+  },
+  "navigatorCoordinates": {
+    "screws": []
+  },
+  "navigatorImageCodes": {
+    "imageCodes": []
+  },
+  "positioningArmCoordinates": {
+    "screws": []
+  }
+}

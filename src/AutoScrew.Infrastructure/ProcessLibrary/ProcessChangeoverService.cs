@@ -1,5 +1,7 @@
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AutoScrew.Infrastructure.ProcessLibrary;
 
@@ -7,15 +9,18 @@ public sealed class ProcessChangeoverService : IProcessChangeoverService
 {
     private readonly IProcessLibraryService _library;
     private readonly IStationProcessStateStore _stationState;
+    private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ILogger<ProcessChangeoverService> _logger;
 
     public ProcessChangeoverService(
         IProcessLibraryService library,
         IStationProcessStateStore stationState,
+        IOptions<AutoScrewAppOptions> appOptions,
         ILogger<ProcessChangeoverService> logger)
     {
         _library = library;
         _stationState = stationState;
+        _appOptions = appOptions;
         _logger = logger;
     }
 
@@ -97,6 +102,20 @@ public sealed class ProcessChangeoverService : IProcessChangeoverService
 
         if (product.Sequences.Count == 0)
             throw new InvalidOperationException($"产品 {pn} 下没有拧紧顺序，无法换产下发。");
+
+        if (_appOptions.Value.UseSimulatedHardware)
+        {
+            _stationState.Save(new StationProcessState(
+                pn,
+                product.UpdatedUtc,
+                DateTimeOffset.UtcNow));
+
+            _logger.LogInformation(
+                "Changeover committed in simulation mode product={ProductPn} updatedUtc={UpdatedUtc}",
+                pn,
+                product.UpdatedUtc);
+            return;
+        }
 
         var paramResult = await _library.DeployProductToDeviceAsync(pn, cancellationToken).ConfigureAwait(false);
         if (paramResult.Failures.Count > 0)

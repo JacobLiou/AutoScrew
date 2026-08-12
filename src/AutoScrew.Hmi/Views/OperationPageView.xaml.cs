@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using AutoScrew.Domain.Models;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Hmi.ViewModels.Operation;
@@ -131,10 +132,29 @@ public partial class OperationPageView : UserControl
         ProgressTree.UpdateLayout();
         ExpandAllTreeViewItems(ProgressTree);
 
-        if (_viewModel?.ActiveSurfaceNode is null)
+        if (_viewModel is null)
             return;
 
-        TrySelectTreeViewItem(ProgressTree, _viewModel.ActiveSurfaceNode);
+        var target = FindCurrentProgressTarget(_viewModel) ?? _viewModel.ActiveSurfaceNode;
+        if (target is null)
+            return;
+
+        TrySelectTreeViewItem(ProgressTree, target);
+    }
+
+    private static object? FindCurrentProgressTarget(MainViewModel vm)
+    {
+        var activeSurface = vm.ActiveSurfaceNode;
+        if (activeSurface is null)
+            return null;
+
+        var inProgressScrew = activeSurface.Screws.FirstOrDefault(s => s.State == StationScrewState.InProgress);
+        if (inProgressScrew is not null)
+            return inProgressScrew;
+
+        // If no screw is currently running, follow the next pending screw on the active surface.
+        var nextPendingScrew = activeSurface.Screws.FirstOrDefault(s => s.State == StationScrewState.Pending);
+        return nextPendingScrew;
     }
 
     private static void ExpandAllTreeViewItems(ItemsControl parent)
@@ -160,6 +180,7 @@ public partial class OperationPageView : UserControl
             if (ReferenceEquals(child, item))
             {
                 container.IsSelected = true;
+                container.BringIntoView();
                 return true;
             }
 
