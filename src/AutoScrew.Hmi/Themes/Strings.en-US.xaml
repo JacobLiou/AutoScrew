@@ -383,6 +383,7 @@
     <system:String x:Key="S.ProcessLibrary.Deploy">Deploy parameters</system:String>
     <system:String x:Key="S.ProcessLibrary.DeploySequences">Deploy sequences</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSlot">Slot</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColDeviceId">Device ID</system:String>
     <system:String x:Key="S.ProcessLibrary.ColScrewPn">Screw PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSequenceId">Sequence ID</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSequenceName">Name</system:String>
@@ -396,6 +397,8 @@
     <system:String x:Key="S.ProcessLibrary.StatusSlotsLoaded">Loaded {0} slot(s).</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusProductLoaded">Loaded {0} parameter slot(s) and {1} sequence(s).</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusUploaded">Uploaded {0} process card(s).</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSlotAdded">Added slot {0} → parameter ID {1} (synced to local parameter presets)</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSlotUpdated">Updated slot {0} → parameter ID {1} (synced to local parameter presets)</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceUploaded">Uploaded {0} sequence(s).</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusDeleted">Slot removed.</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceDeleted">Sequence removed.</system:String>

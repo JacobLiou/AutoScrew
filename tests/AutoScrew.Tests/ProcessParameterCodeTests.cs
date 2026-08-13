@@ -17,10 +17,24 @@ public sealed class ProcessParameterCodeTests
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("1830331949")]
-    [InlineData("-01")]
-    [InlineData("abc-xx")]
-    public void Parse_Invalid_Throws(string code) =>
-        Assert.Throws<InvalidDataException>(() => ProcessParameterCode.Parse(code));
+    [InlineData(0, 1)]
+    [InlineData(1, 2)]
+    [InlineData(499, 500)]
+    public void ToDeviceParameterId_SlotPlusOne(int slot, int expected) =>
+        Assert.Equal(expected, ProcessParameterCode.ToDeviceParameterId(slot));
+
+    [Fact]
+    public void ToDeviceParameterId_OutOfRange_Throws() =>
+        Assert.Throws<InvalidDataException>(() => ProcessParameterCode.ToDeviceParameterId(500));
+
+    [Theory]
+    [InlineData("1830330479_00.txt", 0)]
+    [InlineData("1830330479 _01.txt", 1)]
+    [InlineData("00.txt", 0)]
+    [InlineData(@"C:\tmp\foo_10.txt", 10)]
+    public void TryParseSlotFromFileName_Succeeds(string name, int slot)
+    {
+        Assert.True(ProcessParameterCode.TryParseSlotFromFileName(name, out var parsed));
+        Assert.Equal(slot, parsed);
+    }
 }

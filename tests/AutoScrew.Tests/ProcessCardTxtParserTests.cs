@@ -17,7 +17,7 @@ public sealed class ProcessCardTxtParserTests
 
         Assert.Equal(0, result.SlotId);
         Assert.Equal("1830330479", result.ScrewPn);
-        Assert.Equal(0, result.Template.ParameterId);
+        Assert.Equal(1, result.Template.ParameterId);
         Assert.Equal("1830330479", result.Template.Core.Name);
 
         Assert.Equal(4160, result.Template.Core.MaxAngleDeg);
@@ -65,7 +65,7 @@ public sealed class ProcessCardTxtParserTests
 
         Assert.Equal(0, result.SlotId);
         Assert.Equal("1830330479", result.ScrewPn);
-        Assert.Equal(0, result.Template.ParameterId);
+        Assert.Equal(1, result.Template.ParameterId);
         Assert.Equal("1830330479", result.Template.Core.Name);
 
         Assert.Equal(4160, result.Template.Core.MaxAngleDeg);
@@ -111,5 +111,59 @@ public sealed class ProcessCardTxtParserTests
         Assert.Equal(500, result.Template.Core.Loosen.Stage2SpeedRpm);
         Assert.True(result.Template.Core.Loosen.ProductionLogEnabled);
         Assert.True(result.Template.Core.Loosen.DetectTorqueMilliNm > 0);
+    }
+
+    [Fact]
+    public void Parse_EmptyParamIdLine_UsesPnDashSlotForDeviceId()
+    {
+        var text = """
+            参数ID：
+            参数：1830330479-01
+            阶段有效：1 阶段有效
+            旋转方向：顺时针
+            最大总角度（°）：100
+            最小总角度（°）：0
+            最大拧紧时间（秒）：1
+            1.启动
+            拧紧角度（°）：90
+            速度（转/分钟）：80
+            扭矩判断：OFF
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(1, result.SlotId);
+        Assert.Equal(2, result.Template.ParameterId);
+        Assert.Equal("1830330479", result.ScrewPn);
+    }
+
+    [Fact]
+    public void Parse_FilenameFallback_WhenParamMissing()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "autoscrew-card-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var path = Path.Combine(dir, "1830330479_03.txt");
+            File.WriteAllText(path, """
+                阶段有效：1 阶段有效
+                旋转方向：顺时针
+                最大总角度（°）：100
+                最小总角度（°）：0
+                最大拧紧时间（秒）：1
+                1.启动
+                拧紧角度（°）：90
+                速度（转/分钟）：80
+                扭矩判断：OFF
+                """);
+
+            var result = ProcessCardTxtParser.ParseFile(path);
+            Assert.Equal(3, result.SlotId);
+            Assert.Equal(4, result.Template.ParameterId);
+            Assert.Equal("1830330479", result.ScrewPn);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 }

@@ -7,6 +7,7 @@
 | 1.2 | 2026-06-22 | 工艺工作台 P0+P1 落地；同步 §1/§4/§5/§6；新增 T-24（工作台 P2） |
 | 1.3 | 2026-08-10 | 历史回顾 Dashboard：T-25～T-32（本地 SQLite + IP/MAC + LAN `{MAC}/{SN}`） |
 | 1.4 | 2026-08-11 | **供料器改为现场手动**：取消程控供料自动化/调度；T-06/T-06a/T-06b 作废；α 仅控 IEMD-SD |
+| 1.5 | 2026-08-12 | 工艺卡：槽位文件名定新增/更新；设备 ParameterId=槽位+1；导入同步拧紧参数本地预设 |
 
 **权威追溯**
 
@@ -19,6 +20,8 @@
 | [DATA_AND_TRACE.md](DATA_AND_TRACE.md) | MES/本地追溯字段、SQLite、Outbox |
 | [MULTI_SURFACE_TEMPLATE.md](MULTI_SURFACE_TEMPLATE.md) | 多面产品模板 v2 |
 | [DVT_GUI_TEST_BASIS.md](DVT_GUI_TEST_BASIS.md) | GUI 与 PRD 双轨测试基线 |
+
+**工艺卡约定（2026-08-12）**：身份 = `参数：螺钉PN-槽位` 或文件名尾缀 `_NN`；卡内「参数ID」忽略；**设备 ParameterId = 槽位 + 1**；同槽再导入为更新；导入时同步拧紧参数本地预设（参数页可见非空 ID）。
 
 ---
 

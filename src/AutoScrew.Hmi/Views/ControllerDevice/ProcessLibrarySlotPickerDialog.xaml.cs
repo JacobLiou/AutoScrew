@@ -149,11 +149,16 @@ public partial class ProcessLibrarySlotPickerDialog : Window, INotifyPropertyCha
             SlotId = info.SlotId;
             ScrewPn = info.ScrewPn;
             FileName = info.FileName;
+            DeviceParameterId = info.DeviceParameterId > 0
+                ? info.DeviceParameterId
+                : info.SlotId + 1;
         }
 
         public int SlotId { get; }
+        public int DeviceParameterId { get; }
         public string ScrewPn { get; }
         public string FileName { get; }
         public string SlotLabel => SlotId.ToString("D2");
+        public string DeviceIdLabel => DeviceParameterId.ToString();
     }
 }

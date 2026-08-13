@@ -6,7 +6,9 @@ public sealed record ProcessLibrarySlotInfo(
     int SlotId,
     string ScrewPn,
     string FileName,
-    string DisplayName);
+    string DisplayName,
+    int DeviceParameterId,
+    bool WasUpdate = false);
 
 public sealed record ProcessLibrarySequenceInfo(
     int SequenceId,

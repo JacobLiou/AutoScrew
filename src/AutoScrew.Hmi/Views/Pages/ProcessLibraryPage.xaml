@@ -119,6 +119,9 @@
                             <DataGridTextColumn Width="80"
                                                 Binding="{Binding SlotLabel}"
                                                 Header="{DynamicResource S.ProcessLibrary.ColSlot}" />
+                            <DataGridTextColumn Width="90"
+                                                Binding="{Binding DeviceIdLabel}"
+                                                Header="{DynamicResource S.ProcessLibrary.ColDeviceId}" />
                             <DataGridTextColumn Width="160"
                                                 Binding="{Binding ScrewPn}"
                                                 Header="{DynamicResource S.ProcessLibrary.ColScrewPn}" />

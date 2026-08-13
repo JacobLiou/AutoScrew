@@ -385,7 +385,7 @@
     <system:String x:Key="S.ProcessLibrary.SelectProductHint">请先选择产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.Load">加载产品内容</system:String>
     <system:String x:Key="S.ProcessLibrary.RefreshList">刷新产品列表</system:String>
-    <system:String x:Key="S.ProcessLibrary.TabParams">参数槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.TabParams">拧紧参数</system:String>
     <system:String x:Key="S.ProcessLibrary.TabSequences">拧紧顺序</system:String>
     <system:String x:Key="S.ProcessLibrary.Upload">上传工艺卡</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequence">上传顺序 JSON</system:String>
@@ -398,6 +398,7 @@
     <system:String x:Key="S.ProcessLibrary.Deploy">下发参数到设备</system:String>
     <system:String x:Key="S.ProcessLibrary.DeploySequences">下发顺序到设备</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSlot">槽位</system:String>
+    <system:String x:Key="S.ProcessLibrary.ColDeviceId">设备 ID</system:String>
     <system:String x:Key="S.ProcessLibrary.ColScrewPn">螺钉 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSequenceId">顺序 ID</system:String>
     <system:String x:Key="S.ProcessLibrary.ColSequenceName">名称</system:String>
@@ -411,6 +412,8 @@
     <system:String x:Key="S.ProcessLibrary.StatusSlotsLoaded">已加载 {0} 个槽位。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusProductLoaded">已加载 {0} 个参数槽、{1} 条拧紧顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusUploaded">已上传 {0} 张工艺卡。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSlotAdded">新增槽位 {0} → 参数 ID {1}（已同步到拧紧参数本地库）</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSlotUpdated">更新槽位 {0} → 参数 ID {1}（已同步到拧紧参数本地库）</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceUploaded">已上传 {0} 条拧紧顺序。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusDeleted">已删除槽位。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceDeleted">已删除顺序。</system:String>

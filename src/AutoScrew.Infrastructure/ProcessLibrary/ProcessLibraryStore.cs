@@ -124,6 +124,7 @@ public sealed class ProcessLibraryStore
         var doc = LoadOrCreateManifest(safePn, productDir);
         doc.ProductPn = safePn;
         doc.UpdatedUtc = DateTimeOffset.UtcNow;
+        var wasUpdate = doc.Slots.Any(s => s.SlotId == parsed.SlotId);
         doc.Slots.RemoveAll(s => s.SlotId == parsed.SlotId);
         var slot = new ProcessSlotDocument
         {
@@ -137,11 +138,18 @@ public sealed class ProcessLibraryStore
 
         await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
 
+        var deviceId = ProcessParameterCode.ToDeviceParameterId(slot.SlotId);
         _logger.LogInformation(
-            "Process card saved product={ProductPn} slot={SlotId} screw={ScrewPn}",
-            safePn, parsed.SlotId, parsed.ScrewPn);
+            "Process card saved product={ProductPn} slot={SlotId} deviceId={DeviceId} screw={ScrewPn} wasUpdate={WasUpdate}",
+            safePn, parsed.SlotId, deviceId, parsed.ScrewPn, wasUpdate);
 
-        return new ProcessLibrarySlotInfo(slot.SlotId, slot.ScrewPn, slot.FileName, slot.DisplayName);
+        return new ProcessLibrarySlotInfo(
+            slot.SlotId,
+            slot.ScrewPn,
+            slot.FileName,
+            slot.DisplayName,
+            deviceId,
+            wasUpdate);
     }
 
     public async Task RemoveSlotAsync(string productPn, int slotId, CancellationToken cancellationToken)
@@ -304,7 +312,11 @@ public sealed class ProcessLibraryStore
                     var parsed = ProcessCardTxtParser.ParseFile(file);
                     var relative = Path.GetRelativePath(dir, file).Replace('\\', '/');
                     slots.Add(new ProcessLibrarySlotInfo(
-                        parsed.SlotId, parsed.ScrewPn, relative, parsed.ScrewPn));
+                        parsed.SlotId,
+                        parsed.ScrewPn,
+                        relative,
+                        parsed.ScrewPn,
+                        ProcessParameterCode.ToDeviceParameterId(parsed.SlotId)));
                 }
                 catch (Exception ex)
                 {
@@ -346,7 +358,12 @@ public sealed class ProcessLibraryStore
             doc.UpdatedUtc,
             doc.Slots
                 .OrderBy(s => s.SlotId)
-                .Select(s => new ProcessLibrarySlotInfo(s.SlotId, s.ScrewPn, s.FileName, s.DisplayName))
+                .Select(s => new ProcessLibrarySlotInfo(
+                    s.SlotId,
+                    s.ScrewPn,
+                    s.FileName,
+                    s.DisplayName,
+                    ProcessParameterCode.ToDeviceParameterId(s.SlotId)))
                 .ToList(),
             (doc.Sequences ?? [])
                 .OrderBy(s => s.SequenceId)

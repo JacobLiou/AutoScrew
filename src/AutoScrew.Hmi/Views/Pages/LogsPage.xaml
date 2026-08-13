@@ -78,6 +78,7 @@
                 </ui:CardControl.Header>
                 <ListBox Margin="0,12,0,0"
                          ItemsSource="{Binding ViewModel.LogFiles}"
+                         DisplayMemberPath="FileName"
                          SelectedItem="{Binding ViewModel.SelectedLogFile, Mode=TwoWay}" />
             </ui:CardControl>
             <ui:CardControl Grid.Column="2"

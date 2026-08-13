@@ -18,7 +18,7 @@ public static class ProcessCardTxtParser
         @"^(?<n>\d+)\.(?<name>启动|旋入|预紧|拧紧)\s*$",
         RegexOptions.Compiled);
 
-    public static ProcessCardParseResult Parse(string text)
+    public static ProcessCardParseResult Parse(string text, string? sourceFilePath = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
@@ -114,7 +114,10 @@ public static class ProcessCardTxtParser
             map[key] = value;
         }
 
-        var (screwPn, slotId) = ParseParameterIdentity(map);
+        var (screwPn, slotId) = ProcessParameterCode.ResolveIdentity(
+            GetString(map, "参数"),
+            sourceFilePath,
+            GetString(map, "参数ID") ?? GetString(map, "参数Id"));
 
         TryGetInt(map, "阶段有效", out var stageCount);
         if (stageCount <= 0)
@@ -125,7 +128,7 @@ public static class ProcessCardTxtParser
 
         var template = new TighteningParameterTemplate
         {
-            ParameterId = slotId,
+            ParameterId = ProcessParameterCode.ToDeviceParameterId(slotId),
             ToolIndex = 0,
             Core = new TighteningParameterCore
             {
@@ -169,36 +172,19 @@ public static class ProcessCardTxtParser
     public static ProcessCardParseResult ParseFile(string filePath)
     {
         var text = File.ReadAllText(filePath);
-        return Parse(text);
+        return Parse(text, filePath);
     }
 
     /// <summary>
-    /// 最终模板：<c>参数：螺钉PN-槽位</c>（如 1830330479-00）；
-    /// 兼容旧卡：<c>参数：00</c> + <c>参数ID：螺钉PN</c>。
+    /// 身份：<c>参数：螺钉PN-槽位</c>；卡内「参数ID」仅作旧格式螺钉 PN 回退，不作为设备 ID。
+    /// 缺「参数」时用文件名尾缀槽位。
     /// </summary>
-    private static (string ScrewPn, int SlotId) ParseParameterIdentity(IReadOnlyDictionary<string, string> map)
-    {
-        var paramRaw = GetString(map, "参数")?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(paramRaw))
-            throw new InvalidDataException("工艺卡缺少「参数：螺钉PN-槽位」或「参数：NN」。");
-
-        var dash = paramRaw.LastIndexOf('-');
-        if (dash > 0 && dash < paramRaw.Length - 1)
-        {
-            try
-            {
-                return ProcessParameterCode.Parse(paramRaw);
-            }
-            catch (InvalidDataException ex)
-            {
-                throw new InvalidDataException(ex.Message.Replace("参数码", "「参数」", StringComparison.Ordinal), ex);
-            }
-        }
-
-        return ProcessParameterCode.ParseLegacySlotAndScrew(
-            paramRaw,
+    [Obsolete("Use ProcessParameterCode.ResolveIdentity")]
+    private static (string ScrewPn, int SlotId) ParseParameterIdentity(IReadOnlyDictionary<string, string> map) =>
+        ProcessParameterCode.ResolveIdentity(
+            GetString(map, "参数"),
+            filePathOrName: null,
             GetString(map, "参数ID") ?? GetString(map, "参数Id"));
-    }
 
     private static void ApplyStage(
         TighteningStageCore stage,

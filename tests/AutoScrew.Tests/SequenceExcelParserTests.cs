@@ -134,8 +134,8 @@ public sealed class SequenceExcelParserTests
 
             var pkg = await svc.LoadProductSequenceAsync(productPn, 1);
             Assert.Equal(2, pkg.Core.Steps.Count);
-            Assert.Equal(0, pkg.Core.Steps[0].ParameterId);
-            Assert.Equal(1, pkg.Core.Steps[1].ParameterId);
+            Assert.Equal(1, pkg.Core.Steps[0].ParameterId);
+            Assert.Equal(2, pkg.Core.Steps[1].ParameterId);
             Assert.Equal(4, pkg.Core.Steps[0].Quantity);
         }
         finally

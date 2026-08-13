@@ -23,7 +23,11 @@ namespace AutoScrew.Hmi.Dialog
                 e.GetType()
                     .GetRuntimeProperties()
                     .ToList()
-                    .ForEach(p => Details.Add(new() { Key = p?.Name, Value = p.GetValue(e)?.ToString() }));
+                    .ForEach(p =>
+                    {
+                        var value = p.GetIndexParameters().Length == 0 ? p.GetValue(e)?.ToString() : null;
+                        Details.Add(new() { Key = p.Name, Value = value });
+                    });
             });
 
             DataContext = this;

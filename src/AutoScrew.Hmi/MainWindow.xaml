@@ -71,7 +71,7 @@
             </ui:NavigationView.PaneHeader>
         </ui:NavigationView>
 
-        <ContentPresenter x:Name="RootContentDialog" />
+        <ui:ContentDialogHost x:Name="RootContentDialog" />
         <ui:TitleBar x:Name="TitleBar"
                      Title="{Binding AppTitle}"
                      CloseWindowByDoubleClickOnIcon="True">

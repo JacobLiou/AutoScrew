@@ -199,16 +199,25 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
             IsBusy = true;
             var pn = ProductPn.Trim();
             var count = 0;
+            var details = new List<string>();
             foreach (var file in dialog.FileNames)
             {
                 Audit("Configuration.ProcessLibraryUpload", $"product={pn};file={file}");
-                await _library.UploadProcessCardAsync(pn, file).ConfigureAwait(true);
+                var slot = await _library.UploadProcessCardAsync(pn, file).ConfigureAwait(true);
                 count++;
+                details.Add(string.Format(
+                    Loc.Get(slot.WasUpdate
+                        ? "S.ProcessLibrary.StatusSlotUpdated"
+                        : "S.ProcessLibrary.StatusSlotAdded"),
+                    slot.SlotId.ToString("D2"),
+                    slot.DeviceParameterId));
             }
 
             EnsureProductInList(pn);
             await RefreshProductContentAsync().ConfigureAwait(true);
-            StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusUploaded"), count);
+            StatusMessage = count == 1
+                ? details[0]
+                : string.Format(Loc.Get("S.ProcessLibrary.StatusUploaded"), count) + " — " + string.Join("; ", details);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
@@ -553,13 +562,18 @@ public sealed class ProcessLibrarySlotRow
         ScrewPn = info.ScrewPn;
         FileName = info.FileName;
         DisplayName = info.DisplayName;
+        DeviceParameterId = info.DeviceParameterId > 0
+            ? info.DeviceParameterId
+            : info.SlotId + 1;
     }
 
     public int SlotId { get; }
+    public int DeviceParameterId { get; }
     public string ScrewPn { get; }
     public string FileName { get; }
     public string DisplayName { get; }
     public string SlotLabel => SlotId.ToString("D2");
+    public string DeviceIdLabel => DeviceParameterId.ToString();
 }
 
 public sealed class ProcessLibrarySequenceRow

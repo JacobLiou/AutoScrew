@@ -602,5 +602,5 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Configuration, action, detail: detail);
 
     private void ShowSnackbar(string message, ControlAppearance appearance) =>
-        _snackbarService.Show(message, null, appearance, null, TimeSpan.FromSeconds(3));
+        _snackbarService.Show(Loc.Get("S.ControllerParam.Title"), message, appearance, null, TimeSpan.FromSeconds(3));
 }

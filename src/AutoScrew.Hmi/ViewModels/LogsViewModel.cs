@@ -1,6 +1,7 @@
 using AutoScrew.Hmi.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,16 +12,25 @@ namespace AutoScrew.Hmi.ViewModels;
 
 public sealed partial class LogsViewModel : ObservableObject
 {
+    private const int PreviewWindowBytes = 256 * 1024;
+    private const int MaxPreviewChars = 12000;
+    public sealed class LogFileListItem
+    {
+        public required string FullPath { get; init; }
+
+        public required string FileName { get; init; }
+    }
+
     private const int PageSize = 20;
 
     private readonly ISnackbarService _snackbarService;
     private List<string> _allLogFiles = [];
 
     [ObservableProperty]
-    private ObservableCollection<string> _logFiles = [];
+    private ObservableCollection<LogFileListItem> _logFiles = [];
 
     [ObservableProperty]
-    private string? _selectedLogFile;
+    private LogFileListItem? _selectedLogFile;
 
     [ObservableProperty]
     private string _selectedLogPreview = string.Empty;
@@ -70,7 +80,7 @@ public sealed partial class LogsViewModel : ObservableObject
         SetCurrentPage(targetPage, preserveSelection: true);
     }
 
-    partial void OnSelectedLogFileChanged(string? value) => UpdatePreview();
+    partial void OnSelectedLogFileChanged(LogFileListItem? value) => UpdatePreview();
 
     partial void OnCurrentPageChanged(int value) => UpdatePagingState();
 
@@ -80,9 +90,14 @@ public sealed partial class LogsViewModel : ObservableObject
     {
         CurrentPage = page;
 
-        var previousSelection = preserveSelection ? SelectedLogFile : null;
+        var previousSelection = preserveSelection ? SelectedLogFile?.FullPath : null;
         var pageFiles = _allLogFiles.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        LogFiles = new ObservableCollection<string>(pageFiles);
+        LogFiles = new ObservableCollection<LogFileListItem>(
+            pageFiles.Select(path => new LogFileListItem
+            {
+                FullPath = path,
+                FileName = Path.GetFileName(path)
+            }));
 
         if (pageFiles.Count == 0)
         {
@@ -92,13 +107,14 @@ public sealed partial class LogsViewModel : ObservableObject
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(previousSelection) && pageFiles.Contains(previousSelection))
+        if (!string.IsNullOrWhiteSpace(previousSelection))
         {
-            SelectedLogFile = previousSelection;
+            SelectedLogFile = LogFiles.FirstOrDefault(item => string.Equals(item.FullPath, previousSelection, StringComparison.OrdinalIgnoreCase));
         }
-        else
+
+        if (SelectedLogFile is null)
         {
-            SelectedLogFile = pageFiles[0];
+            SelectedLogFile = LogFiles[0];
         }
 
         UpdatePagingState();
@@ -151,7 +167,8 @@ public sealed partial class LogsViewModel : ObservableObject
 
     private void UpdatePreview()
     {
-        if (string.IsNullOrWhiteSpace(SelectedLogFile) || !File.Exists(SelectedLogFile))
+        var selectedPath = SelectedLogFile?.FullPath;
+        if (string.IsNullOrWhiteSpace(selectedPath) || !File.Exists(selectedPath))
         {
             SelectedLogPreview = string.Empty;
             return;
@@ -159,10 +176,20 @@ public sealed partial class LogsViewModel : ObservableObject
 
         try
         {
-            using var fs = new FileStream(SelectedLogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var sr = new StreamReader(fs);
+            using var fs = new FileStream(selectedPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            // Large files are previewed via a fixed-size tail window to avoid loading full content into memory.
+            var offset = Math.Max(0, fs.Length - PreviewWindowBytes);
+            fs.Seek(offset, SeekOrigin.Begin);
+
+            using var sr = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
             var text = sr.ReadToEnd();
-            SelectedLogPreview = text.Length <= 8000 ? text : text[..8000];
+            if (text.Length > MaxPreviewChars)
+                text = text[^MaxPreviewChars..];
+
+            SelectedLogPreview = offset > 0
+                ? "... (preview truncated, showing file tail)" + Environment.NewLine + text
+                : text;
         }
         catch
         {
@@ -192,12 +219,13 @@ public sealed partial class LogsViewModel : ObservableObject
     [RelayCommand]
     private void OpenSelected()
     {
-        if (string.IsNullOrWhiteSpace(SelectedLogFile) || !File.Exists(SelectedLogFile))
+        var selectedPath = SelectedLogFile?.FullPath;
+        if (string.IsNullOrWhiteSpace(selectedPath) || !File.Exists(selectedPath))
             return;
 
         try
         {
-            Process.Start(new ProcessStartInfo(SelectedLogFile) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(selectedPath) { UseShellExecute = true });
         }
         catch
         {

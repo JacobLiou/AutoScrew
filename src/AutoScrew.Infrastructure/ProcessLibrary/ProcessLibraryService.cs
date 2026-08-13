@@ -75,8 +75,21 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         CancellationToken cancellationToken = default)
     {
         var parsed = ProcessCardTxtParser.ParseFile(sourceFilePath);
-        return await _store.SaveProcessCardAsync(productPn, sourceFilePath, parsed, cancellationToken)
+        parsed.Template.ParameterId = ProcessParameterCode.ToDeviceParameterId(parsed.SlotId);
+        if (string.IsNullOrWhiteSpace(parsed.Template.Core.Name))
+            parsed.Template.Core.Name = parsed.ScrewPn;
+
+        var slot = await _store.SaveProcessCardAsync(productPn, sourceFilePath, parsed, cancellationToken)
             .ConfigureAwait(false);
+
+        await _parameters.SaveLocalPresetAsync(parsed.Template, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation(
+            "Process card synced to local parameter preset id={ParameterId} product={Product} wasUpdate={WasUpdate}",
+            parsed.Template.ParameterId,
+            productPn,
+            slot.WasUpdate);
+
+        return slot;
     }
 
     public Task RemoveSlotAsync(string productPn, int slotId, CancellationToken cancellationToken = default) =>
@@ -124,6 +137,7 @@ public sealed class ProcessLibraryService : IProcessLibraryService
                         productPn, slot.SlotId, parsed.SlotId);
                 }
 
+                parsed.Template.ParameterId = ProcessParameterCode.ToDeviceParameterId(slot.SlotId);
                 await DeployTemplateToDeviceAsync(parsed.Template, cancellationToken).ConfigureAwait(false);
                 written.Add(parsed.Template.ParameterId);
             }
@@ -203,7 +217,9 @@ public sealed class ProcessLibraryService : IProcessLibraryService
             steps.Add(new TighteningSequenceStepCore
             {
                 ToolId = 0,
-                ParameterId = match.SlotId,
+                ParameterId = match.DeviceParameterId > 0
+                    ? match.DeviceParameterId
+                    : ProcessParameterCode.ToDeviceParameterId(match.SlotId),
                 Quantity = row.Quantity,
                 BitId = row.BitId,
             });
