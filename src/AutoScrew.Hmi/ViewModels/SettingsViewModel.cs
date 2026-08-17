@@ -1,8 +1,12 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Windows.Media;
 using Wpf.Ui;
@@ -100,6 +104,68 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private void OnCultureChanged(object? sender, EventArgs e)
     {
         SelectedCulture = _localization.CurrentCultureName;
+    }
+
+    private const string DeveloperMailTo = "menghui.liu1@molex.com";
+    private const string UserManualRelativePath = @"help\UserManul.pdf";
+
+    [RelayCommand]
+    private void ReportBug()
+    {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Setting, "Setting.ReportBug");
+        var subject = Uri.EscapeDataString(Loc.Format("S.Settings.BugReportSubject", AppVersion));
+        var bodyText =
+            Loc.Get("S.Settings.BugReportBodyIntro")
+            + Environment.NewLine
+            + Environment.NewLine
+            + Loc.Format("S.Settings.BugReportBodyVersion", AppVersion);
+        var uri = $"mailto:{DeveloperMailTo}?subject={subject}&body={Uri.EscapeDataString(bodyText)}";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = uri,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageTips.ShowDialog(
+                Loc.Format("S.Settings.BugReportFailed", DeveloperMailTo, Environment.NewLine, ex.Message),
+                System.Windows.Application.Current.MainWindow,
+                Loc.Get("S.Settings.BugReport"));
+        }
+    }
+
+    [RelayCommand]
+    private void OpenUserManual()
+    {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Setting, "Setting.OpenUserManual");
+        var path = Path.Combine(AppContext.BaseDirectory, UserManualRelativePath);
+        if (!File.Exists(path))
+        {
+            MessageTips.ShowDialog(
+                Loc.Format("S.Settings.DocsMissing", path, Environment.NewLine),
+                System.Windows.Application.Current.MainWindow,
+                Loc.Get("S.Settings.Docs"));
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageTips.ShowDialog(
+                Loc.Format("S.Settings.DocsOpenFailed", path, Environment.NewLine, ex.Message),
+                System.Windows.Application.Current.MainWindow,
+                Loc.Get("S.Settings.Docs"));
+        }
     }
 
     private static string GetAssemblyVersion()

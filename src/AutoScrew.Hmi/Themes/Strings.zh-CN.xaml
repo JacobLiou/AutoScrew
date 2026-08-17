@@ -25,10 +25,10 @@
     <system:String x:Key="S.Common.Content">内容</system:String>
 
     <!-- App -->
-    <system:String x:Key="S.App.TitleMain">AutoScrew 自动取螺钉系统</system:String>
-    <system:String x:Key="S.App.TitleLogin">AutoScrew 自动取螺钉系统</system:String>
+    <system:String x:Key="S.App.TitleMain">AutoScrew 自动取螺钉</system:String>
+    <system:String x:Key="S.App.TitleLogin">AutoScrew 自动取螺钉</system:String>
     <system:String x:Key="S.App.ProductName">自动取螺钉</system:String>
-    <system:String x:Key="S.App.AboutProduct">AutoScrew 自动取螺钉系统</system:String>
+    <system:String x:Key="S.App.AboutProduct">AutoScrew 自动取螺钉</system:String>
     <system:String x:Key="S.App.Version">版本 {0}</system:String>
 
     <!-- Navigation -->
@@ -320,6 +320,12 @@
     <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
     <system:String x:Key="S.Settings.BugReport">递交Bug</system:String>
     <system:String x:Key="S.Settings.Docs">阅读文档</system:String>
+    <system:String x:Key="S.Settings.BugReportSubject">AutoScrew 缺陷反馈（{0}）</system:String>
+    <system:String x:Key="S.Settings.BugReportBodyIntro">请描述问题现象、复现步骤与期望结果。</system:String>
+    <system:String x:Key="S.Settings.BugReportBodyVersion">软件版本：{0}</system:String>
+    <system:String x:Key="S.Settings.BugReportFailed">无法打开邮件程序。请手动发送至 {0}。{1}{2}</system:String>
+    <system:String x:Key="S.Settings.DocsMissing">未找到用户手册：{0}{1}请将 UserManul.pdf 放到程序目录 help 文件夹。</system:String>
+    <system:String x:Key="S.Settings.DocsOpenFailed">无法打开用户手册：{0}{1}{2}</system:String>
 
     <!-- Logs -->
     <system:String x:Key="S.Logs.OpenFolder">打开日志目录</system:String>

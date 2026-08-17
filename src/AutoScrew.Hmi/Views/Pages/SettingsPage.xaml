@@ -71,6 +71,7 @@
                       FontTypography="BodyStrong"
                       Text="{DynamicResource S.Common.About}" />
         <ui:CardExpander ContentPadding="0"
+                         IsExpanded="True"
                          Icon="{ui:SymbolIcon Info24}">
             <ui:CardExpander.Header>
                 <Grid>
@@ -111,14 +112,13 @@
                                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                                Text="{DynamicResource S.Settings.TechDetail}" />
                 </Grid>
-                <ui:Anchor Margin="0"
-                           Padding="16"
-                           HorizontalAlignment="Stretch"
-                           HorizontalContentAlignment="Stretch"
-                           Background="Transparent"
-                           BorderThickness="0,1,0,0"
-                           CornerRadius="0"
-                           NavigateUri="menghui.liu1@molex.com">
+                <Button Margin="0"
+                        Padding="16"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0,1,0,0"
+                        Command="{Binding ViewModel.ReportBugCommand}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -129,15 +129,14 @@
                         <ui:SymbolIcon Grid.Column="1"
                                        Symbol="Link24" />
                     </Grid>
-                </ui:Anchor>
-                <ui:Anchor Margin="0"
-                           Padding="16"
-                           HorizontalAlignment="Stretch"
-                           HorizontalContentAlignment="Stretch"
-                           Background="Transparent"
-                           BorderThickness="0,1,0,1"
-                           CornerRadius="0"
-                           NavigateUri="menghui.liu1@molex.com">
+                </Button>
+                <Button Margin="0"
+                        Padding="16"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0,1,0,1"
+                        Command="{Binding ViewModel.OpenUserManualCommand}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -148,9 +147,7 @@
                         <ui:SymbolIcon Grid.Column="1"
                                        Symbol="Link24" />
                     </Grid>
-                </ui:Anchor>
-                <TextBlock Margin="16"
-                           Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
+                </Button>
             </StackPanel>
         </ui:CardExpander>
     </StackPanel>

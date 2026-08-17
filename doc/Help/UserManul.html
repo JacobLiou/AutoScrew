@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>AutoScrew 用户手册</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">AutoScrew 用户手册</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#autoscrew-用户手册usermanul"
+id="toc-autoscrew-用户手册usermanul">AutoScrew 用户手册（UserManul）</a>
+<ul>
+<li><a href="#1-手册目的与适用范围" id="toc-1-手册目的与适用范围">1.
+手册目的与适用范围</a></li>
+<li><a href="#2-角色权限与职责" id="toc-2-角色权限与职责">2.
+角色权限与职责</a></li>
+<li><a href="#21-角色权限矩阵" id="toc-21-角色权限矩阵">2.1
+角色权限矩阵</a></li>
+<li><a href="#22-职责分工" id="toc-22-职责分工">2.2 职责分工</a></li>
+<li><a href="#3-快速上手两角色通用" id="toc-3-快速上手两角色通用">3.
+快速上手（两角色通用）</a></li>
+<li><a href="#4-操作员操作指南sop" id="toc-4-操作员操作指南sop">4.
+操作员操作指南（SOP）</a></li>
+<li><a href="#41-开工前确认" id="toc-41-开工前确认">4.1
+开工前确认</a></li>
+<li><a href="#42-标准作业流程" id="toc-42-标准作业流程">4.2
+标准作业流程</a></li>
+<li><a href="#43-状态颜色与含义" id="toc-43-状态颜色与含义">4.3
+状态颜色与含义</a></li>
+<li><a href="#44-ng-处理操作员" id="toc-44-ng-处理操作员">4.4 NG
+处理（操作员）</a></li>
+<li><a href="#45-常见提示处理" id="toc-45-常见提示处理">4.5
+常见提示处理</a></li>
+<li><a href="#5-技术员操作指南sop" id="toc-5-技术员操作指南sop">5.
+技术员操作指南（SOP）</a></li>
+<li><a href="#51-开线前检查建议顺序" id="toc-51-开线前检查建议顺序">5.1
+开线前检查（建议顺序）</a></li>
+<li><a href="#52-设备连接页" id="toc-52-设备连接页">5.2
+设备连接页</a></li>
+<li><a href="#53-拧紧参数页" id="toc-53-拧紧参数页">5.3
+拧紧参数页</a></li>
+<li><a href="#54-拧紧顺序页" id="toc-54-拧紧顺序页">5.4
+拧紧顺序页</a></li>
+<li><a href="#55-拧紧来源页" id="toc-55-拧紧来源页">5.5
+拧紧来源页</a></li>
+<li><a href="#56-工艺库页a-层" id="toc-56-工艺库页a-层">5.6 工艺库页（A
+层）</a></li>
+<li><a href="#57-螺钉模板页c-层" id="toc-57-螺钉模板页c-层">5.7
+螺钉模板页（C 层）</a></li>
+<li><a href="#58-mes-连接页" id="toc-58-mes-连接页">5.8 MES
+连接页</a></li>
+<li><a href="#59-历史回顾页" id="toc-59-历史回顾页">5.9
+历史回顾页</a></li>
+<li><a href="#510-ng-处理技术员" id="toc-510-ng-处理技术员">5.10 NG
+处理（技术员）</a></li>
+<li><a href="#6-按场景的标准流程" id="toc-6-按场景的标准流程">6.
+按场景的标准流程</a></li>
+<li><a href="#61-正常生产操作员主导" id="toc-61-正常生产操作员主导">6.1
+正常生产（操作员主导）</a></li>
+<li><a href="#62-换产技术员主导" id="toc-62-换产技术员主导">6.2
+换产（技术员主导）</a></li>
+<li><a href="#63-断点恢复" id="toc-63-断点恢复">6.3 断点恢复</a></li>
+<li><a href="#64-网络异常回退" id="toc-64-网络异常回退">6.4
+网络异常回退</a></li>
+<li><a href="#7-数据与文件追溯" id="toc-7-数据与文件追溯">7.
+数据与文件追溯</a></li>
+<li><a href="#71-关键产出" id="toc-71-关键产出">7.1 关键产出</a></li>
+<li><a href="#72-典型存储位置" id="toc-72-典型存储位置">7.2
+典型存储位置</a></li>
+<li><a href="#8-当前版本能力边界避免误用"
+id="toc-8-当前版本能力边界避免误用">8.
+当前版本能力边界（避免误用）</a></li>
+<li><a href="#9-故障快速排查" id="toc-9-故障快速排查">9.
+故障快速排查</a></li>
+<li><a href="#91-无法登录" id="toc-91-无法登录">9.1 无法登录</a></li>
+<li><a href="#92-设备无法连接" id="toc-92-设备无法连接">9.2
+设备无法连接</a></li>
+<li><a href="#93-扫码后不进入作业" id="toc-93-扫码后不进入作业">9.3
+扫码后不进入作业</a></li>
+<li><a href="#94-曲线未显示" id="toc-94-曲线未显示">9.4
+曲线未显示</a></li>
+<li><a href="#10-附录界面示意图索引help-目录"
+id="toc-10-附录界面示意图索引help-目录">10. 附录：界面示意图索引（Help
+目录）</a></li>
+<li><a href="#11-交接建议" id="toc-11-交接建议">11. 交接建议</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="autoscrew-用户手册usermanul">AutoScrew
+用户手册（UserManul）</h1>
+<ul>
+<li>文档版本：v1.0</li>
+<li>更新时间：2026-08-12</li>
+<li>适用软件：AutoScrew HMI（当前仓库实现）</li>
+<li>适用角色：技术员、操作员</li>
+<li>编写依据：PRD、TODO、当前代码与界面实现</li>
+</ul>
+<hr />
+<h2 id="1-手册目的与适用范围">1. 手册目的与适用范围</h2>
+<p>本手册用于指导两类用户在当前版本软件中稳定完成产线作业：</p>
+<ul>
+<li>操作员：按系统引导完成扫码、手动取钉、拧紧、翻面、完工。</li>
+<li>技术员：完成设备连接、工艺下发、模板维护、MES/LAN配置、NG处理与追溯核查。</li>
+</ul>
+<p>当前版本边界（与 PRD V1.4 对齐）：</p>
+<ul>
+<li>供料为现场手动，软件不做程控供料驱动与调度。</li>
+<li>单工位、单受控拧紧设备（IEMD-SD）为主路径。</li>
+</ul>
+<hr />
+<h2 id="2-角色权限与职责">2. 角色权限与职责</h2>
+<h2 id="21-角色权限矩阵">2.1 角色权限矩阵</h2>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th style="text-align: right;">操作员</th>
+<th style="text-align: right;">技术员</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>登录并进入作业台</td>
+<td style="text-align: right;">✅</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>扫码/提交 SN、执行锁附</td>
+<td style="text-align: right;">✅</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>NG 后解锁并重打</td>
+<td style="text-align: right;">⚠️ 仅紧急解除（需填写理由）</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>标记返修 REWORK 并重打</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>设备连接配置</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>拧紧参数/顺序/来源配置</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>工艺库上传/下发</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>模板编辑与 MES 模板同步</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>MES 连接配置</td>
+<td style="text-align: right;">❌</td>
+<td style="text-align: right;">✅</td>
+</tr>
+<tr>
+<td>历史回顾/追溯分析</td>
+<td style="text-align: right;">❌（默认不可见）</td>
+<td style="text-align: right;">✅</td>
+</tr>
+</tbody>
+</table>
+<h2 id="22-职责分工">2.2 职责分工</h2>
+<ul>
+<li>操作员：严格按作业台提示和钉位顺序作业，不越权改参数。</li>
+<li>技术员：确保设备参数正确、连接稳定、异常可闭环处理，保证可追溯性。</li>
+</ul>
+<hr />
+<h2 id="3-快速上手两角色通用">3. 快速上手（两角色通用）</h2>
+<ol type="1">
+<li>启动软件并登录。</li>
+<li>确认当前角色（操作员/技术员）与班次账号正确。</li>
+<li>进入主界面后检查状态栏无严重错误。</li>
+<li>操作员进入作业台准备扫码；技术员先完成开线检查（见第 5 章）。</li>
+</ol>
+<hr />
+<h2 id="4-操作员操作指南sop">4. 操作员操作指南（SOP）</h2>
+<h2 id="41-开工前确认">4.1 开工前确认</h2>
+<ul>
+<li>工件、螺钉、工具齐套。</li>
+<li>电批与工位处于可作业状态。</li>
+<li>作业台已显示“请输入或扫描 SN”。</li>
+</ul>
+<h2 id="42-标准作业流程">4.2 标准作业流程</h2>
+<ol type="1">
+<li>在作业台输入或扫码 SN，点击“提交 SN”。</li>
+<li>系统校验 SN 并加载 PN 对应工艺与模板。</li>
+<li>看左侧作业进度树，确认当前面与当前钉号。</li>
+<li>按中间图板高亮指示，手动取钉并执行锁附。</li>
+<li>观察右侧扭矩-角度曲线与底部状态提示。</li>
+<li>单面完成后按提示翻面并点击“确认翻面”。</li>
+<li>全部完成后出现“本单已完成”，点击“扫描下一 SN”或直接扫描下一单。</li>
+</ol>
+<h2 id="43-状态颜色与含义">4.3 状态颜色与含义</h2>
+<ul>
+<li>黄色闪烁：待打钉位（下一目标）。</li>
+<li>黄色常亮：当前执行中。</li>
+<li>绿色：已完成且 OK。</li>
+<li>红色：该钉位 NG。</li>
+</ul>
+<h2 id="44-ng-处理操作员">4.4 NG 处理（操作员）</h2>
+<ul>
+<li>常规：联系技术员处理。</li>
+<li>紧急：可使用“紧急解除”，必须填写原因，系统会写入审计日志。</li>
+<li>紧急解除后需立即按技术员指示补做确认，禁止直接跳过质量闭环。</li>
+</ul>
+<h2 id="45-常见提示处理">4.5 常见提示处理</h2>
+<ul>
+<li>SN 无效：重新扫码，核对条码枪与标签。</li>
+<li>作业进行中又扫新 SN：先执行“复位会话”或由技术员处理当前单。</li>
+<li>提示恢复进度：如确认是同一在制品，选择恢复继续。</li>
+</ul>
+<hr />
+<h2 id="5-技术员操作指南sop">5. 技术员操作指南（SOP）</h2>
+<h2 id="51-开线前检查建议顺序">5.1 开线前检查（建议顺序）</h2>
+<ol type="1">
+<li>设备连接页检查并测试连接。</li>
+<li>工艺库确认当班 PN 的参数槽位与顺序存在。</li>
+<li>必要时下发参数与顺序到设备。</li>
+<li>拧紧来源确认（主机引导或设备顺序，按现场工艺要求）。</li>
+<li>MES/LAN 连接参数确认并保存、测试。</li>
+<li>试打一单，确认曲线、结果与追溯文件生成正常。</li>
+</ol>
+<h2 id="52-设备连接页">5.2 设备连接页</h2>
+<ul>
+<li>关键项：启用、传输方式（TCP/Serial）、主机地址/串口、超时、触发模式。</li>
+<li>按钮建议使用顺序：保存 → 测试连接 → 应用。</li>
+<li>站点标识 StationId 需与现场一致，避免跨工位混写数据。</li>
+</ul>
+<h2 id="53-拧紧参数页">5.3 拧紧参数页</h2>
+<ul>
+<li>可读写控制器参数并本地保存预设。</li>
+<li>从工艺库导入后先核对，再下发设备。</li>
+<li>重点核对：阶段控制模式、速度、角度、扭矩上下限、扭矩判断开关。</li>
+</ul>
+<h2 id="54-拧紧顺序页">5.4 拧紧顺序页</h2>
+<ul>
+<li>维护每颗螺钉执行顺序。</li>
+<li>可结合导入配置进行排序与验证。</li>
+<li>下发后建议做最小路径实机验证（至少 1 轮完整顺序）。</li>
+</ul>
+<h2 id="55-拧紧来源页">5.5 拧紧来源页</h2>
+<ul>
+<li>用于配置来源模式与关联参数（涉及 #300/#301 等）。</li>
+<li>与产线模式一致：主机引导模式下，作业台会按当前钉位驱动流程。</li>
+</ul>
+<h2 id="56-工艺库页a-层">5.6 工艺库页（A 层）</h2>
+<ul>
+<li>以产品 PN 为主键管理参数工艺卡与顺序文件。</li>
+<li>参数区：上传工艺卡、删除槽位、下发参数到设备。</li>
+<li>顺序区：上传顺序 JSON/Excel、删除顺序、下发顺序到设备。</li>
+<li>建议：每次换产后执行一次“按 PN 下发”，并记录班次切换时间。</li>
+</ul>
+<h2 id="57-螺钉模板页c-层">5.7 螺钉模板页（C 层）</h2>
+<ul>
+<li>用于编辑产品图、面、钉位、顺序与显示信息。</li>
+<li>支持本地模板预览与 MES 模板同步。</li>
+<li>操作建议：先完成面结构，再做钉位精定位，最后统一保存并复核。</li>
+</ul>
+<h2 id="58-mes-连接页">5.8 MES 连接页</h2>
+<ul>
+<li>支持 Mock、LegacyHttp、ProductKey 模式。</li>
+<li>ProductKey 模式常用于 SN→PN 查询。</li>
+<li>可配置 LAN 归档根路径，实现无 MES 也可落地追溯归档。</li>
+<li>改动后执行：保存 → 应用 → 测试连接。</li>
+</ul>
+<h2 id="59-历史回顾页">5.9 历史回顾页</h2>
+<ul>
+<li>支持按日期、SN、PN、结果筛选。</li>
+<li>左表查看工单级数据（含
+HostMac），右表查看螺钉明细（扭矩、角度、曲线路径）。</li>
+<li>用于班后复盘、异常追踪与首件确认。</li>
+</ul>
+<h2 id="510-ng-处理技术员">5.10 NG 处理（技术员）</h2>
+<ul>
+<li>首选“解锁并重打”。</li>
+<li>若为返修场景，使用“标记返修并重打”，结果会打 REWORK 标记。</li>
+<li>处理前确认设备状态与现场安全，处理后复核该钉位最终结果。</li>
+</ul>
+<hr />
+<h2 id="6-按场景的标准流程">6. 按场景的标准流程</h2>
+<h2 id="61-正常生产操作员主导">6.1 正常生产（操作员主导）</h2>
+<ul>
+<li>扫 SN → 系统加载 → 手动取钉+拧紧 → 翻面确认 → 完工 → 下一 SN。</li>
+</ul>
+<h2 id="62-换产技术员主导">6.2 换产（技术员主导）</h2>
+<ul>
+<li>工艺库切到目标 PN → 下发参数与顺序 → 首件验证 →
+交付操作员批量作业。</li>
+</ul>
+<h2 id="63-断点恢复">6.3 断点恢复</h2>
+<ul>
+<li>系统检测到未完成记录时会提示恢复。</li>
+<li>技术员确认实物状态后决定恢复或重开。</li>
+</ul>
+<h2 id="64-网络异常回退">6.4 网络异常回退</h2>
+<ul>
+<li>MES 不可达时，系统可走本地模板与本地/LAN 归档路径。</li>
+<li>网络恢复后由后台重传机制继续上报（如已启用）。</li>
+</ul>
+<hr />
+<h2 id="7-数据与文件追溯">7. 数据与文件追溯</h2>
+<h2 id="71-关键产出">7.1 关键产出</h2>
+<ul>
+<li>lock_log_{timestamp}.json：单次作业日志。</li>
+<li>torque_curve_{position}_{timestamp}.csv：单颗曲线文件。</li>
+<li>本地数据库：作业记录、螺钉明细、审计日志。</li>
+</ul>
+<h2 id="72-典型存储位置">7.2 典型存储位置</h2>
+<ul>
+<li>本地工作目录：%LocalAppData%\AutoScrew\work{SN}\</li>
+<li>审计日志：{DataDirectory}\audit\</li>
+<li>作业活动日志：{DataDirectory}\activity\</li>
+<li>LAN 镜像（如配置）：{LanShareRoot}{MAC}{SN}\</li>
+<li>模板目录：程序同级 Templates{PN}\</li>
+</ul>
+<hr />
+<h2 id="8-当前版本能力边界避免误用">8. 当前版本能力边界（避免误用）</h2>
+<p>以下属于当前版本未完成或非本期目标，请勿按“已具备”使用：</p>
+<ul>
+<li>程控供料器自动调度（已取消，现场手动供料）。</li>
+<li>多工位并行调度。</li>
+<li>吸头外径与螺钉头自动防错校验完整闭环。</li>
+<li>任务库 50 组完整产品化能力。</li>
+<li>全量系统维护功能（#500+）可视化全覆盖。</li>
+</ul>
+<hr />
+<h2 id="9-故障快速排查">9. 故障快速排查</h2>
+<h2 id="91-无法登录">9.1 无法登录</h2>
+<ul>
+<li>检查账号密码与网络。</li>
+<li>若使用 MIMS，确认数据库可达。</li>
+<li>需要时联系管理员核查角色映射。</li>
+</ul>
+<h2 id="92-设备无法连接">9.2 设备无法连接</h2>
+<ul>
+<li>先检查 TCP 地址/端口或串口号/波特率。</li>
+<li>检查设备启用状态与线缆。</li>
+<li>点击“测试连接”并查看状态消息。</li>
+</ul>
+<h2 id="93-扫码后不进入作业">9.3 扫码后不进入作业</h2>
+<ul>
+<li>检查 SN 是否有效。</li>
+<li>检查是否存在正在进行的旧会话。</li>
+<li>检查换产弹窗是否被取消导致中止。</li>
+</ul>
+<h2 id="94-曲线未显示">9.4 曲线未显示</h2>
+<ul>
+<li>优先确认是否已完成一次拧紧动作。</li>
+<li>若仅曲线控件异常，作业流程通常仍可继续。</li>
+</ul>
+<hr />
+<h2 id="10-附录界面示意图索引help-目录">10. 附录：界面示意图索引（Help
+目录）</h2>
+<p>可结合以下图片文件对照本手册步骤：</p>
+<ul>
+<li>IMG_0958.jpeg：拧紧设置页面（阶段示意）</li>
+<li>IMG_0959.jpeg：预紧设置页面</li>
+<li>IMG_0960.jpeg：拧紧来源列表页面</li>
+<li>IMG_0961.jpeg：旋入设置页面</li>
+<li>拧松设定.jpeg：拧松设置示例</li>
+<li>拧紧来源.jpeg：来源页面示例</li>
+<li>拧紧来源的进阶设定.jpeg：来源进阶设定</li>
+<li>拧紧来源的选择.jpeg：来源选择</li>
+<li>拧紧顺序1.jpeg：顺序设置页（一）</li>
+<li>拧紧顺序2.jpeg：顺序设置页（二）</li>
+</ul>
+<p>以及 GIF 教学素材目录：</p>
+<ul>
+<li>ScrewHelp/QuickStart.gif</li>
+<li>ScrewHelp/StartTighteningAndGetResultStatus_Automation.gif</li>
+<li>ScrewHelp/StartTighteningAndGetResultStatus_Manual.gif</li>
+<li>ScrewHelp/ReadReport750.gif</li>
+<li>ScrewHelp/ReadCurve751.gif</li>
+<li>ScrewHelp/ReadCurve751ByFTP.gif</li>
+<li>ScrewHelp/StartTighteningAndSwitchParamID.gif</li>
+</ul>
+<hr />
+<h2 id="11-交接建议">11. 交接建议</h2>
+<ul>
+<li>班前：技术员完成开线确认并签字。</li>
+<li>班中：操作员只走作业台流程，异常立即升级。</li>
+<li>班后：技术员用历史回顾抽检当班首末件与 NG 记录。</li>
+</ul>
+<p>如后续 PRD/TODO 更新，本手册应同步修订版本号与“能力边界”章节。</p>
+</body>
+</html>

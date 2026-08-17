@@ -308,8 +308,14 @@
     <system:String x:Key="S.Settings.AboutCopyright">© 2026 Molex.com | menghui.liu1@molex.com</system:String>
     <system:String x:Key="S.Settings.TechStack">Technology</system:String>
     <system:String x:Key="S.Settings.TechDetail">.NET C# WPF</system:String>
-    <system:String x:Key="S.Settings.BugReport">File a bug or request a sample</system:String>
-    <system:String x:Key="S.Settings.Docs">Check out the docs</system:String>
+    <system:String x:Key="S.Settings.BugReport">File a bug</system:String>
+    <system:String x:Key="S.Settings.Docs">Read the manual</system:String>
+    <system:String x:Key="S.Settings.BugReportSubject">AutoScrew bug report ({0})</system:String>
+    <system:String x:Key="S.Settings.BugReportBodyIntro">Please describe the issue, steps to reproduce, and expected result.</system:String>
+    <system:String x:Key="S.Settings.BugReportBodyVersion">App version: {0}</system:String>
+    <system:String x:Key="S.Settings.BugReportFailed">Could not open the email client. Send mail to {0} manually.{1}{2}</system:String>
+    <system:String x:Key="S.Settings.DocsMissing">User manual not found: {0}{1}Place UserManul.pdf under the help folder next to the application.</system:String>
+    <system:String x:Key="S.Settings.DocsOpenFailed">Could not open the user manual: {0}{1}{2}</system:String>
 
     <system:String x:Key="S.Logs.OpenFolder">Open log folder</system:String>
     <system:String x:Key="S.Logs.OpenFile">Open selected file</system:String>
