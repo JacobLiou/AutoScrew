@@ -72,6 +72,21 @@ public static class ProcessParameterCode
         return id;
     }
 
+    /// <summary>控制器 ParameterId → 本地槽位序号（1→00，2→01）。</summary>
+    public static int ToSlotIndex(int deviceParameterId)
+    {
+        if (deviceParameterId is < MinDeviceParameterId or > MaxDeviceParameterId)
+        {
+            throw new InvalidDataException(
+                $"设备参数 ID {deviceParameterId} 超出允许范围 {MinDeviceParameterId}–{MaxDeviceParameterId}。");
+        }
+
+        return deviceParameterId - 1;
+    }
+
+    public static string FormatParameterCode(string screwPn, int slotId) =>
+        $"{SanitizeAscii(screwPn)}-{slotId.ToString("D2", CultureInfo.InvariantCulture)}";
+
     public static bool TryParseSlotFromFileName(string? filePathOrName, out int slotIndex)
     {
         slotIndex = 0;

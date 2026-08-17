@@ -1,6 +1,8 @@
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.ControllerDevice;
+using AutoScrew.Infrastructure.ProcessLibrary;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -190,6 +192,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     private readonly IOptions<AutoScrew.Application.Configuration.AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
     private TighteningSequencePackage _working = new();
+    private string? _lastExportedDefaultScrewPn;
 
     public ControllerSequenceViewModel(
         IControllerSequencePresetService presetService,
@@ -741,6 +744,92 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 "S.ControllerSeq.StatusImportedProcessLibrary",
                 pkg.SequenceId,
                 productPn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportSequenceExcelAsync()
+    {
+        CommitPendingEdits();
+        if (_working.Core.Steps.Count == 0)
+        {
+            ShowSnackbar(Loc.Get("S.ControllerSeq.ExportNoSteps"), ControlAppearance.Caution);
+            return;
+        }
+
+        if (!ExportSequenceExcelDialog.TryPrompt(
+                _lastExportedDefaultScrewPn,
+                out var defaultScrewPn,
+                out var locationMode,
+                out var locationPrefix))
+            return;
+
+        _lastExportedDefaultScrewPn = defaultScrewPn;
+
+        var nameByParamId = ParameterCatalog
+            .GroupBy(p => p.ParameterId)
+            .ToDictionary(g => g.Key, g => g.First().Name);
+
+        var rows = new List<SequenceExcelStepRow>();
+        for (var i = 0; i < _working.Core.Steps.Count; i++)
+        {
+            var step = _working.Core.Steps[i];
+            var order = i + 1;
+            if (step.ParameterId is < ProcessParameterCode.MinDeviceParameterId
+                or > ProcessParameterCode.MaxDeviceParameterId)
+            {
+                ShowSnackbar(
+                    Loc.Format("S.ControllerSeq.ExportInvalidParameterId", step.ParameterId, order),
+                    ControlAppearance.Danger);
+                return;
+            }
+
+            var slotId = ProcessParameterCode.ToSlotIndex(step.ParameterId);
+            var screwPn = defaultScrewPn;
+            if (nameByParamId.TryGetValue(step.ParameterId, out var presetName))
+            {
+                var fromName = ProcessParameterCode.SanitizeAscii(presetName);
+                if (!string.IsNullOrEmpty(fromName))
+                    screwPn = fromName;
+            }
+
+            var code = ProcessParameterCode.FormatParameterCode(screwPn, slotId);
+            var location = ExportSequenceExcelDialog.FormatLocation(locationMode, locationPrefix, order);
+            rows.Add(new SequenceExcelStepRow(
+                ExcelRowNumber: i + 2,
+                Order: order,
+                Location: location,
+                ScrewPn: screwPn,
+                ParameterCode: code,
+                ScrewPnFromCode: screwPn,
+                SlotId: slotId,
+                Quantity: Math.Clamp(step.Quantity, 1, 999_999),
+                BitId: Math.Clamp(step.BitId, 0, 255),
+                Remark: null));
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel (*.xlsx)|*.xlsx",
+            FileName = $"sequence-{SequenceId:D2}.xlsx",
+            RestoreDirectory = true,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        AuditConfig(
+            "Configuration.SeqExportExcel",
+            $"sequenceId={SequenceId};steps={rows.Count};file={dialog.FileName}");
+        try
+        {
+            await Task.Run(() => SequenceExcelWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ControllerSeq.StatusExportedSequenceExcel");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)

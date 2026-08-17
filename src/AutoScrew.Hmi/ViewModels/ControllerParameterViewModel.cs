@@ -3,6 +3,7 @@ using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.ControllerDevice;
+using AutoScrew.Infrastructure.ProcessLibrary;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
@@ -842,6 +843,45 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
                 "S.ControllerParam.StatusImportedProcessLibrary",
                 parsed.SlotId.ToString("D2"),
                 parsed.ScrewPn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportProcessCardTxtAsync()
+    {
+        CommitPendingEdits();
+        var template = BuildWorkingTemplate();
+        var initialPn = ProcessParameterCode.SanitizeAscii(Name);
+        var initialSlot = 0;
+        if (ParameterId is >= ProcessParameterCode.MinDeviceParameterId and <= ProcessParameterCode.MaxDeviceParameterId)
+            initialSlot = ProcessParameterCode.ToSlotIndex(ParameterId);
+
+        if (!ExportProcessCardDialog.TryPrompt(initialPn, initialSlot, out var screwPn, out var slotId))
+            return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Process card (*.txt)|*.txt",
+            FileName = $"{screwPn}_{slotId:D2}.txt",
+            RestoreDirectory = true,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        AuditConfig(
+            "Configuration.ParamExportProcessCard",
+            $"screwPn={screwPn};slot={slotId};file={dialog.FileName}");
+        try
+        {
+            await Task.Run(() => ProcessCardTxtWriter.WriteFile(dialog.FileName, template, screwPn, slotId))
+                .ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ControllerParam.StatusExportedProcessCard");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
