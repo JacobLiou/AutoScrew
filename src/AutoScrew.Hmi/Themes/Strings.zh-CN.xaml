@@ -444,7 +444,12 @@
     <system:String x:Key="S.ControllerParam.Import">导入 JSON</system:String>
     <system:String x:Key="S.ControllerParam.ImportProcessLibrary">从工艺库导入</system:String>
     <system:String x:Key="S.ControllerParam.ImportProcessLibraryTitle">从工艺参数库导入</system:String>
-    <system:String x:Key="S.ControllerParam.ImportProcessLibraryHint">选择产品 PN 与槽位后，将解析工艺卡并填充当前参数编辑器（不会自动下发设备）。</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryHint">可多选槽位，或导入该产品 PN 下全部工艺卡。写入本机预设：同产品覆盖，其他产品占用的 ID 只新增不覆盖。不会自动下发设备。</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryAll">导入该 PN 全部</system:String>
+    <system:String x:Key="S.ControllerParam.ImportMapSame">槽 {0} → 本机 ID {1}</system:String>
+    <system:String x:Key="S.ControllerParam.ImportMapRemapped">槽 {0} → 本机 ID {1}（未覆盖其他产品的 ID {2}）</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibrary">已从工艺库导入槽位 {0}（{1}），请核对后下发到设备。</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibraryBatch">已从工艺库导入 {0} 个槽位到本机预设（产品 {1}）：{2}</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCard">导出工艺卡 TXT</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardTitle">导出拧紧参数工艺卡</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardHint">确认螺钉 PN 与槽位后导出 TXT。扭矩等工艺数值取自当前编辑器；上传工艺库时再选择产品 PN。</system:String>
@@ -454,7 +459,6 @@
     <system:String x:Key="S.ControllerParam.ExportScrewPnRequired">请输入有效螺钉 PN（字母数字）。</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlotInvalid">槽位须为 0–499 的整数。</system:String>
     <system:String x:Key="S.ControllerParam.StatusExportedProcessCard">已导出工艺卡 TXT</system:String>
-    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibrary">已从工艺库导入槽位 {0}（{1}），请核对后下发到设备。</system:String>
     <system:String x:Key="S.ControllerParam.Export">导出 JSON</system:String>
     <system:String x:Key="S.ControllerParam.ReadDevice">读取当前参数</system:String>
     <system:String x:Key="S.ControllerParam.DeleteDevice">删除设备参数</system:String>
@@ -574,7 +578,10 @@
     <system:String x:Key="S.ControllerSeq.ImportFromDevice">导入选中 (#250)</system:String>
     <system:String x:Key="S.ControllerSeq.ImportProcessLibrary">从工艺库导入</system:String>
     <system:String x:Key="S.ControllerSeq.ImportProcessLibraryTitle">从工艺库导入顺序</system:String>
-    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryHint">选择产品 PN 与顺序后，将填充当前顺序编辑器（不会自动下发设备）。</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryHint">可多选顺序，或导入该产品 PN 下全部顺序。缺的参数槽会一并写入本机；同产品覆盖，其他产品占用的 ID 只新增。不会自动下发设备。</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryAll">导入该 PN 全部</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportMapSame">顺序 {0} → 本机 ID {1}</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportMapRemapped">顺序 {0} → 本机 ID {1}（未覆盖其他产品的 ID {2}）</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcel">导出顺序 Excel</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelTitle">导出拧紧顺序 Excel</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelHint">设备步骤无螺钉 PN/位置文案。填写默认螺钉 PN；各步优先用本地参数预设名称。上传工艺库时再选择产品 PN。</system:String>
@@ -590,6 +597,7 @@
     <system:String x:Key="S.ControllerSeq.ExportInvalidParameterId">第 {1} 步参数 ID {0} 无效（须为 1–500）。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExportedSequenceExcel">已导出顺序 Excel</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibrary">已从工艺库导入顺序 #{0}（产品 {1}）。请核对后再下发到设备。</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibraryBatch">已从工艺库导入 {0} 条顺序到本机预设（产品 {1}）：{2}</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedDevice">已从设备导入顺序 #{0} 到本地。</system:String>
     <system:String x:Key="S.ControllerSeq.NavigatorMode">导航模式</system:String>
     <system:String x:Key="S.ControllerSeq.ModeGeneral">一般</system:String>

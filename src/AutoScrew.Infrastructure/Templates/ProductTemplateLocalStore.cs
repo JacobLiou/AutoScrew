@@ -114,43 +114,54 @@ public sealed class ProductTemplateLocalStore : IProductTemplateLocalStore
         return full;
     }
 
-    public void SeedFromSamplesIfEmpty()
+    public void SeedFromSamples() =>
+        SeedFromSamples(Path.Combine(AppContext.BaseDirectory, "Samples"));
+
+    public void SeedFromSamples(string samplesDirectory)
     {
-        var target = GetTemplateDirectory();
-        if (Directory.EnumerateFileSystemEntries(target).Any())
+        if (string.IsNullOrWhiteSpace(samplesDirectory) || !Directory.Exists(samplesDirectory))
             return;
 
-        var samples = Path.Combine(AppContext.BaseDirectory, "Samples");
-        if (!Directory.Exists(samples))
+        var target = Path.GetFullPath(GetTemplateDirectory());
+        var samples = Path.GetFullPath(samplesDirectory);
+        if (string.Equals(target, samples, StringComparison.OrdinalIgnoreCase))
             return;
+
+        Directory.CreateDirectory(target);
 
         foreach (var file in Directory.EnumerateFiles(samples))
-        {
-            var name = Path.GetFileName(file);
-            File.Copy(file, Path.Combine(target, name), overwrite: false);
-        }
+            CopyIfNewer(file, Path.Combine(target, Path.GetFileName(file)));
 
         foreach (var dir in Directory.EnumerateDirectories(samples))
-        {
-            var name = Path.GetFileName(dir);
-            CopyDirectoryRecursive(dir, Path.Combine(target, name));
-        }
+            CopyDirectoryIfNewer(dir, Path.Combine(target, Path.GetFileName(dir)));
     }
 
-    private static void CopyDirectoryRecursive(string source, string destination)
+    private static void CopyDirectoryIfNewer(string source, string destination)
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.EnumerateFiles(source))
-        {
-            var name = Path.GetFileName(file);
-            File.Copy(file, Path.Combine(destination, name), overwrite: false);
-        }
+            CopyIfNewer(file, Path.Combine(destination, Path.GetFileName(file)));
 
         foreach (var dir in Directory.EnumerateDirectories(source))
+            CopyDirectoryIfNewer(dir, Path.Combine(destination, Path.GetFileName(dir)));
+    }
+
+    private static void CopyIfNewer(string sourceFile, string destinationFile)
+    {
+        if (File.Exists(destinationFile))
         {
-            var name = Path.GetFileName(dir);
-            CopyDirectoryRecursive(dir, Path.Combine(destination, name));
+            var sourceTime = File.GetLastWriteTimeUtc(sourceFile);
+            var destTime = File.GetLastWriteTimeUtc(destinationFile);
+            if (sourceTime <= destTime)
+                return;
         }
+
+        var destDir = Path.GetDirectoryName(destinationFile);
+        if (!string.IsNullOrEmpty(destDir))
+            Directory.CreateDirectory(destDir);
+
+        File.Copy(sourceFile, destinationFile, overwrite: true);
+        File.SetLastWriteTimeUtc(destinationFile, File.GetLastWriteTimeUtc(sourceFile));
     }
 
     private static string SanitizePartNumber(string partNumber) =>

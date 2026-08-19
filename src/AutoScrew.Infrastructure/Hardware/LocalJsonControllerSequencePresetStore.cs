@@ -61,12 +61,30 @@ public sealed class LocalJsonControllerSequencePresetStore
         return doc.ToPackage();
     }
 
-    public async Task SaveAsync(TighteningSequencePackage package, CancellationToken cancellationToken)
+    public Task SaveAsync(TighteningSequencePackage package, CancellationToken cancellationToken) =>
+        SaveAsync(package, cancellationToken, sourceProductPn: null, sourceSequenceId: null);
+
+    public async Task SaveAsync(
+        TighteningSequencePackage package,
+        CancellationToken cancellationToken,
+        string? sourceProductPn,
+        int? sourceSequenceId)
     {
         ArgumentNullException.ThrowIfNull(package);
         package.ApplyCoreToRaw();
         var path = GetPath(package.SequenceId);
+        string? originPn = sourceProductPn;
+        int? originSeq = sourceSequenceId;
+        if (originPn is null && File.Exists(path))
+        {
+            var existing = LoadFile(path);
+            originPn = existing?.SourceProductPn;
+            originSeq = existing?.SourceSequenceId;
+        }
+
         var doc = ControllerSequencePresetDocument.FromPackage(package);
+        doc.SourceProductPn = string.IsNullOrWhiteSpace(originPn) ? null : originPn.Trim();
+        doc.SourceSequenceId = originSeq;
         await using var stream = File.Create(path);
         await JsonSerializer.SerializeAsync(stream, doc, JsonOptions, cancellationToken).ConfigureAwait(false);
     }
@@ -118,6 +136,8 @@ public sealed class ControllerSequencePresetDocument
     public NavigatorCoordinateCore? NavigatorCoordinates { get; set; }
     public NavigatorImageCodeCore? NavigatorImageCodes { get; set; }
     public PositioningArmCoordinateCore? PositioningArmCoordinates { get; set; }
+    public string? SourceProductPn { get; set; }
+    public int? SourceSequenceId { get; set; }
 
     public TighteningSequencePackage ToPackage()
     {
@@ -151,6 +171,8 @@ public sealed class ControllerSequencePresetDocument
         NavigatorCoordinates = package.NavigatorCoordinates,
         NavigatorImageCodes = package.NavigatorImageCodes,
         PositioningArmCoordinates = package.PositioningArmCoordinates,
+        SourceProductPn = null,
+        SourceSequenceId = null,
     };
 
     private static int[] Normalize(int[]? raw, int expected)

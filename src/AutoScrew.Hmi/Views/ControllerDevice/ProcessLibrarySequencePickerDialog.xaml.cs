@@ -58,9 +58,11 @@ public partial class ProcessLibrarySequencePickerDialog : Window, INotifyPropert
 
     public bool Confirmed { get; private set; }
 
+    public bool ImportAll { get; private set; }
+
     public string? ConfirmedProductPn { get; private set; }
 
-    public int ConfirmedSequenceId { get; private set; }
+    public IReadOnlyList<int> ConfirmedSequenceIds { get; private set; } = [];
 
     private async Task InitializeAsync()
     {
@@ -112,11 +114,31 @@ public partial class ProcessLibrarySequencePickerDialog : Window, INotifyPropert
 
     private void ConfirmSelection()
     {
-        if (SelectedSequence is null || string.IsNullOrWhiteSpace(ProductPn))
+        if (string.IsNullOrWhiteSpace(ProductPn) || Sequences.Count == 0)
+            return;
+
+        var ids = SequenceList.SelectedItems.OfType<SequenceRow>().Select(s => s.SequenceId).ToList();
+        if (ids.Count == 0 && SelectedSequence is not null)
+            ids.Add(SelectedSequence.SequenceId);
+        if (ids.Count == 0)
             return;
 
         ConfirmedProductPn = ProductPn.Trim();
-        ConfirmedSequenceId = SelectedSequence.SequenceId;
+        ConfirmedSequenceIds = ids;
+        ImportAll = false;
+        Confirmed = true;
+        DialogResult = true;
+        Close();
+    }
+
+    private void ImportAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn) || Sequences.Count == 0)
+            return;
+
+        ConfirmedProductPn = ProductPn.Trim();
+        ConfirmedSequenceIds = [];
+        ImportAll = true;
         Confirmed = true;
         DialogResult = true;
         Close();

@@ -35,7 +35,9 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
                 return new ControllerParameterPresetSummary(
                     template.ParameterId,
                     template.Core.Name,
-                    template.ToolIndex);
+                    template.ToolIndex,
+                    d.SourceProductPn,
+                    d.SourceSlotId);
             })
             .ToList();
     }
@@ -45,6 +47,13 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
 
     public Task SaveLocalPresetAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default) =>
         _store.SaveAsync(template, cancellationToken);
+
+    public Task SaveLocalPresetWithOriginAsync(
+        TighteningParameterTemplate template,
+        string sourceProductPn,
+        int sourceSlotId,
+        CancellationToken cancellationToken = default) =>
+        _store.SaveAsync(template, cancellationToken, sourceProductPn, sourceSlotId);
 
     public Task DeleteLocalPresetAsync(int parameterId, CancellationToken cancellationToken = default) =>
         _store.DeleteAsync(parameterId, cancellationToken);

@@ -58,9 +58,11 @@ public partial class ProcessLibrarySlotPickerDialog : Window, INotifyPropertyCha
 
     public bool Confirmed { get; private set; }
 
+    public bool ImportAll { get; private set; }
+
     public string? ConfirmedProductPn { get; private set; }
 
-    public int ConfirmedSlotId { get; private set; }
+    public IReadOnlyList<int> ConfirmedSlotIds { get; private set; } = [];
 
     private async Task InitializeAsync()
     {
@@ -112,11 +114,31 @@ public partial class ProcessLibrarySlotPickerDialog : Window, INotifyPropertyCha
 
     private void ConfirmSelection()
     {
-        if (SelectedSlot is null || string.IsNullOrWhiteSpace(ProductPn))
+        if (string.IsNullOrWhiteSpace(ProductPn) || Slots.Count == 0)
+            return;
+
+        var ids = SlotList.SelectedItems.OfType<SlotRow>().Select(s => s.SlotId).ToList();
+        if (ids.Count == 0 && SelectedSlot is not null)
+            ids.Add(SelectedSlot.SlotId);
+        if (ids.Count == 0)
             return;
 
         ConfirmedProductPn = ProductPn.Trim();
-        ConfirmedSlotId = SelectedSlot.SlotId;
+        ConfirmedSlotIds = ids;
+        ImportAll = false;
+        Confirmed = true;
+        DialogResult = true;
+        Close();
+    }
+
+    private void ImportAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn) || Slots.Count == 0)
+            return;
+
+        ConfirmedProductPn = ProductPn.Trim();
+        ConfirmedSlotIds = [];
+        ImportAll = true;
         Confirmed = true;
         DialogResult = true;
         Close();

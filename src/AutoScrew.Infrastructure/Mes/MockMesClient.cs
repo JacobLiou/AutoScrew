@@ -16,7 +16,7 @@ public sealed class MockMesClient : IMesClient
     {
         var bundle = new RecipeBundle(
             partNumber,
-            "demo-product-multisurface.product-template.json",
+            "PNDEMO/PNDEMO.product-template.json",
             ProductImageUrl: null,
             Screws: Array.Empty<ScrewRecipeDto>());
         return Task.FromResult(bundle);

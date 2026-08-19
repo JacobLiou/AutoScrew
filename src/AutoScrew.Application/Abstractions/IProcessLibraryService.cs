@@ -40,6 +40,16 @@ public sealed record ProcessLibrarySequenceDeployResult(
 
 public sealed record ProcessLibrarySequenceDeployFailure(int SequenceId, string Message);
 
+public sealed record ProcessLibraryLocalImportItem(
+    int SourceId,
+    int PreferredId,
+    int LocalId,
+    bool WasNew);
+
+public sealed record ProcessLibraryLocalImportResult(
+    string ProductPn,
+    IReadOnlyList<ProcessLibraryLocalImportItem> Items);
+
 /// <summary>按产品 PN 管理工艺卡（参数 TXT / 顺序 JSON）并下发到设备。</summary>
 public interface IProcessLibraryService
 {
@@ -71,6 +81,15 @@ public interface IProcessLibraryService
 
     /// <summary>删除产品下某一槽位工艺卡。</summary>
     Task RemoveSlotAsync(string productPn, int slotId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 将工艺库槽位写入本机参数预设。slotIds 为空则导入该 PN 全部槽。
+    /// 同产品身份覆盖；跨产品占用首选 ID 时分配新 ID。
+    /// </summary>
+    Task<ProcessLibraryLocalImportResult> ImportSlotsToLocalAsync(
+        string productPn,
+        IReadOnlyList<int>? slotIds,
+        CancellationToken cancellationToken = default);
 
     /// <summary>按产品 PN 将全部参数槽写入设备，并回写本机参数预设。</summary>
     Task<ProcessLibraryDeployResult> DeployProductToDeviceAsync(
@@ -106,6 +125,15 @@ public interface IProcessLibraryService
 
     /// <summary>删除产品下某一顺序。</summary>
     Task RemoveSequenceAsync(string productPn, int sequenceId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 将工艺库顺序写入本机顺序预设。sequenceIds 为空则导入该 PN 全部顺序。
+    /// 缺的参数槽会先按同一规则导入；步骤 ParameterId 映射到本机 ID。
+    /// </summary>
+    Task<ProcessLibraryLocalImportResult> ImportSequencesToLocalAsync(
+        string productPn,
+        IReadOnlyList<int>? sequenceIds,
+        CancellationToken cancellationToken = default);
 
     /// <summary>按产品 PN 将全部顺序覆盖写入设备，并回写本机顺序预设。</summary>
     Task<ProcessLibrarySequenceDeployResult> DeployProductSequencesToDeviceAsync(

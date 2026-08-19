@@ -6,7 +6,9 @@ public sealed record ControllerSequencePresetSummary(
     int SequenceId,
     string Name,
     int StepCount,
-    int BitId = 0);
+    int BitId = 0,
+    string? SourceProductPn = null,
+    int? SourceSequenceId = null);
 
 public interface IControllerSequencePresetService
 {
@@ -17,6 +19,12 @@ public interface IControllerSequencePresetService
     Task<TighteningSequencePackage> LoadLocalPresetAsync(int sequenceId, CancellationToken cancellationToken = default);
 
     Task SaveLocalPresetAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default);
+
+    Task SaveLocalPresetWithOriginAsync(
+        TighteningSequencePackage package,
+        string sourceProductPn,
+        int sourceSequenceId,
+        CancellationToken cancellationToken = default);
 
     Task DeleteLocalPresetAsync(int sequenceId, CancellationToken cancellationToken = default);
 

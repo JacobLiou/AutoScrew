@@ -155,7 +155,7 @@ static string? ResolveTemplateFolder(string pn)
             return path;
     }
 
-    var demoJson = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "src", "AutoScrew.Hmi", "Samples", "demo-product-multisurface.product-template.json"));
+    var demoJson = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "src", "AutoScrew.Hmi", "Samples", "PNDEMO", "PNDEMO.product-template.json"));
     if (string.Equals(pn, "PNDEMO", StringComparison.OrdinalIgnoreCase) && File.Exists(demoJson))
     {
         var temp = Path.Combine(Path.GetTempPath(), "MesMockServer", pn);

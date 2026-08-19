@@ -828,21 +828,24 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             return;
 
         var productPn = picker.ConfirmedProductPn;
-        var slotId = picker.ConfirmedSlotId;
+        var slotIds = picker.ImportAll ? null : picker.ConfirmedSlotIds;
         AuditConfig(
             "Configuration.ParamImportProcessLibrary",
-            $"product={productPn};slot={slotId}");
+            $"product={productPn};slots={string.Join(",", slotIds ?? [])};all={picker.ImportAll}");
         try
         {
-            var parsed = await _processLibrary
-                .LoadProductSlotAsync(productPn, slotId)
+            var result = await _processLibrary
+                .ImportSlotsToLocalAsync(productPn, slotIds)
                 .ConfigureAwait(true);
-            ApplyTemplate(parsed.Template);
-            SelectedPreset = null;
-            StatusMessage = Loc.Format(
-                "S.ControllerParam.StatusImportedProcessLibrary",
-                parsed.SlotId.ToString("D2"),
-                parsed.ScrewPn);
+            await RefreshPresetListAsync().ConfigureAwait(true);
+            if (result.Items.Count > 0)
+            {
+                var firstId = result.Items[0].LocalId;
+                await LoadPresetAsync(firstId).ConfigureAwait(true);
+                SelectedPreset = Presets.FirstOrDefault(p => p.ParameterId == firstId);
+            }
+
+            StatusMessage = FormatSlotImportStatus(productPn, result);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
@@ -939,7 +942,33 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         var items = await _presetService.ListLocalPresetsAsync().ConfigureAwait(true);
         Presets.Clear();
         foreach (var item in items)
-            Presets.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+            Presets.Add(new ControllerParameterListItem(
+                item.ParameterId,
+                item.Name,
+                displayText: FormatLocalPresetLabel(item.ParameterId, item.Name, item.SourceProductPn)));
+    }
+
+    private static string FormatLocalPresetLabel(int id, string name, string? productPn)
+    {
+        var text = $"{id:D3} · {name}";
+        return string.IsNullOrWhiteSpace(productPn) ? text : $"{text} · {productPn}";
+    }
+
+    private static string FormatSlotImportStatus(string productPn, ProcessLibraryLocalImportResult result)
+    {
+        var maps = result.Items.Select(i =>
+            i.LocalId == i.PreferredId
+                ? Loc.Format("S.ControllerParam.ImportMapSame", i.SourceId.ToString("D2"), i.LocalId)
+                : Loc.Format(
+                    "S.ControllerParam.ImportMapRemapped",
+                    i.SourceId.ToString("D2"),
+                    i.LocalId,
+                    i.PreferredId));
+        return Loc.Format(
+            "S.ControllerParam.StatusImportedProcessLibraryBatch",
+            result.Items.Count,
+            productPn,
+            string.Join("；", maps));
     }
 
     private async Task LoadPresetAsync(int parameterId)

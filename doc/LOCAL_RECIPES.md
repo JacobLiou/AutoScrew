@@ -15,7 +15,7 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
   "products": [
     {
       "partNumber": "PNDEMO",
-      "templateFile": "demo-product-multisurface.product-template.json",
+      "templateFile": "PNDEMO/PNDEMO.product-template.json",
       "serialNumbers": ["SN001", "SN002"],
       "screws": []
     }
@@ -36,7 +36,9 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
 2. 编辑 `local-recipes.json`：增加 PN、SN 列表、模板文件名。
 3. 操作员登录后扫**已登记 SN** → 加载对应 PN 与模板；未登记 SN 拒绝（注册表存在时）。
 
-若 **不存在** `local-recipes.json`，Mock MES 回退旧行为：任意 SN（≥3 字符）→ `PNDEMO` + `demo-product-multisurface.product-template.json`。
+若 **不存在** `local-recipes.json`，Mock MES 回退：任意 SN（≥3 字符）→ `PNDEMO` + `PNDEMO/PNDEMO.product-template.json`。
+
+启动时 `SeedFromSamples` 将 `Samples/` 合并到 `TemplateDirectory`：缺失的 PN 会补齐；已有文件仅当样例 `LastWriteTimeUtc` 更新时覆盖（技术员改过且更新的本地文件保留）。`TemplateDirectory` 与 `Samples` 为同一路径时跳过（Development 默认指向 Samples）。
 
 ## 关闭
 
@@ -44,5 +46,6 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
 
 ## 相关代码
 
-- `LocalJsonRecipeStore` / `LocalRecipeMesClient`
+- `LocalJsonRecipeStore` / `LocalRecipeMesClient` / `MockMesClient`
+- `ProductTemplateLocalStore.SeedFromSamples`
 - `ConfigurableMesClient`（Mock 分支）

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace AutoScrew.Infrastructure.Mes;
 
 /// <summary>
-/// Mock MES：优先读 <see cref="LocalJsonRecipeStore"/>（local-recipes.json），未配置时回退旧 PNDEMO 行为。
+/// Mock MES：优先读 <see cref="LocalJsonRecipeStore"/>（local-recipes.json），未配置时回退 PNDEMO 文件夹模板。
 /// </summary>
 public sealed class LocalRecipeMesClient : IMesClient
 {

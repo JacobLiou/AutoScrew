@@ -428,7 +428,12 @@
     <system:String x:Key="S.ControllerParam.Import">Import JSON</system:String>
     <system:String x:Key="S.ControllerParam.ImportProcessLibrary">Import from process library</system:String>
     <system:String x:Key="S.ControllerParam.ImportProcessLibraryTitle">Import from process library</system:String>
-    <system:String x:Key="S.ControllerParam.ImportProcessLibraryHint">Pick a product PN and slot to parse the process card into this editor (does not write to the device).</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryHint">Multi-select slots, or import every card for this product PN. Writes local presets: same product overwrites; IDs owned by another product are added, never overwritten. Does not write the device.</system:String>
+    <system:String x:Key="S.ControllerParam.ImportProcessLibraryAll">Import all for this PN</system:String>
+    <system:String x:Key="S.ControllerParam.ImportMapSame">Slot {0} → local ID {1}</system:String>
+    <system:String x:Key="S.ControllerParam.ImportMapRemapped">Slot {0} → local ID {1} (did not overwrite other product ID {2})</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibrary">Imported slot {0} ({1}) from process library. Review, then write to device.</system:String>
+    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibraryBatch">Imported {0} slot(s) to local presets (product {1}): {2}</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCard">Export process card TXT</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardTitle">Export tightening parameter card</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardHint">Confirm screw PN and slot, then export TXT. Process values come from the editor; choose product PN when uploading to the process library.</system:String>
@@ -438,7 +443,6 @@
     <system:String x:Key="S.ControllerParam.ExportScrewPnRequired">Enter a valid screw PN (letters/digits).</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlotInvalid">Slot must be an integer from 0 to 499.</system:String>
     <system:String x:Key="S.ControllerParam.StatusExportedProcessCard">Process card TXT exported</system:String>
-    <system:String x:Key="S.ControllerParam.StatusImportedProcessLibrary">Imported slot {0} ({1}) from process library. Review, then write to device.</system:String>
     <system:String x:Key="S.ControllerParam.Export">Export JSON</system:String>
     <system:String x:Key="S.ControllerParam.ReadDevice">Read from device</system:String>
     <system:String x:Key="S.ControllerParam.DeleteDevice">Delete on device</system:String>
@@ -558,7 +562,10 @@
     <system:String x:Key="S.ControllerSeq.ImportFromDevice">Import selected (#250)</system:String>
     <system:String x:Key="S.ControllerSeq.ImportProcessLibrary">Import from process library</system:String>
     <system:String x:Key="S.ControllerSeq.ImportProcessLibraryTitle">Import sequence from process library</system:String>
-    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryHint">Pick a product PN and sequence to fill this editor (does not write to the device).</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryHint">Multi-select sequences, or import every sequence for this product PN. Missing parameter slots are imported too. Same product overwrites; IDs owned by another product are added. Does not write the device.</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportProcessLibraryAll">Import all for this PN</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportMapSame">Sequence {0} → local ID {1}</system:String>
+    <system:String x:Key="S.ControllerSeq.ImportMapRemapped">Sequence {0} → local ID {1} (did not overwrite other product ID {2})</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcel">Export sequence Excel</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelTitle">Export tightening sequence Excel</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelHint">Device steps have no screw PN/location text. Enter a default screw PN; each step prefers local parameter preset names. Choose product PN when uploading to the process library.</system:String>
@@ -574,6 +581,7 @@
     <system:String x:Key="S.ControllerSeq.ExportInvalidParameterId">Step {1} has invalid parameter ID {0} (must be 1–500).</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExportedSequenceExcel">Sequence Excel exported</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibrary">Imported sequence #{0} from product {1}. Review, then write to device.</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibraryBatch">Imported {0} sequence(s) to local presets (product {1}): {2}</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedDevice">Imported sequence #{0} from device to local.</system:String>
     <system:String x:Key="S.ControllerSeq.NavigatorMode">Navigator mode</system:String>
     <system:String x:Key="S.ControllerSeq.ModeGeneral">General</system:String>

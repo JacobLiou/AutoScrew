@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="{DynamicResource S.ControllerSeq.ImportProcessLibraryTitle}"
-        Width="520"
+        Width="620"
         Height="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
@@ -38,6 +38,11 @@
                        Appearance="Secondary"
                        Content="{DynamicResource S.Common.Cancel}"
                        Click="Close_Click" />
+            <ui:Button Margin="12,0,0,0"
+                       MinWidth="140"
+                       Appearance="Secondary"
+                       Content="{DynamicResource S.ControllerSeq.ImportProcessLibraryAll}"
+                       Click="ImportAll_Click" />
             <ui:Button Margin="12,0,0,0"
                        MinWidth="120"
                        Appearance="Primary"
@@ -75,6 +80,7 @@
                     BorderThickness="1"
                     Background="White">
                 <ListBox x:Name="SequenceList"
+                         SelectionMode="Extended"
                          ItemsSource="{Binding Sequences}"
                          SelectedItem="{Binding SelectedSequence, Mode=TwoWay}"
                          BorderThickness="0"

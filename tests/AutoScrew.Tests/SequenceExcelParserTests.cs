@@ -227,6 +227,13 @@ public sealed class SequenceExcelParserTests
             CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 
+        public Task SaveLocalPresetWithOriginAsync(
+            TighteningParameterTemplate template,
+            string sourceProductPn,
+            int sourceSlotId,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
         public Task DeleteLocalPresetAsync(int parameterId, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 
@@ -291,6 +298,13 @@ public sealed class SequenceExcelParserTests
 
         public Task SaveLocalPresetAsync(
             TighteningSequencePackage package,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task SaveLocalPresetWithOriginAsync(
+            TighteningSequencePackage package,
+            string sourceProductPn,
+            int sourceSequenceId,
             CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 

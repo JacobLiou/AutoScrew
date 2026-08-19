@@ -2,7 +2,12 @@ using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Application.Abstractions;
 
-public sealed record ControllerParameterPresetSummary(int ParameterId, string Name, int ToolIndex);
+public sealed record ControllerParameterPresetSummary(
+    int ParameterId,
+    string Name,
+    int ToolIndex,
+    string? SourceProductPn = null,
+    int? SourceSlotId = null);
 
 public sealed record ControllerParameterBulkImportResult(
     IReadOnlyList<int> ImportedIds,
@@ -19,6 +24,12 @@ public interface IControllerParameterPresetService
     Task<TighteningParameterTemplate> LoadLocalPresetAsync(int parameterId, CancellationToken cancellationToken = default);
 
     Task SaveLocalPresetAsync(TighteningParameterTemplate template, CancellationToken cancellationToken = default);
+
+    Task SaveLocalPresetWithOriginAsync(
+        TighteningParameterTemplate template,
+        string sourceProductPn,
+        int sourceSlotId,
+        CancellationToken cancellationToken = default);
 
     Task DeleteLocalPresetAsync(int parameterId, CancellationToken cancellationToken = default);
 

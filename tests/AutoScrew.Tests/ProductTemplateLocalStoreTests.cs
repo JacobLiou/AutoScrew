@@ -83,37 +83,130 @@ public sealed class ProductTemplateLocalStoreTests
     }
 
     [Fact]
-    public void SeedFromSamplesIfEmpty_CopiesWhenTargetEmpty()
+    public void SeedFromSamples_CopiesWhenTargetEmpty()
     {
         var root = CreateTempRoot();
-        var samples = Path.Combine(root, "samples-src");
-        Directory.CreateDirectory(samples);
-        File.WriteAllText(Path.Combine(samples, "local-recipes.json"), "{}");
-        File.WriteAllText(Path.Combine(samples, "demo-product-multisurface.product-template.json"), "{}");
-
-        var originalBase = AppContext.BaseDirectory;
         try
         {
+            var samples = CreateSamplePn(root, "PNDEMO", "sample");
             var target = Path.Combine(root, "Templates");
             Directory.CreateDirectory(target);
 
             var store = CreateStore(target);
-            var samplesAtBase = Path.Combine(root, "base", "Samples");
-            Directory.CreateDirectory(samplesAtBase);
-            File.Copy(Path.Combine(samples, "local-recipes.json"), Path.Combine(samplesAtBase, "local-recipes.json"));
-            File.Copy(
-                Path.Combine(samples, "demo-product-multisurface.product-template.json"),
-                Path.Combine(samplesAtBase, "demo-product-multisurface.product-template.json"));
+            store.SeedFromSamples(samples);
 
-            // Seed reads from AppContext.BaseDirectory/Samples — invoke copy logic via direct CopyDirectory test path
-            store.EnsureProductFolder("PNDEMO");
-            File.WriteAllText(store.GetDefaultTemplatePath("PNDEMO"), "{}");
-            Assert.True(File.Exists(Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json")));
+            var dest = Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json");
+            Assert.True(File.Exists(dest));
+            Assert.Equal("sample", File.ReadAllText(dest));
+            Assert.True(File.Exists(Path.Combine(target, "local-recipes.json")));
         }
         finally
         {
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    [Fact]
+    public void SeedFromSamples_OverwritesExistingPnWhenSampleNewer()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var samples = CreateSamplePn(root, "PNDEMO", "newer-sample");
+            var sampleFile = Path.Combine(samples, "PNDEMO", "PNDEMO.product-template.json");
+            File.SetLastWriteTimeUtc(sampleFile, DateTime.UtcNow.AddDays(-1));
+
+            var target = Path.Combine(root, "Templates");
+            var dest = Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            File.WriteAllText(dest, "stale");
+            File.SetLastWriteTimeUtc(dest, DateTime.UtcNow.AddDays(-3));
+
+            CreateStore(target).SeedFromSamples(samples);
+
+            Assert.Equal("newer-sample", File.ReadAllText(dest));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SeedFromSamples_KeepsExistingPnWhenDestNewer()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var samples = CreateSamplePn(root, "PNDEMO", "sample");
+            var sampleFile = Path.Combine(samples, "PNDEMO", "PNDEMO.product-template.json");
+            File.SetLastWriteTimeUtc(sampleFile, DateTime.UtcNow.AddDays(-2));
+
+            var target = Path.Combine(root, "Templates");
+            var dest = Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            File.WriteAllText(dest, "technician-edit");
+            File.SetLastWriteTimeUtc(dest, DateTime.UtcNow.AddDays(-1));
+
+            CreateStore(target).SeedFromSamples(samples);
+
+            Assert.Equal("technician-edit", File.ReadAllText(dest));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SeedFromSamples_AddsMissingPnAlongsideExisting()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var samples = CreateSamplePn(root, "PNDEMO", "demo");
+            var target = Path.Combine(root, "Templates");
+            var custom = Path.Combine(target, "PN-CUSTOM", "PN-CUSTOM.product-template.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(custom)!);
+            File.WriteAllText(custom, "keep-me");
+
+            CreateStore(target).SeedFromSamples(samples);
+
+            Assert.Equal("keep-me", File.ReadAllText(custom));
+            Assert.Equal("demo", File.ReadAllText(Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json")));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SeedFromSamples_NoOpWhenSamplesIsTemplateDirectory()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var samples = CreateSamplePn(root, "PNDEMO", "same");
+            var store = CreateStore(samples);
+            store.SeedFromSamples(samples);
+
+            Assert.Equal("same", File.ReadAllText(Path.Combine(samples, "PNDEMO", "PNDEMO.product-template.json")));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static string CreateSamplePn(string root, string partNumber, string templateContents)
+    {
+        var samples = Path.Combine(root, "Samples");
+        var pnDir = Path.Combine(samples, partNumber);
+        Directory.CreateDirectory(pnDir);
+        File.WriteAllText(Path.Combine(samples, "local-recipes.json"), "{}");
+        File.WriteAllText(Path.Combine(pnDir, $"{partNumber}.product-template.json"), templateContents);
+        return samples;
     }
 
     private static ProductTemplateLocalStore CreateStore(string templateDir) =>

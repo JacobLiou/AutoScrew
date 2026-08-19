@@ -64,12 +64,30 @@ public sealed class LocalJsonControllerParameterPresetStore
         return doc.ToTemplate();
     }
 
-    public async Task SaveAsync(TighteningParameterTemplate template, CancellationToken cancellationToken)
+    public Task SaveAsync(TighteningParameterTemplate template, CancellationToken cancellationToken) =>
+        SaveAsync(template, cancellationToken, sourceProductPn: null, sourceSlotId: null);
+
+    public async Task SaveAsync(
+        TighteningParameterTemplate template,
+        CancellationToken cancellationToken,
+        string? sourceProductPn,
+        int? sourceSlotId)
     {
         ArgumentNullException.ThrowIfNull(template);
         template.ApplyCoreToRaw();
         var path = GetPath(template.ParameterId);
+        string? originPn = sourceProductPn;
+        int? originSlot = sourceSlotId;
+        if (originPn is null && File.Exists(path))
+        {
+            var existing = LoadFile(path);
+            originPn = existing?.SourceProductPn;
+            originSlot = existing?.SourceSlotId;
+        }
+
         var doc = ControllerParameterPresetDocument.FromTemplate(template);
+        doc.SourceProductPn = string.IsNullOrWhiteSpace(originPn) ? null : originPn.Trim();
+        doc.SourceSlotId = originSlot;
         await using var stream = File.Create(path);
         await JsonSerializer.SerializeAsync(stream, doc, JsonOptions, cancellationToken).ConfigureAwait(false);
     }
@@ -116,6 +134,8 @@ public sealed class ControllerParameterPresetDocument
     public int ToolIndex { get; set; }
     public int[] RawBlock { get; set; } = TighteningParameterTemplate.CreateEmptyRawBlock();
     public TighteningParameterCore? Core { get; set; }
+    public string? SourceProductPn { get; set; }
+    public int? SourceSlotId { get; set; }
 
     public TighteningParameterTemplate ToTemplate()
     {
@@ -142,5 +162,7 @@ public sealed class ControllerParameterPresetDocument
         ToolIndex = template.ToolIndex,
         RawBlock = template.RawBlock,
         Core = template.Core,
+        SourceProductPn = null,
+        SourceSlotId = null,
     };
 }

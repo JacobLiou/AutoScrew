@@ -76,6 +76,25 @@ public sealed class LocalRecipeMesClientTests
     }
 
     [Fact]
+    public async Task GetRecipeAsync_WhenRegistryMissing_FallsBackToPndemoFolderTemplate()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var client = CreateClient(root, templateDir: null);
+            var recipe = await client.GetRecipeAsync("ABC", "PNDEMO", CancellationToken.None);
+
+            Assert.Equal("PNDEMO", recipe.PartNumber);
+            Assert.Equal("PNDEMO/PNDEMO.product-template.json", recipe.TemplateJsonPath);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GetRecipeAsync_UsesDefaultTemplateFileName_WhenOmitted()
     {
         var root = CreateTempRoot();

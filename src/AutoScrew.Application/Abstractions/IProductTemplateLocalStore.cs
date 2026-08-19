@@ -20,5 +20,9 @@ public interface IProductTemplateLocalStore
 
     string ToDisplayPath(string absolutePath);
 
-    void SeedFromSamplesIfEmpty();
+    /// <summary>
+    /// Copy sample PN folders into TemplateDirectory. Missing PNs are added;
+    /// existing files are overwritten when the sample LastWriteTimeUtc is newer.
+    /// </summary>
+    void SeedFromSamples();
 }

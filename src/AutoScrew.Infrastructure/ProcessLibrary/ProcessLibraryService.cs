@@ -82,11 +82,11 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         var slot = await _store.SaveProcessCardAsync(productPn, sourceFilePath, parsed, cancellationToken)
             .ConfigureAwait(false);
 
-        await _parameters.SaveLocalPresetAsync(parsed.Template, cancellationToken).ConfigureAwait(false);
+        await ImportSlotsToLocalAsync(productPn, [parsed.SlotId], cancellationToken).ConfigureAwait(false);
         _logger.LogInformation(
-            "Process card synced to local parameter preset id={ParameterId} product={Product} wasUpdate={WasUpdate}",
-            parsed.Template.ParameterId,
+            "Process card synced to local parameter preset product={Product} slot={Slot} wasUpdate={WasUpdate}",
             productPn,
+            parsed.SlotId,
             slot.WasUpdate);
 
         return slot;
@@ -94,6 +94,60 @@ public sealed class ProcessLibraryService : IProcessLibraryService
 
     public Task RemoveSlotAsync(string productPn, int slotId, CancellationToken cancellationToken = default) =>
         _store.RemoveSlotAsync(productPn, slotId, cancellationToken);
+
+    public async Task<ProcessLibraryLocalImportResult> ImportSlotsToLocalAsync(
+        string productPn,
+        IReadOnlyList<int>? slotIds,
+        CancellationToken cancellationToken = default)
+    {
+        var pn = RequireProductPn(productPn);
+        var product = _store.LoadProduct(pn)
+            ?? throw new DirectoryNotFoundException($"未找到产品工艺库：{pn}");
+
+        var requested = slotIds is { Count: > 0 }
+            ? slotIds.Distinct().ToList()
+            : product.Slots.Select(s => s.SlotId).ToList();
+        if (requested.Count == 0)
+            throw new InvalidOperationException($"产品 {pn} 下没有工艺卡。");
+
+        var origins = ParameterOrigins(await _parameters.ListLocalPresetsAsync(cancellationToken).ConfigureAwait(false));
+        var items = new List<ProcessLibraryLocalImportItem>();
+
+        foreach (var slotId in requested.OrderBy(id => id))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var parsed = await LoadProductSlotAsync(pn, slotId, cancellationToken).ConfigureAwait(false);
+            var preferredId = ProcessParameterCode.ToDeviceParameterId(slotId);
+            var existed = HasOrigin(origins, pn, slotId);
+            int localId;
+            try
+            {
+                localId = ProcessLibraryLocalIdAllocator.Resolve(origins, pn, slotId, preferredId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(
+                    $"无法为产品 {pn} 槽位 {slotId:D2} 分配本机参数 ID：{ex.Message}",
+                    ex);
+            }
+
+            parsed.Template.ParameterId = localId;
+            if (string.IsNullOrWhiteSpace(parsed.Template.Core.Name))
+                parsed.Template.Core.Name = parsed.ScrewPn;
+
+            await _parameters
+                .SaveLocalPresetWithOriginAsync(parsed.Template, pn, slotId, cancellationToken)
+                .ConfigureAwait(false);
+
+            UpsertOrigin(origins, new LocalPresetOrigin(localId, pn, slotId));
+            items.Add(new ProcessLibraryLocalImportItem(slotId, preferredId, localId, !existed));
+            _logger.LogInformation(
+                "Imported process slot to local preset product={Product} slot={Slot} preferred={Preferred} local={Local} wasNew={WasNew}",
+                pn, slotId, preferredId, localId, !existed);
+        }
+
+        return new ProcessLibraryLocalImportResult(pn, items);
+    }
 
     public async Task DeployTemplateToDeviceAsync(
         TighteningParameterTemplate template,
@@ -277,6 +331,94 @@ public sealed class ProcessLibraryService : IProcessLibraryService
     public Task RemoveSequenceAsync(string productPn, int sequenceId, CancellationToken cancellationToken = default) =>
         _store.RemoveSequenceAsync(productPn, sequenceId, cancellationToken);
 
+    public async Task<ProcessLibraryLocalImportResult> ImportSequencesToLocalAsync(
+        string productPn,
+        IReadOnlyList<int>? sequenceIds,
+        CancellationToken cancellationToken = default)
+    {
+        var pn = RequireProductPn(productPn);
+        var product = _store.LoadProduct(pn)
+            ?? throw new DirectoryNotFoundException($"未找到产品工艺库：{pn}");
+
+        var requested = sequenceIds is { Count: > 0 }
+            ? sequenceIds.Distinct().ToList()
+            : product.Sequences.Select(s => s.SequenceId).ToList();
+        if (requested.Count == 0)
+            throw new InvalidOperationException($"产品 {pn} 下没有拧紧顺序。");
+
+        var packages = new List<(int LibrarySequenceId, TighteningSequencePackage Package)>();
+        var referencedSlots = new HashSet<int>();
+        foreach (var sequenceId in requested.OrderBy(id => id))
+        {
+            var pkg = await LoadProductSequenceAsync(pn, sequenceId, cancellationToken).ConfigureAwait(false);
+            packages.Add((sequenceId, pkg));
+            foreach (var step in pkg.Core.Steps)
+            {
+                if (step.ParameterId is >= ProcessParameterCode.MinDeviceParameterId
+                    and <= ProcessParameterCode.MaxDeviceParameterId)
+                    referencedSlots.Add(ProcessParameterCode.ToSlotIndex(step.ParameterId));
+            }
+        }
+
+        if (referencedSlots.Count > 0)
+        {
+            var available = product.Slots.Select(s => s.SlotId).ToHashSet();
+            var missing = referencedSlots.Where(s => !available.Contains(s)).ToList();
+            if (missing.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"产品 {pn} 顺序引用了工艺库中不存在的槽位：{string.Join(", ", missing.Select(s => s.ToString("D2")))}。");
+            }
+
+            await ImportSlotsToLocalAsync(pn, referencedSlots.ToList(), cancellationToken).ConfigureAwait(false);
+        }
+
+        var paramOrigins = ParameterOrigins(
+            await _parameters.ListLocalPresetsAsync(cancellationToken).ConfigureAwait(false));
+        var seqOrigins = SequenceOrigins(
+            await _sequences.ListLocalPresetsAsync(cancellationToken).ConfigureAwait(false));
+        var items = new List<ProcessLibraryLocalImportItem>();
+
+        foreach (var (librarySequenceId, package) in packages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            foreach (var step in package.Core.Steps)
+                step.ParameterId = RemapStepParameterId(paramOrigins, pn, step.ParameterId);
+
+            var preferredId = librarySequenceId is >= ProcessLibraryLocalIdAllocator.MinId
+                and <= ProcessLibraryLocalIdAllocator.MaxId
+                ? librarySequenceId
+                : ProcessLibraryLocalIdAllocator.MinId;
+            var existed = HasOrigin(seqOrigins, pn, librarySequenceId);
+            int localId;
+            try
+            {
+                localId = ProcessLibraryLocalIdAllocator.Resolve(
+                    seqOrigins, pn, librarySequenceId, preferredId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(
+                    $"无法为产品 {pn} 顺序 {librarySequenceId:D2} 分配本机顺序 ID：{ex.Message}",
+                    ex);
+            }
+
+            package.SequenceId = localId;
+            package.ApplyCoreToRaw();
+            await _sequences
+                .SaveLocalPresetWithOriginAsync(package, pn, librarySequenceId, cancellationToken)
+                .ConfigureAwait(false);
+
+            UpsertOrigin(seqOrigins, new LocalPresetOrigin(localId, pn, librarySequenceId));
+            items.Add(new ProcessLibraryLocalImportItem(librarySequenceId, preferredId, localId, !existed));
+            _logger.LogInformation(
+                "Imported process sequence to local preset product={Product} librarySeq={Library} preferred={Preferred} local={Local} wasNew={WasNew}",
+                pn, librarySequenceId, preferredId, localId, !existed);
+        }
+
+        return new ProcessLibraryLocalImportResult(pn, items);
+    }
+
     public async Task DeploySequenceToDeviceAsync(
         TighteningSequencePackage package,
         CancellationToken cancellationToken = default)
@@ -324,5 +466,62 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         }
 
         return new ProcessLibrarySequenceDeployResult(product.ProductPn, written, failures);
+    }
+
+    private static string RequireProductPn(string productPn)
+    {
+        if (string.IsNullOrWhiteSpace(productPn))
+            throw new ArgumentException("产品 PN 不能为空。", nameof(productPn));
+        return productPn.Trim();
+    }
+
+    private static List<LocalPresetOrigin> ParameterOrigins(
+        IReadOnlyList<ControllerParameterPresetSummary> items) =>
+        items.Select(p => new LocalPresetOrigin(p.ParameterId, p.SourceProductPn, p.SourceSlotId)).ToList();
+
+    private static List<LocalPresetOrigin> SequenceOrigins(
+        IReadOnlyList<ControllerSequencePresetSummary> items) =>
+        items.Select(s => new LocalPresetOrigin(s.SequenceId, s.SourceProductPn, s.SourceSequenceId)).ToList();
+
+    private static bool HasOrigin(IReadOnlyList<LocalPresetOrigin> origins, string productPn, int sourceIdentity) =>
+        origins.Any(o =>
+            o.SourceIdentity == sourceIdentity
+            && string.Equals(o.SourceProductPn, productPn, StringComparison.OrdinalIgnoreCase));
+
+    private static void UpsertOrigin(List<LocalPresetOrigin> origins, LocalPresetOrigin next)
+    {
+        origins.RemoveAll(o =>
+            o.Id == next.Id
+            || (o.SourceIdentity == next.SourceIdentity
+                && string.Equals(o.SourceProductPn, next.SourceProductPn, StringComparison.OrdinalIgnoreCase)));
+        origins.Add(next);
+    }
+
+    private static int RemapStepParameterId(
+        IReadOnlyList<LocalPresetOrigin> paramOrigins,
+        string productPn,
+        int stepParameterId)
+    {
+        if (stepParameterId is < ProcessParameterCode.MinDeviceParameterId
+            or > ProcessParameterCode.MaxDeviceParameterId)
+            return stepParameterId;
+
+        foreach (var origin in paramOrigins)
+        {
+            if (origin.Id == stepParameterId
+                && string.Equals(origin.SourceProductPn, productPn, StringComparison.OrdinalIgnoreCase))
+                return origin.Id;
+        }
+
+        var slotId = ProcessParameterCode.ToSlotIndex(stepParameterId);
+        foreach (var origin in paramOrigins)
+        {
+            if (origin.SourceIdentity == slotId
+                && string.Equals(origin.SourceProductPn, productPn, StringComparison.OrdinalIgnoreCase))
+                return origin.Id;
+        }
+
+        throw new InvalidOperationException(
+            $"产品 {productPn} 顺序步骤参数 ID {stepParameterId} 无法映射到本机预设（槽位 {slotId:D2}）。");
     }
 }

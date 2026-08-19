@@ -730,20 +730,25 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             return;
 
         var productPn = picker.ConfirmedProductPn;
-        var sequenceId = picker.ConfirmedSequenceId;
+        var sequenceIds = picker.ImportAll ? null : picker.ConfirmedSequenceIds;
         AuditConfig(
             "Configuration.SequenceImportProcessLibrary",
-            $"product={productPn};sequenceId={sequenceId}");
+            $"product={productPn};sequences={string.Join(",", sequenceIds ?? [])};all={picker.ImportAll}");
         try
         {
-            var pkg = await _processLibrary
-                .LoadProductSequenceAsync(productPn, sequenceId)
+            var result = await _processLibrary
+                .ImportSequencesToLocalAsync(productPn, sequenceIds)
                 .ConfigureAwait(true);
-            ApplyPackage(pkg);
-            StatusMessage = Loc.Format(
-                "S.ControllerSeq.StatusImportedProcessLibrary",
-                pkg.SequenceId,
-                productPn);
+            await RefreshPresetListAsync().ConfigureAwait(true);
+            await RefreshParameterCatalogAsync().ConfigureAwait(true);
+            if (result.Items.Count > 0)
+            {
+                var firstId = result.Items[0].LocalId;
+                await LoadPresetAsync(firstId).ConfigureAwait(true);
+                SelectedPreset = Presets.FirstOrDefault(p => p.SequenceId == firstId);
+            }
+
+            StatusMessage = FormatSequenceImportStatus(productPn, result);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
@@ -889,8 +894,32 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             Presets.Add(new ControllerSequenceListItem(
                 item.SequenceId,
                 item.Name,
+                displayText: FormatLocalPresetLabel(item.SequenceId, item.Name, item.SourceProductPn),
                 stepCount: item.StepCount,
                 bitId: item.BitId));
+    }
+
+    private static string FormatLocalPresetLabel(int id, string name, string? productPn)
+    {
+        var text = $"{id:D3} · {name}";
+        return string.IsNullOrWhiteSpace(productPn) ? text : $"{text} · {productPn}";
+    }
+
+    private static string FormatSequenceImportStatus(string productPn, ProcessLibraryLocalImportResult result)
+    {
+        var maps = result.Items.Select(i =>
+            i.LocalId == i.PreferredId
+                ? Loc.Format("S.ControllerSeq.ImportMapSame", i.SourceId.ToString("D2"), i.LocalId)
+                : Loc.Format(
+                    "S.ControllerSeq.ImportMapRemapped",
+                    i.SourceId.ToString("D2"),
+                    i.LocalId,
+                    i.PreferredId));
+        return Loc.Format(
+            "S.ControllerSeq.StatusImportedProcessLibraryBatch",
+            result.Items.Count,
+            productPn,
+            string.Join("；", maps));
     }
 
     private async Task LoadPresetAsync(int sequenceId)
@@ -978,7 +1007,12 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         foreach (var item in items)
         {
             if (seen.Add(item.ParameterId))
-                ParameterCatalog.Add(new ControllerParameterListItem(item.ParameterId, item.Name));
+                ParameterCatalog.Add(new ControllerParameterListItem(
+                    item.ParameterId,
+                    item.Name,
+                    displayText: string.IsNullOrWhiteSpace(item.SourceProductPn)
+                        ? null
+                        : $"{item.ParameterId:D3} · {item.Name} · {item.SourceProductPn}"));
         }
 
         if (_parameterPresetService.IsDeviceAvailable)

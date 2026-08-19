@@ -131,6 +131,6 @@ public static class InfrastructureServiceCollectionExtensions
         using var db = factory.CreateDbContext();
         db.Database.Migrate();
 
-        sp.GetRequiredService<ProductTemplateLocalStore>().SeedFromSamplesIfEmpty();
+        sp.GetRequiredService<ProductTemplateLocalStore>().SeedFromSamples();
     }
 }

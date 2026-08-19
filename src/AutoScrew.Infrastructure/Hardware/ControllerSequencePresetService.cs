@@ -37,7 +37,9 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
                     pkg.SequenceId,
                     pkg.Core.Name,
                     steps.Count,
-                    bitId);
+                    bitId,
+                    d.SourceProductPn,
+                    d.SourceSequenceId);
             })
             .ToList();
     }
@@ -47,6 +49,13 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
 
     public Task SaveLocalPresetAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default) =>
         _store.SaveAsync(package, cancellationToken);
+
+    public Task SaveLocalPresetWithOriginAsync(
+        TighteningSequencePackage package,
+        string sourceProductPn,
+        int sourceSequenceId,
+        CancellationToken cancellationToken = default) =>
+        _store.SaveAsync(package, cancellationToken, sourceProductPn, sourceSequenceId);
 
     public Task DeleteLocalPresetAsync(int sequenceId, CancellationToken cancellationToken = default) =>
         _store.DeleteAsync(sequenceId, cancellationToken);
