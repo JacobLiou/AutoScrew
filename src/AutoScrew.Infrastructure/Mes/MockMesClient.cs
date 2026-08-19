@@ -7,7 +7,7 @@ public sealed class MockMesClient : IMesClient
     public Task<SnValidationResult> ValidateSnAsync(string serialNumber, CancellationToken cancellationToken = default)
     {
         if (serialNumber.Trim().Length >= 3)
-            return Task.FromResult(new SnValidationResult(true, "PN-DEMO", null));
+            return Task.FromResult(new SnValidationResult(true, "PNDEMO", null));
 
         return Task.FromResult(new SnValidationResult(false, null, "SN too short."));
     }

@@ -53,7 +53,7 @@ public sealed class ProductTemplatePathHelperTests : IDisposable
     [Fact]
     public void EnsureImageInTemplateFolder_KeepsExistingImagesRelativePath()
     {
-        var templateDir = Path.Combine(_root, "PN-DEMO");
+        var templateDir = Path.Combine(_root, "PNDEMO");
         var imagesDir = Path.Combine(templateDir, "images");
         Directory.CreateDirectory(imagesDir);
         var boardPath = Path.Combine(imagesDir, "board.png");

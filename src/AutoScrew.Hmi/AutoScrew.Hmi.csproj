@@ -58,7 +58,7 @@
     <None Update="Samples\local-recipes.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Samples\PN-DEMO\**\*">
+    <None Update="Samples\PNDEMO\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="help\**\*">

@@ -7,7 +7,7 @@ internal sealed class StubRecipeProvisioningService : IRecipeProvisioningService
     private readonly string _templatePath;
     private readonly string _partNumber;
 
-    public StubRecipeProvisioningService(string templatePath, string partNumber = "PN-DEMO")
+    public StubRecipeProvisioningService(string templatePath, string partNumber = "PNDEMO")
     {
         _templatePath = templatePath;
         _partNumber = partNumber;

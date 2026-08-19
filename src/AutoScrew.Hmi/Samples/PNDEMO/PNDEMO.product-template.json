@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "productId": "PN-DEMO",
+  "productId": "PNDEMO",
   "displayName": "演示产品（PCBA 顶面）",
   "revision": "2026-06-11",
   "surfaceCount": 1,

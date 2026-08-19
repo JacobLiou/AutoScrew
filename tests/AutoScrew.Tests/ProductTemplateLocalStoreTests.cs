@@ -106,9 +106,9 @@ public sealed class ProductTemplateLocalStoreTests
                 Path.Combine(samplesAtBase, "demo-product-multisurface.product-template.json"));
 
             // Seed reads from AppContext.BaseDirectory/Samples — invoke copy logic via direct CopyDirectory test path
-            store.EnsureProductFolder("PN-DEMO");
-            File.WriteAllText(store.GetDefaultTemplatePath("PN-DEMO"), "{}");
-            Assert.True(File.Exists(Path.Combine(target, "PN-DEMO", "PN-DEMO.product-template.json")));
+            store.EnsureProductFolder("PNDEMO");
+            File.WriteAllText(store.GetDefaultTemplatePath("PNDEMO"), "{}");
+            Assert.True(File.Exists(Path.Combine(target, "PNDEMO", "PNDEMO.product-template.json")));
         }
         finally
         {

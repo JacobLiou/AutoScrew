@@ -14,7 +14,7 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
   "version": 1,
   "products": [
     {
-      "partNumber": "PN-DEMO",
+      "partNumber": "PNDEMO",
       "templateFile": "demo-product-multisurface.product-template.json",
       "serialNumbers": ["SN001", "SN002"],
       "screws": []
@@ -36,7 +36,7 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
 2. 编辑 `local-recipes.json`：增加 PN、SN 列表、模板文件名。
 3. 操作员登录后扫**已登记 SN** → 加载对应 PN 与模板；未登记 SN 拒绝（注册表存在时）。
 
-若 **不存在** `local-recipes.json`，Mock MES 回退旧行为：任意 SN（≥3 字符）→ `PN-DEMO` + `demo-product-multisurface.product-template.json`。
+若 **不存在** `local-recipes.json`，Mock MES 回退旧行为：任意 SN（≥3 字符）→ `PNDEMO` + `demo-product-multisurface.product-template.json`。
 
 ## 关闭
 

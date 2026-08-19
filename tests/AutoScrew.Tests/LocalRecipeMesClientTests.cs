@@ -18,7 +18,7 @@ public sealed class LocalRecipeMesClientTests
             var result = await client.ValidateSnAsync("ABC", CancellationToken.None);
 
             Assert.True(result.IsValid);
-            Assert.Equal("PN-DEMO", result.PartNumber);
+            Assert.Equal("PNDEMO", result.PartNumber);
         }
         finally
         {

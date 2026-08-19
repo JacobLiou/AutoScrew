@@ -2,8 +2,8 @@
   "version": 1,
   "products": [
     {
-      "partNumber": "PN-DEMO",
-      "templateFile": "PN-DEMO/PN-DEMO.product-template.json",
+      "partNumber": "PNDEMO",
+      "templateFile": "PNDEMO/PNDEMO.product-template.json",
       "serialNumbers": [
         "SN001",
         "SN002",

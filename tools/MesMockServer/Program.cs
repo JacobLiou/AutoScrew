@@ -14,14 +14,14 @@ app.MapGet("/api/sn/validate", (string sn, string stationId) =>
     if (string.Equals(sn, "__PING__", StringComparison.Ordinal))
         return Results.Ok(new { valid = false, partNumber = (string?)null, message = "ping ok" });
 
-    return Results.Ok(new { valid = true, partNumber = "PN-DEMO", message = (string?)null });
+    return Results.Ok(new { valid = true, partNumber = "PNDEMO", message = (string?)null });
 });
 
 app.MapGet("/api/recipe", (string sn, string pn, string stationId) =>
     Results.Ok(new
     {
-        templateJsonPath = "PN-DEMO/PN-DEMO.product-template.json",
-        templatePackageUrl = "api/templates/PN-DEMO/package",
+        templateJsonPath = "PNDEMO/PNDEMO.product-template.json",
+        templatePackageUrl = "api/templates/PNDEMO/package",
         productImageUrl = (string?)null,
         screws = new[]
         {
@@ -56,7 +56,7 @@ app.MapGet("/api/templates", (string? stationId) =>
         }
     }
 
-    foreach (var pn in new[] { "PN-DEMO" })
+    foreach (var pn in new[] { "PNDEMO" })
     {
         if (seen.Contains(pn))
             continue;
@@ -156,11 +156,11 @@ static string? ResolveTemplateFolder(string pn)
     }
 
     var demoJson = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "src", "AutoScrew.Hmi", "Samples", "demo-product-multisurface.product-template.json"));
-    if (string.Equals(pn, "PN-DEMO", StringComparison.OrdinalIgnoreCase) && File.Exists(demoJson))
+    if (string.Equals(pn, "PNDEMO", StringComparison.OrdinalIgnoreCase) && File.Exists(demoJson))
     {
         var temp = Path.Combine(Path.GetTempPath(), "MesMockServer", pn);
         Directory.CreateDirectory(temp);
-        var dest = Path.Combine(temp, "PN-DEMO.product-template.json");
+        var dest = Path.Combine(temp, "PNDEMO.product-template.json");
         File.Copy(demoJson, dest, overwrite: true);
         return temp;
     }

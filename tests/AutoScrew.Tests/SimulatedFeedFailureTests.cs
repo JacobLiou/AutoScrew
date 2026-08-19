@@ -77,7 +77,7 @@ public sealed class SimulatedFeedFailureTests
     private sealed class SimpleMesClient(string templatePath) : IMesClient
     {
         public Task<SnValidationResult> ValidateSnAsync(string serialNumber, CancellationToken cancellationToken = default) =>
-            Task.FromResult(new SnValidationResult(true, "PN-DEMO", null));
+            Task.FromResult(new SnValidationResult(true, "PNDEMO", null));
 
         public Task<RecipeBundle> GetRecipeAsync(string serialNumber, string partNumber, CancellationToken cancellationToken = default) =>
             Task.FromResult(new RecipeBundle(partNumber, Path.GetFileName(templatePath), null, Array.Empty<ScrewRecipeDto>()));

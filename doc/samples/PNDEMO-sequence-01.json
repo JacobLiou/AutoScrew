@@ -1,7 +1,7 @@
 {
   "sequenceId": 1,
   "core": {
-    "name": "PN-DEMO-SEQ-01",
+    "name": "PNDEMO-SEQ-01",
     "navigatorMode": 0,
     "positioningArmEnabled": false,
     "steps": [
