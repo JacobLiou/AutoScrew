@@ -28,7 +28,7 @@ public sealed class IemdSdClientOptions
 
     public int ToolIndex { get; set; }
 
-    public TighteningTriggerMode TriggerMode { get; set; } = TighteningTriggerMode.AutoDi;
+    public TighteningTriggerMode TriggerMode { get; set; } = TighteningTriggerMode.Manual;
 
     public bool AutoLockOnInit { get; set; }
 

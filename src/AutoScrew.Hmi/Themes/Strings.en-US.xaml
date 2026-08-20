@@ -779,6 +779,9 @@
     <system:String x:Key="S.Device.CommandTimeout">Command timeout (ms)</system:String>
     <system:String x:Key="S.Device.TriggerAutoDi">Trigger: Auto DI</system:String>
     <system:String x:Key="S.Device.TriggerManual">Trigger: Manual</system:String>
+    <system:String x:Key="S.Device.TriggerModeTitle">Tightening trigger</system:String>
+    <system:String x:Key="S.Device.TriggerModeManualHint">Current mode: Manual (pull the driver trigger). After a screw cycle starts, pull the lever; change under Device connection.</system:String>
+    <system:String x:Key="S.Device.TriggerModeAutoDiHint">Current mode: Auto DI (software starts via DI). For lever trigger on the line, set Manual under Device connection.</system:String>
     <system:String x:Key="S.Device.SimulationBanner">Simulation mode: you can save config; test/apply requires UseSimulatedHardware=false and restart.</system:String>
     <system:String x:Key="S.Device.NoActiveDevice">No active device selected.</system:String>
     <system:String x:Key="S.Device.ActiveSummary">Station {0} · Active: {1} ({2})</system:String>

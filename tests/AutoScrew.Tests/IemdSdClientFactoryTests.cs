@@ -31,6 +31,23 @@ public class IemdSdClientFactoryTests
     }
 
     [Fact]
+    public void MapToOptions_DefaultTriggerMode_IsManual()
+    {
+        var endpoint = new StationDeviceEndpoint();
+        var options = IemdSdClientFactory.MapToOptions(endpoint);
+        Assert.Equal("Manual", endpoint.TriggerMode);
+        Assert.Equal(TighteningTriggerMode.Manual, options.TriggerMode);
+    }
+
+    [Fact]
+    public void MapToOptions_ExplicitAutoDi_IsPreserved()
+    {
+        var endpoint = new StationDeviceEndpoint { TriggerMode = "AutoDi" };
+        var options = IemdSdClientFactory.MapToOptions(endpoint);
+        Assert.Equal(TighteningTriggerMode.AutoDi, options.TriggerMode);
+    }
+
+    [Fact]
     public void MapToOptions_TcpEndpoint_UsesTcpTransport()
     {
         var endpoint = new StationDeviceEndpoint

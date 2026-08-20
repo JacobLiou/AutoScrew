@@ -795,6 +795,9 @@
     <system:String x:Key="S.Device.CommandTimeout">命令超时 (ms)</system:String>
     <system:String x:Key="S.Device.TriggerAutoDi">触发：Auto DI</system:String>
     <system:String x:Key="S.Device.TriggerManual">触发：Manual</system:String>
+    <system:String x:Key="S.Device.TriggerModeTitle">拧紧触发方式</system:String>
+    <system:String x:Key="S.Device.TriggerModeManualHint">当前为 Manual（扳机拧紧）。进入钉周期后请按电批扳机；可在「设备连接」修改。</system:String>
+    <system:String x:Key="S.Device.TriggerModeAutoDiHint">当前为 Auto DI（软件写 DI 启动）。产线用手扳机时请在「设备连接」改为 Manual。</system:String>
     <system:String x:Key="S.Device.SimulationBanner">仿真模式：可保存配置，测试/应用需将 UseSimulatedHardware 设为 false 并重启。</system:String>
     <system:String x:Key="S.Device.NoActiveDevice">尚未选择激活设备。</system:String>
     <system:String x:Key="S.Device.ActiveSummary">工位 {0} · 激活：{1} ({2})</system:String>

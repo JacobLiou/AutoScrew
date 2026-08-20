@@ -32,7 +32,7 @@ public sealed class StationDeviceEndpoint
 
     public int ToolIndex { get; set; }
 
-    public string TriggerMode { get; set; } = "AutoDi";
+    public string TriggerMode { get; set; } = "Manual";
 
     public bool AutoLockOnInit { get; set; }
 

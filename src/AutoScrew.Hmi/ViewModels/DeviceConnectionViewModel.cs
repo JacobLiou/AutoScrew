@@ -46,7 +46,7 @@ public sealed partial class StationDeviceEditor : ObservableObject
     private int _toolIndex;
 
     [ObservableProperty]
-    private int _triggerModeIndex;
+    private int _triggerModeIndex = 1;
 
     [ObservableProperty]
     private int _commandTimeoutMs = 3000;

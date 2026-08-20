@@ -19,6 +19,8 @@ public partial class MainWindow : FluentWindow
 {
     private readonly MainShellViewModel _shellViewModel;
     private readonly INavigationService _navigationService;
+    private readonly IStationDeviceService _devices;
+    private readonly ISnackbarService _snackbarService;
     private bool _defaultPageNavigated;
     private bool _isUserClosedPane;
     private bool _isPaneOpenedOrClosedFromCode;
@@ -27,10 +29,13 @@ public partial class MainWindow : FluentWindow
         MainShellViewModel shellViewModel,
         INavigationService navigationService,
         ISnackbarService snackbarService,
-        IContentDialogService contentDialogService)
+        IContentDialogService contentDialogService,
+        IStationDeviceService devices)
     {
         _shellViewModel = shellViewModel;
         _navigationService = navigationService;
+        _devices = devices;
+        _snackbarService = snackbarService;
         InitializeComponent();
         DataContext = shellViewModel;
         snackbarService.SetSnackbarPresenter(SnackbarPresenter);
@@ -53,6 +58,33 @@ public partial class MainWindow : FluentWindow
         Loaded -= OnMainWindowLoaded;
         SyncPaneUserPreferenceFromShell();
         Dispatcher.BeginInvoke(NavigateToDefaultPageCore, DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(
+            new Action(() => _ = NotifyTriggerModeAsync()),
+            DispatcherPriority.ApplicationIdle);
+    }
+
+    private async Task NotifyTriggerModeAsync()
+    {
+        try
+        {
+            var config = await _devices.LoadAsync().ConfigureAwait(true);
+            var mode = config.Device?.TriggerMode ?? "Manual";
+            var isAutoDi = string.Equals(mode, "AutoDi", StringComparison.OrdinalIgnoreCase);
+            var message = isAutoDi
+                ? Loc.Get("S.Device.TriggerModeAutoDiHint")
+                : Loc.Get("S.Device.TriggerModeManualHint");
+            var appearance = isAutoDi ? ControlAppearance.Caution : ControlAppearance.Info;
+            _snackbarService.Show(
+                Loc.Get("S.Device.TriggerModeTitle"),
+                message,
+                appearance,
+                new SymbolIcon(isAutoDi ? SymbolRegular.Warning24 : SymbolRegular.Info24),
+                TimeSpan.FromSeconds(6));
+        }
+        catch
+        {
+            // non-blocking hint only
+        }
     }
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)

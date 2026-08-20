@@ -32,9 +32,9 @@ public sealed class IemdSdClientFactory
         Parity = endpoint.Parity,
         StopBits = endpoint.StopBits,
         ToolIndex = endpoint.ToolIndex,
-        TriggerMode = string.Equals(endpoint.TriggerMode, "Manual", StringComparison.OrdinalIgnoreCase)
-            ? TighteningTriggerMode.Manual
-            : TighteningTriggerMode.AutoDi,
+        TriggerMode = string.Equals(endpoint.TriggerMode, "AutoDi", StringComparison.OrdinalIgnoreCase)
+            ? TighteningTriggerMode.AutoDi
+            : TighteningTriggerMode.Manual,
         AutoLockOnInit = endpoint.AutoLockOnInit,
         SendUnlockAfterCycle = endpoint.SendUnlockAfterCycle,
         UseLegacyFinishRegister = endpoint.UseLegacyFinishRegister,
