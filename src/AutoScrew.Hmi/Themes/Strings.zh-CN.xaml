@@ -619,6 +619,9 @@
     <system:String x:Key="S.ControllerSeq.StatusImported">已从 JSON 导入。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExported">已导出 JSON。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusReadDevice">已从设备读取顺序 #{0}。</system:String>
+    <system:String x:Key="S.ControllerSeq.DeleteDevice">删除设备顺序</system:String>
+    <system:String x:Key="S.ControllerSeq.ConfirmDeleteDevice">确定从设备删除顺序 #{0}？此操作不可恢复（#210）。</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusDeleteDevice">已从设备删除顺序 #{0}。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusWriteDevice">已下发顺序 #{0} 到设备。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusActivated">已在设备激活顺序 #{0}。</system:String>
     <system:String x:Key="S.ControllerSeq.TabGeneral">一般</system:String>

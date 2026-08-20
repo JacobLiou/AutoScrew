@@ -603,6 +603,9 @@
     <system:String x:Key="S.ControllerSeq.StatusImported">Imported from JSON.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExported">Exported to JSON.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusReadDevice">Read sequence #{0} from device.</system:String>
+    <system:String x:Key="S.ControllerSeq.DeleteDevice">Delete on device</system:String>
+    <system:String x:Key="S.ControllerSeq.ConfirmDeleteDevice">Delete sequence #{0} from the controller? This cannot be undone (#210).</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusDeleteDevice">Deleted sequence #{0} from device.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusWriteDevice">Wrote sequence #{0} to device.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusActivated">Activated sequence #{0} on device.</system:String>
     <system:String x:Key="S.ControllerSeq.TabGeneral">General</system:String>

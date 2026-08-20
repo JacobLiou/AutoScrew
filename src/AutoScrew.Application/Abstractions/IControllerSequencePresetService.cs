@@ -42,5 +42,8 @@ public interface IControllerSequencePresetService
 
     Task WriteToDeviceAsync(TighteningSequencePackage package, CancellationToken cancellationToken = default);
 
+    /// <summary>删除设备上的拧紧顺序（Modbus #210）。</summary>
+    Task DeleteFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);
+
     Task ActivateOnDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);
 }

@@ -135,6 +135,19 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
         _logger.LogInformation("Wrote sequence {SeqId} to IEMD-SD", package.SequenceId);
     }
 
+    public async Task DeleteFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default)
+    {
+        if (sequenceId is < 1 or > TighteningSequenceRegisterMap.MaxSteps)
+            throw new ArgumentOutOfRangeException(
+                nameof(sequenceId),
+                sequenceId,
+                $"Sequence ID must be 1–{TighteningSequenceRegisterMap.MaxSteps}.");
+
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        await client.DeleteSequenceAsync(sequenceId, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Deleted sequence {SeqId} from IEMD-SD (#210)", sequenceId);
+    }
+
     public async Task ActivateOnDeviceAsync(int sequenceId, CancellationToken cancellationToken = default)
     {
         var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);

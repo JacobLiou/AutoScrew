@@ -441,6 +441,9 @@ public sealed class ProcessLibraryLocalImportTests
             CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 
+        public Task DeleteFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
         public Task ActivateOnDeviceAsync(int sequenceId, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
     }

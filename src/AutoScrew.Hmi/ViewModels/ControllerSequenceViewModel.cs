@@ -1,5 +1,6 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.ControllerDevice;
 using AutoScrew.Infrastructure.ProcessLibrary;
@@ -326,6 +327,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedPresetChanged(ControllerSequenceListItem? value)
@@ -357,6 +359,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         }
 
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
     }
 
@@ -390,6 +393,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         RefreshDeviceListCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
@@ -422,6 +426,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         RefreshDeviceListCommand.NotifyCanExecuteChanged();
         ImportSelectedFromDeviceCommand.NotifyCanExecuteChanged();
         ReadFromDeviceCommand.NotifyCanExecuteChanged();
+        DeleteFromDeviceCommand.NotifyCanExecuteChanged();
         WriteToDeviceCommand.NotifyCanExecuteChanged();
         ActivateOnDeviceCommand.NotifyCanExecuteChanged();
     }
@@ -513,6 +518,40 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
             var pkg = await _presetService.ReadFromDeviceAsync(id.Value).ConfigureAwait(true);
             ApplyPackage(pkg);
             StatusMessage = Loc.Format("S.ControllerSeq.StatusReadDevice", id.Value);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (IemdSdCommunicationException ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanReadFromDevice))]
+    private async Task DeleteFromDeviceAsync()
+    {
+        var id = ResolveDeviceSequenceId();
+        if (id is null)
+            return;
+
+        if (!ConfirmTips.ShowDialog(
+                Loc.Format("S.ControllerSeq.ConfirmDeleteDevice", id.Value),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ControllerSeq.DeleteDevice")))
+            return;
+
+        AuditConfig("Configuration.SequenceDeleteDevice", $"sequenceId={id}");
+        try
+        {
+            await _presetService.DeleteFromDeviceAsync(id.Value).ConfigureAwait(true);
+            await RefreshDeviceListCoreAsync().ConfigureAwait(true);
+            SelectedDeviceSequence = DeviceSequences.FirstOrDefault(p => p.SequenceId == id.Value);
+            StatusMessage = Loc.Format("S.ControllerSeq.StatusDeleteDevice", id.Value);
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (IemdSdCommunicationException ex)
