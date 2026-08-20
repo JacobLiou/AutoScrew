@@ -95,6 +95,8 @@
     <system:String x:Key="S.Operation.LogEnterRework">Marked rework and unlocked; continue job</system:String>
     <system:String x:Key="S.Operation.LogEmergencyUnlock">Operator emergency-unlocked NG; continue job</system:String>
     <system:String x:Key="S.Operation.ResetSession">Reset session</system:String>
+    <system:String x:Key="S.Operation.ParkNg">Exit job (park)</system:String>
+    <system:String x:Key="S.Operation.LogParkNg">Job parked. Fix the device, then rescan the same SN to resume.</system:String>
     <system:String x:Key="S.Operation.ProgressTree">Progress</system:String>
     <system:String x:Key="S.Operation.CurveTitle">Torque–angle (last step)</system:String>
     <system:String x:Key="S.Operation.CurveUnavailable">Curve chart failed to initialize. Operation flow is unaffected.</system:String>
@@ -110,7 +112,7 @@
     <system:String x:Key="S.Operation.GuideRunningScrew">Fasten [{0}] screw #{1}</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">Fasten surface [{0}]</system:String>
     <system:String x:Key="S.Operation.GuideAwaitFlip">[{0}] complete. Flip to [{1}], then Confirm flip.</system:String>
-    <system:String x:Key="S.Operation.GuideNgLocked">Screw NG — call a technician, or use emergency unlock if needed.</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">NG locked — park the job, fix the device, then rescan the same SN.</system:String>
     <system:String x:Key="S.Operation.GuideCompleted">Job complete. Scan next SN.</system:String>
     <system:String x:Key="S.Operation.CurrentSurface">current surface</system:String>
     <system:String x:Key="S.Operation.NextSurface">next surface</system:String>
@@ -165,6 +167,7 @@
     <system:String x:Key="S.Operation.NgOverlayTitle">Tightening NG — job paused</system:String>
     <system:String x:Key="S.Operation.NgScrewTitle">Tightening NG — job paused</system:String>
     <system:String x:Key="S.Operation.NgFeedTitle">Feed fault — job paused</system:String>
+    <system:String x:Key="S.Operation.NgDeviceTitle">Device NG — park the job</system:String>
     <system:String x:Key="S.Operation.RestoreCheckpointTitle">Resume unfinished job</system:String>
     <system:String x:Key="S.Operation.RestoreCheckpointPrompt">Unfinished job found: SN={0}, PN={1}, phase={2}. Resume?</system:String>
     <system:String x:Key="S.Operation.StatusRestoring">Restoring job…</system:String>
@@ -174,8 +177,8 @@
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
-    <system:String x:Key="S.Operation.NgOverlayOperatorHint">Call a technician to unlock or clear the device fault. Use Emergency unlock only when necessary.</system:String>
-    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">After the device is ready, unlock and retry, or mark rework and retry (clears controller errors).</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">Park the job first, fix the device, then rescan the same SN. Use Emergency unlock only if the device is already cleared and you must retry now.</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">For a device fault, park the job first. Use Unlock or Rework only after the controller is cleared and you need to retry immediately.</system:String>
     <system:String x:Key="S.Operation.CompletionTitle">Job complete</system:String>
     <system:String x:Key="S.Operation.CompletionSummary">SN "{0}" · PN "{1}" is complete and ready for the next job.</system:String>
     <system:String x:Key="S.Operation.CompletionStats">OK {0} · NG {1} · Pending {2} · Total {3}</system:String>
@@ -358,6 +361,8 @@
     <system:String x:Key="S.Dialog.AbortSession">Abort current job?</system:String>
     <system:String x:Key="S.Dialog.AbortSessionTitle">Reset session</system:String>
     <system:String x:Key="S.Dialog.AbortSessionPark">Reset current job? Progress is saved locally; rescan the same SN to resume, or scan another SN.</system:String>
+    <system:String x:Key="S.Dialog.ParkNgTitle">Exit job (park)</system:String>
+    <system:String x:Key="S.Dialog.ParkNg">The job will be parked and will not retry now. Fix the device, then rescan the same SN to resume.</system:String>
     <system:String x:Key="S.Dialog.Exception">Runtime error</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Title">Confirm exit</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">Exit the application?</system:String>

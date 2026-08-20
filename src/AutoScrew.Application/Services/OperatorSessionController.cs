@@ -968,8 +968,24 @@ public sealed class OperatorSessionController
 
     private void ApplyUnlockNgCore(string? auditAction, string? auditDetail)
     {
-        if (!TryApply(JobSessionTrigger.TechUnlockContinue))
+        PrepareParkResumeFromNgIfNeeded();
+        if (_phase != JobSessionPhase.Running)
             throw new InvalidOperationException("Unlock not allowed in current phase.");
+
+        if (!string.IsNullOrEmpty(auditAction))
+            AuditOperation(auditAction, auditDetail ?? $"sn={_serialNumber}");
+
+        NotifyChanged();
+    }
+
+    /// <summary>NgLocked → Running，当前钉 Pending，不 Notify（避免挂起前触发 AutoRun）。</summary>
+    private void PrepareParkResumeFromNgIfNeeded()
+    {
+        if (_phase != JobSessionPhase.NgLocked)
+            return;
+
+        if (!TryApply(JobSessionTrigger.TechUnlockContinue))
+            throw new InvalidOperationException("Cannot leave NG lock in current phase.");
 
         if (_activeSurfaceOrdinal < _surfaces.Count)
             _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.Active;
@@ -983,18 +999,22 @@ public sealed class OperatorSessionController
 
         _lastErrorMessage = null;
         _lastErrorCode = null;
-
-        if (!string.IsNullOrEmpty(auditAction))
-            AuditOperation(auditAction, auditDetail ?? $"sn={_serialNumber}");
-
-        NotifyChanged();
     }
+
+    /// <summary>
+    /// NG 挂起：当前钉改回 Pending、会话记为 Running，再退出到 Idle。
+    /// 修好设备后扫同一 SN 恢复，不会带着 NgLocked 遮罩。
+    /// </summary>
+    public Task ParkJobAsync(CancellationToken cancellationToken = default) =>
+        ResetToIdleAsync(cancellationToken);
 
     public void ResetToIdle() =>
         ResetToIdleAsync().GetAwaiter().GetResult();
 
     public async Task ResetToIdleAsync(CancellationToken cancellationToken = default)
     {
+        PrepareParkResumeFromNgIfNeeded();
+
         if (!string.IsNullOrWhiteSpace(_serialNumber) && IsActiveJobPhase)
             await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
 
@@ -1011,6 +1031,8 @@ public sealed class OperatorSessionController
 
     public async Task AbortToIdleAsync(CancellationToken cancellationToken = default)
     {
+        PrepareParkResumeFromNgIfNeeded();
+
         if (!string.IsNullOrWhiteSpace(_serialNumber) &&
             _phase is JobSessionPhase.Running or JobSessionPhase.AwaitFlip or JobSessionPhase.NgLocked
                 or JobSessionPhase.LoadingRecipe)

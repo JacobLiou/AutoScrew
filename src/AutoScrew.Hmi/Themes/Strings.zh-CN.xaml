@@ -102,6 +102,8 @@
     <system:String x:Key="S.Operation.LogEnterRework">已标记返修并解锁，继续作业</system:String>
     <system:String x:Key="S.Operation.LogEmergencyUnlock">操作员紧急解除 NG，继续作业</system:String>
     <system:String x:Key="S.Operation.ResetSession">复位会话</system:String>
+    <system:String x:Key="S.Operation.ParkNg">退出作业（挂起）</system:String>
+    <system:String x:Key="S.Operation.LogParkNg">已退出作业并挂起。修好设备后请扫同一 SN 恢复。</system:String>
     <system:String x:Key="S.Operation.ProgressTree">作业进度</system:String>
     <system:String x:Key="S.Operation.CurveTitle">扭矩–角度（最近一步）</system:String>
     <system:String x:Key="S.Operation.CurveUnavailable">曲线控件初始化失败，作业流程不受影响。</system:String>
@@ -117,7 +119,7 @@
     <system:String x:Key="S.Operation.GuideRunningScrew">请锁附【{0}】第 {1} 钉</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">请锁附【{0}】</system:String>
     <system:String x:Key="S.Operation.GuideAwaitFlip">【{0}】已完成，请翻面至【{1}】后点击「确认翻面」。</system:String>
-    <system:String x:Key="S.Operation.GuideNgLocked">螺钉 NG，请联系技术员解锁/返修；紧急时可紧急解除。</system:String>
+    <system:String x:Key="S.Operation.GuideNgLocked">作业已暂停。请「退出作业」挂起，修好设备后再扫同一 SN。</system:String>
     <system:String x:Key="S.Operation.GuideCompleted">本单完成，请扫描下一 SN。</system:String>
     <system:String x:Key="S.Operation.CurrentSurface">当前面</system:String>
     <system:String x:Key="S.Operation.NextSurface">下一面</system:String>
@@ -172,6 +174,7 @@
     <system:String x:Key="S.Operation.NgOverlayTitle">拧紧 NG — 作业已暂停</system:String>
     <system:String x:Key="S.Operation.NgScrewTitle">拧紧 NG — 作业已暂停</system:String>
     <system:String x:Key="S.Operation.NgFeedTitle">供料异常 — 作业已暂停</system:String>
+    <system:String x:Key="S.Operation.NgDeviceTitle">设备 NG — 请退出挂起</system:String>
     <system:String x:Key="S.Operation.RestoreCheckpointTitle">恢复未完成作业</system:String>
     <system:String x:Key="S.Operation.RestoreCheckpointPrompt">检测到未完成作业：SN={0}，PN={1}，状态={2}。是否恢复？</system:String>
     <system:String x:Key="S.Operation.StatusRestoring">正在恢复作业…</system:String>
@@ -181,8 +184,8 @@
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">错误码</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">说明</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">处理建议</system:String>
-    <system:String x:Key="S.Operation.NgOverlayOperatorHint">请联系技术员解锁或处理设备故障。仅在紧急情况下使用「紧急解除」。</system:String>
-    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">确认设备侧可继续后，选择解锁重打或标记返修后重打（将清错）。</system:String>
+    <system:String x:Key="S.Operation.NgOverlayOperatorHint">请先「退出作业」挂起，修好设备后再扫同一 SN 恢复。仅在现场已修好、需立即重打时使用「紧急解除」。</system:String>
+    <system:String x:Key="S.Operation.NgOverlayTechnicianHint">设备故障请先「退出作业」挂起。若现场已清错、需立即重打，再选解锁或返修。</system:String>
     <system:String x:Key="S.Operation.CompletionTitle">本单已完成</system:String>
     <system:String x:Key="S.Operation.CompletionSummary">SN「{0}」· PN「{1}」已完成，准备进入下一单。</system:String>
     <system:String x:Key="S.Operation.CompletionStats">OK {0} · NG {1} · 待打 {2} · 总数 {3}</system:String>
@@ -371,6 +374,8 @@
     <system:String x:Key="S.Dialog.AbortSession">确定放弃当前作业？</system:String>
     <system:String x:Key="S.Dialog.AbortSessionTitle">复位会话</system:String>
     <system:String x:Key="S.Dialog.AbortSessionPark">确定复位当前作业？进度将保存到本地，再扫同一 SN 可恢复；然后可扫描其它 SN。</system:String>
+    <system:String x:Key="S.Dialog.ParkNgTitle">退出作业（挂起）</system:String>
+    <system:String x:Key="S.Dialog.ParkNg">将退出当前作业并保存进度，不会立即重试。请先修好设备，再扫同一 SN 恢复。</system:String>
     <system:String x:Key="S.Dialog.Exception">运行异常</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Title">确认退出</system:String>
     <system:String x:Key="S.ExitAskWindow.ExitAskWindow_Content">确定要退出程序吗？</system:String>

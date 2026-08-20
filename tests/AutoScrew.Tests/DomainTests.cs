@@ -48,6 +48,20 @@ public class JobSessionPhaseMachineTests
         Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.AllScrewsComplete, out var next));
         Assert.Equal(JobSessionPhase.Completed, next);
     }
+
+    [Fact]
+    public void NgLocked_to_Idle_on_ResetToIdle()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.NgLocked, JobSessionTrigger.ResetToIdle, out var next));
+        Assert.Equal(JobSessionPhase.Idle, next);
+    }
+
+    [Fact]
+    public void Running_to_Idle_on_ResetToIdle()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.ResetToIdle, out var next));
+        Assert.Equal(JobSessionPhase.Idle, next);
+    }
 }
 
 public class LockCurveEvaluatorTests

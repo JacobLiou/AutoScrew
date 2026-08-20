@@ -90,7 +90,7 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
-                if (trigger == JobSessionTrigger.Abort)
+                if (trigger == JobSessionTrigger.ResetToIdle || trigger == JobSessionTrigger.Abort)
                 {
                     next = JobSessionPhase.Idle;
                     return true;
@@ -105,7 +105,7 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
-                if (trigger == JobSessionTrigger.Abort)
+                if (trigger == JobSessionTrigger.Abort || trigger == JobSessionTrigger.ResetToIdle)
                 {
                     next = JobSessionPhase.Idle;
                     return true;
@@ -120,7 +120,7 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
-                if (trigger == JobSessionTrigger.Abort)
+                if (trigger == JobSessionTrigger.Abort || trigger == JobSessionTrigger.ResetToIdle)
                 {
                     next = JobSessionPhase.Idle;
                     return true;

@@ -224,6 +224,8 @@ public partial class MainViewModel : ObservableObject
     private bool CanEmergencyUnlockNg() =>
         _session.Phase == JobSessionPhase.NgLocked && _user.Role == UserRole.Operator;
 
+    private bool CanParkNg() => _session.Phase == JobSessionPhase.NgLocked;
+
     [RelayCommand(CanExecute = nameof(CanOpenScan))]
     private void OpenScan()
     {
@@ -553,6 +555,28 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanParkNg))]
+    private async Task ParkNgAsync()
+    {
+        if (!ConfirmTips.ShowDialog(
+                Loc.Get("S.Dialog.ParkNg"),
+                System.Windows.Application.Current.MainWindow,
+                Loc.Get("S.Dialog.ParkNgTitle")))
+            return;
+
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.ParkJob", serialNumber: _session.SerialNumber);
+        await _session.ParkJobAsync().ConfigureAwait(true);
+        SerialNumberInput = "";
+        _activityLog.ClearRecent();
+        IsSnInputEnabled = true;
+        IsNgOverlayVisible = false;
+        IsOperationLocked = false;
+        StatusMessage = Loc.Get("S.Operation.StatusResetParked");
+        AddLog(Loc.Get("S.Operation.LogParkNg"));
+        CurveChanged?.Invoke(this, EventArgs.Empty);
+        NotifyCommandStates();
+    }
+
     private void AfterNgUnlocked(string logMessage)
     {
         IsNgOverlayVisible = false;
@@ -584,15 +608,6 @@ public partial class MainViewModel : ObservableObject
         IsNgOverlayVisible = false;
         IsOperationLocked = false;
         StatusMessage = Loc.Get("S.Operation.StatusResetParked");
-        try
-        {
-            _session.RequestScanDialog();
-        }
-        catch
-        {
-            // ignore
-        }
-
         CurveChanged?.Invoke(this, EventArgs.Empty);
         NotifyCommandStates();
     }
@@ -677,7 +692,9 @@ public partial class MainViewModel : ObservableObject
 
             NgOverlayTitle = ScrewNgAdvisor.IsFeedError(_session.LastErrorCode)
                 ? Loc.Get("S.Operation.NgFeedTitle")
-                : Loc.Get("S.Operation.NgScrewTitle");
+                : ScrewNgAdvisor.IsDeviceError(_session.LastErrorCode)
+                    ? Loc.Get("S.Operation.NgDeviceTitle")
+                    : Loc.Get("S.Operation.NgScrewTitle");
         }
 
         IsNgOverlayVisible = ngLocked;
@@ -1054,6 +1071,7 @@ public partial class MainViewModel : ObservableObject
         UnlockNgCommand.NotifyCanExecuteChanged();
         EnterReworkCommand.NotifyCanExecuteChanged();
         EmergencyUnlockNgCommand.NotifyCanExecuteChanged();
+        ParkNgCommand.NotifyCanExecuteChanged();
     }
 }
 

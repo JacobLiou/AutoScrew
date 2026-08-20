@@ -19,17 +19,17 @@ public static class ScrewNgAdvisor
                 "SKEW_003" => "轴线歪斜超限，重新对正电批与螺钉后再试。",
                 "STRIP_001" => "疑似滑牙，检查螺纹、转速与角度上限。",
                 "JAM_001" => "疑似卡钉，检查供钉与螺钉是否倾斜或堵塞。",
-                "DEVICE_NG" => "控制器判定 NG，请在设备 HMI 查看详情后清错再试。",
+                "DEVICE_NG" => "控制器判定 NG。请「退出作业」挂起，在设备上清错并确认后，再扫同一 SN 恢复。",
                 _ when errorCode.StartsWith("FEED_", StringComparison.Ordinal) =>
                     "供料异常，请检查供料器与料仓后由技术员解锁。",
                 _ when errorCode.StartsWith("DEVICE_", StringComparison.Ordinal) =>
-                    $"控制器错误码 {errorCode["DEVICE_".Length..]}，请技术员清错或返修。",
+                    $"控制器错误码 {errorCode["DEVICE_".Length..]}。请「退出作业」挂起，在设备上清错后，再扫同一 SN 恢复。",
                 _ => "请联系技术员检查曲线与设备报告后解锁。"
             };
         }
 
         if (deviceErrorCode is > 0)
-            return $"控制器错误码 {deviceErrorCode}，请技术员在设备侧清错后解锁重试。";
+            return $"控制器错误码 {deviceErrorCode}。请「退出作业」挂起，在设备上清错后，再扫同一 SN 恢复。";
 
         return "请联系技术员解锁后继续。";
     }
@@ -37,4 +37,9 @@ public static class ScrewNgAdvisor
     public static bool IsFeedError(string? errorCode) =>
         !string.IsNullOrWhiteSpace(errorCode)
         && errorCode.StartsWith("FEED_", StringComparison.Ordinal);
+
+    public static bool IsDeviceError(string? errorCode) =>
+        !string.IsNullOrWhiteSpace(errorCode)
+        && (string.Equals(errorCode, "DEVICE_NG", StringComparison.Ordinal)
+            || errorCode.StartsWith("DEVICE_", StringComparison.Ordinal));
 }

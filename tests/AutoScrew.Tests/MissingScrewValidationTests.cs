@@ -31,6 +31,37 @@ public sealed class MissingScrewValidationTests
     }
 
     [Fact]
+    public async Task ParkFromNg_SavesRunningPending_RescanRestoresWithoutNgLock()
+    {
+        await using var env = await MissingScrewEnv.CreateAsync(new SimulationOptions
+        {
+            TighteningProfile = SimulatedTighteningProfile.OverTorque,
+        });
+
+        env.Controller.RequestScanDialog();
+        await env.Controller.SubmitSerialNumberAsync("SN-PARK-01");
+        await env.Controller.RunCurrentScrewCycleAsync();
+        Assert.Equal(JobSessionPhase.NgLocked, env.Controller.Phase);
+        Assert.Equal(StationScrewState.Ng, env.Controller.ScrewStates[0]);
+
+        await env.Controller.ParkJobAsync();
+
+        Assert.Equal(JobSessionPhase.Idle, env.Controller.Phase);
+        Assert.NotNull(env.Store.Last);
+        Assert.Equal(JobSessionPhase.Running, env.Store.Last!.Phase);
+        Assert.Equal(StationScrewState.Pending, env.Store.Last.Surfaces[0].ScrewStates[0]);
+
+        env.Controller.RequestScanDialog();
+        var accept = await env.Controller.AcceptSerialNumberAsync("SN-PARK-01");
+        Assert.True(accept.Accepted);
+        await env.Controller.ContinueRestoreAfterSerialAcceptedAsync("SN-PARK-01");
+
+        Assert.Equal(JobSessionPhase.Running, env.Controller.Phase);
+        Assert.Equal(StationScrewState.Pending, env.Controller.ScrewStates[0]);
+        Assert.Null(env.Controller.LastErrorCode);
+    }
+
+    [Fact]
     public async Task ConfirmFlip_WithIncompleteSurface_Throws()
     {
         await using var env = await MissingScrewEnv.CreateAsync(new SimulationOptions());
