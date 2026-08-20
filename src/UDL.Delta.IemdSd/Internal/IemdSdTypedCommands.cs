@@ -390,6 +390,24 @@ internal sealed class IemdSdTypedCommands
     public Task ClearProductionReportFilesAsync(CancellationToken ct) =>
         ExecuteMailbox((int)ModbusFunctionCode.Clear_production_report_files, ct);
 
+    public async Task<DeviceHistoryCounts> ReadDeviceHistoryCountsAsync(CancellationToken ct)
+    {
+        var error = await _transport.ReadSingleAsync(ModbusRegisterMap.ErrorReportLatestId, ct).ConfigureAwait(false);
+        var warning = await _transport.ReadSingleAsync(ModbusRegisterMap.WarningReportLatestId, ct).ConfigureAwait(false);
+        var prodLow = await _transport.ReadSingleAsync(ModbusRegisterMap.ReportIdLow, ct).ConfigureAwait(false);
+        var prodHigh = await _transport.ReadSingleAsync(ModbusRegisterMap.ReportIdHigh, ct).ConfigureAwait(false);
+        var btnLow = await _transport.ReadSingleAsync(ModbusRegisterMap.ButtonReportIdLow, ct).ConfigureAwait(false);
+        var btnHigh = await _transport.ReadSingleAsync(ModbusRegisterMap.ButtonReportIdHigh, ct).ConfigureAwait(false);
+
+        return new DeviceHistoryCounts
+        {
+            ProductionLatestId = (uint)(prodHigh * 65536 + (ushort)prodLow),
+            ErrorLatestId = (ushort)error,
+            WarningLatestId = (ushort)warning,
+            ButtonLatestId = (uint)(btnHigh * 65536 + (ushort)btnLow),
+        };
+    }
+
     public async Task<OperatingStatusSnapshot> ReadOperatingStatusAsync(CancellationToken ct)
     {
         var words = await _transport.ReadHoldingAsync(

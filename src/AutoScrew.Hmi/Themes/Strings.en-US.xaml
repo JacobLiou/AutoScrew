@@ -34,6 +34,11 @@
     <system:String x:Key="S.Nav.System">System</system:String>
     <system:String x:Key="S.Nav.Configuration">Configuration</system:String>
     <system:String x:Key="S.Nav.DeviceConfiguration">Device Configuration</system:String>
+    <system:String x:Key="S.Nav.DeviceRecords">Device Records</system:String>
+    <system:String x:Key="S.Nav.DeviceProductionHistory">Production History</system:String>
+    <system:String x:Key="S.Nav.DeviceExceptionHistory">Exception History</system:String>
+    <system:String x:Key="S.Nav.DeviceWarningHistory">Warning History</system:String>
+    <system:String x:Key="S.Nav.DeviceButtonHistory">Button History</system:String>
     <system:String x:Key="S.Nav.Production">Production</system:String>
     <system:String x:Key="S.Nav.Logs">Logs / Audit</system:String>
     <system:String x:Key="S.Nav.MesConnection">MES Connection</system:String>
@@ -786,6 +791,28 @@
     <system:String x:Key="S.Device.NoActiveDevice">No active device selected.</system:String>
     <system:String x:Key="S.Device.ActiveSummary">Station {0} · Active: {1} ({2})</system:String>
     <system:String x:Key="S.Device.StatusSaved">Device configuration saved.</system:String>
+
+    <system:String x:Key="S.DeviceHistory.Refresh">Refresh</system:String>
+    <system:String x:Key="S.DeviceHistory.Simulated">Simulation mode: controller history is unavailable.</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceOffline">Device is offline or disabled.</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceBusy">Device is busy. Wait for the job cycle to finish, then refresh.</system:String>
+    <system:String x:Key="S.DeviceHistory.StatusLoaded">Loaded page {0}/{1}.</system:String>
+    <system:String x:Key="S.DeviceHistory.NoDescription">(no local description)</system:String>
+    <system:String x:Key="S.DeviceHistory.ToolN">Tool {0}</system:String>
+    <system:String x:Key="S.DeviceHistory.UnitDeg">deg</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.DateTime">Date / Time</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Tool">Tool</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.RundownAngle">Rundown angle</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.TighteningAngle">Tightening angle</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.FinalTorque">Final torque</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Status">Status</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.AlNgCode">AL/NG code</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Code">Code</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Description">Description</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ButtonId">Button ID</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.User">User</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ValueBefore">Value before</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ValueAfter">Value after</system:String>
 
     <system:String x:Key="S.Account.UserName">User Name</system:String>
     <system:String x:Key="S.Account.AdmissionNumber">Admission Number</system:String>

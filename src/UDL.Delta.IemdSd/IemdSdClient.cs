@@ -217,14 +217,38 @@ public sealed class IemdSdClient : IIemdSdClient
     public Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default) =>
         _typed.ReadDefaultTorqueUnitAsync(cancellationToken);
 
-    public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+    public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default) =>
         _typed.ReadErrorReportAsync(reportId, wordCount, cancellationToken);
 
-    public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+    public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default) =>
         _typed.ReadWarningReportAsync(reportId, wordCount, cancellationToken);
 
-    public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) =>
+    public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 12, CancellationToken cancellationToken = default) =>
         _typed.ReadButtonReportAsync(reportId, wordCount, cancellationToken);
+
+    public async Task<ErrorReportEntry> ReadErrorReportEntryAsync(uint reportId, CancellationToken cancellationToken = default)
+    {
+        var words = await ReadErrorReportAsync(reportId, HistoryReportParser.ErrorReportWordCount, cancellationToken)
+            .ConfigureAwait(false);
+        return HistoryReportParser.ParseError(reportId, words);
+    }
+
+    public async Task<WarningReportEntry> ReadWarningReportEntryAsync(uint reportId, CancellationToken cancellationToken = default)
+    {
+        var words = await ReadWarningReportAsync(reportId, HistoryReportParser.WarningReportWordCount, cancellationToken)
+            .ConfigureAwait(false);
+        return HistoryReportParser.ParseWarning(reportId, words);
+    }
+
+    public async Task<ButtonReportEntry> ReadButtonReportEntryAsync(uint reportId, CancellationToken cancellationToken = default)
+    {
+        var words = await ReadButtonReportAsync(reportId, HistoryReportParser.ButtonReportWordCount, cancellationToken)
+            .ConfigureAwait(false);
+        return HistoryReportParser.ParseButton(reportId, words);
+    }
+
+    public Task<DeviceHistoryCounts> ReadDeviceHistoryCountsAsync(CancellationToken cancellationToken = default) =>
+        _session.RunAsync(ct => _typed.ReadDeviceHistoryCountsAsync(ct), cancellationToken);
 
     public Task<int[]> ReadSortedProductionReportsAsync(uint wordCount = 100, CancellationToken cancellationToken = default) =>
         _typed.ReadSortedProductionReportsAsync(wordCount, cancellationToken);

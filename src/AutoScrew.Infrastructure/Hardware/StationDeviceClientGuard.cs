@@ -15,7 +15,7 @@ internal static class StationDeviceClientGuard
 
         if (devices.IsDeviceBusy)
             throw new IemdSdDeviceBusyException(
-                "设备正忙（作业拧紧周期进行中），请等待完成后再进行参数/顺序/来源操作。");
+                "设备正忙（作业拧紧周期进行中），请等待完成后再操作。");
 
         await devices.EnsureClientAsync(cancellationToken).ConfigureAwait(false);
         return devices.GetClient()

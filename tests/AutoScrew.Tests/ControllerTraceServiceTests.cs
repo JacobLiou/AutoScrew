@@ -166,9 +166,13 @@ public sealed class ControllerTraceServiceTests
         public Task<PerScrewExportMode> ReadPerScrewExportAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(DefaultTorqueUnit.KgfCm);
-        public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 12, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ErrorReportEntry> ReadErrorReportEntryAsync(uint reportId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<WarningReportEntry> ReadWarningReportEntryAsync(uint reportId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ButtonReportEntry> ReadButtonReportEntryAsync(uint reportId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<DeviceHistoryCounts> ReadDeviceHistoryCountsAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int[]> ReadSortedProductionReportsAsync(uint wordCount = 100, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task DeleteParameterAsync(int parameterId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task QuickSetParameterAsync(int parameterId, int[] payload, CancellationToken cancellationToken = default) => throw new NotImplementedException();

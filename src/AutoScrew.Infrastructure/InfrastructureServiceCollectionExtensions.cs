@@ -60,6 +60,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IControllerParameterPresetService, ControllerParameterPresetService>();
         services.AddSingleton<LocalJsonControllerSequencePresetStore>();
         services.AddSingleton<IControllerSequencePresetService, ControllerSequencePresetService>();
+        services.AddSingleton<IControllerDeviceHistoryService, ControllerDeviceHistoryService>();
         services.AddSingleton<LocalJsonControllerSourceConfigStore>();
         services.AddSingleton<IControllerSourceConfigService, ControllerSourceConfigService>();
         services.AddSingleton<IControllerTraceService, IemdSdControllerTraceService>();

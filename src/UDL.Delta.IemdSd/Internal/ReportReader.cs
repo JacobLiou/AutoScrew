@@ -32,6 +32,13 @@ internal sealed class ReportReader
         static float Torque(int lo) => lo / 1000f;
 
         var status = (DeviceTighteningStatus)U(At(w, 0x147));
+        var year = At(w, 0x136);
+        var month = At(w, 0x137);
+        var day = At(w, 0x138);
+        var hour = At(w, 0x139);
+        var minute = At(w, 0x13A);
+        var second = At(w, 0x13B);
+
         return new ProductionReport
         {
             ReportId = reportId,
@@ -49,6 +56,9 @@ internal sealed class ReportReader
             ErrorCode = U(At(w, 0x149)),
             AppliedTorqueNm = (float)Dw(At(w, 0x17D), At(w, 0x17E)) / 1000f,
             PrevailTorqueNm = Torque(At(w, 0x152)),
+            Timestamp = HistoryReportParser.TryParseTimestamp(year, month, day, hour, minute, second),
+            TorqueUnit = U(At(w, 0x14E)),
+            UserId = U(At(w, 0x164)),
         };
     }
 

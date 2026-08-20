@@ -37,6 +37,11 @@
     <system:String x:Key="S.Nav.System">系统</system:String>
     <system:String x:Key="S.Nav.Configuration">配置</system:String>
     <system:String x:Key="S.Nav.DeviceConfiguration">设备配置</system:String>
+    <system:String x:Key="S.Nav.DeviceRecords">设备记录</system:String>
+    <system:String x:Key="S.Nav.DeviceProductionHistory">生产履历</system:String>
+    <system:String x:Key="S.Nav.DeviceExceptionHistory">异常履历</system:String>
+    <system:String x:Key="S.Nav.DeviceWarningHistory">警告履历</system:String>
+    <system:String x:Key="S.Nav.DeviceButtonHistory">按钮履历</system:String>
     <system:String x:Key="S.Nav.Production">生产</system:String>
     <system:String x:Key="S.Nav.Logs">日志/审计</system:String>
     <system:String x:Key="S.Nav.MesConnection">MES连接</system:String>
@@ -802,6 +807,28 @@
     <system:String x:Key="S.Device.NoActiveDevice">尚未选择激活设备。</system:String>
     <system:String x:Key="S.Device.ActiveSummary">工位 {0} · 激活：{1} ({2})</system:String>
     <system:String x:Key="S.Device.StatusSaved">设备配置已保存。</system:String>
+
+    <system:String x:Key="S.DeviceHistory.Refresh">刷新</system:String>
+    <system:String x:Key="S.DeviceHistory.Simulated">仿真模式：无法读取控制器履历。</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceOffline">设备未连接或未启用。</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceBusy">设备正忙，请等待作业周期结束后再刷新履历。</system:String>
+    <system:String x:Key="S.DeviceHistory.StatusLoaded">已加载第 {0}/{1} 页。</system:String>
+    <system:String x:Key="S.DeviceHistory.NoDescription">（无本地说明）</system:String>
+    <system:String x:Key="S.DeviceHistory.ToolN">工具{0}</system:String>
+    <system:String x:Key="S.DeviceHistory.UnitDeg">度</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.DateTime">日期 / 时间</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Tool">工具</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.RundownAngle">旋入角度</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.TighteningAngle">拧紧角度</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.FinalTorque">最终扭矩</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Status">状态</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.AlNgCode">AL/NG代码</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Code">代码</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.Description">说明</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ButtonId">按钮ID</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.User">使用者</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ValueBefore">修改前数值</system:String>
+    <system:String x:Key="S.DeviceHistory.Col.ValueAfter">修改后数值</system:String>
 
     <!-- UpdateAccount (legacy) -->
     <system:String x:Key="S.Account.UserName">User Name</system:String>

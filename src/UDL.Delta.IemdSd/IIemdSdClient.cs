@@ -100,11 +100,19 @@ public interface IIemdSdClient : IAsyncDisposable
     /// <summary>#555 读控制器默认扭矩单位（0=N.m / 1=kgf.cm / 2=lbf.ft / 3=lbf.in）。</summary>
     Task<DefaultTorqueUnit> ReadDefaultTorqueUnitAsync(CancellationToken cancellationToken = default);
 
-    Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default);
+    Task<int[]> ReadErrorReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default);
 
-    Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default);
+    Task<int[]> ReadWarningReportAsync(uint reportId, uint wordCount = 7, CancellationToken cancellationToken = default);
 
-    Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 50, CancellationToken cancellationToken = default);
+    Task<int[]> ReadButtonReportAsync(uint reportId, uint wordCount = 12, CancellationToken cancellationToken = default);
+
+    Task<ErrorReportEntry> ReadErrorReportEntryAsync(uint reportId, CancellationToken cancellationToken = default);
+
+    Task<WarningReportEntry> ReadWarningReportEntryAsync(uint reportId, CancellationToken cancellationToken = default);
+
+    Task<ButtonReportEntry> ReadButtonReportEntryAsync(uint reportId, CancellationToken cancellationToken = default);
+
+    Task<DeviceHistoryCounts> ReadDeviceHistoryCountsAsync(CancellationToken cancellationToken = default);
 
     Task<int[]> ReadSortedProductionReportsAsync(uint wordCount = 100, CancellationToken cancellationToken = default);
 

@@ -11,8 +11,15 @@ public static class ModbusRegisterMap
 
     public const int DiStatus = 0x67;
     public const int DiCommand = 0x68;
+    /// <summary>Error / exception history latest ID or count.</summary>
+    public const int ErrorReportLatestId = 0x69;
+    /// <summary>Warning history latest ID or count.</summary>
+    public const int WarningReportLatestId = 0x6A;
     public const int ReportIdLow = 0x6B;
     public const int ReportIdHigh = 0x6C;
+    /// <summary>Button history latest ID (DWORD with high).</summary>
+    public const int ButtonReportIdLow = 0x6D;
+    public const int ButtonReportIdHigh = 0x6E;
 
     public const int TotalAngle = 0x24;
     public const int TighteningResultLegacy = 0x26;

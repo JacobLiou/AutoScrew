@@ -118,6 +118,10 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ControllerSequenceViewModel>();
         builder.Services.AddSingleton<ControllerSourceViewModel>();
         builder.Services.AddSingleton<ProcessLibraryViewModel>();
+        builder.Services.AddSingleton<DeviceProductionHistoryViewModel>();
+        builder.Services.AddSingleton<DeviceExceptionHistoryViewModel>();
+        builder.Services.AddSingleton<DeviceWarningHistoryViewModel>();
+        builder.Services.AddSingleton<DeviceButtonHistoryViewModel>();
         builder.Services.AddSingleton<OperationNavPage>();
         builder.Services.AddSingleton<TemplateNavPage>();
         builder.Services.AddSingleton<SettingsPage>();
@@ -128,6 +132,10 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ControllerSequencePage>();
         builder.Services.AddSingleton<ControllerSourcePage>();
         builder.Services.AddSingleton<ProcessLibraryPage>();
+        builder.Services.AddSingleton<DeviceProductionHistoryPage>();
+        builder.Services.AddSingleton<DeviceExceptionHistoryPage>();
+        builder.Services.AddSingleton<DeviceWarningHistoryPage>();
+        builder.Services.AddSingleton<DeviceButtonHistoryPage>();
         builder.Services.AddSingleton<DeviceConnectionPage>();
         builder.Services.AddSingleton<MainShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();

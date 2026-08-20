@@ -30,6 +30,10 @@ public enum MainAppSection
     ControllerSequence,
     ControllerSource,
     ProcessLibrary,
+    DeviceProductionHistory,
+    DeviceExceptionHistory,
+    DeviceWarningHistory,
+    DeviceButtonHistory,
     DeviceConnection,
     Settings
 }
@@ -221,6 +225,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.ControllerSource;
         else if (pageType == typeof(ProcessLibraryPage))
             SelectedSection = MainAppSection.ProcessLibrary;
+        else if (pageType == typeof(DeviceProductionHistoryPage))
+            SelectedSection = MainAppSection.DeviceProductionHistory;
+        else if (pageType == typeof(DeviceExceptionHistoryPage))
+            SelectedSection = MainAppSection.DeviceExceptionHistory;
+        else if (pageType == typeof(DeviceWarningHistoryPage))
+            SelectedSection = MainAppSection.DeviceWarningHistory;
+        else if (pageType == typeof(DeviceButtonHistoryPage))
+            SelectedSection = MainAppSection.DeviceButtonHistory;
         else if (pageType == typeof(DeviceConnectionPage))
             SelectedSection = MainAppSection.DeviceConnection;
         else if (pageType == typeof(SettingsPage))
@@ -264,6 +276,10 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
             MainAppSection.ControllerSource => typeof(ControllerSourcePage),
             MainAppSection.ProcessLibrary => typeof(ProcessLibraryPage),
+            MainAppSection.DeviceProductionHistory => typeof(DeviceProductionHistoryPage),
+            MainAppSection.DeviceExceptionHistory => typeof(DeviceExceptionHistoryPage),
+            MainAppSection.DeviceWarningHistory => typeof(DeviceWarningHistoryPage),
+            MainAppSection.DeviceButtonHistory => typeof(DeviceButtonHistoryPage),
             MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
@@ -428,7 +444,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         section is MainAppSection.ControllerParameter
             or MainAppSection.ControllerSequence
             or MainAppSection.ControllerSource
-            or MainAppSection.ProcessLibrary;
+            or MainAppSection.ProcessLibrary
+            or MainAppSection.DeviceProductionHistory
+            or MainAppSection.DeviceExceptionHistory
+            or MainAppSection.DeviceWarningHistory
+            or MainAppSection.DeviceButtonHistory;
 
     private void RebuildMenuItems()
     {
@@ -499,6 +519,49 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
+        NavigationViewItem? deviceRecordsGroup = null;
+        if (CanUseConfiguration)
+        {
+            deviceRecordsGroup = new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceRecords"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentBulletList24 },
+                IsExpanded = true
+            };
+
+            deviceRecordsGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceProductionHistory"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                TargetPageType = typeof(DeviceProductionHistoryPage),
+                TargetPageTag = "device-production-history"
+            });
+
+            deviceRecordsGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceExceptionHistory"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.ErrorCircle24 },
+                TargetPageType = typeof(DeviceExceptionHistoryPage),
+                TargetPageTag = "device-exception-history"
+            });
+
+            deviceRecordsGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceWarningHistory"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TargetPageType = typeof(DeviceWarningHistoryPage),
+                TargetPageTag = "device-warning-history"
+            });
+
+            deviceRecordsGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.DeviceButtonHistory"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.CursorClick24 },
+                TargetPageType = typeof(DeviceButtonHistoryPage),
+                TargetPageTag = "device-button-history"
+            });
+        }
+
         var systemGroup = new NavigationViewItem
         {
             Content = Loc.Get("S.Nav.System"),
@@ -542,11 +605,15 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
             if (deviceConfigurationGroup is not null)
                 items.Add(deviceConfigurationGroup);
+            if (deviceRecordsGroup is not null)
+                items.Add(deviceRecordsGroup);
             items.Add(systemGroup);
         }
         else if (deviceConfigurationGroup is not null)
         {
             items.Add(deviceConfigurationGroup);
+            if (deviceRecordsGroup is not null)
+                items.Add(deviceRecordsGroup);
         }
 
         MenuItems = items;

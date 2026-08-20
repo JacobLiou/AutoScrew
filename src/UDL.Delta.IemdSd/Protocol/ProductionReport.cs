@@ -31,4 +31,13 @@ public sealed class ProductionReport
     public float AppliedTorqueNm { get; init; }
 
     public float PrevailTorqueNm { get; init; }
+
+    /// <summary>Report timestamp from #750 0x136–0x13B when present; null if invalid.</summary>
+    public DateTime? Timestamp { get; init; }
+
+    /// <summary>Torque unit code at 0x14E (0=N·m / 1=kgf·cm / 2=lbf·ft / 3=lbf·in).</summary>
+    public ushort TorqueUnit { get; init; }
+
+    /// <summary>User account id at 0x164 (1–5 User, 6 Admin).</summary>
+    public ushort UserId { get; init; }
 }
