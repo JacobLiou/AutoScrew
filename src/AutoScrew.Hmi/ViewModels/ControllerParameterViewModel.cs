@@ -80,7 +80,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         Presets = new ObservableCollection<ControllerParameterListItem>();
         DeviceParameters = new ObservableCollection<ControllerParameterListItem>();
         StageItems = new ObservableCollection<ControllerParameterStageItem>();
-        StandardStageItems = new ObservableCollection<ControllerParameterStageItem>();
+        VisibleStageItems = new ObservableCollection<ControllerParameterStageItem>();
         RebuildStageItems();
         DeviceStatusText = BuildDeviceStatusText();
         _devices.DeviceConnectionChanged += OnDeviceConnectionChanged;
@@ -111,8 +111,11 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     public ObservableCollection<ControllerParameterStageItem> StageItems { get; }
 
-    /// <summary>标准策略四阶段：启动 / 旋入 / 预紧 / 拧紧。</summary>
-    public ObservableCollection<ControllerParameterStageItem> StandardStageItems { get; }
+    /// <summary>当前策略下可见的拧紧阶段（标准 4 / 加强 1 / 预定位 2 / 自创最多 6）。</summary>
+    public ObservableCollection<ControllerParameterStageItem> VisibleStageItems { get; }
+
+    /// <summary>兼容旧绑定名；等同 <see cref="VisibleStageItems"/>。</summary>
+    public ObservableCollection<ControllerParameterStageItem> StandardStageItems => VisibleStageItems;
 
 
     [ObservableProperty]
@@ -138,6 +141,10 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     [ObservableProperty]
     private string _name = string.Empty;
+
+    /// <summary>锁附策略：0 标准 / 1 加强 / 2 预定位 / 3 自创。</summary>
+    [ObservableProperty]
+    private int _strategyIndex;
 
     [ObservableProperty]
     private int _minAngleDeg;
@@ -217,11 +224,40 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
             "S.Workbench.Param.Summary",
             ParameterId,
             Name,
+            StrategyDisplayName,
             ActiveStageCount,
             Stage1TorqueKgfCm,
             TorqueUnitLabel);
 
-    public int ActiveStageCount => StageItems.Count(s => s.IsConfigured);
+    public string StrategyDisplayName => StrategyIndex switch
+    {
+        (int)TighteningStrategy.Enhanced => Loc.Get("S.ControllerParam.Strategy.Enhanced"),
+        (int)TighteningStrategy.PrePosition => Loc.Get("S.ControllerParam.Strategy.PrePosition"),
+        (int)TighteningStrategy.SelfDefined => Loc.Get("S.ControllerParam.Strategy.SelfDefined"),
+        _ => Loc.Get("S.ControllerParam.Strategy.Standard"),
+    };
+
+    public TighteningStrategy CurrentStrategy =>
+        StrategyIndex is >= 0 and <= 3
+            ? (TighteningStrategy)StrategyIndex
+            : TighteningStrategy.Standard;
+
+    public bool IsSelfDefinedStrategy => CurrentStrategy == TighteningStrategy.SelfDefined;
+
+    public int ActiveStageCount
+    {
+        get
+        {
+            var indices = TighteningStrategyHelper.GetActiveStageIndices(CurrentStrategy);
+            var count = 0;
+            foreach (var i in indices)
+            {
+                if (i < StageItems.Count && StageItems[i].IsConfigured)
+                    count++;
+            }
+            return count;
+        }
+    }
 
     public double Stage1TorqueNm =>
         StageItems.Count > 0 ? StageItems[0].TargetTorqueNm : 0;
@@ -239,6 +275,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     private bool _sanitizingName;
     private bool _suppressIdNameSync;
+    private bool _suppressStrategyRebuild;
 
     partial void OnNameChanged(string value)
     {
@@ -308,11 +345,31 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         _ = LoadPresetAsync(value.ParameterId);
     }
 
+    partial void OnStrategyIndexChanged(int value)
+    {
+        var strategy = value is >= 0 and <= 3
+            ? (TighteningStrategy)value
+            : TighteningStrategy.Standard;
+        _working.Core.Strategy = strategy;
+        if (_suppressStrategyRebuild)
+            return;
+
+        RebuildVisibleStageItems();
+        OnPropertyChanged(nameof(CurrentStrategy));
+        OnPropertyChanged(nameof(IsSelfDefinedStrategy));
+        OnPropertyChanged(nameof(StrategyDisplayName));
+        AddStageCommand.NotifyCanExecuteChanged();
+        RemoveStageCommand.NotifyCanExecuteChanged();
+        NotifySummary();
+    }
+
     partial void OnSelectedStageIndexChanged(int value)
     {
-        if (value >= 0 && value < StageItems.Count)
+        if (value >= 0 && value < VisibleStageItems.Count)
         {
-            CoerceStandardStageMode(StageItems[value]);
+            var item = VisibleStageItems[value];
+            if (!item.IsSelfDefinedLayout)
+                CoerceStandardStageMode(item);
             OnPropertyChanged(nameof(CurrentStage));
             OnPropertyChanged(nameof(CurrentStageItem));
             RemoveStageCommand.NotifyCanExecuteChanged();
@@ -321,6 +378,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
 
     private static void CoerceStandardStageMode(ControllerParameterStageItem item)
     {
+        if (item.IsSelfDefinedLayout)
+            return;
+
         switch (item.Index)
         {
             case 0:
@@ -351,14 +411,11 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
     }
 
-    public TighteningStageCore? CurrentStage =>
-        SelectedStageIndex >= 0 && SelectedStageIndex < StageItems.Count
-            ? StageItems[SelectedStageIndex].Stage
-            : null;
+    public TighteningStageCore? CurrentStage => CurrentStageItem?.Stage;
 
     public ControllerParameterStageItem? CurrentStageItem =>
-        SelectedStageIndex >= 0 && SelectedStageIndex < StageItems.Count
-            ? StageItems[SelectedStageIndex]
+        SelectedStageIndex >= 0 && SelectedStageIndex < VisibleStageItems.Count
+            ? VisibleStageItems[SelectedStageIndex]
             : null;
 
     public async Task InitializeAsync()
@@ -525,12 +582,17 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         if (item is null)
             return;
-        SelectedStageIndex = item.Index;
+        var idx = VisibleStageItems.IndexOf(item);
+        if (idx >= 0)
+            SelectedStageIndex = idx;
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStage))]
     private void AddStage()
     {
+        if (!IsSelfDefinedStrategy)
+            return;
+
         CommitPendingEdits();
         var empty = StageItems.FirstOrDefault(s => !s.IsConfigured);
         if (empty is null)
@@ -540,7 +602,9 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         }
 
         empty.ApplyDefaultsForNew();
-        SelectedStageIndex = empty.Index;
+        RebuildVisibleStageItems();
+        var idx = VisibleStageItems.IndexOf(empty);
+        SelectedStageIndex = idx >= 0 ? idx : 0;
         NotifySummary();
         OnPropertyChanged(nameof(CurrentStageItem));
         AddStageCommand.NotifyCanExecuteChanged();
@@ -548,17 +612,22 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StatusMessage = Loc.Format("S.ControllerParam.StatusStageAdded", empty.Index + 1);
     }
 
-    private bool CanAddStage() => StageItems.Any(s => !s.IsConfigured);
+    private bool CanAddStage() =>
+        IsSelfDefinedStrategy && StageItems.Any(s => !s.IsConfigured);
 
     [RelayCommand(CanExecute = nameof(CanRemoveStage))]
     private void RemoveStage()
     {
+        if (!IsSelfDefinedStrategy)
+            return;
+
         var item = CurrentStageItem;
         if (item is null)
             return;
 
         CommitPendingEdits();
         item.ClearToEmpty();
+        RebuildVisibleStageItems();
         NotifySummary();
         OnPropertyChanged(nameof(CurrentStageItem));
         AddStageCommand.NotifyCanExecuteChanged();
@@ -566,7 +635,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         StatusMessage = Loc.Format("S.ControllerParam.StatusStageRemoved", item.Index + 1);
     }
 
-    private bool CanRemoveStage() => CurrentStageItem is not null;
+    private bool CanRemoveStage() => IsSelfDefinedStrategy && CurrentStageItem is not null;
 
     [RelayCommand]
     private void OpenLoosenAdvanced()
@@ -1028,10 +1097,22 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         SeatPointAngleCorrectionTenthDeg = template.Core.SeatPointAngleCorrectionTenthDeg;
         ToolPrecisionCompTenthPercent = template.Core.ToolPrecisionCompTenthPercent;
         TorqueRateAngleDelayTenthDeg = template.Core.TorqueRateAngleDelayTenthDeg;
+        _suppressStrategyRebuild = true;
+        try
+        {
+            StrategyIndex = (int)template.Core.Strategy;
+        }
+        finally
+        {
+            _suppressStrategyRebuild = false;
+        }
         RebuildStageItems();
         DirectionIndex = template.Core.Stages.Count > 0
             ? (int)template.Core.Stages[0].Direction
             : (int)TighteningDirection.Clockwise;
+        OnPropertyChanged(nameof(CurrentStrategy));
+        OnPropertyChanged(nameof(IsSelfDefinedStrategy));
+        OnPropertyChanged(nameof(StrategyDisplayName));
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
         NotifySummary();
@@ -1042,22 +1123,59 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         // Drop selection so consumers (CurrentStageItem) clear before new items arrive.
         SelectedStageIndex = -1;
         StageItems.Clear();
-        StandardStageItems.Clear();
         var stages = _working.Core.Stages;
-        for (var i = 0; i < stages.Count; i++)
-            StageItems.Add(new ControllerParameterStageItem(i, stages[i], _displayTorqueUnit));
+        while (stages.Count < MaxStageCount)
+            stages.Add(new TighteningStageCore());
 
-        for (var i = 0; i < Math.Min(4, StageItems.Count); i++)
-            StandardStageItems.Add(StageItems[i]);
+        var useNamed = CurrentStrategy != TighteningStrategy.SelfDefined;
+        for (var i = 0; i < MaxStageCount; i++)
+        {
+            var item = new ControllerParameterStageItem(i, stages[i], _displayTorqueUnit);
+            item.SetUseNamedStandardLayout(useNamed);
+            StageItems.Add(item);
+        }
 
-        // 标准策略：启动阶段固定角度控制
-        if (StageItems.Count > 0 && StageItems[0].ControlModeIndex != (int)TighteningControlMode.Angle)
+        RebuildVisibleStageItems();
+    }
+
+    private void RebuildVisibleStageItems()
+    {
+        var previousAbsoluteIndex = CurrentStageItem?.Index ?? -1;
+        SelectedStageIndex = -1;
+        VisibleStageItems.Clear();
+
+        var strategy = CurrentStrategy;
+        var useNamed = strategy != TighteningStrategy.SelfDefined;
+        foreach (var item in StageItems)
+            item.SetUseNamedStandardLayout(useNamed);
+
+        foreach (var idx in TighteningStrategyHelper.GetActiveStageIndices(strategy))
+        {
+            if (idx < StageItems.Count)
+                VisibleStageItems.Add(StageItems[idx]);
+        }
+
+        // 标准 / 预定位：启动阶段固定角度
+        if (strategy is TighteningStrategy.Standard or TighteningStrategy.PrePosition
+            && StageItems.Count > 0
+            && StageItems[0].ControlModeIndex != (int)TighteningControlMode.Angle)
+        {
             StageItems[0].ControlModeIndex = (int)TighteningControlMode.Angle;
+        }
 
-        SelectedStageIndex = StandardStageItems.Count > 0 ? 0 : -1;
+        var select = 0;
+        if (previousAbsoluteIndex >= 0)
+        {
+            var match = VisibleStageItems.ToList().FindIndex(s => s.Index == previousAbsoluteIndex);
+            if (match >= 0)
+                select = match;
+        }
+
+        SelectedStageIndex = VisibleStageItems.Count > 0 ? select : -1;
 
         OnPropertyChanged(nameof(CurrentStage));
         OnPropertyChanged(nameof(CurrentStageItem));
+        OnPropertyChanged(nameof(IsSelfDefinedStrategy));
         AddStageCommand.NotifyCanExecuteChanged();
         RemoveStageCommand.NotifyCanExecuteChanged();
         NotifySummary();
@@ -1067,6 +1185,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         _working.ParameterId = ParameterId;
         _working.Core.Name = Name;
+        _working.Core.Strategy = CurrentStrategy;
         _working.Core.MinAngleDeg = MinAngleDeg;
         _working.Core.MaxAngleDeg = MaxAngleDeg;
         _working.Core.MaxTighteningTimeTenthSec = MaxTighteningTimeTenthSec;
@@ -1091,6 +1210,7 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     private void NotifySummary()
     {
         OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(StrategyDisplayName));
         OnPropertyChanged(nameof(ActiveStageCount));
         OnPropertyChanged(nameof(Stage1TorqueNm));
         OnPropertyChanged(nameof(Stage1TorqueKgfCm));

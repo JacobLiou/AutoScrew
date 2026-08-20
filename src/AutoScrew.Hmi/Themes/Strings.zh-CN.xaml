@@ -488,6 +488,12 @@
     <system:String x:Key="S.ControllerParam.Basic.Advanced">进阶设定</system:String>
     <system:String x:Key="S.ControllerParam.Basic.MaxLoosenTimeSec">最大拧松时间 (秒)</system:String>
     <system:String x:Key="S.ControllerParam.ParameterId">参数 ID</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy">策略</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.Standard">标准</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.Enhanced">加强</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.PrePosition">预定位</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.SelfDefined">自创</system:String>
+    <system:String x:Key="S.ControllerParam.Stage.Number">阶段{0}</system:String>
     <system:String x:Key="S.ControllerParam.Name">名称</system:String>
     <system:String x:Key="S.ControllerParam.MinAngle">最小角度 (°)</system:String>
     <system:String x:Key="S.ControllerParam.MaxAngle">最大角度 (°)</system:String>
@@ -682,7 +688,7 @@
     <system:String x:Key="S.Workbench.ProductionMode">产线模式</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStart">Quick Start</system:String>
     <system:String x:Key="S.Workbench.Param.SummaryCard">参数摘要</system:String>
-    <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} 阶段有效 · 阶段1 {3:F3} {4}</system:String>
+    <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} · {3} 阶段有效 · 阶段1 {4:F3} {5}</system:String>
     <system:String x:Key="S.Workbench.Param.StageTitle">阶段 {0}</system:String>
     <system:String x:Key="S.Workbench.Param.TabSimple">简易</system:String>
     <system:String x:Key="S.Workbench.Param.TabAdvanced">高级</system:String>

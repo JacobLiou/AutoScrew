@@ -472,6 +472,12 @@
     <system:String x:Key="S.ControllerParam.Basic.Advanced">Advanced settings</system:String>
     <system:String x:Key="S.ControllerParam.Basic.MaxLoosenTimeSec">Max loosen time (s)</system:String>
     <system:String x:Key="S.ControllerParam.ParameterId">Parameter ID</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy">Strategy</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.Standard">Standard</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.Enhanced">Enhanced</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.PrePosition">Pre-position</system:String>
+    <system:String x:Key="S.ControllerParam.Strategy.SelfDefined">Self-defined</system:String>
+    <system:String x:Key="S.ControllerParam.Stage.Number">Stage {0}</system:String>
     <system:String x:Key="S.ControllerParam.Name">Name</system:String>
     <system:String x:Key="S.ControllerParam.MinAngle">Min angle (°)</system:String>
     <system:String x:Key="S.ControllerParam.MaxAngle">Max angle (°)</system:String>
@@ -666,7 +672,7 @@
     <system:String x:Key="S.Workbench.ProductionMode">Production mode</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStart">Quick Start</system:String>
     <system:String x:Key="S.Workbench.Param.SummaryCard">Summary</system:String>
-    <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} active stages · stage1 {3:F3} {4}</system:String>
+    <system:String x:Key="S.Workbench.Param.Summary">ID {0} · {1} · {2} · {3} active stages · stage1 {4:F3} {5}</system:String>
     <system:String x:Key="S.Workbench.Param.StageTitle">Stage {0}</system:String>
     <system:String x:Key="S.Workbench.Param.TabSimple">Simple</system:String>
     <system:String x:Key="S.Workbench.Param.TabAdvanced">Advanced</system:String>

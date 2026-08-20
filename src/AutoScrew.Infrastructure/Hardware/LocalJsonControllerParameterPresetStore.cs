@@ -150,7 +150,10 @@ public sealed class ControllerParameterPresetDocument
             Core = Core ?? new TighteningParameterCore(),
         };
         if (Core is null)
+        {
             template.SyncCoreFromRaw();
+            template.Core.Strategy = TighteningStrategyHelper.InferFromStages(template.Core.Stages);
+        }
         else
             template.ApplyCoreToRaw();
         return template;

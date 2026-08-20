@@ -61,6 +61,22 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
     public int Index { get; }
     public TighteningStageCore Stage { get; }
 
+    /// <summary>标准/加强/预定位用命名阶段布局；自创为通用控制模式布局。</summary>
+    public bool UseNamedStandardLayout { get; private set; } = true;
+
+    public bool IsSelfDefinedLayout => !UseNamedStandardLayout;
+
+    public void SetUseNamedStandardLayout(bool useNamed)
+    {
+        if (UseNamedStandardLayout == useNamed)
+            return;
+        UseNamedStandardLayout = useNamed;
+        OnPropertyChanged(nameof(UseNamedStandardLayout));
+        OnPropertyChanged(nameof(IsSelfDefinedLayout));
+        RefreshTitle();
+        NotifyPrimaryVisibility();
+    }
+
     public string TorqueUnitLabel => TorqueUnitConverter.GetUnitSymbol(_displayTorqueUnit);
 
     public void SetDisplayTorqueUnit(DefaultTorqueUnit unit)
@@ -100,13 +116,13 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         }
     }
 
-    public bool IsStartStage => Index == 0;
-    public bool IsScrewInStage => Index == 1;
-    public bool IsPreTightenStage => Index == 2;
-    public bool IsFinalTightenStage => Index == 3;
+    public bool IsStartStage => UseNamedStandardLayout && Index == 0;
+    public bool IsScrewInStage => UseNamedStandardLayout && Index == 1;
+    public bool IsPreTightenStage => UseNamedStandardLayout && Index == 2;
+    public bool IsFinalTightenStage => UseNamedStandardLayout && Index == 3;
 
-    public bool ShowTorqueMonitorSection => Index is 0 or 1 or 3;
-    public bool ShowAngleMonitorSection => Index is 1 or 2 or 3;
+    public bool ShowTorqueMonitorSection => IsSelfDefinedLayout || Index is 0 or 1 or 3;
+    public bool ShowAngleMonitorSection => IsSelfDefinedLayout || Index is 1 or 2 or 3;
 
     public bool IsModeAngle
     {
@@ -791,22 +807,29 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     private void RefreshTitle()
     {
-        Title = Index switch
+        if (!UseNamedStandardLayout)
         {
-            0 => Loc.Get("S.ControllerParam.Stage.Start"),
-            1 => Loc.Get("S.ControllerParam.Stage.ScrewIn"),
-            2 => Loc.Get("S.ControllerParam.Stage.PreTighten"),
-            3 => Loc.Get("S.ControllerParam.Stage.Tighten"),
-            _ => Loc.Get(Stage.ControlMode switch
+            Title = Loc.Format("S.ControllerParam.Stage.Number", Index + 1);
+        }
+        else
+        {
+            Title = Index switch
             {
-                TighteningControlMode.Angle => "S.Workbench.Param.ModeAngle",
-                TighteningControlMode.Torque => "S.Workbench.Param.ModeTorque",
-                TighteningControlMode.TorqueRate => "S.Workbench.Param.ModeTorqueRate",
-                TighteningControlMode.ClampTorque => "S.Workbench.Param.ModeClampTorque",
-                TighteningControlMode.ClampAngle => "S.Workbench.Param.ModeClampAngle",
-                _ => "S.Workbench.Param.ModeAngle",
-            }),
-        };
+                0 => Loc.Get("S.ControllerParam.Stage.Start"),
+                1 => Loc.Get("S.ControllerParam.Stage.ScrewIn"),
+                2 => Loc.Get("S.ControllerParam.Stage.PreTighten"),
+                3 => Loc.Get("S.ControllerParam.Stage.Tighten"),
+                _ => Loc.Get(Stage.ControlMode switch
+                {
+                    TighteningControlMode.Angle => "S.Workbench.Param.ModeAngle",
+                    TighteningControlMode.Torque => "S.Workbench.Param.ModeTorque",
+                    TighteningControlMode.TorqueRate => "S.Workbench.Param.ModeTorqueRate",
+                    TighteningControlMode.ClampTorque => "S.Workbench.Param.ModeClampTorque",
+                    TighteningControlMode.ClampAngle => "S.Workbench.Param.ModeClampAngle",
+                    _ => "S.Workbench.Param.ModeAngle",
+                }),
+            };
+        }
         var color = DotColors[Math.Clamp(Index, 0, DotColors.Length - 1)];
         DotBrush = new SolidColorBrush(color);
         OnPropertyChanged(nameof(Title));
@@ -835,6 +858,7 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         OnPropertyChanged(nameof(IsScrewInStage));
         OnPropertyChanged(nameof(IsPreTightenStage));
         OnPropertyChanged(nameof(IsFinalTightenStage));
+        OnPropertyChanged(nameof(IsSelfDefinedLayout));
         OnPropertyChanged(nameof(ShowTorqueMonitorSection));
         OnPropertyChanged(nameof(ShowAngleMonitorSection));
         NotifyModeSelection();

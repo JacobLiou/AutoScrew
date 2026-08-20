@@ -3,6 +3,10 @@ namespace UDL.Delta.IemdSd.Protocol;
 public sealed class TighteningParameterCore
 {
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>锁附策略（本地 JSON 持久化；不写入 349-word Raw）。</summary>
+    public TighteningStrategy Strategy { get; set; } = TighteningStrategy.Standard;
+
     public int MinAngleDeg { get; set; }
     public bool LastStageServoOn { get; set; }
     public int LinkedCompensationParamId { get; set; }
