@@ -156,7 +156,7 @@ public sealed class ControllerDeviceHistoryService : IControllerDeviceHistorySer
         StationDeviceClientGuard.RequireIdleClientAsync(_devices, cancellationToken);
 
     private static int NormalizePageSize(int pageSize) =>
-        pageSize is < 1 or > 50 ? 20 : pageSize;
+        pageSize is < 1 or > 50 ? 10 : pageSize;
 
     private static IEnumerable<uint> EnumerateIdsDescending(uint latestId, int pageIndex, int pageSize)
     {

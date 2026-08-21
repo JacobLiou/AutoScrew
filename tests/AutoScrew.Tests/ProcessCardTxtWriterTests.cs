@@ -97,4 +97,74 @@ public sealed class ProcessCardTxtWriterTests
         Assert.DoesNotContain("末段伺服保持", advancedSection);
         Assert.DoesNotContain("关联补偿参数ID", advancedSection);
     }
+
+    [Fact]
+    public void Format_WritesStrategyAndRoundTripsSelfDefinedAdvanced()
+    {
+        var core = new TighteningParameterCore
+        {
+            Name = "RT",
+            Strategy = TighteningStrategy.SelfDefined,
+            MaxAngleDeg = 100,
+            MaxTighteningTimeTenthSec = 50,
+            Stages = TighteningParameterCore.CreateDefaultStages(),
+            Loosen = new TighteningLoosenCore
+            {
+                Stage1AngleDeg = 10,
+                Stage1SpeedRpm = 20,
+                Stage1AccelMs = 33,
+                Stage2AccelMs = 44,
+            },
+        };
+        core.Stages[0].ControlMode = TighteningControlMode.Angle;
+        core.Stages[0].TargetAngleDeg = 90;
+        core.Stages[0].SpeedRpm = 80;
+        core.Stages[0].AccelTimeMs = 12;
+        core.Stages[0].PauseTimeMs = 5;
+        core.Stages[4].ControlMode = TighteningControlMode.Torque;
+        core.Stages[4].TargetTorqueMilliNm = TorqueUnitConverter.DisplayToMilliNm(1.5, DefaultTorqueUnit.LbfIn);
+        core.Stages[4].SpeedRpm = 150;
+        core.Stages[5].ControlMode = TighteningControlMode.Angle;
+        core.Stages[5].TargetAngleDeg = 30;
+        core.Stages[5].SpeedRpm = 40;
+
+        var template = new TighteningParameterTemplate { ParameterId = 1, Core = core };
+        var text = ProcessCardTxtWriter.Format(template, "RT", 0);
+        Assert.Contains("策略：自创", text, StringComparison.Ordinal);
+        Assert.Contains("5.阶段5", text, StringComparison.Ordinal);
+        Assert.Contains("6.阶段6", text, StringComparison.Ordinal);
+        Assert.Contains("控制模式：", text, StringComparison.Ordinal);
+
+        var again = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(TighteningStrategy.SelfDefined, again.Template.Core.Strategy);
+        Assert.Equal(12, again.Template.Core.Stages[0].AccelTimeMs);
+        Assert.Equal(5, again.Template.Core.Stages[0].PauseTimeMs);
+        Assert.Equal(150, again.Template.Core.Stages[4].SpeedRpm);
+        Assert.Equal(30, again.Template.Core.Stages[5].TargetAngleDeg);
+        Assert.Equal(33, again.Template.Core.Loosen.Stage1AccelMs);
+        Assert.Equal(44, again.Template.Core.Loosen.Stage2AccelMs);
+    }
+
+    [Fact]
+    public void Format_Enhanced_WritesOnlyTightenStage()
+    {
+        var core = new TighteningParameterCore
+        {
+            Strategy = TighteningStrategy.Enhanced,
+            MaxTighteningTimeTenthSec = 10,
+            Stages = TighteningParameterCore.CreateDefaultStages(),
+            Loosen = new TighteningLoosenCore(),
+        };
+        core.Stages[3].ControlMode = TighteningControlMode.Torque;
+        core.Stages[3].TargetTorqueMilliNm = 500;
+        core.Stages[3].SpeedRpm = 200;
+
+        var text = ProcessCardTxtWriter.Format(
+            new TighteningParameterTemplate { ParameterId = 1, Core = core },
+            "ENH",
+            0);
+        Assert.Contains("策略：加强", text, StringComparison.Ordinal);
+        Assert.Contains("4.拧紧", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("1.启动", text, StringComparison.Ordinal);
+    }
 }

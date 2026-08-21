@@ -52,6 +52,19 @@ public sealed class SequenceExcelWriterTests
     }
 
     [Fact]
+    public void Parse_AllTemplateSequenceFixture_Succeeds()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "AllTemplateSequence.xlsx");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+        using var stream = File.OpenRead(path);
+        var parsed = SequenceExcelParser.Parse(stream);
+        Assert.True(parsed.IsSuccess, string.Join("; ", parsed.Errors));
+        Assert.Equal(5, parsed.Steps.Count);
+        Assert.Equal("ALLTPL-00", parsed.Steps[^1].ParameterCode);
+        Assert.Equal(0, parsed.Steps[^1].SlotId);
+    }
+
+    [Fact]
     public void Write_EmptySteps_Throws()
     {
         using var stream = new MemoryStream();

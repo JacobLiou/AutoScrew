@@ -10,20 +10,21 @@ public class HistoryReportParserTests
     [Fact]
     public void ParseError_ReadsTimestampAndCode()
     {
-        var words = new[] { 2026, 8, 20, 14, 30, 26, 3224 };
+        var words = new[] { 2026, 8, 20, 14, 30, 26, 0x3224 };
         var entry = HistoryReportParser.ParseError(7, words);
         Assert.Equal(7u, entry.ReportId);
         Assert.Equal(new DateTime(2026, 8, 20, 14, 30, 26), entry.Timestamp);
-        Assert.Equal((ushort)3224, entry.Code);
+        Assert.Equal((ushort)0x3224, entry.Code);
         Assert.Equal("NG3224", HistoryReportParser.FormatAlarmCode(entry.Code));
     }
 
     [Fact]
     public void ParseWarning_FormatsWnCode()
     {
-        var words = new[] { 2026, 8, 20, 12, 59, 32, 5081 };
+        var words = new[] { 2026, 8, 20, 12, 59, 32, 0x5081 };
         var entry = HistoryReportParser.ParseWarning(3, words);
         Assert.Equal("WN5081", HistoryReportParser.FormatAlarmCode(entry.Code));
+        Assert.Equal("拧紧OK后禁止拧松", DeviceAlarmCodeCatalog.TryGetChineseDescription(entry.Code));
     }
 
     [Fact]

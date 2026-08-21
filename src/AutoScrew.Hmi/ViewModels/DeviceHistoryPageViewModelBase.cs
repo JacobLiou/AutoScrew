@@ -33,7 +33,7 @@ public abstract partial class DeviceHistoryPageViewModelBase : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _pageDisplay = "1";
 
-    public int PageSize { get; } = 20;
+    public int PageSize { get; } = 10;
 
     public bool CanGoPrevious => PageIndex > 0 && !IsBusy;
 

@@ -119,48 +119,27 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         if (ids.Count == 0)
             return [];
 
-        const int concurrency = 2;
-        using var gate = new SemaphoreSlim(concurrency, concurrency);
-        var results = new ControllerDeviceParameterEntry[ids.Count];
-        var tasks = new Task[ids.Count];
-        for (var i = 0; i < ids.Count; i++)
-        {
-            var index = i;
-            var id = ids[i];
-            tasks[i] = FillParameterEntryAsync(gate, results, index, id, cancellationToken);
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-        return results;
-    }
-
-    private async Task FillParameterEntryAsync(
-        SemaphoreSlim gate,
-        ControllerDeviceParameterEntry[] results,
-        int index,
-        int parameterId,
-        CancellationToken cancellationToken)
-    {
-        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        // Must be sequential: RequireIdleClientAsync throws while DeviceSession.IsBusy.
+        // Concurrent name reads race (second call sees busy) and degrade to ID-only display.
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var results = new List<ControllerDeviceParameterEntry>(ids.Count);
+        foreach (var parameterId in ids)
         {
             try
             {
-                var template = await ReadFromDeviceAsync(parameterId, cancellationToken).ConfigureAwait(false);
-                results[index] = new ControllerDeviceParameterEntry(
+                var template = await client.ReadParameterAsync(parameterId, cancellationToken).ConfigureAwait(false);
+                results.Add(new ControllerDeviceParameterEntry(
                     parameterId,
-                    template.Core.Name?.Trim() ?? string.Empty);
+                    template.Core.Name?.Trim() ?? string.Empty));
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "ListDeviceParameterEntries: failed to read name for parameter {ParamId}", parameterId);
-                results[index] = new ControllerDeviceParameterEntry(parameterId, string.Empty);
+                results.Add(new ControllerDeviceParameterEntry(parameterId, string.Empty));
             }
         }
-        finally
-        {
-            gate.Release();
-        }
+
+        return results;
     }
 
     public async Task<ControllerParameterBulkImportResult> ImportAllFromDeviceAsync(

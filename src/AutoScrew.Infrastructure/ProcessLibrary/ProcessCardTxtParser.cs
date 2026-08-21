@@ -14,8 +14,9 @@ public static class ProcessCardTxtParser
         @"^(?<k>[^：:]+)[：:]\s*(?<v>.*?)\s*$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>兼容命名四阶段与自创 <c>N.阶段N</c>。</summary>
     private static readonly Regex StageHeader = new(
-        @"^(?<n>\d+)\.(?<name>启动|旋入|预紧|拧紧)\s*$",
+        @"^(?<n>\d+)\.(?<name>启动|旋入|预紧|拧紧|阶段\d+)\s*$",
         RegexOptions.Compiled);
 
     public static ProcessCardParseResult Parse(string text, string? sourceFilePath = null)
@@ -27,7 +28,7 @@ public static class ProcessCardTxtParser
             .Replace('\r', '\n')
             .Split('\n')
             .Select(static l => StripComment(l.Trim()))
-            .Where(static l => l.Length > 0)
+            .Where(static l => l.Length > 0 && !l.StartsWith('#') && !l.StartsWith("//", StringComparison.Ordinal))
             .ToList();
 
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -44,6 +45,8 @@ public static class ProcessCardTxtParser
             {
                 inLoosen = false;
                 var idx = int.Parse(stageMatch.Groups["n"].Value, CultureInfo.InvariantCulture) - 1;
+                if (idx is < 0 or > 5)
+                    continue;
                 currentStage = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 stageBlocks[idx] = currentStage;
                 continue;
@@ -125,6 +128,7 @@ public static class ProcessCardTxtParser
         stageCount = Math.Clamp(stageCount, 1, 6);
 
         var direction = ParseDirection(GetString(map, "旋转方向"));
+        var strategy = ParseStrategy(GetString(map, "策略"));
 
         var template = new TighteningParameterTemplate
         {
@@ -133,6 +137,7 @@ public static class ProcessCardTxtParser
             Core = new TighteningParameterCore
             {
                 Name = screwPn,
+                Strategy = strategy,
                 Stages = TighteningParameterCore.CreateDefaultStages(),
                 Loosen = new TighteningLoosenCore(),
             },
@@ -156,11 +161,22 @@ public static class ProcessCardTxtParser
         template.Core.TorqueRateAngleDelayTenthDeg = GetInt(map, "扭矩率角度间隔", 0);
         template.Core.SeatPointAngleCorrectionTenthDeg = GetInt(map, "贴合点角度修正", 0);
 
-        for (var i = 0; i < stageCount; i++)
+        // 按段标题序号灌入（加强仅 4.拧紧 → 槽 3；自创可含 5/6）
+        foreach (var (idx, block) in stageBlocks)
         {
-            if (!stageBlocks.TryGetValue(i, out var block))
+            if (idx is < 0 or > 5)
                 continue;
-            ApplyStage(template.Core.Stages[i], i, block, direction);
+            ApplyStage(template.Core.Stages[idx], idx, block, direction);
+        }
+
+        // 阶段有效：截断尾部空槽（不删已解析的中间槽，如加强槽 3）
+        if (strategy == TighteningStrategy.SelfDefined && stageCount < 6)
+        {
+            for (var i = stageCount; i < 6; i++)
+            {
+                if (!stageBlocks.ContainsKey(i))
+                    template.Core.Stages[i] = new TighteningStageCore();
+            }
         }
 
         ApplyLoosen(template.Core.Loosen, loosenMap, direction);
@@ -209,7 +225,9 @@ public static class ProcessCardTxtParser
         var torqueJudge = ResolveJudgeEnabled(block, "扭矩判断", maxTorqueLbf > 0 || minTorqueLbf > 0);
         var angleJudge = ResolveJudgeEnabled(block, "角度判断", maxAngle > 0 || minAngle > 0);
 
-        stage.ControlMode = ResolveControlMode(index, tightenAngle, torqueLbf, torqueRate, clampTorqueLbf, clampAngle);
+        var explicitMode = TryParseControlMode(GetString(block, "控制模式"));
+        stage.ControlMode = explicitMode
+            ?? ResolveControlMode(index, tightenAngle, torqueLbf, torqueRate, clampTorqueLbf, clampAngle);
 
         switch (stage.ControlMode)
         {
@@ -263,6 +281,37 @@ public static class ProcessCardTxtParser
             stage.MaxAngleDeg = 0;
             stage.MinAngleDeg = 0;
         }
+
+        ApplyStageAdvanced(stage, block);
+    }
+
+    private static void ApplyStageAdvanced(TighteningStageCore stage, IReadOnlyDictionary<string, string> block)
+    {
+        // 段内键与全局进阶「扭矩率角度间隔」同名时，段块优先（已在段 map 中）
+        if (block.ContainsKey("扭矩率角度间隔"))
+            stage.TorqueRateAngleIntervalTenthDeg = GetInt(block, "扭矩率角度间隔", 0);
+
+        stage.AccelTimeMs = GetInt(block, "加速时间", 0);
+        stage.DecelTimeMs = GetInt(block, "减速时间", 0);
+        stage.MaxRunTimeCentiSec = GetInt(block, "最大运行时间", 0);
+        stage.MinRunTimeCentiSec = GetInt(block, "最小运行时间", 0);
+
+        if (block.ContainsKey("补偿扭矩"))
+            stage.CompTorqueEnabled = ParseOnOff(GetString(block, "补偿扭矩"));
+        stage.CompTorqueAnglePercent = GetInt(block, "补偿扭矩角度百分比", 0);
+        stage.PauseTimeMs = GetInt(block, "暂停时间", GetInt(block, "持续时间", 0));
+
+        var minClampTorqueLbf = GetDouble(block, "最小夹紧扭矩", 0);
+        if (minClampTorqueLbf > 0 || block.ContainsKey("最小夹紧扭矩"))
+            stage.MinClampTorqueMilliNm = LbfInToMilliNm(minClampTorqueLbf);
+        stage.MinClampAngleDeg = GetInt(block, "最小夹紧角度", 0);
+
+        var seg1Lbf = GetDouble(block, "一段扭矩", 0);
+        if (seg1Lbf > 0 || block.ContainsKey("一段扭矩"))
+            stage.Segment1TorqueMilliNm = LbfInToMilliNm(seg1Lbf);
+        stage.Segment1PauseMs = GetInt(block, "一段暂停", 0);
+        stage.Segment2AccelMs = GetInt(block, "二段加速", 0);
+        stage.FinalSpeedRpm = GetInt(block, "最终速度", 0);
     }
 
     /// <summary>
@@ -289,6 +338,24 @@ public static class ProcessCardTxtParser
                || v.Equals("关", StringComparison.Ordinal)
                || v.Equals("否", StringComparison.Ordinal)
                || v.Equals("0", StringComparison.Ordinal);
+    }
+
+    private static TighteningControlMode? TryParseControlMode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        var v = value.Trim();
+        if (v.Contains("扭矩率", StringComparison.Ordinal))
+            return TighteningControlMode.TorqueRate;
+        if (v.Contains("夹紧扭矩", StringComparison.Ordinal))
+            return TighteningControlMode.ClampTorque;
+        if (v.Contains("夹紧角度", StringComparison.Ordinal))
+            return TighteningControlMode.ClampAngle;
+        if (v.Contains("扭矩", StringComparison.Ordinal))
+            return TighteningControlMode.Torque;
+        if (v.Contains("角度", StringComparison.Ordinal))
+            return TighteningControlMode.Angle;
+        return null;
     }
 
     private static TighteningControlMode ResolveControlMode(
@@ -323,11 +390,13 @@ public static class ProcessCardTxtParser
             return TighteningControlMode.Torque;
         }
 
-        // 拧紧：4 选 1
+        // 拧紧及自创段：4 选 1
         if (clampAngle > 0 && torqueLbf <= 0 && clampTorqueLbf <= 0 && tightenAngle <= 0)
             return TighteningControlMode.ClampAngle;
         if (clampTorqueLbf > 0 && torqueLbf <= 0)
             return TighteningControlMode.ClampTorque;
+        if (torqueRate > 0)
+            return TighteningControlMode.TorqueRate;
         if (torqueLbf > 0)
             return TighteningControlMode.Torque;
         if (tightenAngle > 0)
@@ -352,8 +421,30 @@ public static class ProcessCardTxtParser
         if (loosen.Stage1SpeedRpm == 0)
             loosen.Stage1SpeedRpm = GetInt(map, "速度", 0);
 
+        // 段内「加速时间」→ 一段加速时间；或顶层「第一段加速」
+        loosen.Stage1AccelMs = GetInt(map, "一段加速时间", GetInt(map, "一段加速", GetInt(map, "第一段加速", 0)));
+        loosen.Stage2AccelMs = GetInt(map, "二段加速时间", GetInt(map, "二段加速", GetInt(map, "第二段加速", 0)));
+
         loosen.ProductionLogEnabled = ParseOnOff(GetString(map, "生产履历存档"));
         loosen.DetectTorqueMilliNm = LbfInToMilliNm(GetDouble(map, "最小扭矩", 0));
+    }
+
+    public static TighteningStrategy ParseStrategy(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return TighteningStrategy.Standard;
+        var v = value.Trim();
+        if (v.Contains("加强", StringComparison.Ordinal) ||
+            v.Equals("Enhanced", StringComparison.OrdinalIgnoreCase))
+            return TighteningStrategy.Enhanced;
+        if (v.Contains("预定位", StringComparison.Ordinal) ||
+            v.Contains("PrePosition", StringComparison.OrdinalIgnoreCase) ||
+            v.Contains("Pre-position", StringComparison.OrdinalIgnoreCase))
+            return TighteningStrategy.PrePosition;
+        if (v.Contains("自创", StringComparison.Ordinal) ||
+            v.Contains("Self", StringComparison.OrdinalIgnoreCase))
+            return TighteningStrategy.SelfDefined;
+        return TighteningStrategy.Standard;
     }
 
     private static string StripComment(string line)

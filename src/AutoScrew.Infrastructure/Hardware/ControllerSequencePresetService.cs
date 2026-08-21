@@ -117,48 +117,28 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
         if (ids.Count == 0)
             return [];
 
-        const int concurrency = 2;
-        using var gate = new SemaphoreSlim(concurrency, concurrency);
-        var results = new ControllerDeviceSequenceEntry[ids.Count];
-        var tasks = new Task[ids.Count];
-        for (var i = 0; i < ids.Count; i++)
-        {
-            var index = i;
-            var id = ids[i];
-            tasks[i] = FillSequenceEntryAsync(gate, results, index, id, cancellationToken);
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-        return results;
-    }
-
-    private async Task FillSequenceEntryAsync(
-        SemaphoreSlim gate,
-        ControllerDeviceSequenceEntry[] results,
-        int index,
-        int sequenceId,
-        CancellationToken cancellationToken)
-    {
-        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        // Must be sequential: RequireIdleClientAsync throws while DeviceSession.IsBusy.
+        // Concurrent name reads race (second call sees busy) and degrade to ID-only display.
+        var client = await RequireClientAsync(cancellationToken).ConfigureAwait(false);
+        var results = new List<ControllerDeviceSequenceEntry>(ids.Count);
+        foreach (var sequenceId in ids)
         {
             try
             {
-                var pkg = await ReadFromDeviceAsync(sequenceId, cancellationToken).ConfigureAwait(false);
-                results[index] = new ControllerDeviceSequenceEntry(
+                var template = await client.ReadSequenceAsync(sequenceId, cancellationToken).ConfigureAwait(false);
+                template.ExtractCoreFromRaw();
+                results.Add(new ControllerDeviceSequenceEntry(
                     sequenceId,
-                    pkg.Core.Name?.Trim() ?? string.Empty);
+                    template.Core?.Name?.Trim() ?? string.Empty));
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "ListDeviceSequenceEntries: failed to read name for sequence {SeqId}", sequenceId);
-                results[index] = new ControllerDeviceSequenceEntry(sequenceId, string.Empty);
+                results.Add(new ControllerDeviceSequenceEntry(sequenceId, string.Empty));
             }
         }
-        finally
-        {
-            gate.Release();
-        }
+
+        return results;
     }
 
     public async Task<TighteningSequencePackage> ImportFromDeviceAsync(

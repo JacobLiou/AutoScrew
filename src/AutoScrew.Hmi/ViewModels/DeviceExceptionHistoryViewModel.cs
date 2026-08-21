@@ -47,7 +47,10 @@ public sealed partial class DeviceExceptionHistoryViewModel : DeviceHistoryPageV
         var items = await History.ReadErrorPageAsync(pageIndex, PageSize, cancellationToken).ConfigureAwait(true);
         Rows.Clear();
         foreach (var item in items)
-            Rows.Add(new CodeHistoryRowVm(item.Timestamp, item.Code, null));
+        {
+            var description = DeviceAlarmCodeCatalog.TryGetChineseDescription(item.Code);
+            Rows.Add(new CodeHistoryRowVm(item.Timestamp, item.Code, description));
+        }
     }
 
     protected override Task ClearRowsAsync()
@@ -77,7 +80,10 @@ public sealed partial class DeviceWarningHistoryViewModel : DeviceHistoryPageVie
         var items = await History.ReadWarningPageAsync(pageIndex, PageSize, cancellationToken).ConfigureAwait(true);
         Rows.Clear();
         foreach (var item in items)
-            Rows.Add(new CodeHistoryRowVm(item.Timestamp, item.Code, null));
+        {
+            var description = DeviceAlarmCodeCatalog.TryGetChineseDescription(item.Code);
+            Rows.Add(new CodeHistoryRowVm(item.Timestamp, item.Code, description));
+        }
     }
 
     protected override Task ClearRowsAsync()

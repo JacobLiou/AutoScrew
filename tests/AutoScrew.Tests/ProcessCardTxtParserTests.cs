@@ -196,4 +196,73 @@ public sealed class ProcessCardTxtParserTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    [Fact]
+    public void Parse_LegacyCard_DefaultsStrategyToStandard()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00.txt");
+        var result = ProcessCardTxtParser.ParseFile(path);
+        Assert.Equal(TighteningStrategy.Standard, result.Template.Core.Strategy);
+    }
+
+    [Fact]
+    public void Parse_AllTemplateParams_MapsSelfDefinedAndAdvanced()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "AllTemplateParams.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var result = ProcessCardTxtParser.ParseFile(path);
+
+        Assert.Equal("ALLTPL", result.ScrewPn);
+        Assert.Equal(0, result.SlotId);
+        Assert.Equal(TighteningStrategy.SelfDefined, result.Template.Core.Strategy);
+
+        Assert.Equal(TighteningControlMode.Angle, result.Template.Core.Stages[0].ControlMode);
+        Assert.Equal(360, result.Template.Core.Stages[0].TargetAngleDeg);
+        Assert.Equal(50, result.Template.Core.Stages[0].AccelTimeMs);
+        Assert.Equal(10, result.Template.Core.Stages[0].TorqueRateAngleIntervalTenthDeg);
+
+        Assert.Equal(TighteningControlMode.TorqueRate, result.Template.Core.Stages[4].ControlMode);
+        Assert.Equal(TighteningControlMode.ClampAngle, result.Template.Core.Stages[5].ControlMode);
+        Assert.True(result.Template.Core.Stages[5].SpeedRpm > 0);
+
+        Assert.Equal(100, result.Template.Core.Loosen.Stage1AccelMs);
+        Assert.Equal(100, result.Template.Core.Loosen.Stage2AccelMs);
+        Assert.True(result.Template.Core.Stages[3].Segment1TorqueMilliNm > 0);
+        Assert.Equal(30, result.Template.Core.Stages[3].FinalSpeedRpm);
+    }
+
+    [Fact]
+    public void Parse_EnhancedStrategy_FillsSlot3FromStage4Header()
+    {
+        var text = """
+            参数：ENH-00
+            策略：加强
+            阶段有效：1 阶段有效
+            旋转方向：顺时针
+            最大总角度（°）：100
+            最大拧紧时间（秒）：5
+            4.拧紧
+            控制模式：扭矩
+            扭矩（lbf.in）：3.0
+            速度（转/分钟）：200
+            扭矩判断：ON
+            最大扭矩（lbf.in）：3.5
+            最小扭矩（lbf.in）：2.5
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(TighteningStrategy.Enhanced, result.Template.Core.Strategy);
+        Assert.Equal(0, result.Template.Core.Stages[0].SpeedRpm);
+        Assert.Equal(200, result.Template.Core.Stages[3].SpeedRpm);
+        Assert.Equal(TighteningControlMode.Torque, result.Template.Core.Stages[3].ControlMode);
+    }
+
+    [Theory]
+    [InlineData("标准", TighteningStrategy.Standard)]
+    [InlineData("加强", TighteningStrategy.Enhanced)]
+    [InlineData("预定位", TighteningStrategy.PrePosition)]
+    [InlineData("自创", TighteningStrategy.SelfDefined)]
+    public void ParseStrategy_MapsChineseLabels(string label, TighteningStrategy expected) =>
+        Assert.Equal(expected, ProcessCardTxtParser.ParseStrategy(label));
 }
