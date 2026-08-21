@@ -176,6 +176,10 @@ AutoScrew 拟定：
 
 - **禁止**将局域网服务账号口令明文写入仓库、本文件或公开配置样例；仅允许 `aes256:` 密文（`AutoScrew:LanSharePasswordAes256`）。
 - Mes 页**不展示**账号与口令；仅配置 `LanShareRoot`。
+- 技术员「高级文件」页：进页手输 PRED-TESTING 口令（内存会话，离页清除）；用于双目录覆盖同步 / 打开资源管理器；**不**用 `LanSharePasswordAes256` 静默解锁。支持 **UNC（WNet）** 与 **本机 ACL 受限目录（LogonUser 模拟身份 / CreateProcessWithLogonW 开资源管理器）**；本地路径可用「浏览」选择。
+
+
+- Welcome@123
 - 审计日志不得记录完整口令；可记「局域网连接成功/失败」。
 
 ---

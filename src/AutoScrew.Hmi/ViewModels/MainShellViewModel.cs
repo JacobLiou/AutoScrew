@@ -35,6 +35,7 @@ public enum MainAppSection
     DeviceWarningHistory,
     DeviceButtonHistory,
     DeviceConnection,
+    LanFileMaintenance,
     Settings
 }
 
@@ -235,6 +236,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.DeviceButtonHistory;
         else if (pageType == typeof(DeviceConnectionPage))
             SelectedSection = MainAppSection.DeviceConnection;
+        else if (pageType == typeof(LanFileMaintenancePage))
+            SelectedSection = MainAppSection.LanFileMaintenance;
         else if (pageType == typeof(SettingsPage))
             SelectedSection = MainAppSection.Settings;
 
@@ -281,6 +284,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.DeviceWarningHistory => typeof(DeviceWarningHistoryPage),
             MainAppSection.DeviceButtonHistory => typeof(DeviceButtonHistoryPage),
             MainAppSection.DeviceConnection => typeof(DeviceConnectionPage),
+            MainAppSection.LanFileMaintenance => typeof(LanFileMaintenancePage),
             MainAppSection.Settings => typeof(SettingsPage),
             _ => typeof(OperationNavPage)
         };
@@ -437,6 +441,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     private static bool IsSystemSection(MainAppSection section) =>
         section is MainAppSection.Mes
             or MainAppSection.DeviceConnection
+            or MainAppSection.LanFileMaintenance
             or MainAppSection.Logs
             or MainAppSection.History;
 
@@ -578,7 +583,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 TargetPageType = typeof(DeviceConnectionPage),
                 TargetPageTag = "device-connection"
             });
-
+          
             systemGroup.MenuItems.Add(new NavigationViewItem
             {
                 Content = Loc.Get("S.Nav.MesConnection"),
@@ -601,6 +606,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.DocumentText24 },
                 TargetPageType = typeof(LogsPage),
                 TargetPageTag = "logs"
+            });
+
+            systemGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.LanFileMaintenance"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.ShieldLock24 },
+                TargetPageType = typeof(LanFileMaintenancePage),
+                TargetPageTag = "lan-file-maintenance"
             });
 
             if (deviceConfigurationGroup is not null)

@@ -39,6 +39,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IHostIdentity, CachedHostIdentity>();
         services.AddSingleton<ISnWorkArchiveSync, SnWorkArchiveSync>();
         services.AddSingleton<LanShareAccess>();
+        services.AddSingleton<ILanPrivilegedFileService, LanPrivilegedFileService>();
         services.AddSingleton<ProcessLibraryStore>();
         services.AddSingleton<IProcessLibraryService, ProcessLibraryService>();
         services.AddSingleton<IStationProcessStateStore, JsonStationProcessStateStore>();

@@ -51,6 +51,7 @@
     <system:String x:Key="S.Nav.ControllerSource">拧紧来源</system:String>
     <system:String x:Key="S.Nav.ProcessLibrary">工艺库</system:String>
     <system:String x:Key="S.Nav.DeviceConnection">设备连接</system:String>
+    <system:String x:Key="S.Nav.LanFileMaintenance">高级文件</system:String>
     <system:String x:Key="S.Nav.Settings">设置</system:String>
     <system:String x:Key="S.Nav.BreadcrumbDefault">作业台</system:String>
     <system:String x:Key="S.Nav.BreadcrumbConfigurationDefault">设备配置</system:String>
@@ -846,6 +847,41 @@
     <system:String x:Key="S.DeviceHistory.Col.User">使用者</system:String>
     <system:String x:Key="S.DeviceHistory.Col.ValueBefore">修改前数值</system:String>
     <system:String x:Key="S.DeviceHistory.Col.ValueAfter">修改后数值</system:String>
+
+    <!-- Lan file maintenance (technician) -->
+    <system:String x:Key="S.LanFile.Title">高级文件维护</system:String>
+    <system:String x:Key="S.LanFile.Desc">使用 PRED-TESTING 会话访问局域网 UNC 或本机受限目录：双目录覆盖同步，或打开资源管理器。本地目录请用「浏览」选择路径。口令仅存于本页会话，离页即清除。</system:String>
+    <system:String x:Key="S.LanFile.LanRoot">局域网根路径（可选）</system:String>
+    <system:String x:Key="S.LanFile.LanRootEmpty">未配置局域网根。仍可解锁后选择本机目录或任意 UNC。</system:String>
+    <system:String x:Key="S.LanFile.UnlockTitle">解锁会话</system:String>
+    <system:String x:Key="S.LanFile.UnlockHint">请输入 PRED-TESTING 口令。将校验 Windows 登录（用于本机 ACL），若已配置 UNC 根则同时连接共享。</system:String>
+    <system:String x:Key="S.LanFile.Account">账号</system:String>
+    <system:String x:Key="S.LanFile.Password">口令</system:String>
+    <system:String x:Key="S.LanFile.Unlock">解锁</system:String>
+    <system:String x:Key="S.LanFile.Unlocking">正在连接…</system:String>
+    <system:String x:Key="S.LanFile.Unlocked">已解锁</system:String>
+    <system:String x:Key="S.LanFile.UnlockFailed">解锁失败</system:String>
+    <system:String x:Key="S.LanFile.Lock">锁定会话</system:String>
+    <system:String x:Key="S.LanFile.SessionLocked">会话已锁定</system:String>
+    <system:String x:Key="S.LanFile.SyncTitle">双目录覆盖同步</system:String>
+    <system:String x:Key="S.LanFile.SyncDesc">源/目标可为本机路径或 UNC。将源目录文件递归复制到目标目录；目标中同名文件将被覆盖。本机受限目录在 PRED-TESTING 身份下写入。</system:String>
+    <system:String x:Key="S.LanFile.SourceDir">源目录</system:String>
+    <system:String x:Key="S.LanFile.TargetDir">目标目录</system:String>
+    <system:String x:Key="S.LanFile.Browse">浏览…</system:String>
+    <system:String x:Key="S.LanFile.SyncStart">开始覆盖同步</system:String>
+    <system:String x:Key="S.LanFile.SyncConfirmTitle">确认覆盖同步</system:String>
+    <system:String x:Key="S.LanFile.SyncConfirmBody">将把源目录内容复制到目标目录，并覆盖同名文件。是否继续？</system:String>
+    <system:String x:Key="S.LanFile.NeedBothPaths">请填写源目录与目标目录。</system:String>
+    <system:String x:Key="S.LanFile.Syncing">正在同步…</system:String>
+    <system:String x:Key="S.LanFile.SyncOk">同步完成：新建 {0}，覆盖 {1}，新建目录 {2}。</system:String>
+    <system:String x:Key="S.LanFile.SyncPartial">部分完成：新建 {0}，覆盖 {1}，错误 {2}。首条：{3}</system:String>
+    <system:String x:Key="S.LanFile.SyncFailed">同步失败</system:String>
+    <system:String x:Key="S.LanFile.ExplorerTitle">打开资源管理器</system:String>
+    <system:String x:Key="S.LanFile.ExplorerDesc">局域网路径先 WNet 连接；本机受限目录以 PRED-TESTING 启动资源管理器。可用「浏览」选择本地文件夹。</system:String>
+    <system:String x:Key="S.LanFile.ExplorerPath">路径</system:String>
+    <system:String x:Key="S.LanFile.OpenExplorer">打开</system:String>
+    <system:String x:Key="S.LanFile.NeedExplorerPath">请填写要打开的路径。</system:String>
+    <system:String x:Key="S.LanFile.ExplorerOpened">已打开：{0}</system:String>
 
     <!-- UpdateAccount (legacy) -->
     <system:String x:Key="S.Account.UserName">User Name</system:String>
