@@ -1,0 +1,341 @@
+<Window x:Class="AutoScrew.Hmi.Views.ControllerDevice.BasicAdvancedSettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        d:DataContext="{d:DesignInstance vm:ControllerParameterViewModel, IsDesignTimeCreatable=False}"
+        mc:Ignorable="d"
+        Title="{DynamicResource S.ControllerParam.Basic.Advanced}"
+        Width="520"
+        Height="640"
+        MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#F5F7FA">
+    <Window.Resources>
+        <Style x:Key="AdvRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="AdvLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Foreground" Value="#445" />
+        </Style>
+        <Style x:Key="AdvUnit" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="Foreground" Value="#333" />
+            <Setter Property="MinWidth" Value="56" />
+        </Style>
+        <Style x:Key="OnOffToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd"
+                                CornerRadius="14"
+                                Background="#9AA0A6"
+                                Padding="4,0">
+                            <TextBlock x:Name="Txt"
+                                       Text="OFF"
+                                       Foreground="White"
+                                       FontWeight="SemiBold"
+                                       FontSize="11"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E88E5" />
+                                <Setter TargetName="Txt" Property="Text" Value="ON" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#1E88E5" Padding="12,10">
+            <Grid>
+                <TextBlock Text="{DynamicResource S.ControllerParam.Basic.Advanced}"
+                           Foreground="White"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Button HorizontalAlignment="Right"
+                        Width="28"
+                        Height="28"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="White"
+                        FontSize="16"
+                        Content="×"
+                        Click="Close_Click" />
+            </Grid>
+        </Border>
+
+        <Button DockPanel.Dock="Bottom"
+                Margin="16"
+                Height="40"
+                HorizontalAlignment="Right"
+                Content="{DynamicResource S.Common.Confirm}"
+                Click="Close_Click" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,12">
+            <StackPanel>
+                <!-- #1 最终电流判定 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.FinalCurrentJudge}" />
+                    <ToggleButton Grid.Column="1" Style="{StaticResource OnOffToggle}"
+                                  IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
+                </Grid>
+
+                <!-- #2 供料结果延时 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.Sec}" />
+                </Grid>
+
+                <!-- #3 工具精度补偿 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.ToolPrecisionComp}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" Value="{Binding ToolPrecisionCompTenthPercent, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="%" />
+                    <ui:Button Grid.Column="4"
+                               Margin="8,0,0,0"
+                               Appearance="Secondary"
+                               Icon="{ui:SymbolIcon Settings24}"
+                               IsEnabled="False"
+                               ToolTip="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                </Grid>
+
+                <!-- #4 贴合起始扭矩率 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.SeatAngleStartTorqueRate}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" Value="{Binding SeatAngleStartTorqueRate, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.TorqueRate}" />
+                </Grid>
+
+                <!-- #5 曲线取样起始扭矩 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.CurveSampleStartTorque}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" Value="{Binding CurveSampleStartTorqueMilliNm, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{Binding TorqueUnitLabel}" />
+                </Grid>
+
+                <!-- #6 扭矩率角度间隔 -->
+                <Grid Style="{StaticResource AdvRow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.TorqueRateAngleDelay}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" Value="{Binding TorqueRateAngleDelayTenthDeg, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                </Grid>
+
+                <!-- #7 计算拧紧角度的起始扭矩（协议待对齐，占位） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.TightenAngleStartTorque}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="lbf.in" />
+                </Grid>
+
+                <!-- #8 自动搜寻贴合点（协议待对齐，占位） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.AutoSearchSnugPoint}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <ToggleButton Grid.Column="1" Style="{StaticResource OnOffToggle}" IsChecked="False" IsEnabled="False" />
+                </Grid>
+
+                <!-- #9 贴合点角度修正（已接协议，随 #8 禁用而常灰） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.SeatPointAngleCorrection}" />
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="{Binding SeatPointAngleCorrectionTenthDeg, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                </Grid>
+
+                <!-- #10 目标扭矩率到达判断准位（协议待对齐，占位） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.TargetTorqueRateDetectionLevel}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                </Grid>
+
+                <!-- #11 批头打滑判定（协议待对齐，占位） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.BitSlipDetection}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <ToggleButton Grid.Column="1" Style="{StaticResource OnOffToggle}" IsChecked="False" IsEnabled="False" />
+                </Grid>
+
+                <!-- #12 批头打滑侦测的起始扭矩（协议待对齐，占位，随 #11 灰显） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.BitSlipStartTorque}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="lbf.in" />
+                </Grid>
+
+                <!-- #13 批头打滑角度记录的触发扭矩（协议待对齐，占位，随 #11 灰显） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.BitSlipRecordTriggerTorque}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="lbf.in" />
+                </Grid>
+
+                <!-- #14 批头打滑角度上限（协议待对齐，占位，随 #11 灰显） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.BitSlipAngleUpperLimit}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                    <TextBlock Grid.Column="3" Style="{StaticResource AdvUnit}" Text="{DynamicResource S.ControllerParam.Unit.Deg}" />
+                </Grid>
+
+                <!-- #15 批头打滑允许次数（协议待对齐，占位，随 #11 灰显） -->
+                <Grid Style="{StaticResource AdvRow}" Opacity="0.75">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right">
+                        <TextBlock Style="{StaticResource AdvLabel}" Text="{DynamicResource S.Workbench.Param.BitSlipAllowedCount}" />
+                        <TextBlock FontSize="10" Foreground="#789" HorizontalAlignment="Right"
+                                   Text="{DynamicResource S.ControllerParam.ProtocolPending}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="56" />
+                    <ui:NumberBox Grid.Column="2" IsEnabled="False" Value="0" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

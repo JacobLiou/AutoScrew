@@ -49,6 +49,8 @@ public static class ProcessCardTxtWriter
         Line(sb, "最小总角度（°）", core.MinAngleDeg.ToString(CultureInfo.InvariantCulture), "1~4步的总的角度值");
         Line(sb, "最大拧紧时间（秒）", FormatTenthAsSeconds(core.MaxTighteningTimeTenthSec));
         Line(sb, "拧紧启动延时（×0.01）", core.TighteningStartDelayCentiSec.ToString(CultureInfo.InvariantCulture));
+        Line(sb, "末段伺服保持", FormatOnOff(core.LastStageServoOn), "是否启动未段伺服保持");
+        Line(sb, "关联补偿参数ID", core.LinkedCompensationParamId.ToString(CultureInfo.InvariantCulture));
 
         sb.AppendLine();
         sb.AppendLine("拧松条件");
@@ -59,9 +61,7 @@ public static class ProcessCardTxtWriter
         sb.AppendLine();
         sb.AppendLine("进阶设定");
         Line(sb, "最终电流判定", FormatOnOff(core.FinalCurrentJudgeEnabled), "是否启动电流判定");
-        Line(sb, "末段伺服保持", FormatOnOff(core.LastStageServoOn), "是否启动未段伺服保持");
         Line(sb, "供料结果延时（×0.1s）", core.FeederResultDelayTenthSec.ToString(CultureInfo.InvariantCulture));
-        Line(sb, "关联补偿参数ID", core.LinkedCompensationParamId.ToString(CultureInfo.InvariantCulture));
         Line(sb, "贴合起始扭矩率", core.SeatAngleStartTorqueRate.ToString(CultureInfo.InvariantCulture));
         Line(sb, "工具精度补偿（×0.1%）", core.ToolPrecisionCompTenthPercent.ToString(CultureInfo.InvariantCulture));
         Line(sb, "曲线取样起始扭矩（mNm）", core.CurveSampleStartTorqueMilliNm.ToString(CultureInfo.InvariantCulture));

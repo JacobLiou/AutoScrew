@@ -719,6 +719,16 @@
     <system:String x:Key="S.Workbench.Param.CurveSampleStartTorque">曲线取样起始扭矩 (mNm)</system:String>
     <system:String x:Key="S.Workbench.Param.TorqueRateAngleDelay">扭矩率角度间隔 (×0.1°)</system:String>
     <system:String x:Key="S.Workbench.Param.SeatPointAngleCorrection">贴合点角度修正 (×0.1°)</system:String>
+    <system:String x:Key="S.ControllerParam.ProtocolPending">协议待对齐</system:String>
+    <system:String x:Key="S.ControllerParam.OpenBasicAdvanced">打开进阶设定</system:String>
+    <system:String x:Key="S.Workbench.Param.TightenAngleStartTorque">计算拧紧角度的起始扭矩</system:String>
+    <system:String x:Key="S.Workbench.Param.AutoSearchSnugPoint">自动搜寻贴合点</system:String>
+    <system:String x:Key="S.Workbench.Param.TargetTorqueRateDetectionLevel">目标扭矩率到达判断准位</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipDetection">批头打滑判定</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipStartTorque">批头打滑侦测的起始扭矩</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipRecordTriggerTorque">批头打滑角度记录的触发扭矩</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipAngleUpperLimit">批头打滑角度上限</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipAllowedCount">批头打滑允许次数</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStartDone">已应用 Quick Start 三阶段模板。</system:String>
     <system:String x:Key="S.Workbench.Seq.StepTitle">步骤 {0}</system:String>
     <system:String x:Key="S.Workbench.Seq.ParameterPreset">参数预设</system:String>

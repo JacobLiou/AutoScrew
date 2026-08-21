@@ -283,6 +283,8 @@
                             <!-- Basic -->
                             <TabItem Style="{StaticResource IemdTabItem}" Header="{DynamicResource S.ControllerParam.BasicSettings}">
                                 <StackPanel Margin="0,4,0,0">
+
+                                    
                                     <!-- 拧紧条件 -->
                                     <Border Background="White"
                                             BorderBrush="#CFD8DC"
@@ -294,11 +296,24 @@
                                                     Width="4"
                                                     Background="#1E88E5" />
                                             <StackPanel Margin="12,10">
-                                                <TextBlock Margin="0,0,0,10"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="14"
-                                                           Foreground="#37474F"
-                                                           Text="{DynamicResource S.ControllerParam.Basic.TightenCondition}" />
+                                                <Grid >
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Margin="0,0,0,10"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="14"
+                                                               Foreground="#37474F"
+                                                               Text="{DynamicResource S.ControllerParam.Basic.TightenCondition}" />
+                                                    <ui:Button Grid.Column="1" Margin="0,4,0,4"
+                                                               HorizontalAlignment="Right"
+                                                               Appearance="Secondary"
+                                                               Icon="{ui:SymbolIcon Settings24}"
+                                                               ToolTip="{DynamicResource S.ControllerParam.OpenBasicAdvanced}"
+                                                               Command="{Binding OpenBasicAdvancedCommand}" />
+                                                </Grid>
+
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="140" />
@@ -307,6 +322,8 @@
                                                         <ColumnDefinition Width="*" />
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
@@ -326,6 +343,15 @@
                                                     <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="0,0,12,8" Value="{Binding MaxRunTimeSeconds, Mode=TwoWay}" />
                                                     <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TightenStartDelay}" />
                                                     <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TighteningStartDelayCentiSec, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}"
+                                                               Text="{DynamicResource S.Workbench.Param.LastStageServoOn}" />
+                                                    <CheckBox Grid.Row="4" Grid.Column="1" Margin="0,0,12,8"
+                                                              VerticalAlignment="Center"
+                                                              IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource FieldLabel}"
+                                                               Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
+                                                    <ui:NumberBox Grid.Row="5" Grid.Column="1" Margin="0,0,12,0"
+                                                                  Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>
                                         </DockPanel>
@@ -369,61 +395,6 @@
                                         </DockPanel>
                                     </Border>
 
-                                    <!-- 进阶设定 -->
-                                    <Border Background="White"
-                                            BorderBrush="#CFD8DC"
-                                            BorderThickness="1"
-                                            Padding="0">
-                                        <DockPanel>
-                                            <Border DockPanel.Dock="Left"
-                                                    Width="4"
-                                                    Background="#43A047" />
-                                            <StackPanel Margin="12,10">
-                                                <TextBlock Margin="0,0,0,10"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="14"
-                                                           Foreground="#37474F"
-                                                           Text="{DynamicResource S.ControllerParam.Basic.Advanced}" />
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="180" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="180" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
-                                                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,12,8"
-                                                              VerticalAlignment="Center"
-                                                              Content="{DynamicResource S.Workbench.Param.FinalCurrentJudge}"
-                                                              IsChecked="{Binding FinalCurrentJudgeEnabled, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.FeederDelay}" />
-                                                    <ui:NumberBox Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" Value="{Binding FeederResultDelayTenthSec, Mode=TwoWay}" />
-                                                    <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,12,8"
-                                                              VerticalAlignment="Center"
-                                                              Content="{DynamicResource S.Workbench.Param.LastStageServoOn}"
-                                                              IsChecked="{Binding LastStageServoOn, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.LinkedCompParam}" />
-                                                    <ui:NumberBox Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" Value="{Binding LinkedCompensationParamId, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.ToolPrecisionComp}" />
-                                                    <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="0,0,12,8" Value="{Binding ToolPrecisionCompTenthPercent, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.SeatAngleStartTorqueRate}" />
-                                                    <ui:NumberBox Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" Value="{Binding SeatAngleStartTorqueRate, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.CurveSampleStartTorque}" />
-                                                    <ui:NumberBox Grid.Row="3" Grid.Column="1" Margin="0,0,12,8" Value="{Binding CurveSampleStartTorqueMilliNm, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.TorqueRateAngleDelay}" />
-                                                    <ui:NumberBox Grid.Row="3" Grid.Column="3" Margin="0,0,0,8" Value="{Binding TorqueRateAngleDelayTenthDeg, Mode=TwoWay}" />
-                                                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{DynamicResource S.Workbench.Param.SeatPointAngleCorrection}" />
-                                                    <ui:NumberBox Grid.Row="4" Grid.Column="1" Margin="0,0,12,0" Value="{Binding SeatPointAngleCorrectionTenthDeg, Mode=TwoWay}" />
-                                                </Grid>
-                                            </StackPanel>
-                                        </DockPanel>
-                                    </Border>
                                 </StackPanel>
                             </TabItem>
 

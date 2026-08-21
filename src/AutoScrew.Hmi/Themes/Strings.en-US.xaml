@@ -703,6 +703,16 @@
     <system:String x:Key="S.Workbench.Param.CurveSampleStartTorque">Curve sample start torque (mNm)</system:String>
     <system:String x:Key="S.Workbench.Param.TorqueRateAngleDelay">Torque rate angle interval (×0.1°)</system:String>
     <system:String x:Key="S.Workbench.Param.SeatPointAngleCorrection">Seat point angle correction (×0.1°)</system:String>
+    <system:String x:Key="S.ControllerParam.ProtocolPending">Protocol pending</system:String>
+    <system:String x:Key="S.ControllerParam.OpenBasicAdvanced">Open advanced settings</system:String>
+    <system:String x:Key="S.Workbench.Param.TightenAngleStartTorque">Start torque for tightening angle calculation</system:String>
+    <system:String x:Key="S.Workbench.Param.AutoSearchSnugPoint">Auto search for snug point</system:String>
+    <system:String x:Key="S.Workbench.Param.TargetTorqueRateDetectionLevel">Detection level for target torque rate reached</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipDetection">Bit slip (cam-out) detection</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipStartTorque">Start torque for bit slip detection</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipRecordTriggerTorque">Trigger torque for bit slip angle record</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipAngleUpperLimit">Upper limit for bit slip angle</system:String>
+    <system:String x:Key="S.Workbench.Param.BitSlipAllowedCount">Allowed bit slip count</system:String>
     <system:String x:Key="S.Workbench.Param.QuickStartDone">Quick Start 3-stage template applied.</system:String>
     <system:String x:Key="S.Workbench.Seq.StepTitle">Step {0}</system:String>
     <system:String x:Key="S.Workbench.Seq.ParameterPreset">Parameter preset</system:String>

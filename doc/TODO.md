@@ -172,6 +172,7 @@ flowchart LR
 | T-21 | [ ] | 剩余功能码强类型封装 | 已可用 `ExecuteModbusCommandAsync` 做联调 |
 | T-22 | [ ] | 设备 FAT 检查清单脚本化 | 对齐 [driverAnaC.md](driverAnaC.md) §8 联机四步 |
 | T-23 | [ ] | 真机 / 仿真控制器集成测试 | 驱动与 [`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs) 回归 |
+| T-33 | [ ] | **拧紧参数进阶缺口寄存器**：计算拧紧角度起始扭矩、自动搜寻贴合点、目标扭矩率准位、批头打滑（判定+4 子项）— UI 已占位「协议待对齐」，待手册 A.3.1 对齐后写入 `#100` | 驱动+HMI | [parameter-basic-advanced-dialog design](../docs/superpowers/specs/2026-08-20-parameter-basic-advanced-dialog-design.md) |
 
 ---
 

@@ -56,6 +56,36 @@ public sealed class ProcessCardTxtParserTests
     }
 
     [Fact]
+    public void Parse_LastStageServoInTightenConditionSection_MapsCorrectly()
+    {
+        var text = """
+            参数：TEST-00
+            阶段有效：1 阶段有效
+            基本设定
+            拧紧条件
+            旋转方向：顺时针
+            最大总角度（°）：100
+            最小总角度（°）：0
+            最大拧紧时间（秒）：1
+            拧紧启动延时（×0.01）：0
+            末段伺服保持：ON
+            关联补偿参数ID：7
+            拧松条件
+            最大拧松时间（秒）：1
+            进阶设定
+            最终电流判定：OFF
+            1.启动
+            拧紧角度（°）：90
+            速度（转/分钟）：80
+            扭矩判断：OFF
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.True(result.Template.Core.LastStageServoOn);
+        Assert.Equal(7, result.Template.Core.LinkedCompensationParamId);
+    }
+
+    [Fact]
     public void Parse_FinalReviewedCard_MapsPnDashSlotAndJudges()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00_v2.txt");

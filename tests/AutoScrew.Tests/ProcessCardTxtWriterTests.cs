@@ -73,4 +73,28 @@ public sealed class ProcessCardTxtWriterTests
         };
         Assert.Throws<InvalidDataException>(() => ProcessCardTxtWriter.Format(template, "!!!", 0));
     }
+
+    [Fact]
+    public void Format_WritesLastStageServoUnderTightenCondition_NotUnderAdvanced()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00.txt");
+        var original = ProcessCardTxtParser.ParseFile(path);
+        original.Template.Core.LastStageServoOn = true;
+        original.Template.Core.LinkedCompensationParamId = 42;
+
+        var text = ProcessCardTxtWriter.Format(original.Template, original.ScrewPn, original.SlotId);
+
+        var tightenIdx = text.IndexOf("拧紧条件", StringComparison.Ordinal);
+        var loosenIdx = text.IndexOf("拧松条件", StringComparison.Ordinal);
+        var advancedIdx = text.IndexOf("进阶设定", StringComparison.Ordinal);
+        var servoIdx = text.IndexOf("末段伺服保持", StringComparison.Ordinal);
+        var linkedIdx = text.IndexOf("关联补偿参数ID", StringComparison.Ordinal);
+
+        Assert.True(tightenIdx >= 0);
+        Assert.True(servoIdx > tightenIdx && servoIdx < loosenIdx);
+        Assert.True(linkedIdx > tightenIdx && linkedIdx < loosenIdx);
+        var advancedSection = text[advancedIdx..];
+        Assert.DoesNotContain("末段伺服保持", advancedSection);
+        Assert.DoesNotContain("关联补偿参数ID", advancedSection);
+    }
 }

@@ -665,6 +665,17 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         NotifySummary();
     }
 
+    [RelayCommand]
+    private void OpenBasicAdvanced()
+    {
+        CommitPendingEdits();
+        var dialog = new Views.ControllerDevice.BasicAdvancedSettingsDialog(this)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
+
     //[RelayCommand]
     //private void QuickStartNew()
     //{
