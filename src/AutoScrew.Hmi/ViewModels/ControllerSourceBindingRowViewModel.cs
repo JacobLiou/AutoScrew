@@ -1,3 +1,4 @@
+using AutoScrew.Application;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -68,18 +69,20 @@ public sealed partial class ControllerSourceBindingRowViewModel : ObservableObje
         if (entry.BindingType == (int)TighteningSourceBindingType.Parameter)
         {
             var param = parameters.FirstOrDefault(p => p.ParameterId == entry.TargetId);
-            BindingDisplayText = param?.DisplayText
-                ?? (entry.TargetId > 0
+            BindingDisplayText = param is not null
+                ? DeviceListDisplayFormat.Format(entry.TargetId, param.Name)
+                : entry.TargetId > 0
                     ? Loc.Format("S.Workbench.Source.MissingParameter", entry.TargetId)
-                    : string.Empty);
+                    : string.Empty;
         }
         else
         {
             var seq = sequences.FirstOrDefault(s => s.SequenceId == entry.TargetId);
-            BindingDisplayText = seq?.DisplayText
-                ?? (entry.TargetId > 0
+            BindingDisplayText = seq is not null
+                ? DeviceListDisplayFormat.Format(entry.TargetId, seq.Name)
+                : entry.TargetId > 0
                     ? Loc.Format("S.Workbench.Source.MissingSequence", entry.TargetId)
-                    : string.Empty);
+                    : string.Empty;
         }
 
         RefreshSummary();

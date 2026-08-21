@@ -661,6 +661,7 @@
     <system:String x:Key="S.ControllerSource.PickerNeedsDevice">Connect the device first. The picker lists device #160 parameters and sequences.</system:String>
     <system:String x:Key="S.ControllerSource.PickerDeviceEmpty">No parameters or sequences on the device. Write them from the parameter/sequence pages first.</system:String>
     <system:String x:Key="S.ControllerSource.PickerApplied">Selected #{0}: screw count {1}, bit {2}.</system:String>
+    <system:String x:Key="S.ControllerSource.ReadingDeviceNames">Reading names from device…</system:String>
     <system:String x:Key="S.ControllerSource.Barcode">Barcode</system:String>
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">Saved locally.</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">Read source config from device.</system:String>

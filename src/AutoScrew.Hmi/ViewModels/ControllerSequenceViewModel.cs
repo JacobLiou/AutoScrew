@@ -1,3 +1,4 @@
+using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
@@ -33,9 +34,16 @@ public sealed partial class ControllerSequenceListItem : ObservableObject
         BitId = bitId;
     }
 
-    /// <summary>设备侧顺序仅有 ID，无名称；展示为「001 1」。</summary>
+    /// <summary>设备侧无名称时仅显示 ID。</summary>
     public static ControllerSequenceListItem ForDeviceSlot(int sequenceId) =>
-        new(sequenceId, sequenceId.ToString(), displayText: $"{sequenceId:D3} {sequenceId}");
+        ForDeviceEntry(sequenceId, name: null);
+
+    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。</summary>
+    public static ControllerSequenceListItem ForDeviceEntry(int sequenceId, string? name) =>
+        new(
+            sequenceId,
+            string.IsNullOrWhiteSpace(name) ? sequenceId.ToString() : name.Trim(),
+            displayText: DeviceListDisplayFormat.Format(sequenceId, name));
 
     public int SequenceId { get; }
     public string Name { get; }
@@ -407,20 +415,23 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     {
         try
         {
-            var ids = await _presetService.ListDeviceSequenceIdsAsync().ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ControllerSource.ReadingDeviceNames");
+            var entries = await _presetService.ListDeviceSequenceEntriesAsync().ConfigureAwait(true);
             DeviceSequences.Clear();
-            foreach (var id in ids)
-                DeviceSequences.Add(ControllerSequenceListItem.ForDeviceSlot(id));
+            foreach (var entry in entries)
+                DeviceSequences.Add(ControllerSequenceListItem.ForDeviceEntry(entry.SequenceId, entry.Name));
 
             DeviceHasConfiguredSequences = DeviceSequences.Count > 0;
             DeviceListStatus = DeviceHasConfiguredSequences
                 ? Loc.Format("S.ControllerSeq.DeviceListCount", DeviceSequences.Count)
                 : Loc.Get("S.ControllerSeq.DeviceListEmpty");
+            StatusMessage = DeviceListStatus;
         }
         catch (Exception ex)
         {
             DeviceListStatus = ex.Message;
             DeviceHasConfiguredSequences = false;
+            StatusMessage = ex.Message;
         }
 
         RefreshDeviceListCommand.NotifyCanExecuteChanged();
@@ -1058,11 +1069,12 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         {
             try
             {
-                var deviceIds = await _parameterPresetService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
-                foreach (var id in deviceIds)
+                var deviceEntries = await _parameterPresetService.ListDeviceParameterEntriesAsync()
+                    .ConfigureAwait(true);
+                foreach (var entry in deviceEntries)
                 {
-                    if (seen.Add(id))
-                        ParameterCatalog.Add(ControllerParameterListItem.ForDeviceSlot(id));
+                    if (seen.Add(entry.ParameterId))
+                        ParameterCatalog.Add(ControllerParameterListItem.ForDeviceEntry(entry.ParameterId, entry.Name));
                 }
             }
             catch

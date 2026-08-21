@@ -1,3 +1,4 @@
+using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Dialog;
@@ -39,9 +40,16 @@ public sealed partial class ControllerParameterListItem : ObservableObject
             : $"{parameterId:D3} · {name}");
     }
 
-    /// <summary>#160 等设备侧仅有 ID，无名称；展示为「001 1」。</summary>
+    /// <summary>设备侧无名称时仅显示 ID。</summary>
     public static ControllerParameterListItem ForDeviceSlot(int parameterId) =>
-        new(parameterId, parameterId.ToString(), displayText: $"{parameterId:D3} {parameterId}");
+        ForDeviceEntry(parameterId, name: null);
+
+    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。</summary>
+    public static ControllerParameterListItem ForDeviceEntry(int parameterId, string? name) =>
+        new(
+            parameterId,
+            string.IsNullOrWhiteSpace(name) ? parameterId.ToString() : name.Trim(),
+            displayText: DeviceListDisplayFormat.Format(parameterId, name));
 
     public int ParameterId { get; }
     public string Name { get; }
@@ -484,20 +492,23 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
     {
         try
         {
-            var ids = await _presetService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ControllerSource.ReadingDeviceNames");
+            var entries = await _presetService.ListDeviceParameterEntriesAsync().ConfigureAwait(true);
             DeviceParameters.Clear();
-            foreach (var id in ids)
-                DeviceParameters.Add(ControllerParameterListItem.ForDeviceSlot(id));
+            foreach (var entry in entries)
+                DeviceParameters.Add(ControllerParameterListItem.ForDeviceEntry(entry.ParameterId, entry.Name));
 
             DeviceHasConfiguredParameters = DeviceParameters.Count > 0;
             DeviceListStatus = DeviceHasConfiguredParameters
                 ? Loc.Format("S.ControllerParam.DeviceListCount", DeviceParameters.Count)
                 : Loc.Get("S.ControllerParam.DeviceListEmpty");
+            StatusMessage = DeviceListStatus;
         }
         catch (Exception ex)
         {
             DeviceListStatus = ex.Message;
             DeviceHasConfiguredParameters = false;
+            StatusMessage = ex.Message;
         }
 
         NotifyDeviceCommandsCanExecuteChanged();

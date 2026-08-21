@@ -259,6 +259,10 @@ public sealed class SequenceExcelParserTests
         public Task<IReadOnlyList<int>> ListDeviceParameterIdsAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<int>>([]);
 
+        public Task<IReadOnlyList<ControllerDeviceParameterEntry>> ListDeviceParameterEntriesAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ControllerDeviceParameterEntry>>([]);
+
         public Task<TighteningParameterTemplate> ImportFromDeviceAsync(
             int parameterId,
             CancellationToken cancellationToken = default) =>
@@ -329,6 +333,10 @@ public sealed class SequenceExcelParserTests
 
         public Task<IReadOnlyList<int>> ListDeviceSequenceIdsAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<int>>([]);
+
+        public Task<IReadOnlyList<ControllerDeviceSequenceEntry>> ListDeviceSequenceEntriesAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ControllerDeviceSequenceEntry>>([]);
 
         public Task<TighteningSequencePackage> ImportFromDeviceAsync(
             int sequenceId,

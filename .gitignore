@@ -256,3 +256,4 @@ appsettings.Development.json
 src/temp/connstring.txt
 /src/wpfui-4.0.0/wpfui-4.0.0
 /_build_tmp/Hmi
+/.superpowers/sdd/build-verify-device-list

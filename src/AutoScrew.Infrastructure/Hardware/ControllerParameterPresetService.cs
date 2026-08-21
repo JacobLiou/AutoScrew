@@ -112,6 +112,57 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         return [];
     }
 
+    public async Task<IReadOnlyList<ControllerDeviceParameterEntry>> ListDeviceParameterEntriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var ids = await ListDeviceParameterIdsAsync(cancellationToken).ConfigureAwait(false);
+        if (ids.Count == 0)
+            return [];
+
+        const int concurrency = 2;
+        using var gate = new SemaphoreSlim(concurrency, concurrency);
+        var results = new ControllerDeviceParameterEntry[ids.Count];
+        var tasks = new Task[ids.Count];
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var index = i;
+            var id = ids[i];
+            tasks[i] = FillParameterEntryAsync(gate, results, index, id, cancellationToken);
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        return results;
+    }
+
+    private async Task FillParameterEntryAsync(
+        SemaphoreSlim gate,
+        ControllerDeviceParameterEntry[] results,
+        int index,
+        int parameterId,
+        CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            try
+            {
+                var template = await ReadFromDeviceAsync(parameterId, cancellationToken).ConfigureAwait(false);
+                results[index] = new ControllerDeviceParameterEntry(
+                    parameterId,
+                    template.Core.Name?.Trim() ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ListDeviceParameterEntries: failed to read name for parameter {ParamId}", parameterId);
+                results[index] = new ControllerDeviceParameterEntry(parameterId, string.Empty);
+            }
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
     public async Task<ControllerParameterBulkImportResult> ImportAllFromDeviceAsync(
         CancellationToken cancellationToken = default)
     {

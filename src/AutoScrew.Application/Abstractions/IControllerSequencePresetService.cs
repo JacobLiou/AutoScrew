@@ -10,6 +10,9 @@ public sealed record ControllerSequencePresetSummary(
     string? SourceProductPn = null,
     int? SourceSequenceId = null);
 
+/// <summary>设备已配置顺序摘要（含 Name，仅用于列表展示）。</summary>
+public sealed record ControllerDeviceSequenceEntry(int SequenceId, string Name);
+
 public interface IControllerSequencePresetService
 {
     bool IsDeviceAvailable { get; }
@@ -36,6 +39,13 @@ public interface IControllerSequencePresetService
 
     /// <summary>Lists configured sequence IDs from device (#260).</summary>
     Task<IReadOnlyList<int>> ListDeviceSequenceIdsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 列设备已配置顺序 ID，再并发读取 Name（并发度 2）。
+    /// 单条读失败时该条 Name 为空，仍返回；不写入本地预设。
+    /// </summary>
+    Task<IReadOnlyList<ControllerDeviceSequenceEntry>> ListDeviceSequenceEntriesAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>Reads sequence from device (#250+) and saves to local store.</summary>
     Task<TighteningSequencePackage> ImportFromDeviceAsync(int sequenceId, CancellationToken cancellationToken = default);

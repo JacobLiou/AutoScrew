@@ -1,3 +1,4 @@
+using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Hmi.Services;
@@ -360,10 +361,16 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         IReadOnlyList<ControllerSequenceListItem> sequences;
         try
         {
-            var paramIds = await _parameterService.ListDeviceParameterIdsAsync().ConfigureAwait(true);
-            var seqIds = await _sequenceService.ListDeviceSequenceIdsAsync().ConfigureAwait(true);
-            parameters = paramIds.Select(ControllerParameterListItem.ForDeviceSlot).ToList();
-            sequences = seqIds.Select(ControllerSequenceListItem.ForDeviceSlot).ToList();
+            StatusMessage = Loc.Get("S.ControllerSource.ReadingDeviceNames");
+            ShowSnackbar(StatusMessage, ControlAppearance.Info);
+            var paramEntries = await _parameterService.ListDeviceParameterEntriesAsync().ConfigureAwait(true);
+            var seqEntries = await _sequenceService.ListDeviceSequenceEntriesAsync().ConfigureAwait(true);
+            parameters = paramEntries
+                .Select(e => ControllerParameterListItem.ForDeviceEntry(e.ParameterId, e.Name))
+                .ToList();
+            sequences = seqEntries
+                .Select(e => ControllerSequenceListItem.ForDeviceEntry(e.SequenceId, e.Name))
+                .ToList();
         }
         catch (Exception ex)
         {

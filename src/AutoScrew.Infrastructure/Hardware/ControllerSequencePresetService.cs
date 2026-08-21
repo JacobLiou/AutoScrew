@@ -110,6 +110,57 @@ public sealed class ControllerSequencePresetService : IControllerSequencePresetS
             .ToList();
     }
 
+    public async Task<IReadOnlyList<ControllerDeviceSequenceEntry>> ListDeviceSequenceEntriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var ids = await ListDeviceSequenceIdsAsync(cancellationToken).ConfigureAwait(false);
+        if (ids.Count == 0)
+            return [];
+
+        const int concurrency = 2;
+        using var gate = new SemaphoreSlim(concurrency, concurrency);
+        var results = new ControllerDeviceSequenceEntry[ids.Count];
+        var tasks = new Task[ids.Count];
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var index = i;
+            var id = ids[i];
+            tasks[i] = FillSequenceEntryAsync(gate, results, index, id, cancellationToken);
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        return results;
+    }
+
+    private async Task FillSequenceEntryAsync(
+        SemaphoreSlim gate,
+        ControllerDeviceSequenceEntry[] results,
+        int index,
+        int sequenceId,
+        CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            try
+            {
+                var pkg = await ReadFromDeviceAsync(sequenceId, cancellationToken).ConfigureAwait(false);
+                results[index] = new ControllerDeviceSequenceEntry(
+                    sequenceId,
+                    pkg.Core.Name?.Trim() ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ListDeviceSequenceEntries: failed to read name for sequence {SeqId}", sequenceId);
+                results[index] = new ControllerDeviceSequenceEntry(sequenceId, string.Empty);
+            }
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
     public async Task<TighteningSequencePackage> ImportFromDeviceAsync(
         int sequenceId,
         CancellationToken cancellationToken = default)

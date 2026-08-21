@@ -677,6 +677,7 @@
     <system:String x:Key="S.ControllerSource.PickerNeedsDevice">请先连接设备后再选择拧紧来源（列表来自设备 #160 / 顺序列表）。</system:String>
     <system:String x:Key="S.ControllerSource.PickerDeviceEmpty">设备上未配置拧紧参数或顺序，请先在参数/顺序页写入设备后再选择。</system:String>
     <system:String x:Key="S.ControllerSource.PickerApplied">已选择 #{0}，螺钉总数 {1}，批头 {2}。</system:String>
+    <system:String x:Key="S.ControllerSource.ReadingDeviceNames">正在从设备读取名称…</system:String>
     <system:String x:Key="S.ControllerSource.Barcode">条码</system:String>
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">已保存到本地。</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">已从设备读取来源配置。</system:String>
