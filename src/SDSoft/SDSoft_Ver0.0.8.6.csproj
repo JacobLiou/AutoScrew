@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <AssemblyName>SDSoft_Ver0.0.8.6</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>True</UseWindowsForms>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="SD3Soft.Resources.DeltaSans-Light.ttf" />
+    <None Remove="SD3Soft.Resources.DeltaSans-Regular.ttf" />
+    <None Remove="SD3Soft.Resources.DeltaSans-SemiBold.ttf" />
+    <EmbeddedResource Include="SD3Soft.Resources.DeltaSans-Light.ttf" LogicalName="SD3Soft.Resources.DeltaSans-Light.ttf" />
+    <EmbeddedResource Include="SD3Soft.Resources.DeltaSans-Regular.ttf" LogicalName="SD3Soft.Resources.DeltaSans-Regular.ttf" />
+    <EmbeddedResource Include="SD3Soft.Resources.DeltaSans-SemiBold.ttf" LogicalName="SD3Soft.Resources.DeltaSans-SemiBold.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+</Project>
