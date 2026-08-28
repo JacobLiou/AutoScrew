@@ -44,11 +44,11 @@ public sealed partial class ControllerParameterListItem : ObservableObject
     public static ControllerParameterListItem ForDeviceSlot(int parameterId) =>
         ForDeviceEntry(parameterId, name: null);
 
-    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。</summary>
+    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。无名称时 Name 留空，勿用 ID 字符串占位。</summary>
     public static ControllerParameterListItem ForDeviceEntry(int parameterId, string? name) =>
         new(
             parameterId,
-            string.IsNullOrWhiteSpace(name) ? parameterId.ToString() : name.Trim(),
+            string.IsNullOrWhiteSpace(name) ? string.Empty : name.Trim(),
             displayText: DeviceListDisplayFormat.Format(parameterId, name));
 
     public int ParameterId { get; }

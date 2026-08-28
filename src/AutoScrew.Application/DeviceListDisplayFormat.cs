@@ -9,6 +9,11 @@ public static class DeviceListDisplayFormat
     {
         var trimmed = name?.Trim();
         var idText = id.ToString(CultureInfo.InvariantCulture);
-        return string.IsNullOrEmpty(trimmed) ? idText : idText + " " + trimmed;
+        // 无名称、或名称仅为 ID 字符串（占位）时只显示 ID，避免「10 10」
+        if (string.IsNullOrEmpty(trimmed) ||
+            string.Equals(trimmed, idText, StringComparison.Ordinal))
+            return idText;
+
+        return idText + " " + trimmed;
     }
 }

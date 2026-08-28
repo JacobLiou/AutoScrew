@@ -38,11 +38,11 @@ public sealed partial class ControllerSequenceListItem : ObservableObject
     public static ControllerSequenceListItem ForDeviceSlot(int sequenceId) =>
         ForDeviceEntry(sequenceId, name: null);
 
-    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。</summary>
+    /// <summary>设备侧「ID 空格名称」（与 Delta 一致）。无名称时 Name 留空，勿用 ID 字符串占位。</summary>
     public static ControllerSequenceListItem ForDeviceEntry(int sequenceId, string? name) =>
         new(
             sequenceId,
-            string.IsNullOrWhiteSpace(name) ? sequenceId.ToString() : name.Trim(),
+            string.IsNullOrWhiteSpace(name) ? string.Empty : name.Trim(),
             displayText: DeviceListDisplayFormat.Format(sequenceId, name));
 
     public int SequenceId { get; }

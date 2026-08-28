@@ -11,6 +11,8 @@ public sealed class DeviceListDisplayFormatTests
     [InlineData(3, null, "3")]
     [InlineData(3, "", "3")]
     [InlineData(3, "   ", "3")]
+    [InlineData(10, "10", "10")]
+    [InlineData(10, " 10 ", "10")]
     public void Format_IdAndName(int id, string? name, string expected) =>
         Assert.Equal(expected, DeviceListDisplayFormat.Format(id, name));
 }

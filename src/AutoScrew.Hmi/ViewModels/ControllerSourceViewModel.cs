@@ -23,7 +23,9 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
     private readonly ICurrentUser _user;
+    private readonly SemaphoreSlim _deviceIoGate = new(1, 1);
     private bool _suppressProductionModeSave;
+    private bool _suppressOperatingModeSideEffects;
 
     public ControllerSourceViewModel(
         IControllerSourceConfigService sourceService,
@@ -108,10 +110,24 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
 
     partial void OnOperatingModeIndexChanged(int value)
     {
+        // TabControl 在布局抖动时可能把 SelectedIndex 写成 -1；TwoWay 会写回此处并误出双工具行
+        if (value != ClampOperatingModeIndex(value))
+        {
+            OperatingModeIndex = ClampOperatingModeIndex(value);
+            return;
+        }
+
         OnPropertyChanged(nameof(IsSingleToolMode));
         OnPropertyChanged(nameof(IsDualAlternationMode));
         OnPropertyChanged(nameof(IsDualSyncMode));
-        RebuildBindingRowsForTopology();
+        if (!_suppressOperatingModeSideEffects)
+            RebuildBindingRowsForTopology();
+    }
+
+    partial void OnSwitchingMethodIndexChanged(int value)
+    {
+        if (value != ClampSwitchingMethodIndex(value))
+            SwitchingMethodIndex = ClampSwitchingMethodIndex(value);
     }
 
     public async Task InitializeAsync()
@@ -123,8 +139,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         _suppressProductionModeSave = false;
         var mode = await _sourceService.LoadLocalModeAsync().ConfigureAwait(true);
         var bindings = await _sourceService.LoadBindingsAsync().ConfigureAwait(true);
-        OperatingModeIndex = (int)mode.OperatingMode;
-        SwitchingMethodIndex = (int)mode.SwitchingMethod;
+        ApplyDeviceMode(mode);
         await RefreshCatalogsAsync().ConfigureAwait(true);
         ApplyBindings(bindings);
     }
@@ -243,16 +258,24 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    [RelayCommand(CanExecute = nameof(CanUseDevice), AllowConcurrentExecutions = false)]
     private async Task ReadFromDeviceAsync()
     {
+        if (!await _deviceIoGate.WaitAsync(0).ConfigureAwait(true))
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.DeviceBusy");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
         try
         {
             var (mode, content) = await _sourceService.ReadFromDeviceAsync().ConfigureAwait(true);
-            OperatingModeIndex = (int)mode.OperatingMode;
-            SwitchingMethodIndex = (int)mode.SwitchingMethod;
+            ApplyDeviceMode(mode);
             EnsureTargetInCatalog(content.TargetId, content.BindingType);
-            var entryTool = content.ToolIndex > 0 ? content.ToolIndex : mode.ToolIndex;
+            var entryTool = content.ToolIndex is 0 or 1 ? content.ToolIndex : mode.ToolIndex;
+            if (entryTool is not (0 or 1))
+                entryTool = 0;
             ApplyBindings([
                 new ControllerSourceBindingEntry
                 {
@@ -279,6 +302,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             StatusMessage = ex.Message;
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
         }
+        finally
+        {
+            _deviceIoGate.Release();
+        }
     }
 
     private void EnsureTargetInCatalog(int targetId, TighteningSourceBindingType bindingType)
@@ -301,9 +328,16 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         HasParameters = ParameterCatalog.Count > 0;
     }
 
-    [RelayCommand(CanExecute = nameof(CanUseDevice))]
+    [RelayCommand(CanExecute = nameof(CanUseDevice), AllowConcurrentExecutions = false)]
     private async Task WriteToDeviceAsync()
     {
+        if (!await _deviceIoGate.WaitAsync(0).ConfigureAwait(true))
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.DeviceBusy");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
         try
         {
             await SaveLocalAsync().ConfigureAwait(true);
@@ -317,6 +351,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         {
             StatusMessage = ex.Message;
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        finally
+        {
+            _deviceIoGate.Release();
         }
     }
 
@@ -344,7 +382,7 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task OpenBindingPickerAsync(ControllerSourceBindingRowViewModel? row)
     {
         if (row is null)
@@ -353,6 +391,13 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         if (!IsDeviceAvailable)
         {
             StatusMessage = Loc.Get("S.ControllerSource.PickerNeedsDevice");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
+        if (!await _deviceIoGate.WaitAsync(0).ConfigureAwait(true))
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.DeviceBusy");
             ShowSnackbar(StatusMessage, ControlAppearance.Caution);
             return;
         }
@@ -378,6 +423,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
             return;
         }
+        finally
+        {
+            _deviceIoGate.Release();
+        }
 
         if (parameters.Count == 0 && sequences.Count == 0)
         {
@@ -401,6 +450,13 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
         var pick = dialog.SelectedRow;
         int screwCount;
         int bitId;
+        if (!await _deviceIoGate.WaitAsync(0).ConfigureAwait(true))
+        {
+            StatusMessage = Loc.Get("S.ControllerSource.DeviceBusy");
+            ShowSnackbar(StatusMessage, ControlAppearance.Caution);
+            return;
+        }
+
         try
         {
             (screwCount, bitId) = await ResolveCarryFromDeviceAsync(
@@ -413,6 +469,10 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
             StatusMessage = ex.Message;
             ShowSnackbar(ex.Message, ControlAppearance.Danger);
             return;
+        }
+        finally
+        {
+            _deviceIoGate.Release();
         }
 
         EnsureTargetInCatalog(pick.TargetId, (TighteningSourceBindingType)pick.BindingType);
@@ -566,13 +626,37 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
     private TighteningSourceModeCore BuildMode() => new()
     {
         ToolIndex = 0,
-        OperatingMode = (TighteningOperatingMode)OperatingModeIndex,
-        SwitchingMethod = (TighteningSwitchingMethod)SwitchingMethodIndex,
+        OperatingMode = (TighteningOperatingMode)ClampOperatingModeIndex(OperatingModeIndex),
+        SwitchingMethod = (TighteningSwitchingMethod)ClampSwitchingMethodIndex(SwitchingMethodIndex),
     };
+
+    /// <summary>从设备 #300 套用模式；非法枚举值回退为单工具/手动，避免界面长出双工具行。</summary>
+    private void ApplyDeviceMode(TighteningSourceModeCore mode)
+    {
+        _suppressOperatingModeSideEffects = true;
+        try
+        {
+            OperatingModeIndex = ClampOperatingModeIndex((int)mode.OperatingMode);
+            SwitchingMethodIndex = ClampSwitchingMethodIndex((int)mode.SwitchingMethod);
+        }
+        finally
+        {
+            _suppressOperatingModeSideEffects = false;
+        }
+    }
+
+    private static int ClampOperatingModeIndex(int value) =>
+        value is >= 0 and <= (int)TighteningOperatingMode.DualToolSynchronization
+            ? value
+            : (int)TighteningOperatingMode.SingleTool;
+
+    private static int ClampSwitchingMethodIndex(int value) =>
+        value is >= 0 and <= (int)TighteningSwitchingMethod.BarcodeScanner
+            ? value
+            : (int)TighteningSwitchingMethod.Manual;
 
     private void ApplyBindings(IReadOnlyList<ControllerSourceBindingEntry> bindings)
     {
-        BindingRows.Clear();
         RebuildBindingRowsForTopology();
         foreach (var row in BindingRows)
         {
@@ -585,12 +669,20 @@ public sealed partial class ControllerSourceViewModel : ObservableObject
 
     private void RebuildBindingRowsForTopology()
     {
+        var mode = ClampOperatingModeIndex(OperatingModeIndex);
+        var desiredCount = mode == (int)TighteningOperatingMode.SingleTool ? 1 : 2;
         var existing = BindingRows.ToDictionary(r => r.ToolIndex, r => r);
-        BindingRows.Clear();
 
-        // 单轴独立：仅工具 1；双工具交替/同步：工具 1 + 工具 2
+        // 拓扑未变时不 Clear，避免每张工具卡上的 ComboBox TwoWay 回写抖动
+        if (BindingRows.Count == desiredCount
+            && BindingRows.Count >= 1
+            && BindingRows[0].ToolIndex == 0
+            && (desiredCount == 1 || (BindingRows.Count == 2 && BindingRows[1].ToolIndex == 1)))
+            return;
+
+        BindingRows.Clear();
         BindingRows.Add(existing.GetValueOrDefault(0) ?? new ControllerSourceBindingRowViewModel(0));
-        if (OperatingModeIndex != (int)TighteningOperatingMode.SingleTool)
+        if (desiredCount == 2)
             BindingRows.Add(existing.GetValueOrDefault(1) ?? new ControllerSourceBindingRowViewModel(1));
     }
 

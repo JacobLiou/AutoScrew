@@ -667,6 +667,7 @@
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">Saved locally.</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">Read source config from device.</system:String>
     <system:String x:Key="S.ControllerSource.StatusWriteDevice">Wrote source config to device.</system:String>
+    <system:String x:Key="S.ControllerSource.DeviceBusy">Device I/O in progress. Try again shortly.</system:String>
     <system:String x:Key="S.ControllerSource.ActivateSequence">Activate sequence (#303)</system:String>
     <system:String x:Key="S.ControllerSource.StatusActivated">Activated sequence #{0} on device (#303).</system:String>
     <system:String x:Key="S.ControllerSource.ActivateNeedsSequence">Save a sequence binding before activating #303.</system:String>
