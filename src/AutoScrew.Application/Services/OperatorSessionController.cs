@@ -699,7 +699,17 @@ public sealed class OperatorSessionController
         var eval = LockCurveEvaluator.Evaluate(samples.ToArray(), program);
         var device = _hardware.LastOutcome;
         var deviceOk = device?.DeviceOk ?? true;
-        var combinedOk = eval.IsOk && deviceOk;
+        // 产线 OK/NG 以设备周期 IsOk 为准；LockCurveEvaluator 仅 advisory，不锁屏。
+        var combinedOk = deviceOk;
+
+        if (deviceOk && !eval.IsOk)
+        {
+            _logger.LogWarning(
+                "Screw {Index} curve advisory (device OK): {RuleCode} — {Message}",
+                idx + 1,
+                eval.ErrorCode,
+                eval.Message);
+        }
 
         var curvePath = await _curveArchive
             .SaveCurveCsvAsync(_serialNumber!, globalIndex, samples, cancellationToken)
@@ -710,11 +720,9 @@ public sealed class OperatorSessionController
         string? errorCode = null;
         if (!combinedOk)
         {
-            errorCode = !deviceOk
-                ? device?.DeviceErrorCode is ushort dc
-                    ? $"DEVICE_{dc}"
-                    : "DEVICE_NG"
-                : eval.ErrorCode;
+            errorCode = device?.DeviceErrorCode is ushort dc
+                ? $"DEVICE_{dc}"
+                : "DEVICE_NG";
         }
 
         _lastErrorCode = combinedOk ? null : errorCode;
@@ -738,9 +746,7 @@ public sealed class OperatorSessionController
         }
         else
         {
-            var ngMessage = !deviceOk
-                ? $"Device NG (code {device?.DeviceErrorCode})"
-                : eval.Message ?? eval.ErrorCode;
+            var ngMessage = $"Device NG (code {device?.DeviceErrorCode})";
             _lastErrorMessage = ngMessage;
             NotifyScrewCycleProgress(
                 ScrewCycleProgressStep.CompletedNg,
@@ -751,7 +757,7 @@ public sealed class OperatorSessionController
             SetState(idx, StationScrewState.Ng);
             _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.NgLocked;
             TryApply(JobSessionTrigger.ScrewNg);
-            await LogErrorAsync(idx, eval, device, cancellationToken).ConfigureAwait(false);
+            LogDeviceNg(idx, device);
         }
 
         AuditOperation(
@@ -883,19 +889,12 @@ public sealed class OperatorSessionController
         }
     }
 
-    private Task LogErrorAsync(
-        int index,
-        LockEvaluationResult eval,
-        LockHardwareOutcome? device,
-        CancellationToken cancellationToken)
+    private void LogDeviceNg(int index, LockHardwareOutcome? device)
     {
         _logger.LogWarning(
-            "Screw {Index} NG: rule={RuleCode} deviceOk={DeviceOk} deviceCode={DeviceCode}",
+            "Screw {Index} NG: deviceOk=false deviceCode={DeviceCode}",
             index + 1,
-            eval.ErrorCode,
-            device?.DeviceOk ?? true,
             device?.DeviceErrorCode);
-        return Task.CompletedTask;
     }
 
     private sealed record ScrewCycleRecord(

@@ -13,13 +13,14 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
 {
     private readonly SimulationOptions _simulation;
     private int _pickCount;
+    private LockHardwareOutcome? _lastOutcome;
 
     public SimulatedLockStationHardware(IOptions<SimulationOptions> simulation)
     {
         _simulation = simulation.Value;
     }
 
-    public LockHardwareOutcome? LastOutcome => null;
+    public LockHardwareOutcome? LastOutcome => _lastOutcome;
 
     public async Task PickScrewAsync(CancellationToken cancellationToken = default)
     {
@@ -75,6 +76,14 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
             if (stepDelay > 0)
                 await Task.Delay(stepDelay, cancellationToken).ConfigureAwait(false);
         }
+
+        var deviceOk = _simulation.TighteningProfile == SimulatedTighteningProfile.Ok;
+        _lastOutcome = new LockHardwareOutcome(
+            deviceOk,
+            peakTorque,
+            520,
+            deviceOk ? null : 1,
+            0);
     }
 
     public void ResetPickCount() => _pickCount = 0;

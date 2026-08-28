@@ -144,7 +144,8 @@ flowchart TB
 ### 6.2 曲线与判定（Domain + Application）
 
 - **采集路径**：设备适配将采样推送至**非 UI 线程**管道（如 `Channel<T>` 或阻塞队列），**固定容量环形缓冲**，防止内存无限增长。
-- **判定**：Domain 提供纯函数或可测试服务（输入序列片段 + 工艺阈值，输出事件/结果枚举），与 PRD 3.2.1 异常类型对齐（浮锁、滑牙、斜锁、卡钉、漏锁等）。
+- **产线判定**：[`OperatorSessionController`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) 以 `LockHardwareOutcome.DeviceOk`（IEMD-SD 周期 IsOk）为唯一 OK/NG 来源；设备 NG 时 NgLocked。
+- **advisory 规则**：Domain [`LockCurveEvaluator`](../src/AutoScrew.Domain/Curves/LockCurveEvaluator.cs) 仍可用于单元测试与日志对比（浮锁、滑牙等启发式），**不参与**产线 NgLocked。
 - **展示**：ViewModel 订阅聚合后的曲线点集（可降采样用于显示），详细原始数据落盘 CSV（路径与命名对齐 PRD 草案）。
 
 ### 6.3 MES 与离线（Infrastructure）

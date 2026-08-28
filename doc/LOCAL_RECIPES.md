@@ -28,7 +28,7 @@ Development 默认 `TemplateDirectory=Samples`，随 HMI 输出目录拷贝样�
 | `partNumber` | PN，与 MES 返回一致 |
 | `templateFile` | 相对 `TemplateDirectory` 的模板；省略时为 `{partNumber}.product-template.json` |
 | `serialNumbers` | 该 PN 下允许的 SN 列表（一个 PN 可对应多个 SN） |
-| `screws` | 可选；非空时覆盖 MES 螺钉工艺（与线网 Mock 一致） |
+| `screws` | 可选；Mock 脱机 HostGuided 换参参考；**不参与产线 OK/NG 判定**（品质由 IEMD-SD 参数保障） |
 
 ## 技术员 / 操作员流程
 

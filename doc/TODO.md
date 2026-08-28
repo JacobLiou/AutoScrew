@@ -99,8 +99,8 @@ flowchart LR
 - [x] 会话状态机：[`OperatorSessionController.cs`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) + [`JobSessionPhaseMachine`](../src/AutoScrew.Domain/Session/JobSessionPhaseMachine.cs)
 - [x] SN → MES 校验 → Recipe + v2 产品模板加载
 - [x] 多面 runtime：`ActiveSurfaceOrdinal`、`AwaitFlip`、按面 checkpoint 字段
-- [x] 单钉周期：[`RunCurrentScrewCycleAsync`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)（拧紧 → 曲线判定 ∪ 设备 NG；取钉现场手动）
-- [x] 曲线判定：[`LockCurveEvaluator.cs`](../src/AutoScrew.Domain/Curves/LockCurveEvaluator.cs)（浮锁/滑牙等启发式）
+- [x] 单钉周期：[`RunCurrentScrewCycleAsync`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)（拧紧 → **设备 IsOk 判定** + 曲线 advisory；取钉现场手动）
+- [x] 曲线 advisory：[`LockCurveEvaluator.cs`](../src/AutoScrew.Domain/Curves/LockCurveEvaluator.cs)（浮锁/滑牙等启发式，仅日志，不锁 NG）
 - [x] NG 锁定 + 技术员 [`UnlockNgContinue`](../src/AutoScrew.Application/Services/OperatorSessionController.cs)
 - [x] 本地曲线归档 + `lock_log` JSON
 - [x] Checkpoint **写入**：[`PersistCheckpointAsync`](../src/AutoScrew.Application/Services/OperatorSessionController.cs) → [`EfLockSessionRepository`](../src/AutoScrew.Infrastructure/Persistence/EfLockSessionRepository.cs)
@@ -214,7 +214,7 @@ flowchart LR
 | 黄闪待打位置 | Marker Pending 闪烁 | 已实现 |
 | **取钉/供料** | **操作员手动** | 上位机**不调度**供料器 |
 | 按指引锁附 | `AutoRunScrewCycle` + 扳机 | **已实现**（T-01） |
-| 实时曲线判定 | `LockCurveEvaluator` + 设备 Status | **已实现**（T-11） |
+| 实时曲线与判定 | 曲线采集/显示 + **设备 IsOk**；`LockCurveEvaluator` advisory | **已实现**（T-11；2026-08-28 改为设备权威） |
 | OK/NG 反馈 | Marker 绿/红 + NgLocked | **已实现**（T-05） |
 | 完成 → Log + MES/LAN | `lock_log` + Outbox / MAC 归档 | 已实现 |
 

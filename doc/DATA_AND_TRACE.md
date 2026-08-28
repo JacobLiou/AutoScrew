@@ -17,6 +17,13 @@
 - **局域网 SN 归档（ProductKey / Fusion / 无 MES）**：`mes-settings.json` 的 `LanShareRoot`（Mes 页可配）→ `{LanShareRoot}\{MAC}\{SN}\`，镜像本地 `work\{SN}`（曲线 CSV、`lock_log_*.json`）。`MAC` 为本机网卡地址规范化名（`AA-BB-CC-DD-EE-FF`）；取不到时用 `UNKNOWN-HOST`。服务账号与口令**不在 HMI 展示**：账号固定于代码；口令为 `AutoScrew:LanSharePasswordAes256`（`aes256:` 密文，用 `tools/EncryptMimsConnectionString` 生成）。连接用 `WNetUseConnection`；失败不阻塞产线。有 LAN 根即镜像，与是否 HTTP MES 无关。
 - **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。一期 UNC `{PN}` 模板同步见 [FusionTodo.md](FusionTodo.md) F-05（未强制）。
 
+## 产线 OK/NG 与 Recipe 职责（2026-08-28）
+
+- **ProductKey / 无完整 MES Recipe**：`GetRecipeAsync` 仅返回 PN + 作业台模板路径；**不含**螺钉扭矩工艺。工艺由工艺库 → IEMD-SD 拧紧参数/顺序/来源下发。
+- **单钉 OK/NG**：以 IEMD-SD 周期 `IsOk`（`LockHardwareOutcome.DeviceOk`）为准；归档 `ScrewResultDto.Result` / `ErrorCode`（`DEVICE_*`）来自设备报告。
+- **上位机 `LockCurveEvaluator`**：曲线 CSV 仍归档；规则不匹配时仅 Warning 日志（advisory），不触发 NgLocked。
+- **`local-recipes.json` 的 `screws[]`**：Mock 脱机可选；不参与产线 OK/NG。
+
 ## SQLite 实体（Infrastructure）
 
 - `lock_records` / `screw_details` / `error_logs`：表已建；**T-08**：作业完成时 [`SaveLockRecordAsync`](../src/AutoScrew.Application/Abstractions/ILockSessionRepository.cs) 写入 `lock_records` + `screw_details`（`PositionIndex` = 全局位号）。
