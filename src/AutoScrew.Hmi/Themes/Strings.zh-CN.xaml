@@ -59,6 +59,17 @@
     <!-- Shell -->
     <system:String x:Key="S.Shell.Notepad">记事本</system:String>
     <system:String x:Key="S.Shell.Calculator">计算器</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Idle">空闲</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Running">作业中</system:String>
+    <system:String x:Key="S.Shell.JobPhase.NgLocked">NG 锁定</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Idle">作业台空闲，可开始扫描 SN</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.SnPending">等待扫描 / 输入 SN</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.SnRejected">SN 无效，请重新扫描</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.LoadingRecipe">正在加载配方与模板</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Running">正在锁附作业</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.AwaitFlip">当前面已完成，等待翻面确认</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.NgLocked">拧紧 NG，作业已暂停</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Completed">本单已完成，可扫下一 SN</system:String>
     <system:String x:Key="S.Shell.Logout">登出</system:String>
     <system:String x:Key="S.Shell.LoggedIn">已登录</system:String>
     <system:String x:Key="S.Shell.Screenshot">程序截屏</system:String>
@@ -189,6 +200,8 @@
     <system:String x:Key="S.Operation.LogRestored">已恢复 checkpoint 作业 {0}</system:String>
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">错误码</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">说明</system:String>
+    <system:String x:Key="S.Operation.NgOverlayScrewLabel">失败螺钉</system:String>
+    <system:String x:Key="S.Operation.NgFailedScrewDetail">第 {0} 钉（{2}）· 左侧树 {1}</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">处理建议</system:String>
     <system:String x:Key="S.Operation.NgOverlayOperatorHint">请先「退出作业」挂起，修好设备后再扫同一 SN 恢复。仅在现场已修好、需立即重打时使用「紧急解除」。</system:String>
     <system:String x:Key="S.Operation.NgOverlayTechnicianHint">设备故障请先「退出作业」挂起。若现场已清错、需立即重打，再选解锁或返修。</system:String>

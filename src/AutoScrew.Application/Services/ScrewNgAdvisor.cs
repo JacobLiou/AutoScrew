@@ -5,8 +5,18 @@ public static class ScrewNgAdvisor
 {
     public static string GetAdvice(string? errorCode, ushort? deviceErrorCode = null)
     {
+        if (deviceErrorCode is > 0)
+            return DeviceNgDisplayFormat.BuildDeviceAdvice(deviceErrorCode.Value);
+
         if (!string.IsNullOrWhiteSpace(errorCode))
         {
+            if (errorCode.StartsWith("DEVICE_", StringComparison.Ordinal)
+                && ushort.TryParse(errorCode["DEVICE_".Length..], out var parsed)
+                && parsed > 0)
+            {
+                return DeviceNgDisplayFormat.BuildDeviceAdvice(parsed);
+            }
+
             return errorCode switch
             {
                 "FEED_TIMEOUT" => "供料超时：检查供料器是否响应、传感器与程序号；清障后由技术员解锁。",
@@ -23,13 +33,10 @@ public static class ScrewNgAdvisor
                 _ when errorCode.StartsWith("FEED_", StringComparison.Ordinal) =>
                     "供料异常，请检查供料器与料仓后由技术员解锁。",
                 _ when errorCode.StartsWith("DEVICE_", StringComparison.Ordinal) =>
-                    $"控制器错误码 {errorCode["DEVICE_".Length..]}。请「退出作业」挂起，在设备上清错后，再扫同一 SN 恢复。",
+                    "控制器判定 NG。请「退出作业」挂起，在设备上清错后，再扫同一 SN 恢复。",
                 _ => "请联系技术员检查曲线与设备报告后解锁。"
             };
         }
-
-        if (deviceErrorCode is > 0)
-            return $"控制器错误码 {deviceErrorCode}。请「退出作业」挂起，在设备上清错后，再扫同一 SN 恢复。";
 
         return "请联系技术员解锁后继续。";
     }

@@ -1,3 +1,4 @@
+using AutoScrew.Application;
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
 using AutoScrew.Application.Services;
@@ -126,6 +127,9 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _ngOverlayTitle = "";
+
+    [ObservableProperty]
+    private string _ngFailedScrewDetail = "";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(
@@ -683,18 +687,17 @@ public partial class MainViewModel : ObservableObject
         var ngLocked = _session.Phase == JobSessionPhase.NgLocked;
         if (ngLocked)
         {
-            if (_previousPhase != JobSessionPhase.NgLocked)
-            {
-                NgErrorCode = _session.LastErrorCode ?? "";
-                NgErrorMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked");
-                NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode);
-            }
+            PopulateNgOverlayFromSession();
 
             NgOverlayTitle = ScrewNgAdvisor.IsFeedError(_session.LastErrorCode)
                 ? Loc.Get("S.Operation.NgFeedTitle")
                 : ScrewNgAdvisor.IsDeviceError(_session.LastErrorCode)
                     ? Loc.Get("S.Operation.NgDeviceTitle")
                     : Loc.Get("S.Operation.NgScrewTitle");
+        }
+        else
+        {
+            NgFailedScrewDetail = "";
         }
 
         IsNgOverlayVisible = ngLocked;
@@ -716,6 +719,69 @@ public partial class MainViewModel : ObservableObject
         }
 
         RefreshProgressTree();
+    }
+
+    private void PopulateNgOverlayFromSession()
+    {
+        if (_session.LastDeviceErrorCode is ushort deviceCode)
+        {
+            NgErrorCode = DeviceNgDisplayFormat.FormatCodeLine(deviceCode);
+            NgErrorMessage = DeviceNgDisplayFormat.BuildDeviceMessage(
+                deviceCode,
+                _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked"));
+            NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode, deviceCode);
+        }
+        else
+        {
+            NgErrorCode = _session.LastErrorCode ?? "";
+            NgErrorMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.GuideNgLocked");
+            NgErrorAdvice = ScrewNgAdvisor.GetAdvice(_session.LastErrorCode);
+        }
+
+        NgFailedScrewDetail = BuildNgFailedScrewDetail();
+    }
+
+    private string BuildNgFailedScrewDetail()
+    {
+        var localIndex = _session.LastFailedScrewLocalIndex;
+        if (localIndex <= 0)
+            localIndex = _session.CurrentScrewLocalIndex;
+        if (localIndex <= 0)
+            return "";
+
+        var glyph = ResolveProgressTreeGlyph(localIndex);
+        var surface = _session.ActiveSurfaceName ?? _session.ActiveSurfaceId ?? Loc.Get("S.Operation.CurrentSurface");
+        return Loc.Format("S.Operation.NgFailedScrewDetail", localIndex, glyph, surface);
+    }
+
+    private string ResolveProgressTreeGlyph(int localIndex)
+    {
+        var state = FindScrewStateForLocalIndex(localIndex);
+        return state switch
+        {
+            StationScrewState.Ok => "✓",
+            StationScrewState.Ng => "✕",
+            StationScrewState.InProgress => "●",
+            _ => "○"
+        };
+    }
+
+    private StationScrewState FindScrewStateForLocalIndex(int localIndex)
+    {
+        foreach (var snapshot in _session.SurfaceSnapshots)
+        {
+            for (var i = 0; i < snapshot.ScrewLocalIndices.Count; i++)
+            {
+                if (snapshot.ScrewLocalIndices[i] != localIndex)
+                    continue;
+
+                return i < snapshot.ScrewStates.Count
+                    ? snapshot.ScrewStates[i]
+                    : StationScrewState.Pending;
+            }
+        }
+
+        return StationScrewState.Pending;
     }
 
     private void RefreshCompletionState()

@@ -55,6 +55,17 @@
 
     <system:String x:Key="S.Shell.Notepad">Notepad</system:String>
     <system:String x:Key="S.Shell.Calculator">Calculator</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Idle">Idle</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Running">Running</system:String>
+    <system:String x:Key="S.Shell.JobPhase.NgLocked">NG Locked</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Idle">Station idle — scan SN to start</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.SnPending">Waiting for SN scan / input</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.SnRejected">SN rejected — scan again</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.LoadingRecipe">Loading recipe and template</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Running">Tightening in progress</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.AwaitFlip">Surface done — confirm flip</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.NgLocked">Tightening NG — job paused</system:String>
+    <system:String x:Key="S.Shell.JobPhase.Tip.Completed">Job complete — scan next SN</system:String>
     <system:String x:Key="S.Shell.Logout">Sign out</system:String>
     <system:String x:Key="S.Shell.LoggedIn">Signed in</system:String>
     <system:String x:Key="S.Shell.Screenshot">Screenshot</system:String>
@@ -182,6 +193,8 @@
     <system:String x:Key="S.Operation.LogRestored">Restored checkpoint job {0}</system:String>
     <system:String x:Key="S.Operation.NgOverlayCodeLabel">Error code</system:String>
     <system:String x:Key="S.Operation.NgOverlayMessageLabel">Details</system:String>
+    <system:String x:Key="S.Operation.NgOverlayScrewLabel">Failed screw</system:String>
+    <system:String x:Key="S.Operation.NgFailedScrewDetail">Screw #{0} ({2}) · tree {1}</system:String>
     <system:String x:Key="S.Operation.NgOverlayAdviceLabel">Suggested action</system:String>
     <system:String x:Key="S.Operation.NgOverlayOperatorHint">Park the job first, fix the device, then rescan the same SN. Use Emergency unlock only if the device is already cleared and you must retry now.</system:String>
     <system:String x:Key="S.Operation.NgOverlayTechnicianHint">For a device fault, park the job first. Use Unlock or Rework only after the controller is cleared and you need to retry immediately.</system:String>

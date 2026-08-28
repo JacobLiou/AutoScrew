@@ -15,6 +15,7 @@
         <conv:PathToImageConverter x:Key="PathToImageConverter"/>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <conv:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter"/>
     </UserControl.Resources>
     <Grid>
     <DockPanel Margin="0">
@@ -313,6 +314,14 @@
                 <TextBlock Text="{Binding NgErrorCode}"
                            FontFamily="Consolas"
                            Margin="0,0,0,8"/>
+                <TextBlock Text="{DynamicResource S.Operation.NgOverlayScrewLabel}"
+                           FontWeight="SemiBold"
+                           Visibility="{Binding NgFailedScrewDetail, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"/>
+                <TextBlock Text="{Binding NgFailedScrewDetail}"
+                           TextWrapping="Wrap"
+                           FontFamily="Consolas"
+                           Margin="0,0,0,8"
+                           Visibility="{Binding NgFailedScrewDetail, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"/>
                 <TextBlock Text="{DynamicResource S.Operation.NgOverlayMessageLabel}"
                            FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding NgErrorMessage}"

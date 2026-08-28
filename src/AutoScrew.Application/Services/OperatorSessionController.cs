@@ -49,6 +49,8 @@ public sealed class OperatorSessionController
     private bool _isRework;
     private string? _lastErrorMessage;
     private string? _lastErrorCode;
+    private ushort? _lastDeviceErrorCode;
+    private int _lastFailedScrewLocalIndex;
     private int _cycleInProgress;
     private int _templateSurfaceCount = 1;
     private string? _activeSurfaceId;
@@ -102,6 +104,10 @@ public sealed class OperatorSessionController
     public string? LastErrorMessage => _lastErrorMessage;
 
     public string? LastErrorCode => _lastErrorCode;
+
+    public ushort? LastDeviceErrorCode => _lastDeviceErrorCode;
+
+    public int LastFailedScrewLocalIndex => _lastFailedScrewLocalIndex;
 
     public bool IsCycleInProgress => _cycleInProgress > 0;
 
@@ -720,9 +726,25 @@ public sealed class OperatorSessionController
         string? errorCode = null;
         if (!combinedOk)
         {
-            errorCode = device?.DeviceErrorCode is ushort dc
-                ? $"DEVICE_{dc}"
-                : "DEVICE_NG";
+            if (device?.DeviceErrorCode is ushort dc)
+            {
+                errorCode = $"DEVICE_{dc}";
+                _lastDeviceErrorCode = dc;
+                _lastErrorMessage = DeviceNgDisplayFormat.BuildDeviceMessage(dc);
+            }
+            else
+            {
+                errorCode = "DEVICE_NG";
+                _lastDeviceErrorCode = null;
+                _lastErrorMessage = "设备判定 NG";
+            }
+
+            _lastFailedScrewLocalIndex = localIndex;
+        }
+        else
+        {
+            _lastDeviceErrorCode = null;
+            _lastFailedScrewLocalIndex = 0;
         }
 
         _lastErrorCode = combinedOk ? null : errorCode;
@@ -746,8 +768,7 @@ public sealed class OperatorSessionController
         }
         else
         {
-            var ngMessage = $"Device NG (code {device?.DeviceErrorCode})";
-            _lastErrorMessage = ngMessage;
+            var ngMessage = _lastErrorMessage ?? "设备判定 NG";
             NotifyScrewCycleProgress(
                 ScrewCycleProgressStep.CompletedNg,
                 surfaceName,
@@ -998,6 +1019,8 @@ public sealed class OperatorSessionController
 
         _lastErrorMessage = null;
         _lastErrorCode = null;
+        _lastDeviceErrorCode = null;
+        _lastFailedScrewLocalIndex = 0;
     }
 
     /// <summary>
@@ -1062,6 +1085,8 @@ public sealed class OperatorSessionController
         _activeSurfaceName = null;
         _lastErrorMessage = null;
         _lastErrorCode = null;
+        _lastDeviceErrorCode = null;
+        _lastFailedScrewLocalIndex = 0;
         _isRework = false;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
     }
@@ -1071,6 +1096,8 @@ public sealed class OperatorSessionController
         SetState(idx, StationScrewState.Pending);
         _lastErrorCode = ex.ErrorCode;
         _lastErrorMessage = ex.Message;
+        _lastDeviceErrorCode = null;
+        _lastFailedScrewLocalIndex = _positions[idx].Index;
         _surfaces[_activeSurfaceOrdinal].ProgressState = SurfaceProgressState.NgLocked;
         TryApply(JobSessionTrigger.ScrewNg);
         AuditOperation("Operation.FeedNg", $"surface={_activeSurfaceId};screw={_positions[idx].Index};error={ex.ErrorCode}", success: false);

@@ -1,5 +1,7 @@
 using AutoScrew.Application.Abstractions;
 using AutoScrew.Application.Configuration;
+using AutoScrew.Application.Services;
+using AutoScrew.Domain.Session;
 using AutoScrew.Hmi.Dialog;
 using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.Views.Pages;
@@ -14,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -42,9 +45,16 @@ public enum MainAppSection
 /// <summary>主窗壳：NavigationView 导航 + 顶栏工具。</summary>
 public partial class MainShellViewModel : ObservableObject, IDisposable
 {
+    private static readonly SolidColorBrush IdleBackgroundBrush = Freeze(Color.FromRgb(0xE2, 0xE8, 0xF0));
+    private static readonly SolidColorBrush IdleForegroundBrush = Freeze(Color.FromRgb(0x33, 0x41, 0x55));
+    private static readonly SolidColorBrush RunningBackgroundBrush = Freeze(Color.FromRgb(0x43, 0xA0, 0x47));
+    private static readonly SolidColorBrush NgBackgroundBrush = Freeze(Color.FromRgb(0xE5, 0x39, 0x35));
+    private static readonly SolidColorBrush LightForegroundBrush = Freeze(Colors.White);
+
     private readonly INavigationService _navigationService;
     private readonly ICurrentUser _currentUser;
     private readonly IAppSessionCoordinator _sessionCoordinator;
+    private readonly OperatorSessionController _operatorSession;
     private readonly LocalizationService _localization;
     private readonly IUserAuditService _audit;
     private readonly IOptions<AutoScrewAppOptions> _appOptions;
@@ -54,6 +64,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         INavigationService navigationService,
         ICurrentUser currentUser,
         IAppSessionCoordinator sessionCoordinator,
+        OperatorSessionController operatorSession,
         LocalizationService localization,
         IUserAuditService audit,
         IOptions<AutoScrewAppOptions> appOptions,
@@ -62,6 +73,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         _navigationService = navigationService;
         _currentUser = currentUser;
         _sessionCoordinator = sessionCoordinator;
+        _operatorSession = operatorSession;
         _localization = localization;
         _audit = audit;
         _appOptions = appOptions;
@@ -69,12 +81,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged += OnCurrentUserPropertyChanged;
         _localization.CultureChanged += OnCultureChanged;
+        _operatorSession.Changed += OnOperatorSessionChanged;
 
         RebuildMenuItems();
         ApplyRoleBasedNavigationLayout();
         RefreshUserBanner();
         UpdateSidebarSymbol();
         RefreshLocalizedChrome();
+        RefreshJobPhaseChip();
         Breadcrumb = GetDefaultBreadcrumb();
     }
 
@@ -114,6 +128,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _localization.CultureChanged -= OnCultureChanged;
+        _operatorSession.Changed -= OnOperatorSessionChanged;
         if (_currentUser is INotifyPropertyChanged notify)
             notify.PropertyChanged -= OnCurrentUserPropertyChanged;
     }
@@ -126,6 +141,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         RefreshUserBanner();
         OnPropertyChanged(nameof(SidebarToggleHint));
         OnPropertyChanged(nameof(AppTitle));
+        RefreshJobPhaseChip();
         Breadcrumb = GetDefaultBreadcrumb();
         EnsureRoleAllowedSection();
     }
@@ -136,11 +152,80 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(SidebarToggleHint));
     }
 
+    private void OnOperatorSessionChanged(object? sender, EventArgs e) =>
+        RunOnUiThread(RefreshJobPhaseChip);
+
+    private void RefreshJobPhaseChip()
+    {
+        var phase = _operatorSession.Phase;
+        switch (phase)
+        {
+            case JobSessionPhase.LoadingRecipe:
+            case JobSessionPhase.Running:
+            case JobSessionPhase.AwaitFlip:
+                JobPhaseLabel = Loc.Get("S.Shell.JobPhase.Running");
+                JobPhaseBackground = RunningBackgroundBrush;
+                JobPhaseForeground = LightForegroundBrush;
+                break;
+            case JobSessionPhase.NgLocked:
+                JobPhaseLabel = Loc.Get("S.Shell.JobPhase.NgLocked");
+                JobPhaseBackground = NgBackgroundBrush;
+                JobPhaseForeground = LightForegroundBrush;
+                break;
+            default:
+                JobPhaseLabel = Loc.Get("S.Shell.JobPhase.Idle");
+                JobPhaseBackground = IdleBackgroundBrush;
+                JobPhaseForeground = IdleForegroundBrush;
+                break;
+        }
+
+        JobPhaseTooltip = Loc.Get(phase switch
+        {
+            JobSessionPhase.Idle => "S.Shell.JobPhase.Tip.Idle",
+            JobSessionPhase.SnPending => "S.Shell.JobPhase.Tip.SnPending",
+            JobSessionPhase.SnRejected => "S.Shell.JobPhase.Tip.SnRejected",
+            JobSessionPhase.LoadingRecipe => "S.Shell.JobPhase.Tip.LoadingRecipe",
+            JobSessionPhase.Running => "S.Shell.JobPhase.Tip.Running",
+            JobSessionPhase.AwaitFlip => "S.Shell.JobPhase.Tip.AwaitFlip",
+            JobSessionPhase.NgLocked => "S.Shell.JobPhase.Tip.NgLocked",
+            JobSessionPhase.Completed => "S.Shell.JobPhase.Tip.Completed",
+            _ => "S.Shell.JobPhase.Tip.Idle"
+        });
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            action();
+        else
+            dispatcher.BeginInvoke(DispatcherPriority.Normal, action);
+    }
+
+    private static SolidColorBrush Freeze(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+
     [ObservableProperty]
     private ObservableCollection<object> _menuItems = [];
 
     [ObservableProperty]
     private ObservableCollection<object> _footerMenuItems = [];
+
+    [ObservableProperty]
+    private string _jobPhaseLabel = "";
+
+    [ObservableProperty]
+    private Brush _jobPhaseBackground = IdleBackgroundBrush;
+
+    [ObservableProperty]
+    private Brush _jobPhaseForeground = IdleForegroundBrush;
+
+    [ObservableProperty]
+    private string _jobPhaseTooltip = "";
 
     [ObservableProperty]
     private string _userInitial = "?";

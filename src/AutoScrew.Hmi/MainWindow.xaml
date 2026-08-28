@@ -83,6 +83,21 @@
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
+                    <Border MinWidth="120"
+                            Height="36"
+                            CornerRadius="6"
+                            Padding="16,0"
+                            Background="{Binding JobPhaseBackground}"
+                            Margin="0,0,12,0"
+                            ToolTip="{Binding JobPhaseTooltip}"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding JobPhaseLabel}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="{Binding JobPhaseForeground}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
                     <ui:Button Content="{DynamicResource S.Shell.Notepad}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                ToolTip="{DynamicResource S.Shell.Notepad}"

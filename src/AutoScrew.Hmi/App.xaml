@@ -23,29 +23,41 @@
                 <Setter Property="Width" Value="{Binding DiameterPx}"/>
                 <Setter Property="Height" Value="{Binding DiameterPx}"/>
                 <Setter Property="Fill" Value="{StaticResource BrushPendingWaiting}"/>
+                <Setter Property="Opacity" Value="1"/>
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}">
-                        <Setter Property="Fill" Value="{StaticResource BrushPendingWaiting}"/>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
+                        <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
+                        <Setter Property="Opacity" Value="1"/>
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding IsNextTarget}" Value="True">
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
+                        <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
+                        <Setter Property="Opacity" Value="1"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
+                        <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
+                        <Setter Property="Opacity" Value="1"/>
+                    </DataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsNextTarget}" Value="True"/>
+                            <Condition Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}"/>
+                        </MultiDataTrigger.Conditions>
                         <Setter Property="Fill" Value="{StaticResource BrushPending}"/>
-                        <DataTrigger.EnterActions>
-                            <BeginStoryboard>
+                        <MultiDataTrigger.EnterActions>
+                            <BeginStoryboard Name="NextTargetBlinkStoryboard">
                                 <Storyboard RepeatBehavior="Forever">
                                     <DoubleAnimation Storyboard.TargetProperty="Opacity"
                                                      From="1" To="0.35" Duration="0:0:0.5" AutoReverse="True"/>
                                 </Storyboard>
                             </BeginStoryboard>
-                        </DataTrigger.EnterActions>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.InProgress}">
-                        <Setter Property="Fill" Value="{StaticResource BrushInProgress}"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ok}">
-                        <Setter Property="Fill" Value="{StaticResource BrushOk}"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Ng}">
-                        <Setter Property="Fill" Value="{StaticResource BrushNg}"/>
+                        </MultiDataTrigger.EnterActions>
+                        <MultiDataTrigger.ExitActions>
+                            <StopStoryboard BeginStoryboardName="NextTargetBlinkStoryboard"/>
+                        </MultiDataTrigger.ExitActions>
+                    </MultiDataTrigger>
+                    <DataTrigger Binding="{Binding State}" Value="{x:Static domain:StationScrewState.Pending}">
+                        <Setter Property="Fill" Value="{StaticResource BrushPendingWaiting}"/>
+                        <Setter Property="Opacity" Value="1"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
