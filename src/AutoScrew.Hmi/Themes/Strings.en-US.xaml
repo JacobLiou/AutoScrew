@@ -125,6 +125,8 @@
     <system:String x:Key="S.Operation.GuideIdle">Scan or enter SN to start.</system:String>
     <system:String x:Key="S.Operation.GuideSnPending">Enter or scan SN, then press Enter or Submit.</system:String>
     <system:String x:Key="S.Operation.GuideSnRejected">Invalid SN. Scan again.</system:String>
+    <system:String x:Key="S.Operation.SnRejectedTitle">SN validation failed</system:String>
+    <system:String x:Key="S.Operation.SnNotRegistered">SN "{0}" is not registered in local-recipes.json. Check and scan again.</system:String>
     <system:String x:Key="S.Operation.GuideLoading">Loading recipe and template…</system:String>
     <system:String x:Key="S.Operation.GuideRunningScrew">Fasten [{0}] screw #{1}</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">Fasten surface [{0}]</system:String>

@@ -132,6 +132,8 @@
     <system:String x:Key="S.Operation.GuideIdle">请点击或扫描 SN 开始作业。</system:String>
     <system:String x:Key="S.Operation.GuideSnPending">请输入或扫描 SN，按 Enter 或点击提交。</system:String>
     <system:String x:Key="S.Operation.GuideSnRejected">SN 无效，请重新扫描。</system:String>
+    <system:String x:Key="S.Operation.SnRejectedTitle">SN 校验失败</system:String>
+    <system:String x:Key="S.Operation.SnNotRegistered">SN「{0}」未在 local-recipes.json 中注册，请核对后重新扫描。</system:String>
     <system:String x:Key="S.Operation.GuideLoading">正在加载配方与模板…</system:String>
     <system:String x:Key="S.Operation.GuideRunningScrew">请锁附【{0}】第 {1} 钉</system:String>
     <system:String x:Key="S.Operation.GuideRunningSurface">请锁附【{0}】</system:String>

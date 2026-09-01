@@ -209,8 +209,6 @@ public partial class MainViewModel : ObservableObject
             or JobSessionPhase.SnPending
             or JobSessionPhase.SnRejected
             or JobSessionPhase.Completed
-            or JobSessionPhase.Running
-            or JobSessionPhase.AwaitFlip
         && !string.IsNullOrWhiteSpace(SerialNumberInput);
 
     private bool CanRunScrew() =>
@@ -276,10 +274,37 @@ public partial class MainViewModel : ObservableObject
                     "ActiveJobSameSn" => Loc.Get("S.Operation.ActiveJobSameSn"),
                     _ => accept.ErrorMessage ?? Loc.Get("S.Operation.GuideSnRejected"),
                 };
+                ShowSnRejectDialog(accept.ErrorMessage, inputSn);
                 return;
             }
 
             var pn = accept.PartNumber!;
+            var restoreMemory = await _session.TryGetRestorableMemoryAsync(inputSn).ConfigureAwait(true);
+            var shouldRestore = false;
+            if (restoreMemory is not null)
+            {
+                shouldRestore = ConfirmTips.ShowDialog(
+                    Loc.Format(
+                        "S.Operation.RestoreMemoryPrompt",
+                        restoreMemory.SerialNumber,
+                        restoreMemory.PartNumber,
+                        restoreMemory.Phase,
+                        restoreMemory.CompletedScrewCount,
+                        restoreMemory.TotalScrewCount),
+                    System.Windows.Application.Current?.MainWindow,
+                    Loc.Get("S.Operation.RestoreMemoryTitle"));
+                if (!shouldRestore)
+                {
+                    AuditHelper.Log(
+                        _audit,
+                        _appOptions,
+                        _user,
+                        AuditCategory.Operation,
+                        "Operation.RestoreMemoryDeclined",
+                        detail: $"sn={inputSn}");
+                }
+            }
+
             var decision = await _changeover.EvaluateAsync(pn).ConfigureAwait(true);
             if (decision.NeedsChangeover)
             {
@@ -346,45 +371,23 @@ public partial class MainViewModel : ObservableObject
                     detail: $"pn={pn}");
             }
 
-            var memory = await _session.TryGetRestorableMemoryAsync(inputSn).ConfigureAwait(true);
-            if (memory is not null)
+            if (shouldRestore)
             {
-                var restore = ConfirmTips.ShowDialog(
-                    Loc.Format(
-                        "S.Operation.RestoreMemoryPrompt",
-                        memory.SerialNumber,
-                        memory.PartNumber,
-                        memory.Phase,
-                        memory.CompletedScrewCount,
-                        memory.TotalScrewCount),
-                    System.Windows.Application.Current?.MainWindow,
-                    Loc.Get("S.Operation.RestoreMemoryTitle"));
-                if (restore)
+                StatusMessage = Loc.Get("S.Operation.StatusRestoring");
+                AddLog(Loc.Format("S.Operation.LogRestoringMemory", inputSn));
+                await _session.ContinueRestoreAfterSerialAcceptedAsync(inputSn).ConfigureAwait(true);
+                if (_session.IsActiveJobPhase || _session.Phase == JobSessionPhase.Running)
                 {
-                    StatusMessage = Loc.Get("S.Operation.StatusRestoring");
-                    AddLog(Loc.Format("S.Operation.LogRestoringMemory", memory.SerialNumber));
-                    await _session.ContinueRestoreAfterSerialAcceptedAsync(inputSn).ConfigureAwait(true);
-                    if (_session.IsActiveJobPhase || _session.Phase == JobSessionPhase.Running)
-                    {
-                        StatusMessage = Loc.Format("S.Operation.StatusRestored", _session.SerialNumber!);
-                        AddLog(Loc.Format("S.Operation.LogRestored", _session.SerialNumber!));
-                        RefreshFromSession();
-                    }
-                    else
-                    {
-                        StatusMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.RestoreFailed");
-                    }
-
-                    return;
+                    StatusMessage = Loc.Format("S.Operation.StatusRestored", _session.SerialNumber!);
+                    AddLog(Loc.Format("S.Operation.LogRestored", _session.SerialNumber!));
+                    RefreshFromSession();
+                }
+                else
+                {
+                    StatusMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.RestoreFailed");
                 }
 
-                AuditHelper.Log(
-                    _audit,
-                    _appOptions,
-                    _user,
-                    AuditCategory.Operation,
-                    "Operation.RestoreMemoryDeclined",
-                    detail: $"sn={inputSn}");
+                return;
             }
 
             StatusMessage = Loc.Get("S.Operation.LogLoadingRecipe");
@@ -416,6 +419,43 @@ public partial class MainViewModel : ObservableObject
             ApplySnInputAvailability();
             NotifyCommandStates();
         }
+    }
+
+    private void ShowSnRejectDialog(string? errorMessage, string inputSn)
+    {
+        string dialogMessage;
+        string dialogTitle;
+        switch (errorMessage)
+        {
+            case "ActiveJobMustReset":
+                dialogMessage = Loc.Format(
+                    "S.Operation.ActiveJobMustReset",
+                    _session.SerialNumber ?? "—",
+                    inputSn);
+                dialogTitle = Loc.Get("S.Operation.ActiveJobTitle");
+                break;
+            case "ActiveJobSameSn":
+                dialogMessage = Loc.Get("S.Operation.ActiveJobSameSn");
+                dialogTitle = Loc.Get("S.Operation.ActiveJobTitle");
+                break;
+            case null or "":
+                dialogMessage = Loc.Get("S.Operation.GuideSnRejected");
+                dialogTitle = Loc.Get("S.Operation.SnRejectedTitle");
+                break;
+            case var msg when msg.StartsWith("SN not registered in local-recipes.json", StringComparison.OrdinalIgnoreCase):
+                dialogMessage = Loc.Format("S.Operation.SnNotRegistered", inputSn);
+                dialogTitle = Loc.Get("S.Operation.SnRejectedTitle");
+                break;
+            default:
+                dialogMessage = Loc.Format("S.Operation.LogSnRejected", errorMessage);
+                dialogTitle = Loc.Get("S.Operation.SnRejectedTitle");
+                break;
+        }
+
+        MessageTips.ShowDialog(
+            dialogMessage,
+            System.Windows.Application.Current?.MainWindow,
+            dialogTitle);
     }
 
     /// <summary>SN 输入：空闲/待扫可用；加载配方中禁用；NG 锁定时禁用。</summary>
@@ -625,43 +665,10 @@ public partial class MainViewModel : ObservableObject
         CurveChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public async Task TryRestoreCheckpointOnStartupAsync()
+    public Task TryRestoreCheckpointOnStartupAsync()
     {
-        var offer = await _session.GetCheckpointRestoreOfferAsync().ConfigureAwait(true);
-        if (offer is null)
-        {
-            EnsureScanReady();
-            return;
-        }
-
-        var message = Loc.Format(
-            "S.Operation.RestoreMemoryPrompt",
-            offer.SerialNumber,
-            offer.PartNumber,
-            offer.Phase,
-            offer.CompletedScrewCount,
-            offer.TotalScrewCount);
-        if (ConfirmTips.ShowDialog(message, System.Windows.Application.Current.MainWindow, Loc.Get("S.Operation.RestoreMemoryTitle")))
-        {
-            StatusMessage = Loc.Get("S.Operation.StatusRestoring");
-            var ok = await _session.RestoreFromCheckpointAsync().ConfigureAwait(true);
-            if (ok)
-            {
-                SerialNumberInput = _session.SerialNumber ?? "";
-                StatusMessage = Loc.Format("S.Operation.StatusRestored", _session.SerialNumber!);
-                AddLog(Loc.Format("S.Operation.LogRestored", _session.SerialNumber!));
-                RefreshFromSession();
-                return;
-            }
-
-            StatusMessage = _session.LastErrorMessage ?? Loc.Get("S.Operation.RestoreFailed");
-        }
-        else
-        {
-            await _session.DiscardCheckpointAsync().ConfigureAwait(true);
-        }
-
         EnsureScanReady();
+        return Task.CompletedTask;
     }
 
     public void EnsureScanReady()
