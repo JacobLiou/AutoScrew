@@ -13,8 +13,8 @@ public interface ILockStationHardware
 
     Task PickScrewAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>作业开始前写入控制器产线模式（如 #300 手动来源）；仿真可为空操作。</summary>
-    Task PrepareForJobAsync(CancellationToken cancellationToken = default);
+    /// <summary>作业开始：#300 手动 + #303 激活工艺库顺序；仿真可为空操作。</summary>
+    Task PrepareForJobAsync(CancellationToken cancellationToken = default, int? sequenceId = null);
 
     /// <summary>清除控制器故障/错误（如 IEMD ClearErrors）；仿真为空操作。无连接时不应抛出让解锁失败。</summary>
     Task ClearErrorsAsync(CancellationToken cancellationToken = default);

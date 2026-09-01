@@ -30,6 +30,7 @@ public sealed class OperatorSessionController
     private readonly IOptions<SimulationOptions> _simulation;
     private readonly IUserAuditService _audit;
     private readonly IHostIdentity _hostIdentity;
+    private readonly IProcessChangeoverService? _changeover;
     private readonly ILogger<OperatorSessionController> _logger;
 
     private JobSessionPhase _phase = JobSessionPhase.Idle;
@@ -52,6 +53,8 @@ public sealed class OperatorSessionController
     private ushort? _lastDeviceErrorCode;
     private int _lastFailedScrewLocalIndex;
     private int _cycleInProgress;
+    private CancellationTokenSource? _cycleCts;
+    private CancellationTokenSource? _loadCts;
     private int _templateSurfaceCount = 1;
     private string? _activeSurfaceId;
     private string? _activeSurfaceName;
@@ -71,7 +74,8 @@ public sealed class OperatorSessionController
         IOptions<SimulationOptions> simulation,
         IUserAuditService audit,
         IHostIdentity hostIdentity,
-        ILogger<OperatorSessionController> logger)
+        ILogger<OperatorSessionController> logger,
+        IProcessChangeoverService? changeover = null)
     {
         _mesClient = mesClient;
         _recipeProvisioning = recipeProvisioning;
@@ -87,6 +91,7 @@ public sealed class OperatorSessionController
         _audit = audit;
         _hostIdentity = hostIdentity;
         _logger = logger;
+        _changeover = changeover;
     }
 
     public event EventHandler? Changed;
@@ -294,6 +299,7 @@ public sealed class OperatorSessionController
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serialNumber);
         _lastErrorMessage = null;
+        var ct = BeginLoadOperations(cancellationToken);
 
         if (IsActiveJobPhase)
         {
@@ -320,7 +326,7 @@ public sealed class OperatorSessionController
         if (_phase != JobSessionPhase.SnPending)
             throw new InvalidOperationException("Not awaiting SN.");
 
-        var validation = await _mesClient.ValidateSnAsync(serialNumber.Trim(), cancellationToken).ConfigureAwait(false);
+        var validation = await _mesClient.ValidateSnAsync(serialNumber.Trim(), ct).ConfigureAwait(false);
         if (!validation.IsValid || string.IsNullOrWhiteSpace(validation.PartNumber))
         {
             _serialNumber = serialNumber.Trim();
@@ -367,10 +373,16 @@ public sealed class OperatorSessionController
             string.IsNullOrWhiteSpace(_partNumber))
             throw new InvalidOperationException("No accepted SN to continue.");
 
+        var ct = BeginLoadOperations(cancellationToken);
+
         try
         {
-            await _controllerTrace.WriteSerialNumberAsync(_serialNumber!, cancellationToken).ConfigureAwait(false);
+            await _controllerTrace.WriteSerialNumberAsync(_serialNumber!, ct).ConfigureAwait(false);
             AuditOperation("Operation.WriteBarcode", $"sn={_serialNumber}", serialNumber: _serialNumber);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -380,7 +392,7 @@ public sealed class OperatorSessionController
             return;
         }
 
-        await LoadRecipeAndTemplateAsync(cancellationToken).ConfigureAwait(false);
+        await LoadRecipeAndTemplateAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>无换产确认的兼容路径：Accept → Continue。</summary>
@@ -469,9 +481,14 @@ public sealed class OperatorSessionController
 
             _currentIndex = NextPendingIndex(0);
             _sessionStartedAt = DateTimeOffset.UtcNow;
-            await _hardware.PrepareForJobAsync(cancellationToken).ConfigureAwait(false);
+            var sequenceId = await ResolveJobSequenceIdAsync(cancellationToken).ConfigureAwait(false);
+            await _hardware.PrepareForJobAsync(cancellationToken, sequenceId).ConfigureAwait(false);
             await PersistCheckpointAsync(cancellationToken).ConfigureAwait(false);
             NotifyChanged();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -480,6 +497,23 @@ public sealed class OperatorSessionController
             TryApply(JobSessionTrigger.LoadFailed);
             ClearSession();
             NotifyChanged();
+        }
+    }
+
+    private async Task<int?> ResolveJobSequenceIdAsync(CancellationToken cancellationToken)
+    {
+        if (_changeover is null || string.IsNullOrWhiteSpace(_partNumber))
+            return null;
+
+        try
+        {
+            return await _changeover.ResolveActiveSequenceIdAsync(_partNumber, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Resolve job sequence id failed for PN={PartNumber}", _partNumber);
+            return null;
         }
     }
 
@@ -624,13 +658,89 @@ public sealed class OperatorSessionController
         if (Interlocked.CompareExchange(ref _cycleInProgress, 1, 0) != 0)
             throw new InvalidOperationException("Screw cycle already in progress.");
 
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var previous = Interlocked.Exchange(ref _cycleCts, linked);
+        previous?.Dispose();
+
         try
         {
-            await RunCurrentScrewCycleCoreAsync(cancellationToken).ConfigureAwait(false);
+            await RunCurrentScrewCycleCoreAsync(linked.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            RestoreInProgressScrewToPending();
+            _logger.LogInformation("Screw cycle cancelled (session reset / park).");
+            NotifyChanged();
         }
         finally
         {
             Interlocked.Exchange(ref _cycleInProgress, 0);
+            Interlocked.CompareExchange(ref _cycleCts, null, linked);
+        }
+    }
+
+    /// <summary>
+    /// Cancel in-flight pick/tighten and SN load so DeviceSession.IsBusy can release
+    /// and workbench UI can return to Idle input.
+    /// </summary>
+    public async Task StopActiveScrewCycleAsync(CancellationToken cancellationToken = default)
+    {
+        CancelLoadOperations();
+
+        try
+        {
+            _cycleCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // ignored
+        }
+
+        var deadline = Environment.TickCount64 + 8_000;
+        while (Volatile.Read(ref _cycleInProgress) != 0 && Environment.TickCount64 < deadline)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (Volatile.Read(ref _cycleInProgress) != 0)
+            _logger.LogWarning("Screw cycle still marked in-progress after cancel wait.");
+    }
+
+    private void CancelLoadOperations()
+    {
+        var cts = Interlocked.Exchange(ref _loadCts, null);
+        if (cts is null)
+            return;
+
+        try
+        {
+            cts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // ignored
+        }
+
+        cts.Dispose();
+    }
+
+    /// <summary>Token for Accept/Continue/recipe load; cancelled by reset/park.</summary>
+    private CancellationToken BeginLoadOperations(CancellationToken external)
+    {
+        var linked = CancellationTokenSource.CreateLinkedTokenSource(external);
+        var previous = Interlocked.Exchange(ref _loadCts, linked);
+        previous?.Dispose();
+        return linked.Token;
+    }
+
+    private void RestoreInProgressScrewToPending()
+    {
+        if (_currentIndex >= 0
+            && _currentIndex < _states.Length
+            && _states[_currentIndex] == StationScrewState.InProgress)
+        {
+            SetState(_currentIndex, StationScrewState.Pending);
         }
     }
 
@@ -1035,6 +1145,9 @@ public sealed class OperatorSessionController
 
     public async Task ResetToIdleAsync(CancellationToken cancellationToken = default)
     {
+        // Release device session held by WaitFinish / #751 before clearing job state.
+        await StopActiveScrewCycleAsync(cancellationToken).ConfigureAwait(false);
+
         PrepareParkResumeFromNgIfNeeded();
 
         if (!string.IsNullOrWhiteSpace(_serialNumber) && IsActiveJobPhase)
@@ -1053,6 +1166,8 @@ public sealed class OperatorSessionController
 
     public async Task AbortToIdleAsync(CancellationToken cancellationToken = default)
     {
+        await StopActiveScrewCycleAsync(cancellationToken).ConfigureAwait(false);
+
         PrepareParkResumeFromNgIfNeeded();
 
         if (!string.IsNullOrWhiteSpace(_serialNumber) &&

@@ -201,13 +201,14 @@ public partial class OperationPageView : UserControl
 
         var pts = vm.Session.LastTighteningSamples;
         _curvePlot.Plot.Clear();
-        if (pts.Count > 0)
+        if (pts.Count > 1)
         {
             var xs = pts.Select(p => p.AngleDeg).ToArray();
             var ys = pts.Select(p => p.TorqueNm).ToArray();
             _curvePlot.Plot.Add.Scatter(xs, ys);
             _curvePlot.Plot.Axes.Bottom.Label.Text = "Angle (°)";
             _curvePlot.Plot.Axes.Left.Label.Text = "Torque (N·m)";
+            _curvePlot.Plot.Axes.AutoScale();
         }
 
         _curvePlot.Refresh();

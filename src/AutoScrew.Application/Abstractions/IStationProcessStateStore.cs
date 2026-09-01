@@ -4,7 +4,8 @@ namespace AutoScrew.Application.Abstractions;
 public sealed record StationProcessState(
     string ProductPn,
     DateTimeOffset? UpdatedUtc,
-    DateTimeOffset DeployedUtc);
+    DateTimeOffset DeployedUtc,
+    int? ActiveSequenceId = null);
 
 public interface IStationProcessStateStore
 {

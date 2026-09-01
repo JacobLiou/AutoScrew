@@ -4,7 +4,7 @@ using UDL.Delta.IemdSd;
 namespace AutoScrew.Infrastructure.Hardware;
 
 /// <summary>
-/// 产线联机：拧紧来源 #300 须为「手动设定」，#302 换参才有效（见 doc/driverAnaC.md §5.6）。
+/// 产线联机：拧紧来源 #300 须为「手动设定」，#303 激活顺序才有效（见 doc/driverAnaC.md §5.6）。
 /// </summary>
 public static class IemdSdProductionSetup
 {

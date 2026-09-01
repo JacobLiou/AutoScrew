@@ -135,8 +135,8 @@ public sealed class OperatorSessionDeviceAuthorityTests
         public Task PickScrewAsync(CancellationToken cancellationToken = default) =>
             _inner.PickScrewAsync(cancellationToken);
 
-        public Task PrepareForJobAsync(CancellationToken cancellationToken = default) =>
-            _inner.PrepareForJobAsync(cancellationToken);
+        public Task PrepareForJobAsync(CancellationToken cancellationToken = default, int? sequenceId = null) =>
+            _inner.PrepareForJobAsync(cancellationToken, sequenceId);
 
         public Task ClearErrorsAsync(CancellationToken cancellationToken = default) =>
             _inner.ClearErrorsAsync(cancellationToken);

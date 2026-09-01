@@ -696,7 +696,7 @@
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">已保存到本地。</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">已从设备读取来源配置。</system:String>
     <system:String x:Key="S.ControllerSource.StatusWriteDevice">已下发来源配置到设备。</system:String>
-    <system:String x:Key="S.ControllerSource.DeviceBusy">设备读写进行中，请稍后再试。</system:String>
+    <system:String x:Key="S.ControllerSource.DeviceBusy">设备正忙（作业台可能在等待扳机或拧紧中）。请先「复位会话」至空闲后再试。</system:String>
     <system:String x:Key="S.ControllerSource.ActivateSequence">激活顺序 (#303)</system:String>
     <system:String x:Key="S.ControllerSource.StatusActivated">已在设备激活顺序 #{0} (#303)。</system:String>
     <system:String x:Key="S.ControllerSource.ActivateNeedsSequence">请先保存顺序绑定后再激活 #303。</system:String>
@@ -843,7 +843,7 @@
     <system:String x:Key="S.DeviceHistory.Refresh">刷新</system:String>
     <system:String x:Key="S.DeviceHistory.Simulated">仿真模式：无法读取控制器履历。</system:String>
     <system:String x:Key="S.DeviceHistory.DeviceOffline">设备未连接或未启用。</system:String>
-    <system:String x:Key="S.DeviceHistory.DeviceBusy">设备正忙，请等待作业周期结束后再刷新履历。</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceBusy">设备正忙（作业台可能在等待扳机或拧紧中）。请先「复位会话」至空闲后再刷新履历。</system:String>
     <system:String x:Key="S.DeviceHistory.StatusLoaded">已加载第 {0}/{1} 页。</system:String>
     <system:String x:Key="S.DeviceHistory.NoDescription">（无本地说明）</system:String>
     <system:String x:Key="S.DeviceHistory.ToolN">工具{0}</system:String>

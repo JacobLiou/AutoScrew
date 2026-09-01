@@ -27,4 +27,9 @@ public interface IProcessChangeoverService
 
     /// <summary>覆盖下发参数与顺序；全部成功后写入工位状态。失败不更新状态。</summary>
     Task DeployAndCommitAsync(string productPn, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 作业开工用顺序号：工位 PN 一致则用换产写入的 ActiveSequenceId，否则取工艺库最小 SequenceId。
+    /// </summary>
+    Task<int?> ResolveActiveSequenceIdAsync(string productPn, CancellationToken cancellationToken = default);
 }

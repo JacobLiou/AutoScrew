@@ -680,7 +680,7 @@
     <system:String x:Key="S.ControllerSource.StatusSavedLocal">Saved locally.</system:String>
     <system:String x:Key="S.ControllerSource.StatusReadDevice">Read source config from device.</system:String>
     <system:String x:Key="S.ControllerSource.StatusWriteDevice">Wrote source config to device.</system:String>
-    <system:String x:Key="S.ControllerSource.DeviceBusy">Device I/O in progress. Try again shortly.</system:String>
+    <system:String x:Key="S.ControllerSource.DeviceBusy">Device is busy (workbench may be waiting for trigger or tightening). Reset the session to Idle, then try again.</system:String>
     <system:String x:Key="S.ControllerSource.ActivateSequence">Activate sequence (#303)</system:String>
     <system:String x:Key="S.ControllerSource.StatusActivated">Activated sequence #{0} on device (#303).</system:String>
     <system:String x:Key="S.ControllerSource.ActivateNeedsSequence">Save a sequence binding before activating #303.</system:String>
@@ -827,7 +827,7 @@
     <system:String x:Key="S.DeviceHistory.Refresh">Refresh</system:String>
     <system:String x:Key="S.DeviceHistory.Simulated">Simulation mode: controller history is unavailable.</system:String>
     <system:String x:Key="S.DeviceHistory.DeviceOffline">Device is offline or disabled.</system:String>
-    <system:String x:Key="S.DeviceHistory.DeviceBusy">Device is busy. Wait for the job cycle to finish, then refresh.</system:String>
+    <system:String x:Key="S.DeviceHistory.DeviceBusy">Device is busy (workbench may be waiting for trigger or tightening). Reset the session to Idle, then refresh history.</system:String>
     <system:String x:Key="S.DeviceHistory.StatusLoaded">Loaded page {0}/{1}.</system:String>
     <system:String x:Key="S.DeviceHistory.NoDescription">(no local description)</system:String>
     <system:String x:Key="S.DeviceHistory.ToolN">Tool {0}</system:String>

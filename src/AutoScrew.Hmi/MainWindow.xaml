@@ -92,13 +92,14 @@
                             ToolTip="{Binding JobPhaseTooltip}"
                             VerticalAlignment="Center">
                         <TextBlock Text="{Binding JobPhaseLabel}"
-                                   FontSize="18"
+                                   FontSize="16"
                                    FontWeight="Bold"
                                    Foreground="{Binding JobPhaseForeground}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Border>
-                    <ui:Button Content="{DynamicResource S.Shell.Notepad}"
+                    <ui:Button Margin="185 0 0 0" 
+                               Content="{DynamicResource S.Shell.Notepad}"
                                Style="{StaticResource ShellSecondaryButtonStyle}"
                                ToolTip="{DynamicResource S.Shell.Notepad}"
                                Command="{Binding OpenNotepadCommand}" />

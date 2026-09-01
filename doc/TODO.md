@@ -50,7 +50,7 @@
 |------|--------|------|
 | 驱动 `UDL.Delta.IemdSd` | ~85%（Modbus） | 149 功能码目录、产线相关强类型 API；**无 FTP 包** |
 | 驱动程控供料器 | **N/A** | **已取消**：现场手动供料，不做自动化/调度 |
-| 硬件适配 `IemdSdLockStationHardware` | ~75% | `#300`/`#302`/拧紧/`#750`/`#751` 已接线；取钉路径可为空操作/跳过 |
+| 硬件适配 `IemdSdLockStationHardware` | ~80% | 开工 `#300`+`#303`；周期拧紧/`#750`/`#751`；作业台不发 `#302` |
 | 业务 `OperatorSessionController` | ~85% | SN→Recipe→拧紧调度→判定→归档；checkpoint、漏锁已有 |
 | HMI | ~85% | 作业台/模板/工艺工作台/工艺库/历史回顾/设备·MES；**无供料器页（不需要）** |
 | MES | ~70% | 占位 REST / ProductKey + Outbox；字段仍有待 IT 定稿项 |
@@ -192,7 +192,7 @@ flowchart LR
 |------|----------|--------------|
 | 手动拧紧来源 | `WriteSourceModeAsync` (#300) | **已接线**（Apply/Test + `PrepareForJobAsync`） |
 | 条码写控制器 | `WriteBarcodeAsync` (#401) | **已接线**（`WriteSnToController` + [`IemdSdControllerTraceService`](../src/AutoScrew.Infrastructure/Hardware/IemdSdControllerTraceService.cs)） |
-| 换参 | `SwitchParameterAsync` (#302) | **已接线**（[`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)） |
+| 换参 | 作业开始 `#303` 激活工艺库顺序；周期不发 `#302` | **已接线**（[`IemdSdLockStationHardware`](../src/AutoScrew.Infrastructure/Hardware/IemdSdLockStationHardware.cs)） |
 | 拧紧周期 | `ExecuteTighteningCycleAsync` | **已接线** |
 | 报告/曲线 | `ReadReportAsync` / `ReadCurveAsync` | **已接线** |
 | 单颗 BIN 导出 | `SetPerScrewExportAsync` (#517) | 未接线（BIN+FTP 方案才需要） |
@@ -233,7 +233,7 @@ flowchart LR
 
 1. `UseSimulatedHardware=false`，HMI **设备连接** Apply（仅电批）
 2. **拧紧参数**：#150 回读 → 修改 → #100 写入
-3. 作业：扫码 → #300 手动来源 → `#302` → **操作员手动取钉** → 拧紧 → `#750`/`#751`
+3. 作业：扫码 → 换产下发参数+顺序 → `#300` 手动 + `#303` 激活顺序 → **操作员手动取钉** → 拧紧（设备按顺序步进，不发 `#302`）→ `#750`/`#751`
 4. 关 Mock MES / 配 LAN，验证出站或归档（T-04 / ProductKey）
 
 ---

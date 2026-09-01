@@ -56,7 +56,8 @@ public static class JobSessionPhaseMachine
                     return true;
                 }
 
-                if (trigger == JobSessionTrigger.LoadFailed)
+                if (trigger == JobSessionTrigger.LoadFailed
+                    || trigger == JobSessionTrigger.ResetToIdle)
                 {
                     next = JobSessionPhase.Idle;
                     return true;

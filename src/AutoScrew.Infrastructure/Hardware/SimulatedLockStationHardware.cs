@@ -43,7 +43,7 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
         throw new FeedFaultException(code, message);
     }
 
-    public Task PrepareForJobAsync(CancellationToken cancellationToken = default)
+    public Task PrepareForJobAsync(CancellationToken cancellationToken = default, int? sequenceId = null)
     {
         ResetPickCount();
         return Task.CompletedTask;

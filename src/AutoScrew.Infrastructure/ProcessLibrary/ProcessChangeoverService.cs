@@ -103,17 +103,22 @@ public sealed class ProcessChangeoverService : IProcessChangeoverService
         if (product.Sequences.Count == 0)
             throw new InvalidOperationException($"产品 {pn} 下没有拧紧顺序，无法换产下发。");
 
+        var activeSequenceId = TrySelectPrimarySequenceId(product)
+            ?? throw new InvalidOperationException($"产品 {pn} 下没有拧紧顺序，无法换产下发。");
+
         if (_appOptions.Value.UseSimulatedHardware)
         {
             _stationState.Save(new StationProcessState(
                 pn,
                 product.UpdatedUtc,
-                DateTimeOffset.UtcNow));
+                DateTimeOffset.UtcNow,
+                activeSequenceId));
 
             _logger.LogInformation(
-                "Changeover committed in simulation mode product={ProductPn} updatedUtc={UpdatedUtc}",
+                "Changeover committed in simulation mode product={ProductPn} updatedUtc={UpdatedUtc} sequence={SequenceId}",
                 pn,
-                product.UpdatedUtc);
+                product.UpdatedUtc,
+                activeSequenceId);
             return;
         }
 
@@ -137,13 +142,45 @@ public sealed class ProcessChangeoverService : IProcessChangeoverService
         _stationState.Save(new StationProcessState(
             pn,
             product.UpdatedUtc,
-            DateTimeOffset.UtcNow));
+            DateTimeOffset.UtcNow,
+            activeSequenceId));
 
         _logger.LogInformation(
-            "Changeover committed product={ProductPn} updatedUtc={UpdatedUtc} params={ParamCount} sequences={SeqCount}",
+            "Changeover committed product={ProductPn} updatedUtc={UpdatedUtc} params={ParamCount} sequences={SeqCount} activeSequence={SequenceId}",
             pn,
             product.UpdatedUtc,
             paramResult.WrittenSlotIds.Count,
-            seqResult.WrittenSequenceIds.Count);
+            seqResult.WrittenSequenceIds.Count,
+            activeSequenceId);
     }
+
+    public async Task<int?> ResolveActiveSequenceIdAsync(
+        string productPn,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(productPn))
+            return null;
+
+        var pn = productPn.Trim();
+        var current = _stationState.Load();
+        if (current is { ActiveSequenceId: > 0 }
+            && string.Equals(current.ProductPn, pn, StringComparison.OrdinalIgnoreCase))
+        {
+            return current.ActiveSequenceId;
+        }
+
+        try
+        {
+            var product = await _library.GetProductAsync(pn, cancellationToken).ConfigureAwait(false);
+            return product is null ? null : TrySelectPrimarySequenceId(product);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Resolve sequence id failed for {ProductPn}", pn);
+            return null;
+        }
+    }
+
+    private static int? TrySelectPrimarySequenceId(ProcessLibraryProductSummary product) =>
+        product.Sequences.Count == 0 ? null : product.Sequences.Min(static s => s.SequenceId);
 }

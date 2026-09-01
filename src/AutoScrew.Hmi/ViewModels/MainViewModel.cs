@@ -198,7 +198,10 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanOpenScan() =>
         !IsOperationLocked
-        && _session.Phase is JobSessionPhase.Idle or JobSessionPhase.SnRejected;
+        && _session.Phase is JobSessionPhase.Idle
+            or JobSessionPhase.SnPending
+            or JobSessionPhase.SnRejected
+            or JobSessionPhase.Completed;
 
     private bool CanSubmitSn() =>
         !IsOperationLocked
@@ -208,7 +211,6 @@ public partial class MainViewModel : ObservableObject
             or JobSessionPhase.Completed
             or JobSessionPhase.Running
             or JobSessionPhase.AwaitFlip
-            or JobSessionPhase.NgLocked
         && !string.IsNullOrWhiteSpace(SerialNumberInput);
 
     private bool CanRunScrew() =>
@@ -229,22 +231,6 @@ public partial class MainViewModel : ObservableObject
         _session.Phase == JobSessionPhase.NgLocked && _user.Role == UserRole.Operator;
 
     private bool CanParkNg() => _session.Phase == JobSessionPhase.NgLocked;
-
-    [RelayCommand(CanExecute = nameof(CanOpenScan))]
-    private void OpenScan()
-    {
-        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.OpenScan");
-        try
-        {
-            _session.RequestScanDialog();
-            IsSnInputEnabled = true;
-            StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = ex.Message;
-        }
-    }
 
     [RelayCommand(CanExecute = nameof(CanSubmitSn))]
     private async Task SubmitSnAsync()
@@ -417,25 +403,57 @@ public partial class MainViewModel : ObservableObject
                     _session.TemplateSurfaceCount));
             }
         }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = Loc.Get("S.Operation.StatusResetParked");
+        }
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
         }
         finally
         {
-            RefreshSnInputEnabled();
+            ApplySnInputAvailability();
             NotifyCommandStates();
         }
     }
 
-    private void RefreshSnInputEnabled() =>
-        IsSnInputEnabled = _session.Phase is JobSessionPhase.SnPending
-            or JobSessionPhase.SnRejected
-            or JobSessionPhase.Idle
-            or JobSessionPhase.Completed
-            or JobSessionPhase.Running
-            or JobSessionPhase.AwaitFlip
-            or JobSessionPhase.NgLocked;
+    /// <summary>SN 输入：空闲/待扫可用；加载配方中禁用；NG 锁定时禁用。</summary>
+    private void ApplySnInputAvailability()
+    {
+        var phase = _session.Phase;
+        IsSnInputEnabled = !IsOperationLocked
+            && phase is not JobSessionPhase.LoadingRecipe;
+    }
+
+    private void RefreshSnInputEnabled() => ApplySnInputAvailability();
+
+    private void ApplyWorkbenchIdleUi()
+    {
+        IsNgOverlayVisible = false;
+        IsOperationLocked = false;
+        SerialNumberInput = "";
+        IsSnInputEnabled = true;
+        NotifyCommandStates();
+        EnsureScanReady();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanOpenScan))]
+    private void OpenScan()
+    {
+        AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.OpenScan");
+        try
+        {
+            EnsureAwaitingSn();
+            IsSnInputEnabled = true;
+            StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
+            NotifyCommandStates();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+        }
+    }
 
     private bool ConfirmChangeover(ChangeoverDecision decision)
     {
@@ -570,15 +588,10 @@ public partial class MainViewModel : ObservableObject
 
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.ParkJob", serialNumber: _session.SerialNumber);
         await _session.ParkJobAsync().ConfigureAwait(true);
-        SerialNumberInput = "";
-        _activityLog.ClearRecent();
-        IsSnInputEnabled = true;
-        IsNgOverlayVisible = false;
-        IsOperationLocked = false;
+        ApplyWorkbenchIdleUi();
         StatusMessage = Loc.Get("S.Operation.StatusResetParked");
         AddLog(Loc.Get("S.Operation.LogParkNg"));
         CurveChanged?.Invoke(this, EventArgs.Empty);
-        NotifyCommandStates();
     }
 
     private void AfterNgUnlocked(string logMessage)
@@ -606,14 +619,10 @@ public partial class MainViewModel : ObservableObject
             return;
 
         await _session.ResetToIdleAsync().ConfigureAwait(true);
-        SerialNumberInput = "";
         _activityLog.ClearRecent();
-        IsSnInputEnabled = true;
-        IsNgOverlayVisible = false;
-        IsOperationLocked = false;
+        ApplyWorkbenchIdleUi();
         StatusMessage = Loc.Get("S.Operation.StatusResetParked");
         CurveChanged?.Invoke(this, EventArgs.Empty);
-        NotifyCommandStates();
     }
 
     public async Task TryRestoreCheckpointOnStartupAsync()
@@ -678,7 +687,6 @@ public partial class MainViewModel : ObservableObject
         BoardWidth = _session.BoardWidth;
         BoardHeight = _session.BoardHeight;
         RefreshDeviceProcessPn();
-        RefreshSnInputEnabled();
         RefreshCompletionState();
 
         if (_session.Phase == JobSessionPhase.Completed)
@@ -702,8 +710,10 @@ public partial class MainViewModel : ObservableObject
 
         IsNgOverlayVisible = ngLocked;
         IsOperationLocked = ngLocked;
+        ApplySnInputAvailability();
         _previousPhase = _session.Phase;
         OnPropertyChanged(nameof(CanUnlockNgOverlay));
+        NotifyCommandStates();
 
         Markers.Clear();
         var positions = _session.Positions;
@@ -882,20 +892,20 @@ public partial class MainViewModel : ObservableObject
 
             await _session.RunCurrentScrewCycleAsync().ConfigureAwait(true);
 
+            // 曲线刷新与 OK/NG 无关；NG 遮罩下仍更新，便于对照本次扭矩–角度。
+            CurveChanged?.Invoke(this, EventArgs.Empty);
+
             if (_session.LastErrorMessage is not null)
-            {
                 StatusMessage = _session.LastErrorMessage;
-                if (_session.Phase != JobSessionPhase.NgLocked)
-                    CurveChanged?.Invoke(this, EventArgs.Empty);
-            }
             else
-            {
                 StatusMessage = Loc.Get("S.Operation.StatusStepDone");
-                CurveChanged?.Invoke(this, EventArgs.Empty);
-            }
 
             if (_session.Phase == JobSessionPhase.AwaitFlip)
                 await PromptAndConfirmFlipAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = Loc.Get("S.Operation.StatusResetParked");
         }
         catch (Exception ex)
         {

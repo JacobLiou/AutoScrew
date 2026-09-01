@@ -62,6 +62,13 @@ public class JobSessionPhaseMachineTests
         Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.Running, JobSessionTrigger.ResetToIdle, out var next));
         Assert.Equal(JobSessionPhase.Idle, next);
     }
+
+    [Fact]
+    public void LoadingRecipe_to_Idle_on_ResetToIdle()
+    {
+        Assert.True(JobSessionPhaseMachine.TryTransition(JobSessionPhase.LoadingRecipe, JobSessionTrigger.ResetToIdle, out var next));
+        Assert.Equal(JobSessionPhase.Idle, next);
+    }
 }
 
 public class LockCurveEvaluatorTests

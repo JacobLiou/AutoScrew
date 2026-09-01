@@ -44,7 +44,8 @@ public sealed class JsonStationProcessStateStore : IStationProcessStateStore
                 return new StationProcessState(
                     doc.ProductPn.Trim(),
                     doc.UpdatedUtc,
-                    doc.DeployedUtc ?? DateTimeOffset.UtcNow);
+                    doc.DeployedUtc ?? DateTimeOffset.UtcNow,
+                    doc.ActiveSequenceId is > 0 ? doc.ActiveSequenceId : null);
             }
             catch
             {
@@ -70,6 +71,7 @@ public sealed class JsonStationProcessStateStore : IStationProcessStateStore
                 ProductPn = state.ProductPn.Trim(),
                 UpdatedUtc = state.UpdatedUtc,
                 DeployedUtc = state.DeployedUtc,
+                ActiveSequenceId = state.ActiveSequenceId is > 0 ? state.ActiveSequenceId : null,
             };
             var json = JsonSerializer.Serialize(doc, JsonOptions);
             File.WriteAllText(_path, json);
@@ -81,5 +83,6 @@ public sealed class JsonStationProcessStateStore : IStationProcessStateStore
         public string ProductPn { get; set; } = string.Empty;
         public DateTimeOffset? UpdatedUtc { get; set; }
         public DateTimeOffset? DeployedUtc { get; set; }
+        public int? ActiveSequenceId { get; set; }
     }
 }
