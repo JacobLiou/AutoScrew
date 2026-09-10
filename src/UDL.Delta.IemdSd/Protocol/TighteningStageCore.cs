@@ -31,6 +31,12 @@ public sealed class TighteningStageCore
     public int FinalSpeedRpm { get; set; }
     public int DecelTimeMs { get; set; }
 
+    /// <summary>两阶段模式使能（阶段控制字 bit13 / 0x2000；对齐 SDSoft）。</summary>
+    public bool TwoStageModeEnabled { get; set; }
+
+    /// <summary>缓停止 / Ergo Stop（阶段进阶字 bit2；对齐 SDSoft AdvancedSetting）。</summary>
+    public bool ErgoStopEnabled { get; set; }
+
     [JsonIgnore]
     public int ControlModeValue
     {

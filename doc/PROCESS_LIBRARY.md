@@ -140,6 +140,8 @@
 | `暂停时间（ms）` | `PauseTimeMs` |
 | `最小夹紧扭矩（lbf.in）` / `最小夹紧角度（°）` | `MinClamp*` |
 | `一段扭矩` / `一段暂停` / `二段加速` / `最终速度` | `Segment*` / `FinalSpeedRpm` |
+| `两阶段模式` ON/OFF | `TwoStageModeEnabled`（写设备控制字 bit13） |
+| `缓停止` ON/OFF | `ErgoStopEnabled`（写设备进阶字 bit2 / Ergo Stop） |
 
 ## 4. 拧紧顺序（JSON / Excel）
 

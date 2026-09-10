@@ -52,6 +52,59 @@ public class TighteningParameterCodecTests
     }
 
     [Fact]
+    public void StageFlags_ErgoStopAndTwoStage_RoundTripPackedBits()
+    {
+        var raw = TighteningParameterTemplate.CreateEmptyRawBlock();
+        var core = new TighteningParameterCore
+        {
+            Name = "Flags",
+            Stages = TighteningParameterCore.CreateDefaultStages(),
+        };
+        var stage = core.Stages[3];
+        stage.ControlMode = TighteningControlMode.Torque;
+        stage.Direction = TighteningDirection.CounterClockwise;
+        stage.TwoStageModeEnabled = true;
+        stage.ErgoStopEnabled = true;
+        stage.Segment1TorqueMilliNm = 1800;
+        stage.FinalSpeedRpm = 100;
+
+        TighteningParameterCodec.ApplyCoreToRaw(raw, core);
+
+        var baseIndex = TighteningParameterRegisterMap.StageStarts[3];
+        var word0 = (ushort)raw[baseIndex];
+        Assert.Equal(0x10, word0 & 0x30); // torque target bits
+        Assert.True((word0 & (1 << 13)) != 0); // two-stage
+        Assert.True((word0 & (1 << 6)) != 0); // CCW
+        Assert.True((raw[baseIndex + 46] & (1 << 13)) != 0); // enable mirror
+        Assert.True((((ushort)raw[baseIndex + 1]) & 0x4) != 0); // ergo in low bits of word1
+
+        var decoded = TighteningParameterCodec.ExtractCoreFromRaw(raw).Stages[3];
+        Assert.Equal(TighteningControlMode.Torque, decoded.ControlMode);
+        Assert.Equal(TighteningDirection.CounterClockwise, decoded.Direction);
+        Assert.True(decoded.TwoStageModeEnabled);
+        Assert.True(decoded.ErgoStopEnabled);
+        Assert.Equal(1800, decoded.Segment1TorqueMilliNm);
+        Assert.Equal(100, decoded.FinalSpeedRpm);
+    }
+
+    [Fact]
+    public void StageFlags_LegacyPlainControlWord_StillReads()
+    {
+        var raw = TighteningParameterTemplate.CreateEmptyRawBlock();
+        var baseIndex = TighteningParameterRegisterMap.StageStarts[0];
+        raw[baseIndex] = (int)TighteningControlMode.Torque; // legacy plain enum
+        raw[baseIndex + 1] = (int)TighteningDirection.Clockwise;
+        raw[baseIndex + TighteningParameterRegisterMap.StageSpeedRpm] = 500;
+
+        var decoded = TighteningParameterCodec.ExtractCoreFromRaw(raw).Stages[0];
+        Assert.Equal(TighteningControlMode.Torque, decoded.ControlMode);
+        Assert.Equal(TighteningDirection.Clockwise, decoded.Direction);
+        Assert.Equal(500, decoded.SpeedRpm);
+        Assert.False(decoded.ErgoStopEnabled);
+        Assert.False(decoded.TwoStageModeEnabled);
+    }
+
+    [Fact]
     public void TemplateSync_RoundTripsCore()
     {
         var template = new TighteningParameterTemplate

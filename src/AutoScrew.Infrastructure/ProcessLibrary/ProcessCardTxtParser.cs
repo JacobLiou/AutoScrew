@@ -312,6 +312,18 @@ public static class ProcessCardTxtParser
         stage.Segment1PauseMs = GetInt(block, "一段暂停", 0);
         stage.Segment2AccelMs = GetInt(block, "二段加速", 0);
         stage.FinalSpeedRpm = GetInt(block, "最终速度", 0);
+
+        if (block.ContainsKey("两阶段模式"))
+            stage.TwoStageModeEnabled = ParseOnOff(GetString(block, "两阶段模式"));
+        else
+            stage.TwoStageModeEnabled =
+                stage.Segment1TorqueMilliNm > 0
+                || stage.Segment1PauseMs > 0
+                || stage.Segment2AccelMs > 0
+                || stage.FinalSpeedRpm > 0;
+
+        if (block.ContainsKey("缓停止"))
+            stage.ErgoStopEnabled = ParseOnOff(GetString(block, "缓停止"));
     }
 
     /// <summary>

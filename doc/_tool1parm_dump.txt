@@ -1,0 +1,670 @@
+SHEETS: [('拧紧参数', 'rId1'), ('标准', 'rId2'), ('预定位', 'rId3'), ('加强', 'rId4'), ('自创', 'rId5'), ('模板', 'rId6'), ('功能矩阵图', 'rId7')]
+
+==== SHEET: 拧紧参数 ====
+dims rows=1..553 cols=1..16
+-- header/left labels + mode titles --
+R1: 2:图片中文名称（逻辑） | 6:项目 | 7:mode1 | 8:mode2 | 9:mode3 | 10:mode4 | 11:mode5 | 12:mode6 | 13:mode7 | 14:mode8 | 15:mode9 | 16:mode10
+R2: 1:模式层 | 2:设定层 | 4:项目层 | 5:参数层 | 6:Title | 7:BIAOZHUN | 8:1830330479 | 9:EEE | 10:0.5YUJIN | 11:0.7NINGJIN | 12:1.5NINGJN | 13:3 | 14:18NINGJN | 15:SAMPLE1 | 16:YUDINGWEI
+R3: 1:标准 | 2:基本设定 | 6:Param ID | 7:11 | 8:2 | 9:3 | 10:4 | 11:5 | 12:6 | 13:7 | 14:8 | 15:9 | 16:10
+R4: 1:自创 | 2:拧紧设定 | 3:启动 | 6:Ver | 7:1 | 8:1 | 9:1 | 10:1 | 11:1 | 12:1 | 13:1 | 14:1 | 15:1 | 16:1
+R5: 1:加强 | 3:旋入 | 6:Torq Unit | 7:3 | 8:0 | 9:3 | 10:3 | 11:3 | 12:3 | 13:3 | 14:0 | 15:3 | 16:3
+R6: 1:预定位 | 3:预紧 | 6:- | 7:0 | 8:0 | 9:0 | 10:0 | 11:3 | 12:3 | 13:0 | 14:1 | 15:0 | 16:2
+R7: 3:拧紧 | 6:- | 7:0 | 8:1 | 9:0 | 10:0 | 11:0 | 12:0 | 13:0 | 14:1 | 15:0 | 16:0
+-- parameter name column F (col6) with mode2(col8) sample for all rows --
+R1: L=图片中文名称（逻辑） | Name=项目 | mode2=mode2
+R2: L=模式层 / 设定层 / 项目层 / 参数层 | Name=Title | mode2=1830330479
+R3: L=标准 / 基本设定 | Name=Param ID | mode2=2
+R4: L=自创 / 拧紧设定 / 启动 | Name=Ver | mode2=1
+R5: L=加强 / 旋入 | Name=Torq Unit | mode2=0
+R6: L=预定位 / 预紧 | Name=- | mode2=0
+R7: L=拧紧 | Name=- | mode2=1
+R8: L=拧松设定 | Name=- | mode2=0
+R9: L= | Name=1st Angle Loosening | mode2=0
+R10: L= | Name=2nd Angle Loosening | mode2=0
+R11: L= | Name=Target Yield | mode2=0
+R12: L= | Name=- | mode2=0
+R13: L= | Name=Tool1 or 2 | mode2=0
+R14: L= | Name=- | mode2=12
+R15: L= | Name=- | mode2=12
+R16: L= | Name=- | mode2=0
+R17: L= | Name=- | mode2=0
+R18: L= | Name=- | mode2=300
+R19: L= | Name=- | mode2=300
+R20: L= | Name=Torque Rate Delay Detection | mode2=0
+R21: L= | Name=- | mode2=0
+R22: L= | Name=- | mode2=1200
+R23: L= | Name=- | mode2=1856
+R24: L= | Name=Max Current Tightening | mode2=0
+R25: L= | Name=Max Time Tightening | mode2=100
+R26: L= | Name=Max Angle Tightening | mode2=4160
+R27: L= | Name=- | mode2=0
+R28: L= | Name=Delay Start Tightening | mode2=0
+R29: L= | Name=Min Angle Tightening | mode2=3800
+R30: L= | Name=- | mode2=0
+R31: L= | Name=Start Torque for Yield detection L | mode2=0
+R32: L= | Name=Start Torque for Yield detection H | mode2=0
+R33: L= | Name=Loosening Rotation | mode2=1
+R34: L= | Name=- | mode2=20686
+R35: L= | Name=Max Time Loosening | mode2=100
+R36: L= | Name=Max Angle Loosening | mode2=0
+R37: L= | Name=- | mode2=0
+R38: L= | Name=Delay Start Loosening | mode2=0
+R39: L= | Name=- | mode2=24157
+R40: L= | Name=- | mode2=0
+R41: L= | Name=- | mode2=1
+R42: L= | Name=- | mode2=322
+R43: L= | Name=- | mode2=0
+R44: L= | Name=Prevail Torq | mode2=0
+R45: L= | Name=- | mode2=0
+R46: L= | Name=- | mode2=0
+R47: L= | Name=- | mode2=2
+R48: L= | Name=- | mode2=0
+R49: L= | Name=- | mode2=100
+R50: L= | Name=- | mode2=0
+R51: L= | Name=1st Loosening Speed | mode2=60
+R52: L= | Name=2nd Loosening Speed | mode2=500
+R53: L= | Name=Control mode L | mode2=6
+R54: L= | Name=Control mode H | mode2=0
+R55: L= | Name=Speed of 2nd Stage | mode2=0
+R56: L= | Name=Target Speed | mode2=80
+R57: L= | Name=Target Angle | mode2=360
+R58: L= | Name=Pause Time | mode2=0
+R59: L= | Name=Acc. time | mode2=0
+R60: L= | Name=Dcc. time | mode2=0
+R61: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R62: L= | Name=- | mode2=0
+R63: L= | Name=Pause Time after 1st Stage | mode2=0
+R64: L= | Name=- | mode2=0
+R65: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R66: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R67: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R68: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R69: L= | Name=Torque Rate L | mode2=0
+R70: L= | Name=Torque Rate H | mode2=0
+R71: L= | Name=Torque of 1st Stage L | mode2=0
+R72: L= | Name=Torque of 1st Stage H | mode2=0
+R73: L= | Name=- | mode2=0
+R74: L= | Name=- | mode2=0
+R75: L= | Name=Max. Clamp Torque L | mode2=0
+R76: L= | Name=Max. Clamp Torque H | mode2=0
+R77: L= | Name=Min. Clamp Torque L | mode2=0
+R78: L= | Name=Min. Clamp Torque H | mode2=0
+R79: L= | Name=Max. Angle | mode2=0
+R80: L= | Name=Min. Angle | mode2=0
+R81: L= | Name=Max. Torque L | mode2=0
+R82: L= | Name=Max. Torque H | mode2=0
+R83: L= | Name=Min. Torque L | mode2=0
+R84: L= | Name=Min. Torque H | mode2=0
+R85: L= | Name=Max. Switching Torque L | mode2=0
+R86: L= | Name=Max. Switching Torque H | mode2=0
+R87: L= | Name=Min. Switching Torque L | mode2=0
+R88: L= | Name=Min. Switching Torque H | mode2=0
+R89: L= | Name=- | mode2=0
+R90: L= | Name=- | mode2=0
+R91: L= | Name=- | mode2=0
+R92: L= | Name=Max. Time | mode2=0
+R93: L= | Name=Min. Time | mode2=0
+R94: L= | Name=Max. Clamp Angle | mode2=0
+R95: L= | Name=Min. Clamp Angle | mode2=0
+R96: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R97: L= | Name=- | mode2=0
+R98: L= | Name=- | mode2=0
+R99: L= | Name=Limit Switch L | mode2=0
+R100: L= | Name=Limit Switch H | mode2=0
+R101: L= | Name=- | mode2=0
+R102: L= | Name=Type | mode2=10
+R103: L= | Name=Control mode L | mode2=6
+R104: L= | Name=Control mode H | mode2=0
+R105: L= | Name=Speed of 2nd Stage | mode2=0
+R106: L= | Name=Target Speed | mode2=600
+R107: L= | Name=Target Angle | mode2=3600
+R108: L= | Name=Pause Time | mode2=0
+R109: L= | Name=Acc. time | mode2=0
+R110: L= | Name=Dcc. time | mode2=0
+R111: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R112: L= | Name=- | mode2=0
+R113: L= | Name=Pause Time after 1st Stage | mode2=0
+R114: L= | Name=- | mode2=0
+R115: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R116: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R117: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R118: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R119: L= | Name=Torque Rate L | mode2=0
+R120: L= | Name=Torque Rate H | mode2=0
+R121: L= | Name=Torque of 1st Stage L | mode2=0
+R122: L= | Name=Torque of 1st Stage H | mode2=0
+R123: L= | Name=- | mode2=0
+R124: L= | Name=- | mode2=0
+R125: L= | Name=Max. Clamp Torque L | mode2=0
+R126: L= | Name=Max. Clamp Torque H | mode2=0
+R127: L= | Name=Min. Clamp Torque L | mode2=0
+R128: L= | Name=Min. Clamp Torque H | mode2=0
+R129: L= | Name=Max. Angle | mode2=0
+R130: L= | Name=Min. Angle | mode2=0
+R131: L= | Name=Max. Torque L | mode2=271
+R132: L= | Name=Max. Torque H | mode2=0
+R133: L= | Name=Min. Torque L | mode2=0
+R134: L= | Name=Min. Torque H | mode2=0
+R135: L= | Name=Max. Switching Torque L | mode2=0
+R136: L= | Name=Max. Switching Torque H | mode2=0
+R137: L= | Name=Min. Switching Torque L | mode2=0
+R138: L= | Name=Min. Switching Torque H | mode2=0
+R139: L= | Name=- | mode2=0
+R140: L= | Name=- | mode2=0
+R141: L= | Name=- | mode2=0
+R142: L= | Name=Max. Time | mode2=0
+R143: L= | Name=Min. Time | mode2=0
+R144: L= | Name=Max. Clamp Angle | mode2=0
+R145: L= | Name=Min. Clamp Angle | mode2=0
+R146: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R147: L= | Name=- | mode2=0
+R148: L= | Name=- | mode2=0
+R149: L= | Name=Limit Switch L | mode2=0
+R150: L= | Name=Limit Switch H | mode2=1
+R151: L= | Name=- | mode2=0
+R152: L= | Name=Type | mode2=20
+R153: L= | Name=Control mode L | mode2=21
+R154: L= | Name=Control mode H | mode2=0
+R155: L= | Name=Speed of 2nd Stage | mode2=0
+R156: L= | Name=Target Speed | mode2=120
+R157: L= | Name=Target Angle | mode2=0
+R158: L= | Name=Pause Time | mode2=0
+R159: L= | Name=Acc. time | mode2=0
+R160: L= | Name=Dcc. time | mode2=0
+R161: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R162: L= | Name=- | mode2=0
+R163: L= | Name=Pause Time after 1st Stage | mode2=0
+R164: L= | Name=- | mode2=0
+R165: L= | Name=Target Torque|Clamp Torque L | mode2=294
+R166: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R167: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R168: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R169: L= | Name=Torque Rate L | mode2=0
+R170: L= | Name=Torque Rate H | mode2=0
+R171: L= | Name=Torque of 1st Stage L | mode2=0
+R172: L= | Name=Torque of 1st Stage H | mode2=0
+R173: L= | Name=- | mode2=0
+R174: L= | Name=- | mode2=0
+R175: L= | Name=Max. Clamp Torque L | mode2=0
+R176: L= | Name=Max. Clamp Torque H | mode2=0
+R177: L= | Name=Min. Clamp Torque L | mode2=0
+R178: L= | Name=Min. Clamp Torque H | mode2=0
+R179: L= | Name=Max. Angle | mode2=100
+R180: L= | Name=Min. Angle | mode2=0
+R181: L= | Name=Max. Torque L | mode2=339
+R182: L= | Name=Max. Torque H | mode2=0
+R183: L= | Name=Min. Torque L | mode2=0
+R184: L= | Name=Min. Torque H | mode2=0
+R185: L= | Name=Max. Switching Torque L | mode2=0
+R186: L= | Name=Max. Switching Torque H | mode2=0
+R187: L= | Name=Min. Switching Torque L | mode2=0
+R188: L= | Name=Min. Switching Torque H | mode2=0
+R189: L= | Name=- | mode2=0
+R190: L= | Name=- | mode2=0
+R191: L= | Name=- | mode2=0
+R192: L= | Name=Max. Time | mode2=0
+R193: L= | Name=Min. Time | mode2=0
+R194: L= | Name=Max. Clamp Angle | mode2=0
+R195: L= | Name=Min. Clamp Angle | mode2=0
+R196: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R197: L= | Name=- | mode2=0
+R198: L= | Name=- | mode2=0
+R199: L= | Name=Limit Switch L | mode2=4
+R200: L= | Name=Limit Switch H | mode2=1
+R201: L= | Name=- | mode2=0
+R202: L= | Name=Type | mode2=30
+R203: L= | Name=Control mode L | mode2=17
+R204: L= | Name=Control mode H | mode2=0
+R205: L= | Name=Speed of 2nd Stage | mode2=0
+R206: L= | Name=Target Speed | mode2=120
+R207: L= | Name=Target Angle | mode2=0
+R208: L= | Name=Pause Time | mode2=0
+R209: L= | Name=Acc. time | mode2=0
+R210: L= | Name=Dcc. time | mode2=0
+R211: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R212: L= | Name=- | mode2=0
+R213: L= | Name=Pause Time after 1st Stage | mode2=0
+R214: L= | Name=- | mode2=0
+R215: L= | Name=Target Torque|Clamp Torque L | mode2=339
+R216: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R217: L= | Name=Start torque for tightening angle calculation L | mode2=322
+R218: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R219: L= | Name=Torque Rate L | mode2=0
+R220: L= | Name=Torque Rate H | mode2=0
+R221: L= | Name=Torque of 1st Stage L | mode2=0
+R222: L= | Name=Torque of 1st Stage H | mode2=0
+R223: L= | Name=- | mode2=0
+R224: L= | Name=- | mode2=0
+R225: L= | Name=Max. Clamp Torque L | mode2=0
+R226: L= | Name=Max. Clamp Torque H | mode2=0
+R227: L= | Name=Min. Clamp Torque L | mode2=0
+R228: L= | Name=Min. Clamp Torque H | mode2=0
+R229: L= | Name=Max. Angle | mode2=10
+R230: L= | Name=Min. Angle | mode2=0
+R231: L= | Name=Max. Torque L | mode2=356
+R232: L= | Name=Max. Torque H | mode2=0
+R233: L= | Name=Min. Torque L | mode2=322
+R234: L= | Name=Min. Torque H | mode2=0
+R235: L= | Name=Max. Switching Torque L | mode2=0
+R236: L= | Name=Max. Switching Torque H | mode2=0
+R237: L= | Name=Min. Switching Torque L | mode2=0
+R238: L= | Name=Min. Switching Torque H | mode2=0
+R239: L= | Name=- | mode2=0
+R240: L= | Name=- | mode2=0
+R241: L= | Name=- | mode2=0
+R242: L= | Name=Max. Time | mode2=0
+R243: L= | Name=Min. Time | mode2=0
+R244: L= | Name=Max. Clamp Angle | mode2=90
+R245: L= | Name=Min. Clamp Angle | mode2=0
+R246: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R247: L= | Name=- | mode2=0
+R248: L= | Name=- | mode2=0
+R249: L= | Name=Limit Switch L | mode2=36
+R250: L= | Name=Limit Switch H | mode2=1
+R251: L= | Name=- | mode2=0
+R252: L= | Name=Type | mode2=40
+R253: L= | Name=Control mode L | mode2=0
+R254: L= | Name=Control mode H | mode2=0
+R255: L= | Name=Speed of 2nd Stage | mode2=0
+R256: L= | Name=Target Speed | mode2=0
+R257: L= | Name=Target Angle | mode2=0
+R258: L= | Name=Pause Time | mode2=0
+R259: L= | Name=Acc. time | mode2=0
+R260: L= | Name=Dcc. time | mode2=0
+R261: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R262: L= | Name=- | mode2=0
+R263: L= | Name=Pause Time after 1st Stage | mode2=0
+R264: L= | Name=- | mode2=0
+R265: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R266: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R267: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R268: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R269: L= | Name=Torque Rate L | mode2=0
+R270: L= | Name=Torque Rate H | mode2=0
+R271: L= | Name=Torque of 1st Stage L | mode2=0
+R272: L= | Name=Torque of 1st Stage H | mode2=0
+R273: L= | Name=- | mode2=0
+R274: L= | Name=- | mode2=0
+R275: L= | Name=Max. Clamp Torque L | mode2=0
+R276: L= | Name=Max. Clamp Torque H | mode2=0
+R277: L= | Name=Min. Clamp Torque L | mode2=0
+R278: L= | Name=Min. Clamp Torque H | mode2=0
+R279: L= | Name=Max. Angle | mode2=0
+R280: L= | Name=Min. Angle | mode2=0
+R281: L= | Name=Max. Torque L | mode2=0
+R282: L= | Name=Max. Torque H | mode2=0
+R283: L= | Name=Min. Torque L | mode2=0
+R284: L= | Name=Min. Torque H | mode2=0
+R285: L= | Name=Max. Switching Torque L | mode2=0
+R286: L= | Name=Max. Switching Torque H | mode2=0
+R287: L= | Name=Min. Switching Torque L | mode2=0
+R288: L= | Name=Min. Switching Torque H | mode2=0
+R289: L= | Name=- | mode2=0
+R290: L= | Name=- | mode2=0
+R291: L= | Name=- | mode2=0
+R292: L= | Name=Max. Time | mode2=0
+R293: L= | Name=Min. Time | mode2=0
+R294: L= | Name=Max. Clamp Angle | mode2=0
+R295: L= | Name=Min. Clamp Angle | mode2=0
+R296: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R297: L= | Name=- | mode2=0
+R298: L= | Name=- | mode2=0
+R299: L= | Name=Limit Switch L | mode2=0
+R300: L= | Name=Limit Switch H | mode2=0
+R301: L= | Name=- | mode2=0
+R302: L= | Name=Type | mode2=0
+R303: L= | Name=Control mode L | mode2=0
+R304: L= | Name=Control mode H | mode2=0
+R305: L= | Name=Speed of 2nd Stage | mode2=0
+R306: L= | Name=Target Speed | mode2=0
+R307: L= | Name=Target Angle | mode2=0
+R308: L= | Name=Pause Time | mode2=0
+R309: L= | Name=Acc. time | mode2=0
+R310: L= | Name=Dcc. time | mode2=0
+R311: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R312: L= | Name=- | mode2=0
+R313: L= | Name=Pause Time after 1st Stage | mode2=0
+R314: L= | Name=- | mode2=0
+R315: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R316: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R317: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R318: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R319: L= | Name=Torque Rate L | mode2=0
+R320: L= | Name=Torque Rate H | mode2=0
+R321: L= | Name=Torque of 1st Stage L | mode2=0
+R322: L= | Name=Torque of 1st Stage H | mode2=0
+R323: L= | Name=- | mode2=0
+R324: L= | Name=- | mode2=0
+R325: L= | Name=Max. Clamp Torque L | mode2=0
+R326: L= | Name=Max. Clamp Torque H | mode2=0
+R327: L= | Name=Min. Clamp Torque L | mode2=0
+R328: L= | Name=Min. Clamp Torque H | mode2=0
+R329: L= | Name=Max. Angle | mode2=0
+R330: L= | Name=Min. Angle | mode2=0
+R331: L= | Name=Max. Torque L | mode2=0
+R332: L= | Name=Max. Torque H | mode2=0
+R333: L= | Name=Min. Torque L | mode2=0
+R334: L= | Name=Min. Torque H | mode2=0
+R335: L= | Name=Max. Switching Torque L | mode2=0
+R336: L= | Name=Max. Switching Torque H | mode2=0
+R337: L= | Name=Min. Switching Torque L | mode2=0
+R338: L= | Name=Min. Switching Torque H | mode2=0
+R339: L= | Name=- | mode2=0
+R340: L= | Name=- | mode2=0
+R341: L= | Name=- | mode2=0
+R342: L= | Name=Max. Time | mode2=0
+R343: L= | Name=Min. Time | mode2=0
+R344: L= | Name=Max. Clamp Angle | mode2=0
+R345: L= | Name=Min. Clamp Angle | mode2=0
+R346: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R347: L= | Name=- | mode2=0
+R348: L= | Name=- | mode2=0
+R349: L= | Name=Limit Switch L | mode2=0
+R350: L= | Name=Limit Switch H | mode2=0
+R351: L= | Name=- | mode2=0
+R352: L= | Name=Type | mode2=0
+R353: L= | Name=Control mode L | mode2=69
+R354: L= | Name=Control mode H | mode2=0
+R355: L= | Name=Speed of 2nd Stage | mode2=0
+R356: L= | Name=Target Speed | mode2=60
+R357: L= | Name=Target Angle | mode2=240
+R358: L= | Name=Pause Time | mode2=0
+R359: L= | Name=Acc. time | mode2=50
+R360: L= | Name=Dcc. time | mode2=50
+R361: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R362: L= | Name=- | mode2=0
+R363: L= | Name=Pause Time after 1st Stage | mode2=0
+R364: L= | Name=- | mode2=0
+R365: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R366: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R367: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R368: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R369: L= | Name=Torque Rate L | mode2=0
+R370: L= | Name=Torque Rate H | mode2=0
+R371: L= | Name=Torque of 1st Stage L | mode2=0
+R372: L= | Name=Torque of 1st Stage H | mode2=0
+R373: L= | Name=- | mode2=0
+R374: L= | Name=- | mode2=0
+R375: L= | Name=Max. Clamp Torque L | mode2=0
+R376: L= | Name=Max. Clamp Torque H | mode2=0
+R377: L= | Name=Min. Clamp Torque L | mode2=0
+R378: L= | Name=Min. Clamp Torque H | mode2=0
+R379: L= | Name=Max. Angle | mode2=0
+R380: L= | Name=Min. Angle | mode2=0
+R381: L= | Name=Max. Torque L | mode2=0
+R382: L= | Name=Max. Torque H | mode2=0
+R383: L= | Name=Min. Torque L | mode2=0
+R384: L= | Name=Min. Torque H | mode2=0
+R385: L= | Name=Max. Switching Torque L | mode2=0
+R386: L= | Name=Max. Switching Torque H | mode2=0
+R387: L= | Name=Min. Switching Torque L | mode2=0
+R388: L= | Name=Min. Switching Torque H | mode2=0
+R389: L= | Name=- | mode2=0
+R390: L= | Name=- | mode2=0
+R391: L= | Name=- | mode2=0
+R392: L= | Name=Max. Time | mode2=0
+R393: L= | Name=Min. Time | mode2=0
+R394: L= | Name=Max. Clamp Angle | mode2=0
+R395: L= | Name=Min. Clamp Angle | mode2=0
+R396: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R397: L= | Name=- | mode2=0
+R398: L= | Name=- | mode2=0
+R399: L= | Name=Limit Switch L | mode2=1
+R400: L= | Name=Limit Switch H | mode2=0
+R401: L= | Name=- | mode2=0
+R402: L= | Name=Type | mode2=90
+R403: L= | Name=Control mode L | mode2=65
+R404: L= | Name=Control mode H | mode2=0
+R405: L= | Name=Speed of 2nd Stage | mode2=0
+R406: L= | Name=Target Speed | mode2=500
+R407: L= | Name=Target Angle | mode2=3800
+R408: L= | Name=Pause Time | mode2=0
+R409: L= | Name=Acc. time | mode2=50
+R410: L= | Name=Dcc. time | mode2=50
+R411: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R412: L= | Name=- | mode2=0
+R413: L= | Name=Pause Time after 1st Stage | mode2=0
+R414: L= | Name=- | mode2=0
+R415: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R416: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R417: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R418: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R419: L= | Name=Torque Rate L | mode2=0
+R420: L= | Name=Torque Rate H | mode2=0
+R421: L= | Name=Torque of 1st Stage L | mode2=0
+R422: L= | Name=Torque of 1st Stage H | mode2=0
+R423: L= | Name=- | mode2=0
+R424: L= | Name=- | mode2=0
+R425: L= | Name=Max. Clamp Torque L | mode2=0
+R426: L= | Name=Max. Clamp Torque H | mode2=0
+R427: L= | Name=Min. Clamp Torque L | mode2=0
+R428: L= | Name=Min. Clamp Torque H | mode2=0
+R429: L= | Name=Max. Angle | mode2=0
+R430: L= | Name=Min. Angle | mode2=0
+R431: L= | Name=Max. Torque L | mode2=0
+R432: L= | Name=Max. Torque H | mode2=0
+R433: L= | Name=Min. Torque L | mode2=0
+R434: L= | Name=Min. Torque H | mode2=0
+R435: L= | Name=Max. Switching Torque L | mode2=0
+R436: L= | Name=Max. Switching Torque H | mode2=0
+R437: L= | Name=Min. Switching Torque L | mode2=0
+R438: L= | Name=Min. Switching Torque H | mode2=0
+R439: L= | Name=- | mode2=0
+R440: L= | Name=- | mode2=0
+R441: L= | Name=- | mode2=0
+R442: L= | Name=Max. Time | mode2=0
+R443: L= | Name=Min. Time | mode2=0
+R444: L= | Name=Max. Clamp Angle | mode2=0
+R445: L= | Name=Min. Clamp Angle | mode2=0
+R446: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R447: L= | Name=- | mode2=0
+R448: L= | Name=- | mode2=0
+R449: L= | Name=Limit Switch L | mode2=1
+R450: L= | Name=Limit Switch H | mode2=0
+R451: L= | Name=- | mode2=0
+R452: L= | Name=Type | mode2=91
+R453: L= | Name=Control mode L | mode2=0
+R454: L= | Name=Control mode H | mode2=0
+R455: L= | Name=Speed of 2nd Stage | mode2=0
+R456: L= | Name=Target Speed | mode2=0
+R457: L= | Name=Target Angle | mode2=0
+R458: L= | Name=Pause Time | mode2=0
+R459: L= | Name=Acc. time | mode2=0
+R460: L= | Name=Dcc. time | mode2=0
+R461: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R462: L= | Name=- | mode2=0
+R463: L= | Name=Pause Time after 1st Stage | mode2=0
+R464: L= | Name=- | mode2=0
+R465: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R466: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R467: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R468: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R469: L= | Name=Torque Rate L | mode2=0
+R470: L= | Name=Torque Rate H | mode2=0
+R471: L= | Name=Torque of 1st Stage L | mode2=0
+R472: L= | Name=Torque of 1st Stage H | mode2=0
+R473: L= | Name=- | mode2=0
+R474: L= | Name=- | mode2=0
+R475: L= | Name=Max. Clamp Torque L | mode2=0
+R476: L= | Name=Max. Clamp Torque H | mode2=0
+R477: L= | Name=Min. Clamp Torque L | mode2=0
+R478: L= | Name=Min. Clamp Torque H | mode2=0
+R479: L= | Name=Max. Angle | mode2=0
+R480: L= | Name=Min. Angle | mode2=0
+R481: L= | Name=Max. Torque L | mode2=0
+R482: L= | Name=Max. Torque H | mode2=0
+R483: L= | Name=Min. Torque L | mode2=0
+R484: L= | Name=Min. Torque H | mode2=0
+R485: L= | Name=Max. Switching Torque L | mode2=0
+R486: L= | Name=Max. Switching Torque H | mode2=0
+R487: L= | Name=Min. Switching Torque L | mode2=0
+R488: L= | Name=Min. Switching Torque H | mode2=0
+R489: L= | Name=- | mode2=0
+R490: L= | Name=- | mode2=0
+R491: L= | Name=- | mode2=0
+R492: L= | Name=Max. Time | mode2=0
+R493: L= | Name=Min. Time | mode2=0
+R494: L= | Name=Max. Clamp Angle | mode2=0
+R495: L= | Name=Min. Clamp Angle | mode2=0
+R496: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R497: L= | Name=- | mode2=0
+R498: L= | Name=- | mode2=0
+R499: L= | Name=Limit Switch L | mode2=0
+R500: L= | Name=Limit Switch H | mode2=0
+R501: L= | Name=- | mode2=0
+R502: L= | Name=Type | mode2=0
+R503: L= | Name=Control mode L | mode2=0
+R504: L= | Name=Control mode H | mode2=0
+R505: L= | Name=Speed of 2nd Stage | mode2=0
+R506: L= | Name=Target Speed | mode2=0
+R507: L= | Name=Target Angle | mode2=0
+R508: L= | Name=Pause Time | mode2=0
+R509: L= | Name=Acc. time | mode2=0
+R510: L= | Name=Dcc. time | mode2=0
+R511: L= | Name=Acc. Time of 2nd Stage | mode2=0
+R512: L= | Name=- | mode2=0
+R513: L= | Name=Pause Time after 1st Stage | mode2=0
+R514: L= | Name=- | mode2=0
+R515: L= | Name=Target Torque|Clamp Torque L | mode2=0
+R516: L= | Name=Target Torque|Clamp Torque H | mode2=0
+R517: L= | Name=Start torque for tightening angle calculation L | mode2=0
+R518: L= | Name=Start torque for tightening angle calculation H | mode2=0
+R519: L= | Name=Torque Rate L | mode2=0
+R520: L= | Name=Torque Rate H | mode2=0
+R521: L= | Name=Torque of 1st Stage L | mode2=0
+R522: L= | Name=Torque of 1st Stage H | mode2=0
+R523: L= | Name=- | mode2=0
+R524: L= | Name=- | mode2=0
+R525: L= | Name=Max. Clamp Torque L | mode2=0
+R526: L= | Name=Max. Clamp Torque H | mode2=0
+R527: L= | Name=Min. Clamp Torque L | mode2=0
+R528: L= | Name=Min. Clamp Torque H | mode2=0
+R529: L= | Name=Max. Angle | mode2=0
+R530: L= | Name=Min. Angle | mode2=0
+R531: L= | Name=Max. Torque L | mode2=0
+R532: L= | Name=Max. Torque H | mode2=0
+R533: L= | Name=Min. Torque L | mode2=0
+R534: L= | Name=Min. Torque H | mode2=0
+R535: L= | Name=Max. Switching Torque L | mode2=0
+R536: L= | Name=Max. Switching Torque H | mode2=0
+R537: L= | Name=Min. Switching Torque L | mode2=0
+R538: L= | Name=Min. Switching Torque H | mode2=0
+R539: L= | Name=- | mode2=0
+R540: L= | Name=- | mode2=0
+R541: L= | Name=- | mode2=0
+R542: L= | Name=Max. Time | mode2=0
+R543: L= | Name=Min. Time | mode2=0
+R544: L= | Name=Max. Clamp Angle | mode2=0
+R545: L= | Name=Min. Clamp Angle | mode2=0
+R546: L= | Name=Angle Percent for Prevail Torque calculation | mode2=0
+R547: L= | Name=- | mode2=0
+R548: L= | Name=- | mode2=0
+R549: L= | Name=Limit Switch L | mode2=0
+R550: L= | Name=Limit Switch H | mode2=0
+R551: L= | Name=- | mode2=0
+R552: L= | Name=Type | mode2=0
+R553: L= | Name=Ver99; | mode2=;
+
+==== SHEET: 标准 ====
+dims rows=1..0 cols=1..0
+
+==== SHEET: 预定位 ====
+dims rows=1..0 cols=1..0
+
+==== SHEET: 加强 ====
+dims rows=1..0 cols=1..0
+
+==== SHEET: 自创 ====
+dims rows=1..0 cols=1..0
+
+==== SHEET: 模板 ====
+dims rows=1..92 cols=1..9
+R1: 1:参数ID：                                       <生成顺序号>
+R2: 1:参数：1830330479-00                   <设定的该螺钉参数，螺钉PN-00>
+R3: 1:阶段有效：4 阶段有效 | 9:标准
+R4: 9:预定位
+R5: 1:基本设定 | 9:加强
+R7: 1:拧紧条件 
+R8: 1:旋转方向：顺时针                 <拧紧螺钉旋转方向>
+R9: 1:最大总角度（°）：4160       <1~4步的总的角度值，也是判断条件，会触发的报警>
+R10: 1:最小总角度（°）：3800       <1~4步的总的角度值，也是判断条件，会触发的报警>
+R11: 1:最大拧紧时间（秒）：10
+R12: 1: 拧紧启动延时（×0.01）：0
+R14: 1:拧松条件 
+R15: 1:最大拧松时间（秒）：10 
+R16: 1:拧松启动延时（×0.01）：0 
+R17: 1:最大拧松角度（°）：5000        《删除》
+R19: 1:进阶设定 
+R20: 1:最终电流判定： OFF        <是否启动电流判定>
+R21: 1:末段伺服保持： OFF       <是否启动未段伺服保持>
+R22: 1:供料结果延时（×0.1s）：0 《名字订正与控制器一致》
+R23: 1:关联补偿参数ID：0 
+R24: 1:贴合起始扭矩率：0 21
+R25: 1:工具精度补偿（×0.1%）：1 
+R26: 1:曲线取样起始扭矩（mNm）：2 
+R27: 1:扭矩率角度间隔（×0.1°）：0
+R28: 1:贴合点角度修正(×0.1°)：0
+R29: 1:《追加》：批头打滑判定 ON/OFF；判断批头寿命，是否磨损。及下面4项。《有问题再联络》
+R31: 1:拧紧设定
+R33: 1:1.启动
+R34: 1:拧紧角度（°）：360       <90~360>
+R35: 1:速度（转/分钟）：80  8  <100以下，一般80>
+R36: 1:扭矩判断：OFF                <启动阶段扭矩阈值是否开启，off情况下设定无效，on上下限就生效，报警停止>
+R37: 1:最大扭矩（lbf.in）：1.7 <拧紧扭矩的20%~40%>
+R38: 1:最小扭矩（lbf.in）：0
+R39: 1:《加减速未设定》
+R41: 1:2.旋入
+R42: 1:拧紧角度（°）：3600       <3选1><一般角度管控，80%的圈数>
+R43: 1:扭矩（lbf.in）：1.66        <3选1>
+R44: 1:扭矩率（lbf.in/°）：0       <3选1><每一段角度产生的扭矩
+R45: 1:速度（转/分钟）：600      <节拍，实际摩擦力、热量，可能卡牙，验证要>
+R46: 1:扭矩判断：ON                  <旋入阶段扭矩判断是否开启，off情况下设定无效>
+R47: 1:最大扭矩（lbf.in）：2.4     <70%~80%~90%,带胶扭矩可能会大，实测值大10%一般>
+R48: 1:最小扭矩（lbf.in）：0 
+R49: 1:角度判断：OFF                  <旋入阶段角度判断是否开启，off情况下设定无效>
+R50: 1:最大角度（°）：100            <设置角度，可以避免浮高>
+R51: 1:最小角度（°）：0           <设置角度，可以避免浮高>
+R52: 1:《逻辑上要确认，重新修改》
+R54: 1:3.预紧
+R55: 1:扭矩（lbf.in）：2.6         <2选1>
+R56: 1:扭矩率（lbf.in/°）：0      <2选1>
+R57: 1:速度（转/分钟）：120     <100~300>
+R58: 1:角度判断：ON                   <预紧阶段角度判断是否开启，off情况下设定无效>  <一般80%>
+R59: 1:最大角度：100                   <金属的一般10度左右，塑胶会大一点.实测10PCS之后再设定>
+R60: 1:最小角度：0
+R62: 1:4.拧紧  《逻辑问题，需要修改程序》
+R63: 1:拧紧角度：                   <4选1>  《名字改为角度，ON/OFF》
+R64: 1:扭矩（lbf.in）：3               <4选1> <设定扭矩管控，即WR扭矩值>
+R65: 1:夹紧扭矩（lbf.in）：        <4选1>
+R66: 1:夹紧角度：                      <4选1>
+R67: 1:速度（转/分钟）：120       <100以下>
+R68: 1:最大扭矩（lbf.in）：3.15       <设定扭矩管控，即WR扭矩值>
+R69: 1:最小扭矩（lbf.in）：2.85       <设定扭矩管控，即WR扭矩值>
+R70: 1:角度判断：ON                    <拧紧阶段角度判断是否开启，off情况下设定无效>
+R71: 1:最大角度（°）：10              <一般几度>
+R72: 1:最小角度（°）：0                <设置角度，可以避免浮高>
+R74: 1:拧紧 进阶设定  《追加》
+R75: 1:两阶段模式  ON/OFF
+R76: 1:第一阶段扭矩
+R77: 1:第一段后的暂定时间
+R78: 1:第二段加速度时间
+R79: 1:第二段速度
+R80: 1:缓停止 on/off 
+R83: 1:拧松设定
+R84: 1:第一段
+R85: 1:角度：240
+R86: 1:速度（转/分钟）：60
+R87: 1:第二段
+R88: 1:速度（转/分钟）：500
+R89: 1:角度（°）：3800
+R91: 1:生产履历存档：ON            <off情况下，设定有效，拧松但不做存档>
+R92: 1:最小扭矩（lbf.in）：2.85 
+
+==== SHEET: 功能矩阵图 ====
+dims rows=1..9 cols=1..15
+R4: 2:拧紧参数 | 3:模式 | 4:基本设定 | 5:基本设定扩展 | 6:拧紧设定 | 14:拧松 | 15:拧松扩展
+R5: 6:启动 | 7:启动扩展 | 8:旋入 | 9:旋入扩展 | 10:预紧 | 11:预紧扩展 | 12:拧紧 | 13:拧紧扩展
+R6: 3:标准模式 | 4:● | 5:● | 6:● | 7:● | 8:● | 9:● | 10:● | 11:● | 12:● | 13:● | 14:● | 15:●
+R7: 3:加强模式 | 4:● | 5:● | 12:● | 13:● | 14:● | 15:●
+R8: 3:自创模式 | 4:● | 5:● | 12:● | 13:● | 14:● | 15:●
+R9: 3:预定位模式 | 4:● | 5:● | 6:● | 7:● | 8:● | 9:● | 14:● | 15:●

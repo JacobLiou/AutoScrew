@@ -206,7 +206,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Two-stage -->
+                <!-- Two-stage + Ergo stop -->
                 <Border BorderBrush="#F9A825" BorderThickness="3,0,0,0" Padding="10,0,0,0">
                     <StackPanel>
                         <Grid Style="{StaticResource AdvRow}">
@@ -217,6 +217,15 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.ControllerParam.Adv.TwoStage}" />
                             <ToggleButton Grid.Column="1" Style="{StaticResource OnOffToggle}" IsChecked="{Binding TwoStageModeEnabled, Mode=TwoWay}" />
+                        </Grid>
+                        <Grid Style="{StaticResource AdvRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Style="{StaticResource AdvLabel}" Text="{DynamicResource S.ControllerParam.Adv.ErgoStop}" />
+                            <ToggleButton Grid.Column="1" Style="{StaticResource OnOffToggle}" IsChecked="{Binding ErgoStopEnabled, Mode=TwoWay}" />
                         </Grid>
                         <Grid Style="{StaticResource AdvRow}">
                             <Grid.ColumnDefinitions>

@@ -103,5 +103,7 @@ internal sealed class ParameterBlockWriter
         Segment2AccelMs = s.Segment2AccelMs,
         FinalSpeedRpm = s.FinalSpeedRpm,
         DecelTimeMs = s.DecelTimeMs,
+        TwoStageModeEnabled = s.TwoStageModeEnabled,
+        ErgoStopEnabled = s.ErgoStopEnabled,
     };
 }

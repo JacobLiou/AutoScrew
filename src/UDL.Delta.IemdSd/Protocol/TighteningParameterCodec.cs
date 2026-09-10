@@ -109,10 +109,23 @@ public static class TighteningParameterCodec
 
     private static TighteningStageCore ReadStage(int[] raw, int baseIndex)
     {
-        return new TighteningStageCore
+        var word0 = (ushort)raw[baseIndex + TighteningParameterRegisterMap.StageControlMode];
+        var word1 = (ushort)raw[baseIndex + TighteningParameterRegisterMap.StageDirection];
+        TighteningStageFlagCodec.DecodeControlWord(
+            word0,
+            word1,
+            out var mode,
+            out var direction,
+            out var twoStage,
+            out var ergoStop);
+
+        if (!twoStage)
+            twoStage = TighteningStageFlagCodec.ReadTwoStageEnableMirror(raw, baseIndex);
+
+        var stage = new TighteningStageCore
         {
-            ControlMode = (TighteningControlMode)(ushort)raw[baseIndex + TighteningParameterRegisterMap.StageControlMode],
-            Direction = (TighteningDirection)(ushort)raw[baseIndex + TighteningParameterRegisterMap.StageDirection],
+            ControlMode = mode,
+            Direction = direction,
             SpeedRpm = raw[baseIndex + TighteningParameterRegisterMap.StageSpeedRpm],
             TargetTorqueMilliNm = raw[baseIndex + TighteningParameterRegisterMap.StageTargetTorqueMilliNm],
             TargetAngleDeg = raw[baseIndex + TighteningParameterRegisterMap.StageTargetAngleDeg],
@@ -137,13 +150,36 @@ public static class TighteningParameterCodec
             Segment2AccelMs = raw[baseIndex + TighteningParameterRegisterMap.StageSegment2AccelMs],
             FinalSpeedRpm = raw[baseIndex + TighteningParameterRegisterMap.StageFinalSpeedRpm],
             DecelTimeMs = raw[baseIndex + TighteningParameterRegisterMap.StageDecelTimeMs],
+            TwoStageModeEnabled = twoStage,
+            ErgoStopEnabled = ergoStop,
         };
+
+        // 旧写入未带使能 bit 时，用一段参数非零推断两阶段
+        if (!stage.TwoStageModeEnabled
+            && (stage.Segment1TorqueMilliNm > 0
+                || stage.Segment1PauseMs > 0
+                || stage.Segment2AccelMs > 0
+                || stage.FinalSpeedRpm > 0))
+        {
+            stage.TwoStageModeEnabled = true;
+        }
+
+        return stage;
     }
 
     private static void WriteStage(int[] raw, int baseIndex, TighteningStageCore stage)
     {
-        raw[baseIndex + TighteningParameterRegisterMap.StageControlMode] = (ushort)stage.ControlMode;
-        raw[baseIndex + TighteningParameterRegisterMap.StageDirection] = (ushort)stage.Direction;
+        TighteningStageFlagCodec.EncodeControlWords(
+            stage.ControlMode,
+            stage.Direction,
+            stage.TwoStageModeEnabled,
+            stage.ErgoStopEnabled,
+            out var word0,
+            out var word1);
+        raw[baseIndex + TighteningParameterRegisterMap.StageControlMode] = word0;
+        raw[baseIndex + TighteningParameterRegisterMap.StageDirection] = word1;
+        TighteningStageFlagCodec.ApplyTwoStageEnableMirror(raw, baseIndex, stage.TwoStageModeEnabled);
+
         raw[baseIndex + TighteningParameterRegisterMap.StageSpeedRpm] = stage.SpeedRpm;
         raw[baseIndex + TighteningParameterRegisterMap.StageTargetTorqueMilliNm] = stage.TargetTorqueMilliNm;
         raw[baseIndex + TighteningParameterRegisterMap.StageTargetAngleDeg] = stage.TargetAngleDeg;

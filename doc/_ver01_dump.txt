@@ -1,0 +1,65 @@
+SHEETS: ['Sheet1']
+
+==== Sheet1 ====
+dims 61x14
+R1: 1:项目 | 7:设定值 | 8:说明（对应地址） | 9:设定值意义
+R2: 1:名称 | 6:Title | 8:螺钉PN+后缀 | 9:00锁紧 | 10:10预紧· | 11:20紧固
+R3: 1:ID | 6:Param ID | 8:序号由系统自动设定
+R4: 4:进阶设定 | 5:供料结果延时 | 6:- | 7:21
+R5: 4:进阶设定 | 5:最终电流判定 | 8:F2 | 9:1=open | 10:0=close
+R6: 4:最大总角度 | 6:Max Angle Tightening | 7:32767
+R7: 4:启动延时 | 6:Delay Start Tightening | 7:120
+R8: 4:最小总角度 | 6:Min Angle Tightening | 7:3240
+R9: 3:拧松条件 | 4:启动延时 | 6:Delay Start Loosening | 7:123
+R10: 4:超时 | 6:Max Time Tightening
+R11: 2:拧紧设定 | 3:启动 | 4:速度 | 6:Target Speed | 7:80
+R12: 4:角度 | 6:Target Angle | 7:90
+R13: 4:进阶设定 | 5:加速度时间 | 6:Acc. time | 7:55
+R14: 4:进阶设定 | 5:减速度时间 | 6:Dcc. time | 7:55
+R15: 4:最大扭矩 | 6:Max. Torque L | 7:2123
+R16: 4:最小扭矩 | 6:Min. Torque L | 7:0
+R17: 3:旋入 | 4:设定模式 | 5:on/off | 8:12C | 9:0=角度 | 10:1=扭矩 | 11:2=扭矩率
+R18: 4:速度 | 6:Target Speed | 7:110
+R19: 4:角度 | 6:Target Angle | 7:1080
+R20: 4:进阶设定 | 5:加速度时间 | 6:Acc. time | 7:52
+R21: 4:进阶设定 | 5:减速度时间 | 6:Dcc. time | 7:52
+R22: 4:扭矩 | 6:Target Torque|Clamp Torque L | 7:350
+R23: 4:扭矩率 | 6:Start torque for tightening angle calculation H | 7:0
+R24: 4:最大角度 | 6:Max. Angle | 7:9600
+R25: 4:最小角度 | 6:Min. Angle | 7:3240
+R26: 4:最大扭矩 | 6:Max. Torque L | 7:450
+R27: 4:最小扭矩 | 6:Min. Torque L | 7:100
+R28: 3:预紧 | 4:设定模式 | 5:on/off | 8:15E | 10:1=扭矩 | 11:2=扭矩率
+R29: 4:扭矩 | 6:- | 7:0
+R30: 4:速度 | 6:Target Speed | 7:110
+R31: 4:进阶设定 | 5:加速度时间 | 6:Acc. time | 7:53
+R32: 4:进阶设定 | 5:减速度时间 | 6:Dcc. time | 7:53
+R33: 4:扭矩率 | 6:Start torque for tightening angle calculation H | 7:0
+R34: 4:最大角度 | 6:Max. Angle | 7:9600
+R35: 4:最小角度 | 6:Min. Angle | 7:2450
+R36: 3:拧紧 | 4:设定模式 | 5:on/off | 6:有标记 | 8:190 | 9:0=角度 | 10:1=扭矩 | 12:3=夹紧扭矩 | 13:4=夹紧角度
+R37: 4:夹紧扭矩
+R38: 4:夹紧角度
+R39: 4:角度 | 6:Target Angle | 7:10
+R40: 4:扭矩 | 6:Target Torque|Clamp Torque L | 7:2123
+R41: 4:进阶设定 | 5:第一阶段扭矩 | 6:Torque of 1st Stage L | 7:520
+R42: 4:进阶设定 | 5:第二阶段速度 | 6:Speed of 2nd Stage | 7:0
+R43: 4:速度 | 6:Target Speed | 7:0
+R44: 4:角度 | 6:Target Angle | 7:0
+R45: 4:进阶设定 | 5:加速度时间 | 6:Acc. time | 7:0
+R46: 4:进阶设定 | 5:减速度时间 | 6:Dcc. time | 7:0
+R47: 4:进阶设定 | 5:第二阶段加速度时间 | 6:Acc. Time of 2nd Stage | 7:0
+R48: 4:进阶设定 | 5:第一阶段暂定时间 | 6:Pause Time after 1st Stage | 7:0
+R49: 4:进阶设定 | 5:第一阶段扭矩 | 6:Torque of 1st Stage L | 7:0
+R50: 4:最大角度 | 6:Max. Angle | 7:0
+R51: 4:最小角度 | 6:Min. Angle | 7:0
+R52: 4:最大扭矩 | 6:Max. Torque L | 7:0
+R53: 4:最小扭矩 | 6:Min. Torque L | 7:0
+R54: 4:进阶设定 | 5:两阶段模式 | 6:ON/OFF | 8:0x1AAbit11 | 9:0关闭 | 10:1开启
+R55: 4:进阶设定 | 5:缓停止 | 6:ON/OFF | 8:0x1AAbit2 | 9:0关闭 | 10:1开启
+R56: 2:拧松设定 | 3:第一阶段 | 4:速度 | 6:Target Speed | 7:300
+R57: 3:第一阶段 | 4:角度 | 6:Target Angle | 7:7200
+R58: 3:第二阶段 | 4:角度 | 6:Target Speed | 7:0
+R59: 3:第二阶段 | 4:速度 | 6:Target Angle | 7:0
+R60: 3:生产履历 | 4:生产履历 | 6:ON/OFF | 8:22C | 9:0关闭 | 10:1开启
+R61: 3:最小扭矩 | 4:最小扭矩 | 8:22B | 9:直接写值

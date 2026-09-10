@@ -208,6 +208,8 @@ public static class ProcessCardTxtWriter
             stage.Segment2AccelMs != 0);
         Opt("最终速度（转/分钟）", stage.FinalSpeedRpm.ToString(CultureInfo.InvariantCulture),
             stage.FinalSpeedRpm != 0);
+        Opt("两阶段模式", FormatOnOff(stage.TwoStageModeEnabled), stage.TwoStageModeEnabled);
+        Opt("缓停止", FormatOnOff(stage.ErgoStopEnabled), stage.ErgoStopEnabled);
     }
 
     private static void WriteOptional(StringBuilder sb, string key, string value, bool write)

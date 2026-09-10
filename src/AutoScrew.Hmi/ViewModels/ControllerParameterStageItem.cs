@@ -55,6 +55,15 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         _cachedSegment1PauseMs = stage.Segment1PauseMs;
         _cachedSegment2AccelMs = stage.Segment2AccelMs;
         _cachedFinalSpeedRpm = stage.FinalSpeedRpm;
+        if (!stage.TwoStageModeEnabled
+            && (stage.Segment1TorqueMilliNm > 0
+                || stage.Segment1PauseMs > 0
+                || stage.Segment2AccelMs > 0
+                || stage.FinalSpeedRpm > 0))
+        {
+            stage.TwoStageModeEnabled = true;
+        }
+
         RefreshTitle();
     }
 
@@ -628,21 +637,20 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
 
     public bool TwoStageModeEnabled
     {
-        get =>
-            Stage.Segment1TorqueMilliNm > 0
-            || Stage.Segment1PauseMs > 0
-            || Stage.Segment2AccelMs > 0
-            || Stage.FinalSpeedRpm > 0;
+        get => Stage.TwoStageModeEnabled;
         set
         {
-            if (value == TwoStageModeEnabled)
+            if (value == Stage.TwoStageModeEnabled)
                 return;
+            Stage.TwoStageModeEnabled = value;
             if (value)
             {
-                Stage.Segment1TorqueMilliNm = _cachedSegment1TorqueMilliNm > 0 ? _cachedSegment1TorqueMilliNm : 1;
-                Stage.Segment1PauseMs = _cachedSegment1PauseMs;
-                Stage.Segment2AccelMs = _cachedSegment2AccelMs;
-                Stage.FinalSpeedRpm = _cachedFinalSpeedRpm > 0 ? _cachedFinalSpeedRpm : 1;
+                if (Stage.Segment1TorqueMilliNm <= 0)
+                    Stage.Segment1TorqueMilliNm = _cachedSegment1TorqueMilliNm > 0 ? _cachedSegment1TorqueMilliNm : 1;
+                if (Stage.FinalSpeedRpm <= 0 && _cachedFinalSpeedRpm > 0)
+                    Stage.FinalSpeedRpm = _cachedFinalSpeedRpm;
+                Stage.Segment1PauseMs = Stage.Segment1PauseMs > 0 ? Stage.Segment1PauseMs : _cachedSegment1PauseMs;
+                Stage.Segment2AccelMs = Stage.Segment2AccelMs > 0 ? Stage.Segment2AccelMs : _cachedSegment2AccelMs;
             }
             else
             {
@@ -668,6 +676,18 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         }
     }
 
+    public bool ErgoStopEnabled
+    {
+        get => Stage.ErgoStopEnabled;
+        set
+        {
+            if (Stage.ErgoStopEnabled == value)
+                return;
+            Stage.ErgoStopEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
     public double Segment1TorqueKgfCm
     {
         get => TorqueUnitConverter.MilliNmToDisplay(Stage.Segment1TorqueMilliNm, _displayTorqueUnit);
@@ -678,7 +698,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
                 return;
             Stage.Segment1TorqueMilliNm = milli;
             if (milli > 0)
+            {
                 _cachedSegment1TorqueMilliNm = milli;
+                Stage.TwoStageModeEnabled = true;
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(TwoStageModeEnabled));
         }
@@ -694,7 +717,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
                 return;
             Stage.Segment1PauseMs = ms;
             if (ms > 0)
+            {
                 _cachedSegment1PauseMs = ms;
+                Stage.TwoStageModeEnabled = true;
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(TwoStageModeEnabled));
         }
@@ -710,7 +736,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
                 return;
             Stage.Segment2AccelMs = ms;
             if (ms > 0)
+            {
                 _cachedSegment2AccelMs = ms;
+                Stage.TwoStageModeEnabled = true;
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(TwoStageModeEnabled));
         }
@@ -726,7 +755,10 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
                 return;
             Stage.FinalSpeedRpm = rpm;
             if (rpm > 0)
+            {
                 _cachedFinalSpeedRpm = rpm;
+                Stage.TwoStageModeEnabled = true;
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(TwoStageModeEnabled));
         }
@@ -787,6 +819,8 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         Stage.Segment1PauseMs = 0;
         Stage.Segment2AccelMs = 0;
         Stage.FinalSpeedRpm = 0;
+        Stage.TwoStageModeEnabled = false;
+        Stage.ErgoStopEnabled = false;
         RefreshTitle();
         NotifyAllBoundFields();
     }
@@ -887,6 +921,7 @@ public sealed partial class ControllerParameterStageItem : ObservableObject
         OnPropertyChanged(nameof(MinClampAngleDeg));
         OnPropertyChanged(nameof(ClampAngleEnabled));
         OnPropertyChanged(nameof(TwoStageModeEnabled));
+        OnPropertyChanged(nameof(ErgoStopEnabled));
         OnPropertyChanged(nameof(Segment1PauseMs));
         OnPropertyChanged(nameof(Segment2AccelMs));
         OnPropertyChanged(nameof(FinalSpeedRpm));

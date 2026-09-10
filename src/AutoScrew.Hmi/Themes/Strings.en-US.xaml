@@ -577,6 +577,7 @@
     <system:String x:Key="S.ControllerParam.Adv.MaxClampAngle">Max clamp angle</system:String>
     <system:String x:Key="S.ControllerParam.Adv.MinClampAngle">Min clamp angle</system:String>
     <system:String x:Key="S.ControllerParam.Adv.TwoStage">Two-stage mode</system:String>
+    <system:String x:Key="S.ControllerParam.Adv.ErgoStop">Ergo Stop</system:String>
     <system:String x:Key="S.ControllerParam.Adv.Segment1Torque">1st stage torque</system:String>
     <system:String x:Key="S.ControllerParam.Adv.Segment1Pause">Pause after 1st stage</system:String>
     <system:String x:Key="S.ControllerParam.Adv.Segment2Accel">2nd stage accel time</system:String>
