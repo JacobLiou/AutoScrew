@@ -218,22 +218,55 @@ public sealed class ProcessLibraryService : IProcessLibraryService
     public SequenceExcelParseResult ParseSequenceExcelFile(string filePath) =>
         SequenceExcelParser.ParseFile(filePath);
 
-    public async Task<ProcessLibrarySequenceInfo> UploadSequenceExcelAsync(
+    public Task<ProcessLibrarySequenceInfo> UploadSequenceExcelAsync(
         string productPn,
         string sourceFilePath,
         int sequenceId,
         CancellationToken cancellationToken = default)
+    {
+        EnsureSequenceImportArgs(productPn, sourceFilePath, sequenceId, "顺序 Excel 文件不存在。");
+        var parsed = SequenceExcelParser.ParseFile(sourceFilePath);
+        return SaveParsedSequenceAsync(productPn, sourceFilePath, sequenceId, parsed, "Excel", cancellationToken);
+    }
+
+    public SequenceExcelParseResult ParseSequenceTxtFile(string filePath) =>
+        SequenceTxtParser.ParseFile(filePath);
+
+    public Task<ProcessLibrarySequenceInfo> UploadSequenceTxtAsync(
+        string productPn,
+        string sourceFilePath,
+        int sequenceId,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureSequenceImportArgs(productPn, sourceFilePath, sequenceId, "顺序 TXT 文件不存在。");
+        var parsed = SequenceTxtParser.ParseFile(sourceFilePath);
+        return SaveParsedSequenceAsync(productPn, sourceFilePath, sequenceId, parsed, "TXT", cancellationToken);
+    }
+
+    private static void EnsureSequenceImportArgs(
+        string productPn,
+        string sourceFilePath,
+        int sequenceId,
+        string missingFileMessage)
     {
         if (string.IsNullOrWhiteSpace(productPn))
             throw new ArgumentException("产品 PN 不能为空。", nameof(productPn));
         if (sequenceId is < 1 or > 500)
             throw new ArgumentOutOfRangeException(nameof(sequenceId), sequenceId, "顺序 ID 须为 1–500。");
         if (string.IsNullOrWhiteSpace(sourceFilePath) || !File.Exists(sourceFilePath))
-            throw new FileNotFoundException("顺序 Excel 文件不存在。", sourceFilePath);
+            throw new FileNotFoundException(missingFileMessage, sourceFilePath);
+    }
 
+    private async Task<ProcessLibrarySequenceInfo> SaveParsedSequenceAsync(
+        string productPn,
+        string sourceFilePath,
+        int sequenceId,
+        SequenceExcelParseResult parsed,
+        string importLabel,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var parsed = SequenceExcelParser.ParseFile(sourceFilePath);
         if (!parsed.IsSuccess)
             throw new InvalidDataException(string.Join(Environment.NewLine, parsed.Errors));
 
@@ -300,8 +333,8 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         package.ApplyCoreToRaw();
 
         _logger.LogInformation(
-            "Sequence Excel imported product={Product} sequenceId={SequenceId} steps={Steps}",
-            productPn, sequenceId, steps.Count);
+            "Sequence {Label} imported product={Product} sequenceId={SequenceId} steps={Steps}",
+            importLabel, productPn, sequenceId, steps.Count);
 
         return await _store.SaveSequenceAsync(productPn, package, cancellationToken).ConfigureAwait(false);
     }

@@ -22,7 +22,8 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Text="{DynamicResource S.ControllerSeq.ExportSequenceExcelTitle}"
+        <TextBlock x:Name="txt_Title"
+                   Text="{DynamicResource S.ControllerSeq.ExportSequenceExcelTitle}"
                    FontSize="18"
                    FontWeight="SemiBold" />
         <TextBlock Grid.Row="1"

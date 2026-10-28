@@ -1,4 +1,3 @@
-using System.Globalization;
 using AutoScrew.Application.Abstractions;
 using ClosedXML.Excel;
 
@@ -84,34 +83,8 @@ public static class SequenceExcelParser
         int row,
         IReadOnlyDictionary<string, int> headerMap)
     {
-        var orderText = Cell(ws, row, headerMap, "拧紧顺序");
-        if (!int.TryParse(orderText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var order) || order < 1)
-            throw new InvalidDataException($"拧紧顺序无效：{orderText}");
-
-        var location = Cell(ws, row, headerMap, "位置");
-        var screwPnCol = ProcessParameterCode.SanitizeAscii(Cell(ws, row, headerMap, "螺钉PN"));
-        var parameterCode = Cell(ws, row, headerMap, "拧紧参数");
-        var (screwFromCode, slotId) = ProcessParameterCode.Parse(parameterCode);
-
-        if (!string.IsNullOrEmpty(screwPnCol)
-            && !string.Equals(screwPnCol, screwFromCode, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidDataException(
-                $"螺钉PN「{screwPnCol}」与拧紧参数前缀「{screwFromCode}」不一致。");
-        }
-
-        var qtyText = Cell(ws, row, headerMap, "数量");
-        if (!int.TryParse(qtyText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var quantity)
-            || quantity is < 1 or > 999_999)
-            throw new InvalidDataException($"数量无效（1–999999）：{qtyText}");
-
-        var bitText = Cell(ws, row, headerMap, "批头");
-        if (!int.TryParse(bitText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bitId)
-            || bitId is < 0 or > 255)
-            throw new InvalidDataException($"批头无效（0–255）：{bitText}");
-
         string? remark = null;
-        if (headerMap.TryGetValue("备注", out var remarkCol)
+        if (headerMap.TryGetValue("备注", out _)
             || headerMap.Keys.Any(k => k.StartsWith("备注", StringComparison.Ordinal)))
         {
             var remarkKey = headerMap.ContainsKey("备注")
@@ -122,17 +95,15 @@ public static class SequenceExcelParser
                 remark = remarkText.Trim();
         }
 
-        return new SequenceExcelStepRow(
-            ExcelRowNumber: row,
-            Order: order,
-            Location: location,
-            ScrewPn: string.IsNullOrEmpty(screwPnCol) ? screwFromCode : screwPnCol,
-            ParameterCode: parameterCode.Trim(),
-            ScrewPnFromCode: screwFromCode,
-            SlotId: slotId,
-            Quantity: quantity,
-            BitId: bitId,
-            Remark: remark);
+        return SequenceStepRowFactory.Create(
+            row,
+            Cell(ws, row, headerMap, "拧紧顺序"),
+            Cell(ws, row, headerMap, "位置"),
+            Cell(ws, row, headerMap, "螺钉PN"),
+            Cell(ws, row, headerMap, "拧紧参数"),
+            Cell(ws, row, headerMap, "数量"),
+            Cell(ws, row, headerMap, "批头"),
+            remark);
     }
 
     private static bool IsRowEmpty(IXLWorksheet ws, int row, IReadOnlyDictionary<string, int> headerMap)

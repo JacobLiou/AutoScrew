@@ -117,6 +117,19 @@ public interface IProcessLibraryService
         int sequenceId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>解析拧紧顺序 TXT（「步骤」键值块；不落盘、不校验工艺库槽位）。</summary>
+    SequenceExcelParseResult ParseSequenceTxtFile(string filePath);
+
+    /// <summary>
+    /// 解析 TXT → 按「螺钉PN-槽位」映射 ParameterId，校验产品工艺库已有对应槽位后写入 sequences/{id}.json。
+    /// 落盘结果与 <see cref="UploadSequenceExcelAsync"/> 相同。
+    /// </summary>
+    Task<ProcessLibrarySequenceInfo> UploadSequenceTxtAsync(
+        string productPn,
+        string sourceFilePath,
+        int sequenceId,
+        CancellationToken cancellationToken = default);
+
     /// <summary>按产品 PN + 顺序 ID 读取顺序包。</summary>
     Task<TighteningSequencePackage> LoadProductSequenceAsync(
         string productPn,

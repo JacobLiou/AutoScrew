@@ -122,6 +122,7 @@
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportSelectedFromDeviceCommand}" Content="{DynamicResource S.ControllerSeq.ImportFromDevice}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ImportFromProcessLibraryCommand}" Content="{DynamicResource S.ControllerSeq.ImportProcessLibrary}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ExportSequenceExcelCommand}" Content="{DynamicResource S.ControllerSeq.ExportSequenceExcel}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ExportSequenceTxtCommand}" Content="{DynamicResource S.ControllerSeq.ExportSequenceTxt}" />
             <ui:Button Margin="0,0,8,8" Command="{Binding ReadFromDeviceCommand}" Content="{DynamicResource S.ControllerParam.ReadDevice}" />
             <ui:Button Margin="0,0,8,8"
                        Appearance="Danger"

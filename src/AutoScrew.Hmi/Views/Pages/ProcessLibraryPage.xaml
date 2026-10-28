@@ -157,6 +157,10 @@
                                    Command="{Binding ViewModel.UploadSequenceExcelCommand}"
                                    Content="{DynamicResource S.ProcessLibrary.UploadSequenceExcel}" />
                         <ui:Button Margin="0,0,8,0"
+                                   Appearance="Primary"
+                                   Command="{Binding ViewModel.UploadSequenceTxtCommand}"
+                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceTxt}" />
+                        <ui:Button Margin="0,0,8,0"
                                    Appearance="Secondary"
                                    Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"
                                    Content="{DynamicResource S.ProcessLibrary.DeleteSequence}"

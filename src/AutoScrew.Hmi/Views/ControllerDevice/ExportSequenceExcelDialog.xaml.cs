@@ -14,10 +14,14 @@ public enum SequenceExportLocationMode
 
 public partial class ExportSequenceExcelDialog
 {
-    public ExportSequenceExcelDialog(string? initialDefaultScrewPn)
+    public ExportSequenceExcelDialog(string? initialDefaultScrewPn, bool forTxt = false)
     {
         InitializeComponent();
-        Title = Loc.Get("S.ControllerSeq.ExportSequenceExcelTitle");
+        var titleKey = forTxt
+            ? "S.ControllerSeq.ExportSequenceTxtTitle"
+            : "S.ControllerSeq.ExportSequenceExcelTitle";
+        Title = Loc.Get(titleKey);
+        txt_Title.Text = Title;
         txt_DefaultScrewPn.Text = initialDefaultScrewPn ?? string.Empty;
         cmb_LocationMode.Items.Clear();
         cmb_LocationMode.Items.Add(Loc.Get("S.ControllerSeq.ExportLocationStepNumber"));
@@ -41,12 +45,13 @@ public partial class ExportSequenceExcelDialog
         out string defaultScrewPn,
         out SequenceExportLocationMode locationMode,
         out string locationPrefix,
-        Window? owner = null)
+        Window? owner = null,
+        bool forTxt = false)
     {
         defaultScrewPn = "";
         locationMode = SequenceExportLocationMode.StepNumber;
         locationPrefix = "";
-        var dlg = new ExportSequenceExcelDialog(initialDefaultScrewPn)
+        var dlg = new ExportSequenceExcelDialog(initialDefaultScrewPn, forTxt)
         {
             Owner = owner ?? System.Windows.Application.Current?.MainWindow,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,

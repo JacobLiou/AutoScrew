@@ -809,7 +809,12 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportSequenceExcelAsync()
+    private Task ExportSequenceExcelAsync() => ExportSequenceFileAsync(forTxt: false);
+
+    [RelayCommand]
+    private Task ExportSequenceTxtAsync() => ExportSequenceFileAsync(forTxt: true);
+
+    private async Task ExportSequenceFileAsync(bool forTxt)
     {
         CommitPendingEdits();
         if (_working.Core.Steps.Count == 0)
@@ -822,16 +827,56 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 _lastExportedDefaultScrewPn,
                 out var defaultScrewPn,
                 out var locationMode,
-                out var locationPrefix))
+                out var locationPrefix,
+                forTxt: forTxt))
             return;
 
         _lastExportedDefaultScrewPn = defaultScrewPn;
 
+        if (!TryBuildExportRows(defaultScrewPn, locationMode, locationPrefix, out var rows))
+            return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = forTxt ? "Sequence (*.txt)|*.txt" : "Excel (*.xlsx)|*.xlsx",
+            FileName = forTxt ? $"sequence-{SequenceId:D2}.txt" : $"sequence-{SequenceId:D2}.xlsx",
+            RestoreDirectory = true,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        AuditConfig(
+            forTxt ? "Configuration.SeqExportTxt" : "Configuration.SeqExportExcel",
+            $"sequenceId={SequenceId};steps={rows.Count};file={dialog.FileName}");
+        try
+        {
+            if (forTxt)
+                await Task.Run(() => SequenceTxtWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
+            else
+                await Task.Run(() => SequenceExcelWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
+            StatusMessage = Loc.Get(forTxt
+                ? "S.ControllerSeq.StatusExportedSequenceTxt"
+                : "S.ControllerSeq.StatusExportedSequenceExcel");
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+    }
+
+    private bool TryBuildExportRows(
+        string defaultScrewPn,
+        SequenceExportLocationMode locationMode,
+        string locationPrefix,
+        out List<SequenceExcelStepRow> rows)
+    {
+        rows = [];
         var nameByParamId = ParameterCatalog
             .GroupBy(p => p.ParameterId)
             .ToDictionary(g => g.Key, g => g.First().Name);
 
-        var rows = new List<SequenceExcelStepRow>();
         for (var i = 0; i < _working.Core.Steps.Count; i++)
         {
             var step = _working.Core.Steps[i];
@@ -842,7 +887,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 ShowSnackbar(
                     Loc.Format("S.ControllerSeq.ExportInvalidParameterId", step.ParameterId, order),
                     ControlAppearance.Danger);
-                return;
+                return false;
             }
 
             var slotId = ProcessParameterCode.ToSlotIndex(step.ParameterId);
@@ -869,29 +914,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 Remark: null));
         }
 
-        var dialog = new SaveFileDialog
-        {
-            Filter = "Excel (*.xlsx)|*.xlsx",
-            FileName = $"sequence-{SequenceId:D2}.xlsx",
-            RestoreDirectory = true,
-        };
-        if (dialog.ShowDialog() != true)
-            return;
-
-        AuditConfig(
-            "Configuration.SeqExportExcel",
-            $"sequenceId={SequenceId};steps={rows.Count};file={dialog.FileName}");
-        try
-        {
-            await Task.Run(() => SequenceExcelWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
-            StatusMessage = Loc.Get("S.ControllerSeq.StatusExportedSequenceExcel");
-            ShowSnackbar(StatusMessage, ControlAppearance.Success);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = ex.Message;
-            ShowSnackbar(ex.Message, ControlAppearance.Danger);
-        }
+        return true;
     }
 
     [RelayCommand]

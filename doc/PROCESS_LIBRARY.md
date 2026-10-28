@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 状态 |
 |------|------|------|
+| 1.7 | 2026-10-28 | 拧紧顺序支持 TXT 键值导入/导出，与 Excel 落同一顺序包 |
 | 1.6 | 2026-08-21 | TXT 全量键：策略四模式、自创 5–6 段、阶段高级设定；全量样板 AllTemplate* |
 | 1.5 | 2026-08-19 | 参数/顺序页从工艺库多选导入；同 PN 覆盖、跨 PN 只新增 |
 | 1.4 | 2026-08-17 | 拧紧参数/顺序页导出 TXT·Excel 模板；槽位→设备 ID = 槽位+1 |
@@ -11,7 +12,7 @@
 | 1.0 | 2026-08-03 | 落地：产品 PN 目录 + TXT 工艺卡 + 按槽位下发 |
 
 **需求追溯**：[PRD.md](PRD.md) §3.2.4 模板库（A 工艺库）  
-**全量样板（推荐填空）**：[samples/AllTemplateParams.txt](samples/AllTemplateParams.txt)、[samples/AllTemplateSequence.xlsx](samples/AllTemplateSequence.xlsx)  
+**全量样板（推荐填空）**：[samples/AllTemplateParams.txt](samples/AllTemplateParams.txt)、[samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt)、[samples/AllTemplateSequence.xlsx](samples/AllTemplateSequence.xlsx)  
 **现场样例**：[samples/1830330479 _00.txt](samples/1830330479%20_00.txt)  
 **兼容样例（旧）**：[tests Fixtures/1830330479_00.txt](../tests/AutoScrew.Tests/Fixtures/1830330479_00.txt)
 
@@ -143,35 +144,38 @@
 | `两阶段模式` ON/OFF | `TwoStageModeEnabled`（写设备控制字 bit13） |
 | `缓停止` ON/OFF | `ErgoStopEnabled`（写设备进阶字 bit2 / Ergo Stop） |
 
-## 4. 拧紧顺序（JSON / Excel）
+## 4. 拧紧顺序（JSON / TXT / Excel）
 
 | 操作 | 行为 |
 |------|------|
 | 上传 JSON | 校验 → `sequences/{SequenceId:D2}.json` → 更新 `product.json.sequences` |
+| 上传 TXT | 键值块，每步以 `步骤` 开头：`拧紧顺序` / `位置` / `螺钉PN` / `拧紧参数` / `数量` / `批头` / `备注`。`#`、`//` 与行尾 `<说明>` 忽略。顺序 ID 在工艺库页填写，显示名取文件名。全量样板见 [samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt) |
 | 上传 Excel | 表头：`拧紧顺序\|位置\|螺钉PN\|拧紧参数\|数量\|批头\|备注`；`拧紧参数`=`螺钉PN-槽位`；步骤设备 ID=槽位+1。全量样板见 [samples/AllTemplateSequence.xlsx](samples/AllTemplateSequence.xlsx) |
 | 删除 | 仅删工艺库文件与清单项，不删设备顺序 |
 | 按 PN 下发 | 逐条覆盖写入设备（`WriteToDevice`）并 `SaveLocalPreset`；遇错停止；**不**先全删设备顺序 |
 
-> Excel **不**承载导航坐标 / 定位臂 / 工具号；那些字段走顺序 JSON 或设备编辑器。`位置`/`备注` 为人读元数据，上传进包时不落设备步骤。
+TXT 与 Excel 解析后走同一落盘：`拧紧参数` → 设备 ParameterId=槽位+1，并写入 `数量`、`批头`（工具号固定 0）。库内顺序文件仍是 JSON。
+
+> TXT / Excel **不**承载导航坐标 / 定位臂 / 工具号；那些字段走顺序 JSON 或设备编辑器。`位置`/`备注` 为人读元数据，上传进包时不落设备步骤。必填 `拧紧顺序`、`拧紧参数`、`数量`、`批头`；`螺钉PN` 省略时用参数码前缀，填写时须与前缀一致。
 
 ## 4.1 从设备导出模板（调教闭环）
 
 技术员在设备调出最佳参数后：
 
 1. **拧紧参数页**：`#150` 导入编辑器 → **导出工艺卡 TXT**（表单确认螺钉 PN、槽位）→ 保存 `{螺钉PN}_{槽位:D2}.txt`  
-2. **拧紧顺序页**：`#250` 导入编辑器 → **导出顺序 Excel**（表单确认默认螺钉 PN、位置列写法）→ 保存 `sequence-{id}.xlsx`  
+2. **拧紧顺序页**：`#250` 导入编辑器 → **导出顺序 Excel 或 TXT**（表单确认默认螺钉 PN、位置列写法）→ 保存 `sequence-{id}.xlsx` 或 `sequence-{id}.txt`  
 3. 再到**工艺库**页选择产品 PN，上传上述 TXT / Excel  
 
-实现：`ProcessCardTxtWriter` / `SequenceExcelWriter`（与 Parser 往返兼容）。产品 PN **不在**导出表单中询问。
+实现：`ProcessCardTxtWriter` / `SequenceExcelWriter` / `SequenceTxtWriter`（与 Parser 往返兼容）。产品 PN **不在**导出表单中询问。
 
 ## 5. HMI 操作流
 
 1. 输入 **产品 PN** → 加载参数槽 + 顺序列表（Tab：**参数槽位** | **拧紧顺序**）  
-2. **上传工艺卡 / 上传顺序 JSON / 上传顺序 Excel** → 写入对应子目录并更新清单  
+2. **上传工艺卡 / 上传顺序 JSON / 上传顺序 Excel / 上传顺序 TXT** → 写入对应子目录并更新清单  
 3. **拧紧参数页「从工艺库导入」**：多选槽位或「导入该 PN 全部」→ **写入本机预设**并打开第一条。同产品 PN 按槽位覆盖；首选设备 ID 已被**其他产品**占用则分配新 ID（1–500），绝不覆盖。状态栏给出「槽 00 → 本机 ID 4（未覆盖其他产品的 ID 1）」。导入**不**自动写设备。  
 4. **拧紧参数页「导出工艺卡 TXT」**：确认身份 → 写出可再上传的 TXT（不写工艺库目录）  
 5. **拧紧顺序页「从工艺库导入」**：多选或「导入该 PN 全部」→ 先按上款规则补齐引用的参数槽，再把步骤 `ParameterId` 映射到本机 ID 后写入本机顺序预设。导入**不**自动写设备。  
-6. **拧紧顺序页「导出顺序 Excel」**：确认默认螺钉 PN → 写出可再上传的 xlsx  
+6. **拧紧顺序页「导出顺序 Excel / 导出顺序 TXT」**：确认默认螺钉 PN → 写出可再上传的 xlsx 或 txt  
 7. **工艺库「下发参数 / 下发顺序到设备」**：按清单覆盖写入设备（仍用库槽位+1），并回写本机预设  
 
 无 `SourceProductPn` 的旧本机文件视为已占用，后导入的产品走新增。生产换产下发仍按库槽位+1 写控制器，与本机重分配无关。  

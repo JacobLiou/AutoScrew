@@ -41,6 +41,9 @@
     <None Update="Fixtures\AllTemplateSequence.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\doc\samples\AllTemplateSequence.txt" Link="Fixtures\AllTemplateSequence.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

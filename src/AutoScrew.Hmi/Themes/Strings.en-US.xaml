@@ -417,7 +417,7 @@
     <system:String x:Key="S.Logs.SnackbarTitle">Logs / Audit</system:String>
 
     <system:String x:Key="S.ProcessLibrary.Title">Process library</system:String>
-    <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence JSON) by product PN on LAN/local storage, then deploy to the controller.</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence JSON / TXT / Excel) by product PN on LAN/local storage, then deploy to the controller.</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">Library root</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">Product PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① Select product PN first</system:String>
@@ -430,9 +430,11 @@
     <system:String x:Key="S.ProcessLibrary.Upload">Upload card</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequence">Upload sequence JSON</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequenceExcel">Upload sequence Excel</system:String>
+    <system:String x:Key="S.ProcessLibrary.UploadSequenceTxt">Upload sequence TXT</system:String>
     <system:String x:Key="S.ProcessLibrary.SequenceIdLabel">Sequence ID</system:String>
     <system:String x:Key="S.ProcessLibrary.InvalidSequenceId">Sequence ID must be an integer from 1 to 500.</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceExcelUploaded">Imported Excel sequence (ID={0}). Ensure process-card slots exist first.</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceTxtUploaded">Imported TXT sequence (ID={0}). Ensure process-card slots exist first.</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSlot">Delete selected slot</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSequence">Delete selected sequence</system:String>
     <system:String x:Key="S.ProcessLibrary.Deploy">Deploy parameters</system:String>
@@ -623,7 +625,9 @@
     <system:String x:Key="S.ControllerSeq.ImportMapSame">Sequence {0} → local ID {1}</system:String>
     <system:String x:Key="S.ControllerSeq.ImportMapRemapped">Sequence {0} → local ID {1} (did not overwrite other product ID {2})</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcel">Export sequence Excel</system:String>
+    <system:String x:Key="S.ControllerSeq.ExportSequenceTxt">Export sequence TXT</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelTitle">Export tightening sequence Excel</system:String>
+    <system:String x:Key="S.ControllerSeq.ExportSequenceTxtTitle">Export tightening sequence TXT</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelHint">Device steps have no screw PN/location text. Enter a default screw PN; each step prefers local parameter preset names. Choose product PN when uploading to the process library.</system:String>
     <system:String x:Key="S.ControllerSeq.ExportDefaultScrewPn">Default screw PN</system:String>
     <system:String x:Key="S.ControllerSeq.ExportLocationMode">Location column</system:String>
@@ -636,6 +640,7 @@
     <system:String x:Key="S.ControllerSeq.ExportNoSteps">Current sequence has no steps to export.</system:String>
     <system:String x:Key="S.ControllerSeq.ExportInvalidParameterId">Step {1} has invalid parameter ID {0} (must be 1–500).</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExportedSequenceExcel">Sequence Excel exported</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusExportedSequenceTxt">Sequence TXT exported</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibrary">Imported sequence #{0} from product {1}. Review, then write to device.</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibraryBatch">Imported {0} sequence(s) to local presets (product {1}): {2}</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedDevice">Imported sequence #{0} from device to local.</system:String>

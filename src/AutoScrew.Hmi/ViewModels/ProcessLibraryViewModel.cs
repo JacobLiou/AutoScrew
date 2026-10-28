@@ -330,6 +330,58 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task UploadSequenceTxtAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        if (!int.TryParse(UploadSequenceIdText?.Trim(), out var sequenceId) || sequenceId is < 1 or > 500)
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.InvalidSequenceId"), ControlAppearance.Caution);
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Sequence TXT (*.txt)|*.txt|All files (*.*)|*.*",
+            RestoreDirectory = true,
+            Multiselect = false,
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            IsBusy = true;
+            var pn = ProductPn.Trim();
+            var file = dialog.FileName;
+            Audit(
+                "Configuration.ProcessLibraryUploadSequenceTxt",
+                $"product={pn};sequenceId={sequenceId};file={file}");
+            await _library.UploadSequenceTxtAsync(pn, file, sequenceId).ConfigureAwait(true);
+
+            EnsureProductInList(pn);
+            await RefreshProductContentAsync().ConfigureAwait(true);
+            StatusMessage = string.Format(
+                Loc.Get("S.ProcessLibrary.StatusSequenceTxtUploaded"),
+                sequenceId);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task RemoveSelectedSlotAsync()
     {
         if (string.IsNullOrWhiteSpace(ProductPn) || SelectedSlot is null)

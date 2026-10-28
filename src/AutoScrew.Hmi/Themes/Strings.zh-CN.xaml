@@ -432,7 +432,7 @@
 
     <!-- Process library (A) -->
     <system:String x:Key="S.ProcessLibrary.Title">工艺库</system:String>
-    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 JSON），并可下发到设备。</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 JSON / TXT / Excel），并可下发到设备。</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① 先选择产品 PN</system:String>
@@ -445,9 +445,11 @@
     <system:String x:Key="S.ProcessLibrary.Upload">上传工艺卡</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequence">上传顺序 JSON</system:String>
     <system:String x:Key="S.ProcessLibrary.UploadSequenceExcel">上传顺序 Excel</system:String>
+    <system:String x:Key="S.ProcessLibrary.UploadSequenceTxt">上传顺序 TXT</system:String>
     <system:String x:Key="S.ProcessLibrary.SequenceIdLabel">顺序 ID</system:String>
     <system:String x:Key="S.ProcessLibrary.InvalidSequenceId">顺序 ID 须为 1–500 的整数。</system:String>
     <system:String x:Key="S.ProcessLibrary.StatusSequenceExcelUploaded">已导入 Excel 顺序（ID={0}）。请先确保工艺卡槽位齐全。</system:String>
+    <system:String x:Key="S.ProcessLibrary.StatusSequenceTxtUploaded">已导入 TXT 顺序（ID={0}）。请先确保工艺卡槽位齐全。</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSlot">删除选中槽位</system:String>
     <system:String x:Key="S.ProcessLibrary.DeleteSequence">删除选中顺序</system:String>
     <system:String x:Key="S.ProcessLibrary.Deploy">下发参数到设备</system:String>
@@ -639,7 +641,9 @@
     <system:String x:Key="S.ControllerSeq.ImportMapSame">顺序 {0} → 本机 ID {1}</system:String>
     <system:String x:Key="S.ControllerSeq.ImportMapRemapped">顺序 {0} → 本机 ID {1}（未覆盖其他产品的 ID {2}）</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcel">导出顺序 Excel</system:String>
+    <system:String x:Key="S.ControllerSeq.ExportSequenceTxt">导出顺序 TXT</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelTitle">导出拧紧顺序 Excel</system:String>
+    <system:String x:Key="S.ControllerSeq.ExportSequenceTxtTitle">导出拧紧顺序 TXT</system:String>
     <system:String x:Key="S.ControllerSeq.ExportSequenceExcelHint">设备步骤无螺钉 PN/位置文案。填写默认螺钉 PN；各步优先用本地参数预设名称。上传工艺库时再选择产品 PN。</system:String>
     <system:String x:Key="S.ControllerSeq.ExportDefaultScrewPn">默认螺钉 PN</system:String>
     <system:String x:Key="S.ControllerSeq.ExportLocationMode">位置列写法</system:String>
@@ -652,6 +656,7 @@
     <system:String x:Key="S.ControllerSeq.ExportNoSteps">当前顺序没有步骤，无法导出。</system:String>
     <system:String x:Key="S.ControllerSeq.ExportInvalidParameterId">第 {1} 步参数 ID {0} 无效（须为 1–500）。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusExportedSequenceExcel">已导出顺序 Excel</system:String>
+    <system:String x:Key="S.ControllerSeq.StatusExportedSequenceTxt">已导出顺序 TXT</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibrary">已从工艺库导入顺序 #{0}（产品 {1}）。请核对后再下发到设备。</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedProcessLibraryBatch">已从工艺库导入 {0} 条顺序到本机预设（产品 {1}）：{2}</system:String>
     <system:String x:Key="S.ControllerSeq.StatusImportedDevice">已从设备导入顺序 #{0} 到本地。</system:String>
