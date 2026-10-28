@@ -527,10 +527,18 @@ public partial class MainViewModel : ObservableObject
 
     private void RefreshDeviceProcessPn()
     {
+        // 仅在扫 SN 校验出 PN 后显示；勿用工位残留状态（如 PNDEMO）在未扫码时抢先展示。
+        if (string.IsNullOrWhiteSpace(_session.PartNumber))
+        {
+            DeviceProcessPnText = Loc.Get("S.Operation.DeviceProcessPnNone");
+            return;
+        }
+
         var state = _changeover.GetStationState();
-        DeviceProcessPnText = state is null || string.IsNullOrWhiteSpace(state.ProductPn)
-            ? Loc.Get("S.Operation.DeviceProcessPnNone")
-            : Loc.Format("S.Operation.DeviceProcessPn", state.ProductPn);
+        var displayPn = state is not null && !string.IsNullOrWhiteSpace(state.ProductPn)
+            ? state.ProductPn
+            : _session.PartNumber;
+        DeviceProcessPnText = Loc.Format("S.Operation.DeviceProcessPn", displayPn);
     }
 
     private void EnsureAwaitingSn()
