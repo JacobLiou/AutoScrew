@@ -130,6 +130,8 @@ public sealed class OperatorSessionDeviceAuthorityTests
 
         public LockHardwareOutcome? LastOutcome => _override ?? _inner.LastOutcome;
 
+        public TighteningCurveDiagnostic? LastCurveDiagnostic => _inner.LastCurveDiagnostic;
+
         public void OverrideLastOutcome(LockHardwareOutcome outcome) => _override = outcome;
 
         public Task PickScrewAsync(CancellationToken cancellationToken = default) =>

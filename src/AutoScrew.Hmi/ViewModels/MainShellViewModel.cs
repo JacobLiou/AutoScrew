@@ -33,6 +33,7 @@ public enum MainAppSection
     ControllerSequence,
     ControllerSource,
     ProcessLibrary,
+    TighteningResults,
     DeviceProductionHistory,
     DeviceExceptionHistory,
     DeviceWarningHistory,
@@ -311,6 +312,8 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             SelectedSection = MainAppSection.ControllerSource;
         else if (pageType == typeof(ProcessLibraryPage))
             SelectedSection = MainAppSection.ProcessLibrary;
+        else if (pageType == typeof(TighteningResultsPage))
+            SelectedSection = MainAppSection.TighteningResults;
         else if (pageType == typeof(DeviceProductionHistoryPage))
             SelectedSection = MainAppSection.DeviceProductionHistory;
         else if (pageType == typeof(DeviceExceptionHistoryPage))
@@ -364,6 +367,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             MainAppSection.ControllerSequence => typeof(ControllerSequencePage),
             MainAppSection.ControllerSource => typeof(ControllerSourcePage),
             MainAppSection.ProcessLibrary => typeof(ProcessLibraryPage),
+            MainAppSection.TighteningResults => typeof(TighteningResultsPage),
             MainAppSection.DeviceProductionHistory => typeof(DeviceProductionHistoryPage),
             MainAppSection.DeviceExceptionHistory => typeof(DeviceExceptionHistoryPage),
             MainAppSection.DeviceWarningHistory => typeof(DeviceWarningHistoryPage),
@@ -535,6 +539,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             or MainAppSection.ControllerSequence
             or MainAppSection.ControllerSource
             or MainAppSection.ProcessLibrary
+            or MainAppSection.TighteningResults
             or MainAppSection.DeviceProductionHistory
             or MainAppSection.DeviceExceptionHistory
             or MainAppSection.DeviceWarningHistory
@@ -606,6 +611,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.RatingMature24 },
                 TargetPageType = typeof(ControllerSourcePage),
                 TargetPageTag = "controller-source"
+            });
+
+            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.TighteningResults"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DataHistogram24 },
+                TargetPageType = typeof(TighteningResultsPage),
+                TargetPageTag = "tightening-results"
             });
         }
 

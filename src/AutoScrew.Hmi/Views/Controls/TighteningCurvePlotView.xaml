@@ -1,0 +1,38 @@
+<UserControl x:Class="AutoScrew.Hmi.Views.Controls.TighteningCurvePlotView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="220"
+             d:DesignWidth="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
+            <ComboBox x:Name="ModeCombo"
+                      DockPanel.Dock="Right"
+                      Width="160"
+                      VerticalAlignment="Center"
+                      SelectionChanged="ModeCombo_OnSelectionChanged" />
+            <TextBlock x:Name="TitleText"
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Text="{DynamicResource S.Operation.CurveTitle}" />
+        </DockPanel>
+        <Grid Grid.Row="1" MinHeight="140">
+            <Grid x:Name="PlotHost" />
+            <TextBlock x:Name="EmptyHint"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       Margin="12"
+                       Visibility="Collapsed"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Text="{DynamicResource S.Curve.EmptyHint}" />
+        </Grid>
+    </Grid>
+</UserControl>

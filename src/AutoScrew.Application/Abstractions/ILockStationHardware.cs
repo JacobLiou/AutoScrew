@@ -7,6 +7,9 @@ public interface ILockStationHardware
     /// <summary>控制器侧最近一次拧紧结果；仿真驱动为 null。</summary>
     LockHardwareOutcome? LastOutcome { get; }
 
+    /// <summary>最近一次 #751 曲线读回诊断；无周期时为 null。</summary>
+    TighteningCurveDiagnostic? LastCurveDiagnostic { get; }
+
     IAsyncEnumerable<TorqueAngleSample> RunTighteningAsync(
         TighteningContext context,
         CancellationToken cancellationToken = default);

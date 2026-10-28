@@ -7,6 +7,7 @@
              xmlns:vm="clr-namespace:AutoScrew.Hmi.ViewModels"
              xmlns:op="clr-namespace:AutoScrew.Hmi.ViewModels.Operation"
              xmlns:conv="clr-namespace:AutoScrew.Hmi.Converters"
+             xmlns:ctrl="clr-namespace:AutoScrew.Hmi.Views.Controls"
              mc:Ignorable="d"
              d:DesignHeight="720"
              d:DesignWidth="1200"
@@ -247,13 +248,8 @@
                             BorderBrush="Black"
                             BorderThickness="1"
                             Padding="8">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Top"
-                                       Text="{DynamicResource S.Operation.CurveTitle}"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,8"/>
-                            <Grid x:Name="CurvePlotHost" MinHeight="140"/>
-                        </DockPanel>
+                        <ctrl:TighteningCurvePlotView x:Name="CurvePlot"
+                                                      MinHeight="140"/>
                     </Border>
                     <Border Grid.Row="1"
                             BorderBrush="Black"

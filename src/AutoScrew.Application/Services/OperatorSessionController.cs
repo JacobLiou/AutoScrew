@@ -152,6 +152,21 @@ public sealed class OperatorSessionController
 
     public IReadOnlyList<TorqueAngleSample> LastTighteningSamples { get; private set; } = Array.Empty<TorqueAngleSample>();
 
+    /// <summary>最近一次拧紧曲线诊断（#751 空点原因等）；复位后清空。</summary>
+    public TighteningCurveDiagnostic? LastCurveDiagnostic { get; private set; }
+
+    /// <summary>最近一次拧紧周期摘要（作业台/结果页共用）。</summary>
+    public LastTighteningResultSummary? LastTighteningResult { get; private set; }
+
+    public sealed record LastTighteningResultSummary(
+        string? SerialNumber,
+        string? PartNumber,
+        bool DeviceOk,
+        double? FinalTorqueNm,
+        double? FinalAngleDeg,
+        uint ReportId,
+        TighteningCurveDiagnostic? Curve);
+
     public sealed record CheckpointRestoreOffer(
         string SerialNumber,
         string PartNumber,
@@ -794,6 +809,7 @@ public sealed class OperatorSessionController
 
         var samples = new List<TorqueAngleSample>();
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
+        LastCurveDiagnostic = null;
         NotifyTighteningProgress();
 
         var progressCounter = 0;
@@ -809,12 +825,26 @@ public sealed class OperatorSessionController
         }
 
         LastTighteningSamples = samples.ToArray();
-        NotifyTighteningProgress();
+        var curveDiag = _hardware.LastCurveDiagnostic
+                        ?? (samples.Count == 0
+                            ? new TighteningCurveDiagnostic(0, 0, "No curve samples from hardware.")
+                            : new TighteningCurveDiagnostic(0, samples.Count, null));
+        LastCurveDiagnostic = curveDiag;
 
         var program = _programs[idx];
         var eval = LockCurveEvaluator.Evaluate(samples.ToArray(), program);
         var device = _hardware.LastOutcome;
         var deviceOk = device?.DeviceOk ?? true;
+
+        LastTighteningResult = new LastTighteningResultSummary(
+            _serialNumber,
+            _partNumber,
+            deviceOk,
+            device?.FinalTorqueNm ?? (samples.Count > 0 ? samples[^1].TorqueNm : null),
+            device?.FinalAngleDeg ?? (samples.Count > 0 ? samples[^1].AngleDeg : null),
+            device?.ReportId ?? curveDiag.ReportId,
+            curveDiag);
+        NotifyTighteningProgress();
         // 产线 OK/NG 以设备周期 IsOk 为准；LockCurveEvaluator 仅 advisory，不锁屏。
         var combinedOk = deviceOk;
 
@@ -1204,6 +1234,8 @@ public sealed class OperatorSessionController
         _lastFailedScrewLocalIndex = 0;
         _isRework = false;
         LastTighteningSamples = Array.Empty<TorqueAngleSample>();
+        LastCurveDiagnostic = null;
+        LastTighteningResult = null;
     }
 
     private async Task HandleFeedFailureAsync(int idx, FeedFaultException ex, CancellationToken cancellationToken)

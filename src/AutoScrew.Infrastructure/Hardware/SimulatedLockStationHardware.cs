@@ -14,6 +14,7 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
     private readonly SimulationOptions _simulation;
     private int _pickCount;
     private LockHardwareOutcome? _lastOutcome;
+    private TighteningCurveDiagnostic? _lastCurveDiagnostic;
 
     public SimulatedLockStationHardware(IOptions<SimulationOptions> simulation)
     {
@@ -21,6 +22,8 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
     }
 
     public LockHardwareOutcome? LastOutcome => _lastOutcome;
+
+    public TighteningCurveDiagnostic? LastCurveDiagnostic => _lastCurveDiagnostic;
 
     public async Task PickScrewAsync(CancellationToken cancellationToken = default)
     {
@@ -84,6 +87,7 @@ public sealed class SimulatedLockStationHardware : ILockStationHardware
             520,
             deviceOk ? null : 1,
             0);
+        _lastCurveDiagnostic = new TighteningCurveDiagnostic(0, steps + 1, null);
     }
 
     public void ResetPickCount() => _pickCount = 0;

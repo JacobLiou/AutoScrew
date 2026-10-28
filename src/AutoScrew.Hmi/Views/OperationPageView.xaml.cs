@@ -5,18 +5,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using AutoScrew.Domain.Models;
-using AutoScrew.Hmi.Services;
 using AutoScrew.Hmi.ViewModels;
 using AutoScrew.Hmi.ViewModels.Operation;
-using ScottPlot.WPF;
 
 namespace AutoScrew.Hmi.Views;
 
 public partial class OperationPageView : UserControl
 {
     private MainViewModel? _viewModel;
-    private WpfPlot? _curvePlot;
-    private bool _curvePlotUnavailable;
 
     public OperationPageView()
     {
@@ -56,33 +52,10 @@ public partial class OperationPageView : UserControl
         if (DataContext is not MainViewModel vm)
             return;
 
-        EnsureCurvePlot();
         await vm.TryRestoreCheckpointOnStartupAsync().ConfigureAwait(true);
         vm.RefreshFromSession();
         RefreshPlot();
         SnInputBox.Focus();
-    }
-
-    private void EnsureCurvePlot()
-    {
-        if (_curvePlot is not null || _curvePlotUnavailable)
-            return;
-
-        try
-        {
-            _curvePlot = new WpfPlot { MinHeight = 180 };
-            CurvePlotHost.Children.Add(_curvePlot);
-        }
-        catch (Exception)
-        {
-            _curvePlotUnavailable = true;
-            CurvePlotHost.Children.Add(new TextBlock
-            {
-                Text = Loc.Get("S.Operation.CurveUnavailable"),
-                TextWrapping = TextWrapping.Wrap,
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-        }
     }
 
     private void SnInputBox_OnKeyDown(object sender, KeyEventArgs e)
@@ -196,21 +169,9 @@ public partial class OperationPageView : UserControl
 
     private void RefreshPlot()
     {
-        if (DataContext is not MainViewModel vm || _curvePlot is null)
+        if (DataContext is not MainViewModel vm)
             return;
 
-        var pts = vm.Session.LastTighteningSamples;
-        _curvePlot.Plot.Clear();
-        if (pts.Count > 1)
-        {
-            var xs = pts.Select(p => p.AngleDeg).ToArray();
-            var ys = pts.Select(p => p.TorqueNm).ToArray();
-            _curvePlot.Plot.Add.Scatter(xs, ys);
-            _curvePlot.Plot.Axes.Bottom.Label.Text = "Angle (°)";
-            _curvePlot.Plot.Axes.Left.Label.Text = "Torque (N·m)";
-            _curvePlot.Plot.Axes.AutoScale();
-        }
-
-        _curvePlot.Refresh();
+        CurvePlot.SetSamples(vm.Session.LastTighteningSamples, vm.Session.LastCurveDiagnostic?.EmptyReason);
     }
 }

@@ -118,6 +118,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ControllerSequenceViewModel>();
         builder.Services.AddSingleton<ControllerSourceViewModel>();
         builder.Services.AddSingleton<ProcessLibraryViewModel>();
+        builder.Services.AddSingleton<TighteningResultsViewModel>();
         builder.Services.AddSingleton<LanFileMaintenanceViewModel>();
         builder.Services.AddSingleton<DeviceProductionHistoryViewModel>();
         builder.Services.AddSingleton<DeviceExceptionHistoryViewModel>();
@@ -133,6 +134,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ControllerSequencePage>();
         builder.Services.AddSingleton<ControllerSourcePage>();
         builder.Services.AddSingleton<ProcessLibraryPage>();
+        builder.Services.AddSingleton<TighteningResultsPage>();
         builder.Services.AddSingleton<LanFileMaintenancePage>();
         builder.Services.AddSingleton<DeviceProductionHistoryPage>();
         builder.Services.AddSingleton<DeviceExceptionHistoryPage>();

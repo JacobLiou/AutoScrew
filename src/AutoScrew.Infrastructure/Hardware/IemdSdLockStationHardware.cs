@@ -28,6 +28,8 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
 
     public LockHardwareOutcome? LastOutcome { get; private set; }
 
+    public TighteningCurveDiagnostic? LastCurveDiagnostic { get; private set; }
+
     public Task PickScrewAsync(CancellationToken cancellationToken = default) =>
         _feederSim.PickScrewAsync(cancellationToken);
 
@@ -108,12 +110,19 @@ public sealed class IemdSdLockStationHardware : ILockStationHardware
 
         if (curve is not { Points.Count: > 0 })
         {
-            _logger.LogDebug(
-                "No #751 curve points for ReportId={ReportId}; UI plot stays empty (device result unchanged).",
-                reportId);
+            var emptyReason = artifacts.ArtifactReadError
+                              ?? (curve is null
+                                  ? "No #751 curve snapshot."
+                                  : $"#751 TotalPoints={curve.TotalPoints}, Points={curve.Points.Count}.");
+            LastCurveDiagnostic = new TighteningCurveDiagnostic(reportId, 0, emptyReason);
+            _logger.LogWarning(
+                "No #751 curve points for ReportId={ReportId}; UI plot stays empty (device result unchanged). {Reason}",
+                reportId,
+                emptyReason);
             yield break;
         }
 
+        LastCurveDiagnostic = new TighteningCurveDiagnostic(reportId, curve.Points.Count, null);
         foreach (var p in curve.Points)
         {
             cancellationToken.ThrowIfCancellationRequested();
