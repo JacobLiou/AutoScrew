@@ -9,6 +9,20 @@ namespace AutoScrew.Hmi.Views.Controls;
 
 public partial class TighteningCurvePlotView : UserControl
 {
+    public static readonly DependencyProperty ShowModeSelectorProperty =
+        DependencyProperty.Register(
+            nameof(ShowModeSelector),
+            typeof(bool),
+            typeof(TighteningCurvePlotView),
+            new PropertyMetadata(true, OnShowModeSelectorChanged));
+
+    public static readonly DependencyProperty PlotModeProperty =
+        DependencyProperty.Register(
+            nameof(PlotMode),
+            typeof(TighteningCurvePlotMode),
+            typeof(TighteningCurvePlotView),
+            new PropertyMetadata(TighteningCurvePlotMode.TorqueAngle, OnPlotModeChanged));
+
     private WpfPlot? _plot;
     private bool _plotUnavailable;
     private IReadOnlyList<TorqueAngleSample> _samples = Array.Empty<TorqueAngleSample>();
@@ -21,11 +35,40 @@ public partial class TighteningCurvePlotView : UserControl
         Loaded += OnLoaded;
     }
 
-    public TighteningCurvePlotMode SelectedMode { get; private set; } = TighteningCurvePlotMode.TorqueAngle;
+    public bool ShowModeSelector
+    {
+        get => (bool)GetValue(ShowModeSelectorProperty);
+        set => SetValue(ShowModeSelectorProperty, value);
+    }
+
+    public TighteningCurvePlotMode PlotMode
+    {
+        get => (TighteningCurvePlotMode)GetValue(PlotModeProperty);
+        set => SetValue(PlotModeProperty, value);
+    }
+
+    public TighteningCurvePlotMode SelectedMode => PlotMode;
+
+    private static void OnShowModeSelectorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is TighteningCurvePlotView view)
+            view.ApplyChrome();
+    }
+
+    private static void OnPlotModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not TighteningCurvePlotView view)
+            return;
+
+        view.SyncComboToPlotMode();
+        view.ApplyChrome();
+        view.RefreshPlot();
+    }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         EnsureModeCombo();
+        ApplyChrome();
         EnsurePlot();
         RefreshPlot();
     }
@@ -45,10 +88,30 @@ public partial class TighteningCurvePlotView : UserControl
         SetSamples(Array.Empty<TorqueAngleSample>(), null);
     }
 
+    private void ApplyChrome()
+    {
+        if (ModeCombo is null || TitleText is null)
+            return;
+
+        ModeCombo.Visibility = ShowModeSelector ? Visibility.Visible : Visibility.Collapsed;
+        if (ShowModeSelector)
+            TitleText.SetResourceReference(TextBlock.TextProperty, "S.Operation.CurveTitle");
+        else
+            TitleText.Text = ModeTitle(PlotMode);
+    }
+
+    private static string ModeTitle(TighteningCurvePlotMode mode) =>
+        mode == TighteningCurvePlotMode.TorqueTime
+            ? Loc.Get("S.Curve.ModeTorqueTime")
+            : Loc.Get("S.Curve.ModeTorqueAngle");
+
     private void EnsureModeCombo()
     {
         if (ModeCombo.Items.Count > 0)
+        {
+            SyncComboToPlotMode();
             return;
+        }
 
         _suppressModeChange = true;
         ModeCombo.Items.Add(new ComboBoxItem
@@ -61,7 +124,21 @@ public partial class TighteningCurvePlotView : UserControl
             Content = Loc.Get("S.Curve.ModeTorqueTime"),
             Tag = TighteningCurvePlotMode.TorqueTime,
         });
-        ModeCombo.SelectedIndex = (int)SelectedMode;
+        ModeCombo.SelectedIndex = (int)PlotMode;
+        _suppressModeChange = false;
+    }
+
+    private void SyncComboToPlotMode()
+    {
+        if (ModeCombo is null || ModeCombo.Items.Count == 0)
+            return;
+
+        var index = (int)PlotMode;
+        if (ModeCombo.SelectedIndex == index)
+            return;
+
+        _suppressModeChange = true;
+        ModeCombo.SelectedIndex = index;
         _suppressModeChange = false;
     }
 
@@ -94,10 +171,7 @@ public partial class TighteningCurvePlotView : UserControl
             return;
 
         if (ModeCombo.SelectedItem is ComboBoxItem { Tag: TighteningCurvePlotMode mode })
-        {
-            SelectedMode = mode;
-            RefreshPlot();
-        }
+            PlotMode = mode;
     }
 
     private void RefreshPlot()
@@ -121,7 +195,7 @@ public partial class TighteningCurvePlotView : UserControl
             EmptyHint.Visibility = Visibility.Collapsed;
             double[] xs;
             string xLabel;
-            if (SelectedMode == TighteningCurvePlotMode.TorqueTime)
+            if (PlotMode == TighteningCurvePlotMode.TorqueTime)
             {
                 xs = _samples.Select(p => p.TimeMs / 1000.0).ToArray();
                 xLabel = Loc.Get("S.Curve.AxisTime");

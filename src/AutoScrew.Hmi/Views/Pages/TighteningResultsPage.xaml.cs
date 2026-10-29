@@ -39,6 +39,12 @@ public partial class TighteningResultsPage : INavigableView<TighteningResultsVie
 
     private void OnCurveChanged(object? sender, EventArgs e) => Dispatcher.Invoke(RefreshPlot);
 
-    private void RefreshPlot() =>
-        CurvePlot.SetSamples(ViewModel.Samples, ViewModel.CurveEmptyReason);
+    private void RefreshPlot()
+    {
+        var samples = ViewModel.Samples;
+        var reason = ViewModel.CurveEmptyReason;
+        CurvePlotAngle.SetSamples(samples, reason);
+        CurvePlotTime.SetSamples(samples, reason);
+    }
 }
+

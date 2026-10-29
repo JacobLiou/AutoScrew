@@ -15,7 +15,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="280" />
         </Grid.RowDefinitions>
 
         <ui:CardControl Grid.Row="0" Margin="0,0,0,12" Icon="{ui:SymbolIcon DataHistogram24}">
@@ -77,7 +77,31 @@
         </ui:Card>
 
         <ui:Card Grid.Row="2" Padding="12">
-            <ctrl:TighteningCurvePlotView x:Name="CurvePlot" MinHeight="280" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="220" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="*" MinWidth="220" />
+                </Grid.ColumnDefinitions>
+                <ctrl:TighteningCurvePlotView x:Name="CurvePlotAngle"
+                                              Grid.Column="0"
+                                              MinHeight="280"
+                                              ShowModeSelector="False"
+                                              PlotMode="TorqueAngle" />
+                <GridSplitter Grid.Column="1"
+                              Width="6"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              ResizeBehavior="PreviousAndNext"
+                              ShowsPreview="True"
+                              Background="{ui:ThemeResource ControlStrokeColorDefaultBrush}" />
+                <ctrl:TighteningCurvePlotView x:Name="CurvePlotTime"
+                                              Grid.Column="2"
+                                              MinHeight="280"
+                                              Margin="8,0,0,0"
+                                              ShowModeSelector="False"
+                                              PlotMode="TorqueTime" />
+            </Grid>
         </ui:Card>
     </Grid>
 </UserControl>
