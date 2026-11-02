@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using AutoScrew.Application;
@@ -24,6 +25,9 @@ namespace AutoScrew.Hmi;
 
 public partial class App : System.Windows.Application
 {
+    private const string SingleInstanceMutexName = @"Global\AutoScrew.Hmi.SingleInstance";
+    private Mutex? _singleInstanceMutex;
+    private bool _ownsSingleInstanceMutex;
     private IHost? _host;
 
     public App()
@@ -57,6 +61,27 @@ public partial class App : System.Windows.Application
     {
         try
         {
+            _singleInstanceMutex = new Mutex(false, SingleInstanceMutexName);
+            try
+            {
+                _ownsSingleInstanceMutex = _singleInstanceMutex.WaitOne(0);
+            }
+            catch (AbandonedMutexException)
+            {
+                _ownsSingleInstanceMutex = true;
+            }
+
+            if (!_ownsSingleInstanceMutex)
+            {
+                MessageBox.Show(
+                    "AutoScrew 已在运行，请勿重复打开。",
+                    "AutoScrew",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                Shutdown();
+                return;
+            }
+
             await OnStartupCoreAsync(e).ConfigureAwait(true);
         }
         catch (Exception ex)
@@ -181,11 +206,21 @@ public partial class App : System.Windows.Application
     /// <summary>同步关闭 host；避免 async OnExit + ConfigureAwait(false) 在线程池上调用 <c>base.OnExit</c> 触发跨线程异常。</summary>
     protected override void OnExit(ExitEventArgs e)
     {
-        if (_host is not null)
-            _host.StopAsync().GetAwaiter().GetResult();
+        try
+        {
+            if (_host is not null)
+                _host.StopAsync().GetAwaiter().GetResult();
 
-        Log.CloseAndFlush();
-        base.OnExit(e);
+            Log.CloseAndFlush();
+            base.OnExit(e);
+        }
+        finally
+        {
+            if (_ownsSingleInstanceMutex)
+                _singleInstanceMutex!.ReleaseMutex();
+
+            _singleInstanceMutex?.Dispose();
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
