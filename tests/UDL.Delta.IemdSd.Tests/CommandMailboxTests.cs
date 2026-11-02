@@ -1,9 +1,62 @@
+using Microsoft.Extensions.Logging;
+using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Modbus;
 
 namespace UDL.Delta.IemdSd.Tests;
 
 public class CommandMailboxTests
 {
+    [Fact]
+    public async Task SendCommandAsync_AckLogsCommandAndSuccess()
+    {
+        var transport = new LoggingModbusTransportTests.FakeTransport { Data = [100, 1, 0] };
+        var logger = new LoggingModbusTransportTests.RecordingLogger();
+        var mailbox = new CommandMailbox(transport, new IemdSdClientOptions(), logger);
+        await mailbox.SendCommandAsync(100, CommandMailbox.CreateRequest(100), default);
+        Assert.Equal(2, logger.Events.Count);
+        Assert.Contains("#100 Started", logger.Events[0].Message);
+        Assert.Contains("#100 Success", logger.Events[1].Message);
+        Assert.Equal(1, transport.LastPayload![6]);
+    }
+
+    [Fact]
+    public async Task SendCommandAsync_RejectionLogsDeviceError()
+    {
+        var transport = new LoggingModbusTransportTests.FakeTransport { Data = [100, 2, 7] };
+        var logger = new LoggingModbusTransportTests.RecordingLogger();
+        var mailbox = new CommandMailbox(transport, new IemdSdClientOptions(), logger);
+        var exception = await Assert.ThrowsAsync<IemdSdCommunicationException>(() =>
+            mailbox.SendCommandAsync(100, CommandMailbox.CreateRequest(100), default));
+        Assert.Equal(7, exception.DeviceErrorCode);
+        Assert.Equal(LogLevel.Warning, logger.Events.Last().Level);
+        Assert.Contains("DeviceErrorCode=7", logger.Events.Last().Message);
+    }
+
+    [Fact]
+    public async Task SendCommandAsync_TimeoutLogsWarning()
+    {
+        var transport = new LoggingModbusTransportTests.FakeTransport { Data = [0, 0, 0] };
+        var logger = new LoggingModbusTransportTests.RecordingLogger();
+        var mailbox = new CommandMailbox(transport, new IemdSdClientOptions { CommandTimeoutMs = 1 }, logger);
+        var exception = await Assert.ThrowsAsync<IemdSdCommunicationException>(() =>
+            mailbox.SendCommandAsync(100, CommandMailbox.CreateRequest(100), default));
+        Assert.Equal(100, exception.CommandCode);
+        Assert.Equal(LogLevel.Warning, logger.Events.Last().Level);
+        Assert.Contains("TimedOut", logger.Events.Last().Message);
+    }
+
+    [Fact]
+    public async Task SendCommandAsync_CancelDoesNotLogWarning()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        var logger = new LoggingModbusTransportTests.RecordingLogger();
+        var mailbox = new CommandMailbox(new LoggingModbusTransportTests.FakeTransport(), new IemdSdClientOptions(), logger);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            mailbox.SendCommandAsync(100, CommandMailbox.CreateRequest(100), source.Token));
+        Assert.DoesNotContain(logger.Events, entry => entry.Level >= LogLevel.Warning);
+    }
+
     [Fact]
     public void CreateRequest_SetsCommandInFirstWord()
     {

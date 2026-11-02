@@ -7,11 +7,11 @@ namespace UDL.Delta.IemdSd.Modbus;
 internal static class ModbusTransportFactory
 {
     public static IModbusTransport Create(IemdSdClientOptions options, ILogger logger) =>
-        options.Transport switch
+        new LoggingModbusTransport(options.Transport switch
         {
             ControllerTransportType.ModbusRtu => new ModbusRtuTransport(options, logger),
             _ => new ModbusTransport(options, logger),
-        };
+        }, options, logger);
 
     internal static Parity ParseParity(string value) =>
         value.ToUpperInvariant() switch

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using UDL.Delta.IemdSd.Exceptions;
 
@@ -23,6 +24,8 @@ internal sealed class CommandMailbox : ICommandMailbox
 
         requestWords[0] = commandCode;
         requestWords[6] = 1;
+        var started = Stopwatch.GetTimestamp();
+        _logger.LogInformation("COMM Command #{CommandCode} Started", commandCode);
         await _transport.WriteMultipleAsync(ModbusRegisterMap.CommandRequest, requestWords, cancellationToken)
             .ConfigureAwait(false);
 
@@ -33,10 +36,16 @@ internal sealed class CommandMailbox : ICommandMailbox
             var response = await _transport.ReadHoldingAsync(ModbusRegisterMap.CommandResponse, 3, cancellationToken)
                 .ConfigureAwait(false);
             if (response[0] == commandCode && response[1] == 1 && response[2] == 0)
+            {
+                _logger.LogInformation("COMM Command #{CommandCode} Success ElapsedMs={ElapsedMs:F3}",
+                    commandCode, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 return;
+            }
 
             if (response[0] == commandCode && response[1] == 2)
             {
+                _logger.LogWarning("COMM Command #{CommandCode} Rejected DeviceErrorCode={DeviceErrorCode} ElapsedMs={ElapsedMs:F3}",
+                    commandCode, response[2], Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 throw new IemdSdCommunicationException($"Command #{commandCode} rejected by controller.")
                 {
                     CommandCode = commandCode,
@@ -47,6 +56,8 @@ internal sealed class CommandMailbox : ICommandMailbox
             await Task.Delay(50, cancellationToken).ConfigureAwait(false);
         }
 
+        _logger.LogWarning("COMM Command #{CommandCode} TimedOut TimeoutMs={TimeoutMs} ElapsedMs={ElapsedMs:F3}",
+            commandCode, _commandTimeoutMs, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
         throw new IemdSdCommunicationException($"Command #{commandCode} timed out after {_commandTimeoutMs} ms.")
         {
             CommandCode = commandCode,

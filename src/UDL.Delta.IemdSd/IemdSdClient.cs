@@ -9,6 +9,8 @@ namespace UDL.Delta.IemdSd;
 
 public sealed class IemdSdClient : IIemdSdClient
 {
+    public const string CommunicationLogCategory = "UDL.Delta.IemdSd.Communication";
+
     private readonly ILogger _logger;
     private readonly IModbusTransport _transport;
     private readonly DeviceSession _session;
@@ -21,13 +23,14 @@ public sealed class IemdSdClient : IIemdSdClient
     private readonly ParameterBlockReader _parameterReader;
     private readonly ParameterBlockWriter _parameterWriter;
 
-    public IemdSdClient(IemdSdClientOptions options, ILogger<IemdSdClient>? logger = null)
+    public IemdSdClient(IemdSdClientOptions options, ILogger<IemdSdClient>? logger = null, ILogger? communicationLogger = null)
     {
         Options = options;
         _logger = logger ?? NullLogger<IemdSdClient>.Instance;
         _session = new DeviceSession();
-        _transport = ModbusTransportFactory.Create(options, _logger);
-        _mailbox = new CommandMailbox(_transport, options, _logger);
+        var commLogger = communicationLogger ?? _logger;
+        _transport = ModbusTransportFactory.Create(options, commLogger);
+        _mailbox = new CommandMailbox(_transport, options, commLogger);
         _executor = new IemdSdCommandExecutor(_transport, _mailbox, _session);
         _typed = new IemdSdTypedCommands(_executor, _transport, options.ToolIndex);
         _reportReader = new ReportReader(_executor);

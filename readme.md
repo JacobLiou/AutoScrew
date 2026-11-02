@@ -78,6 +78,14 @@ flowchart LR
 | [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | **草案**：多面模板编辑 / 作业台 UI 线框 |
 | [doc/CONNECTION_STRING_ENCRYPTION.md](doc/CONNECTION_STRING_ENCRYPTION.md) | **部署必读**：MIMS 连接串加密与跨机配置方法 |
 
+## 控制器通信日志
+
+- IEMD-SD 的 Modbus TCP/RTU 通信独立写入程序目录下的 `Logs/Comm/comm-YYYYMMDD.log`，首次发生通信时生成，按本地日期每天滚动，保留最近 14 个文件；业务日志仍使用原有文件。
+- 默认记录每次逻辑寄存器读写（含轮询）的设备地址、站号、寄存器地址、数量、**完整**十六进制数据、耗时和异常，以及命令号的开始、成功、拒绝及超时结果。例如写参数可搜索 `Command #100` 或 `WriteMultiple`。
+- `Data=` 含 `Words=`、结束地址 `End=`、`Sha256=`（全部 word 按小端 ushort 字节做 SHA-256，便于写出与读回比对），以及按 16 word 分组的偏移标记（如 `@0010:`），**不截断省略**任何寄存器。拧紧参数约 349 word、顺序约 530 word 时单行会较长，属预期。不包含原始 TCP/RTU 帧、CRC、内部重试和物理分块详情。写失败时会尽量附带待写 `Data`。日志不等于脱敏，可能包含 SN 或工艺数据，请按现场权限管理。
+- 在 HMI 日志页面中可查看 `Comm` 子目录的日志（预览为文件尾部窗口；完整长行请用编辑器打开 `Logs/Comm` 文件）。可通过 `Serilog:CommunicationFile` 的 `Path`、`RetainedFileCountLimit` 和 `MinimumLevel` 调整路径、保留文件数和级别；默认级别为 `Information`，与业务日志级别独立。自定义到其他目录时需从文件系统查看。
+- 高频轮询会增大日志量；通信文件不按大小另行分割，也不设单日文件大小上限，请监控磁盘空间。清理在日志文件关闭或日期滚动时执行，14 个文件不等同于严格保留 14 个自然日。仿真模式不产生真实驱动通信日志。
+
 ## 仓库结构
 
 | 路径 | 说明 |

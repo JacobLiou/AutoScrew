@@ -39,7 +39,7 @@ param(
 )
 
 # 获取脚本所在目录
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommandPath
+$scriptDir = $PSScriptRoot
 $projectRoot = Split-Path -Parent $scriptDir
 
 # 项目路径

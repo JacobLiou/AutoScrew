@@ -81,7 +81,7 @@ public partial class App : System.Windows.Application
 
         var builder = Host.CreateApplicationBuilder(e.Args);
 
-        builder.Services.AddSerilog((_, cfg) => cfg.ReadFrom.Configuration(builder.Configuration));
+        builder.Services.AddSerilog((_, cfg) => CommunicationLogging.Configure(cfg, builder.Configuration, AppContext.BaseDirectory));
 
         builder.Services.Configure<AutoScrewAppOptions>(builder.Configuration.GetSection(AutoScrewAppOptions.SectionName));
         builder.Services.Configure<AuthenticationOptions>(builder.Configuration.GetSection(AuthenticationOptions.SectionName));

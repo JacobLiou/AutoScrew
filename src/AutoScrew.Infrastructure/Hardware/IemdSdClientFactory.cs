@@ -16,7 +16,9 @@ public sealed class IemdSdClientFactory
     public IIemdSdClient Create(StationDeviceEndpoint endpoint)
     {
         var options = MapToOptions(endpoint);
-        return new IemdSdClient(options, _loggerFactory.CreateLogger<IemdSdClient>());
+        return new IemdSdClient(options,
+            _loggerFactory.CreateLogger<IemdSdClient>(),
+            _loggerFactory.CreateLogger(IemdSdClient.CommunicationLogCategory));
     }
 
     public static IemdSdClientOptions MapToOptions(StationDeviceEndpoint endpoint) => new()

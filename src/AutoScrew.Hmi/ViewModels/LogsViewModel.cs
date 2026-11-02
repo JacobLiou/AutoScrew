@@ -62,8 +62,10 @@ public sealed partial class LogsViewModel : ObservableObject
         var dir = GetLogsDirectory();
         Directory.CreateDirectory(dir);
 
-        _allLogFiles = Directory.EnumerateFiles(dir, "*.log", SearchOption.TopDirectoryOnly)
-            .Concat(Directory.EnumerateFiles(dir, "*.txt", SearchOption.TopDirectoryOnly))
+        var commDirectory = Path.Combine(dir, "Comm");
+        var directories = Directory.Exists(commDirectory) ? new[] { dir, commDirectory } : new[] { dir };
+        _allLogFiles = directories.SelectMany(directory => Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly)
+            .Concat(Directory.EnumerateFiles(directory, "*.txt", SearchOption.TopDirectoryOnly)))
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .ToList();
 
@@ -96,7 +98,7 @@ public sealed partial class LogsViewModel : ObservableObject
             pageFiles.Select(path => new LogFileListItem
             {
                 FullPath = path,
-                FileName = Path.GetFileName(path)
+                FileName = Path.GetRelativePath(GetLogsDirectory(), path)
             }));
 
         if (pageFiles.Count == 0)
