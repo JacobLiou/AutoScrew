@@ -7,11 +7,16 @@ internal sealed class ParameterBlockReader
 {
     private readonly IIemdSdCommandExecutor _executor;
     private readonly int _toolIndex;
+    private readonly IemdSdControllerProfile _profile;
 
-    public ParameterBlockReader(IIemdSdCommandExecutor executor, int toolIndex)
+    public ParameterBlockReader(
+        IIemdSdCommandExecutor executor,
+        int toolIndex,
+        IemdSdControllerProfile profile)
     {
         _executor = executor;
         _toolIndex = toolIndex;
+        _profile = profile;
     }
 
     public async Task<TighteningParameterTemplate> ReadAsync(int parameterId, CancellationToken cancellationToken)
@@ -35,7 +40,7 @@ internal sealed class ParameterBlockReader
             ToolIndex = _toolIndex,
             RawBlock = words,
         };
-        template.SyncCoreFromRaw();
+        template.SyncCoreFromRaw(_profile);
         template.Core.Strategy = TighteningStrategyHelper.InferFromStages(template.Core.Stages);
         return template;
     }

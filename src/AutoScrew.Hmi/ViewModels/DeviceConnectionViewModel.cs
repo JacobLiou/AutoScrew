@@ -45,6 +45,10 @@ public sealed partial class StationDeviceEditor : ObservableObject
     [ObservableProperty]
     private int _toolIndex;
 
+    /// <summary>0 = Sd3_101 (10.1"), 1 = Sd3_43 (4.3").</summary>
+    [ObservableProperty]
+    private int _controllerProfileIndex;
+
     [ObservableProperty]
     private int _triggerModeIndex = 1;
 
@@ -83,6 +87,9 @@ public sealed partial class StationDeviceEditor : ObservableObject
             _ => 0,
         };
         ToolIndex = endpoint.ToolIndex;
+        ControllerProfileIndex = string.Equals(endpoint.ControllerProfile, "Sd3_43", StringComparison.OrdinalIgnoreCase)
+            ? 1
+            : 0;
         TriggerModeIndex = string.Equals(endpoint.TriggerMode, "Manual", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         CommandTimeoutMs = endpoint.CommandTimeoutMs;
         AutoLockOnInit = endpoint.AutoLockOnInit;
@@ -105,6 +112,7 @@ public sealed partial class StationDeviceEditor : ObservableObject
             Parity = ParityIndex switch { 1 => "Odd", 2 => "Even", _ => "None" },
             StopBits = StopBitsIndex == 1 ? "Two" : "One",
             ToolIndex = ToolIndex,
+            ControllerProfile = ControllerProfileIndex == 1 ? "Sd3_43" : "Sd3_101",
             TriggerMode = TriggerModeIndex == 1 ? "Manual" : "AutoDi",
             CommandTimeoutMs = CommandTimeoutMs,
             AutoLockOnInit = AutoLockOnInit,

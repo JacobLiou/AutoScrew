@@ -32,6 +32,11 @@ public sealed class StationDeviceEndpoint
 
     public int ToolIndex { get; set; }
 
+    /// <summary>
+    /// 控制器协议档：Sd3_101（10.1 寸）或 Sd3_43（4.3 寸）。缺省/未知按 Sd3_101。
+    /// </summary>
+    public string ControllerProfile { get; set; } = "Sd3_101";
+
     public string TriggerMode { get; set; } = "Manual";
 
     public bool AutoLockOnInit { get; set; }

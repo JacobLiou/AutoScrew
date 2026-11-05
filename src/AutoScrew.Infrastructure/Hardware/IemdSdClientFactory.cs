@@ -34,6 +34,7 @@ public sealed class IemdSdClientFactory
         Parity = endpoint.Parity,
         StopBits = endpoint.StopBits,
         ToolIndex = endpoint.ToolIndex,
+        ControllerProfile = ParseControllerProfile(endpoint.ControllerProfile),
         TriggerMode = string.Equals(endpoint.TriggerMode, "AutoDi", StringComparison.OrdinalIgnoreCase)
             ? TighteningTriggerMode.AutoDi
             : TighteningTriggerMode.Manual,
@@ -42,4 +43,9 @@ public sealed class IemdSdClientFactory
         UseLegacyFinishRegister = endpoint.UseLegacyFinishRegister,
         CommandTimeoutMs = endpoint.CommandTimeoutMs,
     };
+
+    public static IemdSdControllerProfile ParseControllerProfile(string? value) =>
+        string.Equals(value, "Sd3_43", StringComparison.OrdinalIgnoreCase)
+            ? IemdSdControllerProfile.Sd3_43
+            : IemdSdControllerProfile.Sd3_101;
 }

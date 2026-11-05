@@ -78,6 +78,11 @@ flowchart LR
 | [doc/MULTI_SURFACE_UI_WIREFRAME.md](doc/MULTI_SURFACE_UI_WIREFRAME.md) | **草案**：多面模板编辑 / 作业台 UI 线框 |
 | [doc/CONNECTION_STRING_ENCRYPTION.md](doc/CONNECTION_STRING_ENCRYPTION.md) | **部署必读**：MIMS 连接串加密与跨机配置方法 |
 
+## 控制器协议档（10.1 / 4.3 寸）
+
+- 技术员在 **系统 → 设备连接** 选择控制器协议：`Sd3_101`（10.1 寸）或 `Sd3_43`（4.3 寸），写入工位 `devices.json`。缺省为 `Sd3_101`（兼容旧配置）。
+- 协议档影响拧紧参数 `#100` 阶段控制字编码、mailbox `0xCC`、寄存器 `0xEC` 语义，以及初始化是否发送 `#533`。改选后须「应用」重建连接后再下发参数。
+
 ## 控制器通信日志
 
 - IEMD-SD 的 Modbus TCP/RTU 通信独立写入程序目录下的 `Logs/Comm/comm-YYYYMMDD.log`，首次发生通信时生成，按本地日期每天滚动，保留最近 14 个文件；业务日志仍使用原有文件。

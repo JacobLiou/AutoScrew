@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using UDL.Delta.IemdSd.Modbus;
 using UDL.Delta.IemdSd.Protocol;
 
@@ -7,11 +8,19 @@ internal sealed class ParameterBlockWriter
 {
     private readonly IIemdSdCommandExecutor _executor;
     private readonly int _toolIndex;
+    private readonly IemdSdControllerProfile _profile;
+    private readonly ILogger? _logger;
 
-    public ParameterBlockWriter(IIemdSdCommandExecutor executor, int toolIndex)
+    public ParameterBlockWriter(
+        IIemdSdCommandExecutor executor,
+        int toolIndex,
+        IemdSdControllerProfile profile,
+        ILogger? logger = null)
     {
         _executor = executor;
         _toolIndex = toolIndex;
+        _profile = profile;
+        _logger = logger;
     }
 
     public async Task WriteAsync(TighteningParameterTemplate template, CancellationToken cancellationToken)
@@ -25,13 +34,19 @@ internal sealed class ParameterBlockWriter
         // 编辑器 Raw 与 Core 保持未掩码同步（本地 JSON / 切换策略不丢槽位数据）。
         template.ApplyCoreToRaw();
 
-        // 写出副本：按策略掩码清非活动槽，不改动调用方 Core。
+        // 写出副本：按策略掩码清非活动槽，不改动调用方 Core；按协议档编码设备布局。
         var writeCore = CloneCoreForWrite(template.Core);
         TighteningStrategyHelper.ApplyStrategyMask(writeCore.Stages, writeCore.Strategy);
         var writeBlock = (int[])template.RawBlock.Clone();
-        TighteningParameterCodec.ApplyCoreToRaw(writeBlock, writeCore);
+        TighteningParameterCodec.ApplyCoreToRaw(writeBlock, writeCore, _profile);
 
-        var word4 = TighteningStrategyHelper.ToMailboxWord4(writeCore.Strategy);
+        var word4 = TighteningStrategyHelper.ToMailboxWord4(writeCore.Strategy, _profile);
+        _logger?.LogInformation(
+            "COMM ParameterWrite ControllerProfile={ControllerProfile} ParameterId={ParameterId} Strategy={Strategy} MailboxWord4={MailboxWord4}",
+            _profile,
+            template.ParameterId,
+            writeCore.Strategy,
+            word4);
 
         await _executor.ExecuteAsync(
             ModbusCommandInvocation.WithWritePayload(

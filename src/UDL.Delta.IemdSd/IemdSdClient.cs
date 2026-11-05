@@ -36,8 +36,8 @@ public sealed class IemdSdClient : IIemdSdClient
         _reportReader = new ReportReader(_executor);
         _curveReader = new CurveReader(_executor);
         _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options, _session);
-        _parameterReader = new ParameterBlockReader(_executor, options.ToolIndex);
-        _parameterWriter = new ParameterBlockWriter(_executor, options.ToolIndex);
+        _parameterReader = new ParameterBlockReader(_executor, options.ToolIndex, options.ControllerProfile);
+        _parameterWriter = new ParameterBlockWriter(_executor, options.ToolIndex, options.ControllerProfile, _logger);
     }
 
     public IemdSdClientOptions Options { get; }
@@ -68,7 +68,17 @@ public sealed class IemdSdClient : IIemdSdClient
         if (!Options.UseLegacyFinishRegister)
             await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningFinish, 0, cancellationToken).ConfigureAwait(false);
 
-        await _typed.SetAutoLockAsync(Options.AutoLockOnInit, cancellationToken).ConfigureAwait(false);
+        // #533 仅 10.1 寸协议档支持；4.3 寸总表无此功能码。
+        if (Options.ControllerProfile == IemdSdControllerProfile.Sd3_101)
+        {
+            await _typed.SetAutoLockAsync(Options.AutoLockOnInit, cancellationToken).ConfigureAwait(false);
+        }
+        else if (Options.AutoLockOnInit)
+        {
+            _logger.LogInformation(
+                "IEMD-SD skip #533 AutoLock ControllerProfile={ControllerProfile} (not in 4.3-inch command catalog)",
+                Options.ControllerProfile);
+        }
 
         if (Options.SendUnlockAfterCycle)
             await _typed.LimitTighteningAsync(cancellationToken).ConfigureAwait(false);
@@ -84,7 +94,11 @@ public sealed class IemdSdClient : IIemdSdClient
             };
         }
 
-        _logger.LogInformation("IEMD-SD initialized CurveVer={CurveVer} ReportIdMax={Max}", CurveVersion, ReportIdMax);
+        _logger.LogInformation(
+            "IEMD-SD initialized ControllerProfile={ControllerProfile} CurveVer={CurveVer} ReportIdMax={Max}",
+            Options.ControllerProfile,
+            CurveVersion,
+            ReportIdMax);
     }
 
     public Task<uint> GetCurrentReportIdAsync(CancellationToken cancellationToken = default) =>

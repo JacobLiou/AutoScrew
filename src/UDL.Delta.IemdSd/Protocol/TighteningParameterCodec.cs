@@ -5,7 +5,9 @@ namespace UDL.Delta.IemdSd.Protocol;
 
 public static class TighteningParameterCodec
 {
-    public static TighteningParameterCore ExtractCoreFromRaw(int[] raw)
+    public static TighteningParameterCore ExtractCoreFromRaw(
+        int[] raw,
+        IemdSdControllerProfile profile = IemdSdControllerProfile.Sd3_101)
     {
         ArgumentNullException.ThrowIfNull(raw);
         if (raw.Length != ModbusRegisterMap.ParameterBlockWordCount)
@@ -20,7 +22,10 @@ public static class TighteningParameterCodec
             MaxTighteningTimeTenthSec = raw[TighteningParameterRegisterMap.MaxTighteningTimeTenthSec],
             MaxLoosenTimeTenthSec = raw[TighteningParameterRegisterMap.MaxLoosenTimeTenthSec],
             MaxAngleDeg = raw[TighteningParameterRegisterMap.MaxAngle],
-            MaxLoosenAngleDeg = raw[TighteningParameterRegisterMap.MaxLoosenAngle],
+            // 0xEC：4.3 为拧松最大角度；10.1 手册为保留，读回不当角度。
+            MaxLoosenAngleDeg = profile == IemdSdControllerProfile.Sd3_43
+                ? raw[TighteningParameterRegisterMap.MaxLoosenAngle]
+                : 0,
             TighteningStartDelayCentiSec = raw[TighteningParameterRegisterMap.TighteningStartDelayCentiSec],
             LoosenStartDelayCentiSec = raw[TighteningParameterRegisterMap.LoosenStartDelayCentiSec],
             CurveSampleStartTorqueMilliNm = raw[TighteningParameterRegisterMap.CurveSampleStartTorqueMilliNm],
@@ -40,7 +45,10 @@ public static class TighteningParameterCodec
         return core;
     }
 
-    public static void ApplyCoreToRaw(int[] raw, TighteningParameterCore core)
+    public static void ApplyCoreToRaw(
+        int[] raw,
+        TighteningParameterCore core,
+        IemdSdControllerProfile profile = IemdSdControllerProfile.Sd3_101)
     {
         ArgumentNullException.ThrowIfNull(raw);
         ArgumentNullException.ThrowIfNull(core);
@@ -54,7 +62,8 @@ public static class TighteningParameterCodec
         raw[TighteningParameterRegisterMap.MaxTighteningTimeTenthSec] = core.MaxTighteningTimeTenthSec;
         raw[TighteningParameterRegisterMap.MaxLoosenTimeTenthSec] = core.MaxLoosenTimeTenthSec;
         raw[TighteningParameterRegisterMap.MaxAngle] = core.MaxAngleDeg;
-        raw[TighteningParameterRegisterMap.MaxLoosenAngle] = core.MaxLoosenAngleDeg;
+        raw[TighteningParameterRegisterMap.MaxLoosenAngle] =
+            profile == IemdSdControllerProfile.Sd3_43 ? core.MaxLoosenAngleDeg : 0;
         raw[TighteningParameterRegisterMap.TighteningStartDelayCentiSec] = core.TighteningStartDelayCentiSec;
         raw[TighteningParameterRegisterMap.LoosenStartDelayCentiSec] = core.LoosenStartDelayCentiSec;
         raw[TighteningParameterRegisterMap.CurveSampleStartTorqueMilliNm] = core.CurveSampleStartTorqueMilliNm;
@@ -68,7 +77,7 @@ public static class TighteningParameterCodec
         for (var i = 0; i < 6; i++)
         {
             var stage = core.Stages.Count > i ? core.Stages[i] : new TighteningStageCore();
-            WriteStage(raw, TighteningParameterRegisterMap.StageStarts[i], stage);
+            WriteStage(raw, TighteningParameterRegisterMap.StageStarts[i], stage, profile);
         }
 
         WriteLoosen(raw, core.Loosen);
@@ -167,18 +176,23 @@ public static class TighteningParameterCodec
         return stage;
     }
 
-    private static void WriteStage(int[] raw, int baseIndex, TighteningStageCore stage)
+    private static void WriteStage(
+        int[] raw,
+        int baseIndex,
+        TighteningStageCore stage,
+        IemdSdControllerProfile profile)
     {
         TighteningStageFlagCodec.EncodeControlWords(
             stage.ControlMode,
             stage.Direction,
             stage.TwoStageModeEnabled,
             stage.ErgoStopEnabled,
+            profile,
             out var word0,
             out var word1);
         raw[baseIndex + TighteningParameterRegisterMap.StageControlMode] = word0;
         raw[baseIndex + TighteningParameterRegisterMap.StageDirection] = word1;
-        TighteningStageFlagCodec.ApplyTwoStageEnableMirror(raw, baseIndex, stage.TwoStageModeEnabled);
+        TighteningStageFlagCodec.ApplyTwoStageEnableMirror(raw, baseIndex, stage.TwoStageModeEnabled, profile);
 
         raw[baseIndex + TighteningParameterRegisterMap.StageSpeedRpm] = stage.SpeedRpm;
         raw[baseIndex + TighteningParameterRegisterMap.StageTargetTorqueMilliNm] = stage.TargetTorqueMilliNm;

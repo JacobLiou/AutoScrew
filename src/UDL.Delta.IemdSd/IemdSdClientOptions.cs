@@ -6,9 +6,22 @@ public enum ControllerTransportType
     ModbusRtu,
 }
 
+/// <summary>
+/// 控制器协议档。对齐 SD3 10.1 寸 / SD30X0 4.3 寸手册附录 A.3.1 差异。
+/// 缺省 <see cref="Sd3_101"/> 与现网行为一致。
+/// </summary>
+public enum IemdSdControllerProfile
+{
+    Sd3_101 = 0,
+    Sd3_43 = 1,
+}
+
 public sealed class IemdSdClientOptions
 {
     public ControllerTransportType Transport { get; set; } = ControllerTransportType.ModbusTcp;
+
+    /// <summary>控制器协议档；影响 #100 阶段控制字、0xCC、0xEC 与初始化 #533。</summary>
+    public IemdSdControllerProfile ControllerProfile { get; set; } = IemdSdControllerProfile.Sd3_101;
 
     public string Host { get; set; } = "192.168.1.11";
 

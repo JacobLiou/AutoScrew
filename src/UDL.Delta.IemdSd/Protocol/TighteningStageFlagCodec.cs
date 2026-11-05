@@ -1,8 +1,10 @@
 namespace UDL.Delta.IemdSd.Protocol;
 
 /// <summary>
-/// 阶段控制字 / 进阶字位域编解码（对齐 SDSoft TransferCSV / GlobalVar）。
-/// 兼容旧版「word0=枚举、word1=方向」的简化落盘。
+/// 阶段控制字 / 进阶字位域编解码。
+/// Sd3_101：对齐 SDSoft TransferCSV / GlobalVar 的 packed 控制字。
+/// Sd3_43：对齐 4.3 寸手册 A.3.1 明文枚举（FA=模式 0–4，FB=方向 0/1）。
+/// 读回兼容两种落盘。
 /// </summary>
 internal static class TighteningStageFlagCodec
 {
@@ -12,7 +14,7 @@ internal static class TighteningStageFlagCodec
     public const int MaskStageTarget = 0x30;    // word0 bits4–5
     public const int BitErgoStopInAdvanced = 2;  // AdvancedSetting bit2 → word1
 
-    /// <summary>阶段内 limit/enable 镜像字（SDSoft 读两阶段时检查 +46 bit13）。</summary>
+    /// <summary>阶段内 limit/enable 镜像字（SDSoft 读两阶段时检查 +46 bit13）。仅 Sd3_101 写入。</summary>
     public const int StageEnableFlagsOffset = 46;
 
     public static void DecodeControlWord(
@@ -47,9 +49,17 @@ internal static class TighteningStageFlagCodec
         TighteningDirection direction,
         bool twoStage,
         bool ergoStop,
+        IemdSdControllerProfile profile,
         out ushort word0,
         out ushort word1)
     {
+        if (profile == IemdSdControllerProfile.Sd3_43)
+        {
+            word0 = (ushort)mode;
+            word1 = (ushort)direction;
+            return;
+        }
+
         word0 = EncodeControlModeBits(mode);
         if (direction == TighteningDirection.CounterClockwise)
             word0 |= (ushort)(1 << BitDirection);
@@ -63,8 +73,15 @@ internal static class TighteningStageFlagCodec
         word1 = EncodeAdvancedSetting(advanced);
     }
 
-    public static void ApplyTwoStageEnableMirror(int[] raw, int stageBase, bool twoStage)
+    public static void ApplyTwoStageEnableMirror(
+        int[] raw,
+        int stageBase,
+        bool twoStage,
+        IemdSdControllerProfile profile)
     {
+        if (profile != IemdSdControllerProfile.Sd3_101)
+            return;
+
         var idx = stageBase + StageEnableFlagsOffset;
         if (idx < 0 || idx >= raw.Length)
             return;

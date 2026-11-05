@@ -62,6 +62,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0"
                                Grid.Column="0"
@@ -85,8 +87,25 @@
                     <TextBlock Grid.Row="2"
                                Grid.Column="0"
                                VerticalAlignment="Center"
+                               Text="{DynamicResource S.Device.ControllerProfile}" />
+                    <ComboBox Grid.Row="2"
+                              Grid.Column="1"
+                              Margin="0,0,0,8"
+                              SelectedIndex="{Binding ControllerProfileIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{DynamicResource S.Device.ControllerProfile101}" />
+                        <ComboBoxItem Content="{DynamicResource S.Device.ControllerProfile43}" />
+                    </ComboBox>
+                    <TextBlock Grid.Row="3"
+                               Grid.Column="1"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{DynamicResource S.Device.ControllerProfileHint}" />
+                    <TextBlock Grid.Row="4"
+                               Grid.Column="0"
+                               VerticalAlignment="Center"
                                Text="{DynamicResource S.Device.ToolIndex}" />
-                    <ui:NumberBox Grid.Row="2"
+                    <ui:NumberBox Grid.Row="4"
                                   Grid.Column="1"
                                   Maximum="1"
                                   Minimum="0"

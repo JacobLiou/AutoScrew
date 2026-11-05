@@ -21,9 +21,17 @@ public enum TighteningStrategy : ushort
 /// <summary>策略 ↔ 阶段槽位映射、写前掩码、设备回读推断。</summary>
 public static class TighteningStrategyHelper
 {
-    /// <summary>#100 mailbox 0xCC：0=自动识别策略，1=固定自创。</summary>
-    public static int ToMailboxWord4(TighteningStrategy strategy) =>
-        strategy == TighteningStrategy.SelfDefined ? 1 : 0;
+    /// <summary>
+    /// #100 mailbox 0xCC：Sd3_101 上 0=自动识别、1=固定自创；Sd3_43 手册为保留，恒写 0。
+    /// </summary>
+    public static int ToMailboxWord4(
+        TighteningStrategy strategy,
+        IemdSdControllerProfile profile = IemdSdControllerProfile.Sd3_101)
+    {
+        if (profile == IemdSdControllerProfile.Sd3_43)
+            return 0;
+        return strategy == TighteningStrategy.SelfDefined ? 1 : 0;
+    }
 
     public static IReadOnlyList<int> GetActiveStageIndices(TighteningStrategy strategy) =>
         strategy switch

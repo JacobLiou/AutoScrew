@@ -12,7 +12,9 @@ public sealed class TighteningParameterTemplate
     public static int[] CreateEmptyRawBlock() =>
         new int[ModbusRegisterMap.ParameterBlockWordCount];
 
-    public void SyncCoreFromRaw() => Core = TighteningParameterCodec.ExtractCoreFromRaw(RawBlock);
+    public void SyncCoreFromRaw(IemdSdControllerProfile profile = IemdSdControllerProfile.Sd3_101) =>
+        Core = TighteningParameterCodec.ExtractCoreFromRaw(RawBlock, profile);
 
-    public void ApplyCoreToRaw() => TighteningParameterCodec.ApplyCoreToRaw(RawBlock, Core);
+    public void ApplyCoreToRaw(IemdSdControllerProfile profile = IemdSdControllerProfile.Sd3_101) =>
+        TighteningParameterCodec.ApplyCoreToRaw(RawBlock, Core, profile);
 }

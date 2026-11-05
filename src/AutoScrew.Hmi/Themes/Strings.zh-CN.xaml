@@ -855,6 +855,10 @@
     <system:String x:Key="S.Device.TransportTcp">网口 (Modbus TCP)</system:String>
     <system:String x:Key="S.Device.TransportSerial">串口 (Modbus RTU)</system:String>
     <system:String x:Key="S.Device.ToolIndex">工具 (0/1)</system:String>
+    <system:String x:Key="S.Device.ControllerProfile">控制器协议</system:String>
+    <system:String x:Key="S.Device.ControllerProfile101">10.1 寸 (Sd3_101)</system:String>
+    <system:String x:Key="S.Device.ControllerProfile43">4.3 寸 (Sd3_43)</system:String>
+    <system:String x:Key="S.Device.ControllerProfileHint">须与实物一致。选错会导致拧紧参数下发后空转或校验失败；改选后请保存并「应用」。</system:String>
     <system:String x:Key="S.Device.Host">IP 地址</system:String>
     <system:String x:Key="S.Device.Port">端口</system:String>
     <system:String x:Key="S.Device.SerialPort">串口</system:String>
