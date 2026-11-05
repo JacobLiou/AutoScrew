@@ -451,7 +451,8 @@
     <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① 先选择产品 PN</system:String>
-    <system:String x:Key="S.ProcessLibrary.ProductPnHint">未选择产品时下方列表会清空，请勿对残留数据操作。输入新 PN 可「新建 PN」再建空目录，或选择已有 PN 后「加载产品内容」。删除 PN 会清空该产品下全部工艺数据。</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHint">未选择产品时下方列表会清空。可输入新 PN「新建」，或选择已有 PN 后「加载产品内容」；「删除 PN」会清空该产品下模板、参数与顺序，不可恢复。</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHintShort">在上方选择或新建产品 PN，再加载内容。</system:String>
     <system:String x:Key="S.ProcessLibrary.SelectProductHint">请先选择产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.Load">加载产品内容</system:String>
     <system:String x:Key="S.ProcessLibrary.CreatePn">新建 PN</system:String>

@@ -436,7 +436,8 @@
     <system:String x:Key="S.ProcessLibrary.RootPath">Library root</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">Product PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① Select product PN first</system:String>
-    <system:String x:Key="S.ProcessLibrary.ProductPnHint">Lists clear when no PN is selected. Type a new PN and click Create PN for an empty folder, or pick an existing PN and Load product. Delete PN removes all process data for that product.</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHint">Lists clear when no PN is selected. Type a new PN and Create, or pick an existing PN and Load product. Delete PN permanently removes templates, parameters, and sequences for that product.</system:String>
+    <system:String x:Key="S.ProcessLibrary.ProductPnHintShort">Select or create a product PN above, then load its content.</system:String>
     <system:String x:Key="S.ProcessLibrary.SelectProductHint">Select a product PN first</system:String>
     <system:String x:Key="S.ProcessLibrary.Load">Load product</system:String>
     <system:String x:Key="S.ProcessLibrary.CreatePn">Create PN</system:String>

@@ -17,200 +17,227 @@
     <Grid Margin="0,0,0,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="200" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:CardControl Grid.Row="0" Margin="0,0,0,12" Icon="{ui:SymbolIcon FolderOpen24}">
-            <ui:CardControl.Header>
-                <StackPanel>
-                    <ui:TextBlock FontTypography="Body" Text="{DynamicResource S.ProcessLibrary.Title}" />
-                    <ui:TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.ProcessLibrary.Desc}"
-                                  TextWrapping="Wrap" />
-                </StackPanel>
-            </ui:CardControl.Header>
+        <!-- 顶栏：标题 / 根路径 / PN 操作（固定高度，不占满剩余空间） -->
+        <Border Grid.Row="0"
+                Margin="0,0,0,12"
+                Padding="16"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{ui:ThemeResource ControlStrokeColorDefaultBrush}"
+                Background="{ui:ThemeResource ControlFillColorDefaultBrush}">
             <StackPanel>
-                <ui:TextBlock Margin="0,0,0,4"
-                              FontTypography="Caption"
+                <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                    <ui:SymbolIcon DockPanel.Dock="Left"
+                                   Margin="0,2,10,0"
+                                   VerticalAlignment="Top"
+                                   FontSize="22"
+                                   Symbol="FolderOpen24" />
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong"
+                                      Text="{DynamicResource S.ProcessLibrary.Title}" />
+                        <ui:TextBlock Margin="0,2,0,0"
+                                      Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                      Text="{DynamicResource S.ProcessLibrary.Desc}"
+                                      TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+
+                <ui:TextBlock FontTypography="Caption"
                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                               Text="{DynamicResource S.ProcessLibrary.RootPath}" />
-                <ui:TextBlock Margin="0,0,0,12"
+                <ui:TextBlock Margin="0,2,0,12"
                               Text="{Binding ViewModel.ProcessRootPath}"
                               TextWrapping="Wrap"
                               FontSize="12"
                               Opacity="0.85" />
 
                 <Border Padding="12"
-                        Margin="0,0,0,8"
                         CornerRadius="6"
                         BorderThickness="1"
                         BorderBrush="{ui:ThemeResource AccentTextFillColorPrimaryBrush}"
-                        Background="{ui:ThemeResource ControlFillColorDefaultBrush}">
+                        Background="{ui:ThemeResource ControlFillColorSecondaryBrush}">
                     <StackPanel>
-                        <ui:TextBlock Margin="0,0,0,6"
+                        <ui:TextBlock Margin="0,0,0,4"
                                       FontTypography="BodyStrong"
                                       Text="{DynamicResource S.ProcessLibrary.ProductPnRequired}" />
                         <ui:TextBlock Margin="0,0,0,10"
                                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                                       Text="{DynamicResource S.ProcessLibrary.ProductPnHint}"
                                       TextWrapping="Wrap" />
-                        <DockPanel LastChildFill="True">
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
-                                <ui:Button Margin="0,0,8,0"
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="200" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      MinHeight="36"
+                                      Margin="0,0,12,0"
+                                      VerticalAlignment="Center"
+                                      FontSize="16"
+                                      IsEditable="True"
+                                      ItemsSource="{Binding ViewModel.ProductPns}"
+                                      Text="{Binding ViewModel.ProductPn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <WrapPanel Grid.Column="1"
+                                       VerticalAlignment="Center"
+                                       Orientation="Horizontal">
+                                <ui:Button Margin="0,0,8,4"
                                            MinHeight="36"
                                            Appearance="Primary"
                                            Command="{Binding ViewModel.RefreshProductContentCommand}"
                                            Content="{DynamicResource S.ProcessLibrary.Load}"
                                            Icon="{ui:SymbolIcon ArrowSync24}" />
-                                <ui:Button Margin="0,0,8,0"
+                                <ui:Button Margin="0,0,8,4"
                                            MinHeight="36"
                                            Appearance="Secondary"
                                            Command="{Binding ViewModel.CreateProductCommand}"
                                            Content="{DynamicResource S.ProcessLibrary.CreatePn}"
                                            Icon="{ui:SymbolIcon Add24}" />
-                                <ui:Button Margin="0,0,8,0"
+                                <ui:Button Margin="0,0,8,4"
                                            MinHeight="36"
                                            Appearance="Danger"
                                            Command="{Binding ViewModel.DeleteProductCommand}"
                                            Content="{DynamicResource S.ProcessLibrary.DeletePn}"
                                            Icon="{ui:SymbolIcon Delete24}" />
-                                <ui:Button MinHeight="36"
+                                <ui:Button Margin="0,0,0,4"
+                                           MinHeight="36"
                                            Appearance="Secondary"
                                            Command="{Binding ViewModel.RefreshProductListCommand}"
                                            Content="{DynamicResource S.ProcessLibrary.RefreshList}" />
-                            </StackPanel>
-                            <ComboBox MinWidth="280"
-                                      MinHeight="36"
-                                      FontSize="16"
-                                      IsEditable="True"
-                                      ItemsSource="{Binding ViewModel.ProductPns}"
-                                      Text="{Binding ViewModel.ProductPn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
+                            </WrapPanel>
+                        </Grid>
                     </StackPanel>
                 </Border>
 
-                <ui:TextBlock Margin="0,4,0,0"
+                <ui:TextBlock Margin="0,8,0,0"
                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                              Text="{Binding ViewModel.DeviceStatusText}" />
+                              Text="{Binding ViewModel.DeviceStatusText}"
+                              TextWrapping="Wrap" />
             </StackPanel>
-        </ui:CardControl>
+        </Border>
 
+        <!-- 内容区：参数 / 顺序表 -->
         <Grid Grid.Row="1">
             <TabControl IsEnabled="{Binding ViewModel.HasProductPn}">
-            <TabItem Header="{DynamicResource S.ProcessLibrary.TabParams}">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Primary"
-                                   Command="{Binding ViewModel.UploadCardCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.Upload}"
-                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Secondary"
-                                   Command="{Binding ViewModel.RemoveSelectedSlotCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.DeleteSlot}"
-                                   Icon="{ui:SymbolIcon Delete24}" />
-                        <ui:Button Appearance="Primary"
-                                   Command="{Binding ViewModel.DeployProductCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.Deploy}"
-                                   Icon="{ui:SymbolIcon ArrowDownload24}" />
-                    </StackPanel>
-                    <DataGrid Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="True"
-                              SelectedItem="{Binding ViewModel.SelectedSlot, Mode=TwoWay}"
-                              ItemsSource="{Binding ViewModel.Slots}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="80"
-                                                Binding="{Binding SlotLabel}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColSlot}" />
-                            <DataGridTextColumn Width="90"
-                                                Binding="{Binding DeviceIdLabel}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColDeviceId}" />
-                            <DataGridTextColumn Width="160"
-                                                Binding="{Binding ScrewPn}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColScrewPn}" />
-                            <DataGridTextColumn Width="*"
-                                                Binding="{Binding FileName}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColFile}" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                <TabItem Header="{DynamicResource S.ProcessLibrary.TabParams}">
+                    <Grid Margin="0,12,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <WrapPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
+                            <ui:Button Margin="0,0,8,4"
+                                       Appearance="Primary"
+                                       Command="{Binding ViewModel.UploadCardCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.Upload}"
+                                       Icon="{ui:SymbolIcon ArrowUpload24}" />
+                            <ui:Button Margin="0,0,8,4"
+                                       Appearance="Secondary"
+                                       Command="{Binding ViewModel.RemoveSelectedSlotCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.DeleteSlot}"
+                                       Icon="{ui:SymbolIcon Delete24}" />
+                            <ui:Button Margin="0,0,0,4"
+                                       Appearance="Primary"
+                                       Command="{Binding ViewModel.DeployProductCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.Deploy}"
+                                       Icon="{ui:SymbolIcon ArrowDownload24}" />
+                        </WrapPanel>
+                        <DataGrid Grid.Row="1"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  SelectedItem="{Binding ViewModel.SelectedSlot, Mode=TwoWay}"
+                                  ItemsSource="{Binding ViewModel.Slots}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="80"
+                                                    Binding="{Binding SlotLabel}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColSlot}" />
+                                <DataGridTextColumn Width="90"
+                                                    Binding="{Binding DeviceIdLabel}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColDeviceId}" />
+                                <DataGridTextColumn Width="160"
+                                                    Binding="{Binding ScrewPn}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColScrewPn}" />
+                                <DataGridTextColumn Width="*"
+                                                    Binding="{Binding FileName}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColFile}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
 
-            <TabItem Header="{DynamicResource S.ProcessLibrary.TabSequences}">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center"
-                                   Margin="0,0,4,0"
-                                   Text="{DynamicResource S.ProcessLibrary.SequenceIdLabel}" />
-                        <TextBox Width="56"
-                                 Margin="0,0,8,0"
-                                 VerticalAlignment="Center"
-                                 Text="{Binding ViewModel.UploadSequenceIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Primary"
-                                   Command="{Binding ViewModel.UploadSequenceTxtCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceTxt}"
-                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Secondary"
-                                   Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.DeleteSequence}"
-                                   Icon="{ui:SymbolIcon Delete24}" />
-                        <ui:Button Appearance="Primary"
-                                   Command="{Binding ViewModel.DeploySequencesCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.DeploySequences}"
-                                   Icon="{ui:SymbolIcon ArrowDownload24}" />
-                    </StackPanel>
-                    <DataGrid Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="True"
-                              SelectedItem="{Binding ViewModel.SelectedSequence, Mode=TwoWay}"
-                              ItemsSource="{Binding ViewModel.Sequences}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="80"
-                                                Binding="{Binding IdLabel}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColSequenceId}" />
-                            <DataGridTextColumn Width="200"
-                                                Binding="{Binding DisplayName}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColSequenceName}" />
-                            <DataGridTextColumn Width="*"
-                                                Binding="{Binding FileName}"
-                                                Header="{DynamicResource S.ProcessLibrary.ColFile}" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-        </TabControl>
+                <TabItem Header="{DynamicResource S.ProcessLibrary.TabSequences}">
+                    <Grid Margin="0,12,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <WrapPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
+                            <TextBlock Margin="0,0,4,4"
+                                       VerticalAlignment="Center"
+                                       Text="{DynamicResource S.ProcessLibrary.SequenceIdLabel}" />
+                            <TextBox Width="56"
+                                     Margin="0,0,8,4"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding ViewModel.UploadSequenceIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:Button Margin="0,0,8,4"
+                                       Appearance="Primary"
+                                       Command="{Binding ViewModel.UploadSequenceTxtCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.UploadSequenceTxt}"
+                                       Icon="{ui:SymbolIcon ArrowUpload24}" />
+                            <ui:Button Margin="0,0,8,4"
+                                       Appearance="Secondary"
+                                       Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.DeleteSequence}"
+                                       Icon="{ui:SymbolIcon Delete24}" />
+                            <ui:Button Margin="0,0,0,4"
+                                       Appearance="Primary"
+                                       Command="{Binding ViewModel.DeploySequencesCommand}"
+                                       Content="{DynamicResource S.ProcessLibrary.DeploySequences}"
+                                       Icon="{ui:SymbolIcon ArrowDownload24}" />
+                        </WrapPanel>
+                        <DataGrid Grid.Row="1"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  SelectedItem="{Binding ViewModel.SelectedSequence, Mode=TwoWay}"
+                                  ItemsSource="{Binding ViewModel.Sequences}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="80"
+                                                    Binding="{Binding IdLabel}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColSequenceId}" />
+                                <DataGridTextColumn Width="200"
+                                                    Binding="{Binding DisplayName}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColSequenceName}" />
+                                <DataGridTextColumn Width="*"
+                                                    Binding="{Binding FileName}"
+                                                    Header="{DynamicResource S.ProcessLibrary.ColFile}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
 
             <Border HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
                     Background="{ui:ThemeResource SolidBackgroundFillColorBaseBrush}"
                     Opacity="0.92"
                     Visibility="{Binding ViewModel.HasProductPn, Converter={StaticResource BoolToVisInverse}}">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
-                    <ui:SymbolIcon Symbol="Search24" FontSize="40" Margin="0,0,0,12" />
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="480" Margin="24">
+                    <ui:SymbolIcon Symbol="Search24" FontSize="40" Margin="0,0,0,12" HorizontalAlignment="Center" />
                     <ui:TextBlock FontTypography="BodyStrong"
                                   HorizontalAlignment="Center"
                                   Text="{DynamicResource S.ProcessLibrary.SelectProductHint}" />
                     <ui:TextBlock Margin="0,8,0,0"
                                   HorizontalAlignment="Center"
                                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                  Text="{DynamicResource S.ProcessLibrary.ProductPnHint}"
+                                  Text="{DynamicResource S.ProcessLibrary.ProductPnHintShort}"
                                   TextWrapping="Wrap"
                                   TextAlignment="Center" />
                 </StackPanel>
