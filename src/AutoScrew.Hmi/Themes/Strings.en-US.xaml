@@ -417,7 +417,7 @@
     <system:String x:Key="S.Logs.SnackbarTitle">Logs / Audit</system:String>
 
     <system:String x:Key="S.ProcessLibrary.Title">Process library</system:String>
-    <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence JSON / TXT / Excel) by product PN on LAN/local storage, then deploy to the controller.</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">Manage process cards (parameter TXT and sequence TXT) by product PN on LAN/local storage, then deploy to the controller.</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">Library root</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">Product PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① Select product PN first</system:String>

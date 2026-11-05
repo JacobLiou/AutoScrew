@@ -751,24 +751,6 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ImportJsonAsync()
-    {
-        var dialog = new OpenFileDialog { Filter = "JSON (*.json)|*.json", RestoreDirectory = true };
-        if (dialog.ShowDialog() != true) return;
-        try
-        {
-            var pkg = await _presetService.ImportFromFileAsync(dialog.FileName).ConfigureAwait(true);
-            ApplyPackage(pkg);
-            StatusMessage = Loc.Get("S.ControllerSeq.StatusImported");
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = ex.Message;
-            ShowSnackbar(ex.Message, ControlAppearance.Danger);
-        }
-    }
-
-    [RelayCommand]
     private async Task ImportFromProcessLibraryAsync()
     {
         var picker = new ProcessLibrarySequencePickerDialog(_processLibrary)
@@ -809,12 +791,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task ExportSequenceExcelAsync() => ExportSequenceFileAsync(forTxt: false);
-
-    [RelayCommand]
-    private Task ExportSequenceTxtAsync() => ExportSequenceFileAsync(forTxt: true);
-
-    private async Task ExportSequenceFileAsync(bool forTxt)
+    private async Task ExportSequenceTxtAsync()
     {
         CommitPendingEdits();
         if (_working.Core.Steps.Count == 0)
@@ -828,7 +805,7 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
                 out var defaultScrewPn,
                 out var locationMode,
                 out var locationPrefix,
-                forTxt: forTxt))
+                forTxt: true))
             return;
 
         _lastExportedDefaultScrewPn = defaultScrewPn;
@@ -838,8 +815,8 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
 
         var dialog = new SaveFileDialog
         {
-            Filter = forTxt ? "Sequence (*.txt)|*.txt" : "Excel (*.xlsx)|*.xlsx",
-            FileName = forTxt ? $"sequence-{SequenceId:D2}.txt" : $"sequence-{SequenceId:D2}.xlsx",
+            Filter = "Sequence (*.txt)|*.txt",
+            FileName = $"sequence-{SequenceId:D2}.txt",
             RestoreDirectory = true,
         };
         if (dialog.ShowDialog() != true)
@@ -848,19 +825,14 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         var author = TemplateExportHeader.ResolveAuthor(_user.DisplayName, _user.UserId);
         var exportedAt = DateTimeOffset.Now;
         AuditConfig(
-            forTxt ? "Configuration.SeqExportTxt" : "Configuration.SeqExportExcel",
+            "Configuration.SeqExportTxt",
             $"sequenceId={SequenceId};steps={rows.Count};author={author};file={dialog.FileName}");
         try
         {
-            if (forTxt)
-                await Task.Run(() => SequenceTxtWriter.WriteFile(
-                        dialog.FileName, rows, productPn: null, author: author, exportedAt: exportedAt))
-                    .ConfigureAwait(true);
-            else
-                await Task.Run(() => SequenceExcelWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
-            StatusMessage = Loc.Get(forTxt
-                ? "S.ControllerSeq.StatusExportedSequenceTxt"
-                : "S.ControllerSeq.StatusExportedSequenceExcel");
+            await Task.Run(() => SequenceTxtWriter.WriteFile(
+                    dialog.FileName, rows, productPn: null, author: author, exportedAt: exportedAt))
+                .ConfigureAwait(true);
+            StatusMessage = Loc.Get("S.ControllerSeq.StatusExportedSequenceTxt");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);
         }
         catch (Exception ex)
@@ -919,30 +891,6 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         }
 
         return true;
-    }
-
-    [RelayCommand]
-    private async Task ExportJsonAsync()
-    {
-        var dialog = new SaveFileDialog
-        {
-            Filter = "JSON (*.json)|*.json",
-            FileName = $"sequence-{SequenceId:D3}.json",
-            RestoreDirectory = true,
-        };
-        if (dialog.ShowDialog() != true) return;
-        try
-        {
-            CommitPendingEdits();
-            await _presetService.ExportToFileAsync(_working, dialog.FileName).ConfigureAwait(true);
-            StatusMessage = Loc.Get("S.ControllerSeq.StatusExported");
-            ShowSnackbar(StatusMessage, ControlAppearance.Success);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = ex.Message;
-            ShowSnackbar(ex.Message, ControlAppearance.Danger);
-        }
     }
 
     // 仅按「设备已配置/可用」启用；忙闲由底层会话互斥与异常提示处理。

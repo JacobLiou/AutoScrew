@@ -140,13 +140,8 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Primary"
-                                   Command="{Binding ViewModel.UploadSequenceCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.UploadSequence}"
-                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
                         <TextBlock VerticalAlignment="Center"
-                                   Margin="8,0,4,0"
+                                   Margin="0,0,4,0"
                                    Text="{DynamicResource S.ProcessLibrary.SequenceIdLabel}" />
                         <TextBox Width="56"
                                  Margin="0,0,8,0"
@@ -154,12 +149,9 @@
                                  Text="{Binding ViewModel.UploadSequenceIdText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ui:Button Margin="0,0,8,0"
                                    Appearance="Primary"
-                                   Command="{Binding ViewModel.UploadSequenceExcelCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceExcel}" />
-                        <ui:Button Margin="0,0,8,0"
-                                   Appearance="Primary"
                                    Command="{Binding ViewModel.UploadSequenceTxtCommand}"
-                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceTxt}" />
+                                   Content="{DynamicResource S.ProcessLibrary.UploadSequenceTxt}"
+                                   Icon="{ui:SymbolIcon ArrowUpload24}" />
                         <ui:Button Margin="0,0,8,0"
                                    Appearance="Secondary"
                                    Command="{Binding ViewModel.RemoveSelectedSequenceCommand}"

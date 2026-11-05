@@ -432,7 +432,7 @@
 
     <!-- Process library (A) -->
     <system:String x:Key="S.ProcessLibrary.Title">工艺库</system:String>
-    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 JSON / TXT / Excel），并可下发到设备。</system:String>
+    <system:String x:Key="S.ProcessLibrary.Desc">按产品 PN 管理局域网/本机工艺卡（参数 TXT、拧紧顺序 TXT），并可下发到设备。</system:String>
     <system:String x:Key="S.ProcessLibrary.RootPath">工艺库根路径</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPn">产品 PN</system:String>
     <system:String x:Key="S.ProcessLibrary.ProductPnRequired">① 先选择产品 PN</system:String>
