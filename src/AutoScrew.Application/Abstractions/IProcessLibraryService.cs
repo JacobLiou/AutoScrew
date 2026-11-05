@@ -62,6 +62,12 @@ public interface IProcessLibraryService
 
     Task<ProcessLibraryProductSummary?> GetProductAsync(string productPn, CancellationToken cancellationToken = default);
 
+    /// <summary>在工艺库根下新建空产品 PN 目录（含空 product.json）。已存在则失败。</summary>
+    Task CreateProductAsync(string productPn, CancellationToken cancellationToken = default);
+
+    /// <summary>递归删除产品 PN 目录（螺钉模板、拧紧参数、拧紧顺序等全部内容）。</summary>
+    Task DeleteProductAsync(string productPn, CancellationToken cancellationToken = default);
+
     /// <summary>解析工艺卡 TXT（不落盘）。</summary>
     ProcessCardParseResult ParseProcessCardText(string text);
 

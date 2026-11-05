@@ -134,6 +134,86 @@ public sealed partial class ProcessLibraryViewModel : ObservableObject
     private Task RefreshSlotsAsync() => RefreshProductContentAsync();
 
     [RelayCommand]
+    private async Task CreateProductAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        var pn = ProductPn.Trim();
+        try
+        {
+            IsBusy = true;
+            Audit("Configuration.ProcessLibraryCreateProduct", $"product={pn}");
+            await _library.CreateProductAsync(pn).ConfigureAwait(true);
+            EnsureProductInList(pn);
+            ProductPn = pn;
+            await RefreshProductListAsync().ConfigureAwait(true);
+            ProductPn = pn;
+            await RefreshProductContentAsync().ConfigureAwait(true);
+            StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusProductCreated"), pn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+            Audit("Configuration.ProcessLibraryCreateProduct", $"product={pn};error={ex.Message}", success: false);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteProductAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ProductPn))
+        {
+            ShowSnackbar(Loc.Get("S.ProcessLibrary.NeedProductPn"), ControlAppearance.Caution);
+            return;
+        }
+
+        var pn = ProductPn.Trim();
+        if (!ConfirmTips.ShowDialog(
+                string.Format(Loc.Get("S.ProcessLibrary.ConfirmDeleteProductBody"), pn),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ProcessLibrary.ConfirmDeleteProductTitle")))
+            return;
+
+        if (!ConfirmTips.ShowDialog(
+                string.Format(Loc.Get("S.ProcessLibrary.ConfirmDeleteProductAgainBody"), pn),
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.ProcessLibrary.ConfirmDeleteProductAgainTitle")))
+            return;
+
+        try
+        {
+            IsBusy = true;
+            Audit("Configuration.ProcessLibraryDeleteProduct", $"product={pn}");
+            await _library.DeleteProductAsync(pn).ConfigureAwait(true);
+            ProductPn = string.Empty;
+            ClearProductContent(string.Format(Loc.Get("S.ProcessLibrary.StatusProductDeleted"), pn));
+            await RefreshProductListAsync().ConfigureAwait(true);
+            StatusMessage = string.Format(Loc.Get("S.ProcessLibrary.StatusProductDeleted"), pn);
+            ShowSnackbar(StatusMessage, ControlAppearance.Success);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+            ShowSnackbar(ex.Message, ControlAppearance.Danger);
+            Audit("Configuration.ProcessLibraryDeleteProduct", $"product={pn};error={ex.Message}", success: false);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task RefreshProductContentAsync()
     {
         if (string.IsNullOrWhiteSpace(ProductPn))

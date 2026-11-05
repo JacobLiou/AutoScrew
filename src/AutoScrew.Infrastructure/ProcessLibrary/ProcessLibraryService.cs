@@ -41,6 +41,16 @@ public sealed class ProcessLibraryService : IProcessLibraryService
         return Task.FromResult(_store.LoadProduct(productPn));
     }
 
+    public Task CreateProductAsync(string productPn, CancellationToken cancellationToken = default) =>
+        _store.CreateProductAsync(productPn, cancellationToken);
+
+    public Task DeleteProductAsync(string productPn, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _store.DeleteProduct(productPn);
+        return Task.CompletedTask;
+    }
+
     public ProcessCardParseResult ParseProcessCardText(string text) =>
         ProcessCardTxtParser.Parse(text);
 

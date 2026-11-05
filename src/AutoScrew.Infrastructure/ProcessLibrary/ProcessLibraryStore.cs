@@ -84,6 +84,57 @@ public sealed class ProcessLibraryStore
     }
 
     /// <summary>
+    /// 新建空产品 PN 目录并写入空 <c>product.json</c>。目录已存在则抛出。
+    /// </summary>
+    public async Task CreateProductAsync(string productPn, CancellationToken cancellationToken = default)
+    {
+        EnsureRoot();
+        var safePn = SanitizeFileName(productPn);
+        if (string.IsNullOrWhiteSpace(safePn))
+            throw new ArgumentException("产品 PN 无效。", nameof(productPn));
+
+        EnsureLanConnected();
+
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        if (Directory.Exists(productDir))
+            throw new InvalidOperationException($"产品 {safePn} 在工艺库中已存在。");
+
+        Directory.CreateDirectory(productDir);
+        var doc = new ProcessProductManifestDocument
+        {
+            ProductPn = safePn,
+            UpdatedUtc = DateTimeOffset.UtcNow,
+            Slots = [],
+            Sequences = [],
+        };
+        await SaveManifestAsync(productDir, doc, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Process product created product={ProductPn} path={Path}", safePn, productDir);
+    }
+
+    /// <summary>
+    /// 递归删除产品 PN 目录（含 template / screws / sequences / product.json）。
+    /// 目录不存在则视为已删除。
+    /// </summary>
+    public void DeleteProduct(string productPn)
+    {
+        var safePn = SanitizeFileName(productPn);
+        if (string.IsNullOrWhiteSpace(safePn))
+            throw new ArgumentException("产品 PN 无效。", nameof(productPn));
+
+        EnsureLanConnected();
+
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        if (!Directory.Exists(productDir))
+        {
+            _logger.LogInformation("Process product delete skipped (missing) product={ProductPn}", safePn);
+            return;
+        }
+
+        Directory.Delete(productDir, recursive: true);
+        _logger.LogInformation("Process product deleted product={ProductPn} path={Path}", safePn, productDir);
+    }
+
+    /// <summary>
     /// 拧紧顺序写入前：PN 目录须已存在，且已有拧紧参数（禁止顺序新建 PN）。
     /// </summary>
     public void EnsureProductExistsWithParameters(string productPn)
