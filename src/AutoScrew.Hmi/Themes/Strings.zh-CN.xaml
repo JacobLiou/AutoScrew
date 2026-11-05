@@ -132,8 +132,8 @@
     <system:String x:Key="S.Curve.EmptyHint">本步暂无曲线。完成一钉后显示；若仍为空请查 #751 读回。</system:String>
     <system:String x:Key="S.Curve.EmptyTooFewPoints">曲线点数不足，无法绘图。</system:String>
     <system:String x:Key="S.Curve.EmptyWithReason">本步无曲线点：{0}</system:String>
-    <system:String x:Key="S.Nav.TighteningResults">拧紧结果</system:String>
-    <system:String x:Key="S.Results.Title">拧紧结果</system:String>
+    <system:String x:Key="S.Nav.TighteningResults">结果曲线</system:String>
+    <system:String x:Key="S.Results.Title">结果曲线</system:String>
     <system:String x:Key="S.Results.Desc">查看最近一次拧紧周期的摘要，并排显示扭矩–角度与扭矩–时间曲线（与作业台同源，周期结束后刷新；中间可拖拽调宽）。</system:String>
     <system:String x:Key="S.Results.Summary">最近结果摘要</system:String>
     <system:String x:Key="S.Results.NoData">尚无拧紧结果。请在作业台完成一钉后再查看。</system:String>

@@ -162,7 +162,9 @@ public partial class MainWindow : FluentWindow
         if (DataContext is MainShellViewModel shell)
         {
             shell.OnNavigationViewSelectionChanged(sender);
-            if (shell.IsOperatorRole && shell.SelectedSection != MainAppSection.Operation)
+            if (shell.IsOperatorRole
+                && shell.SelectedSection is not MainAppSection.Operation
+                and not MainAppSection.TighteningResults)
                 shell.NavigateToDefaultPage();
         }
 
@@ -176,7 +178,7 @@ public partial class MainWindow : FluentWindow
 
     private void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (_isUserClosedPane || _shellViewModel.IsOperatorRole)
+        if (_isUserClosedPane)
             return;
 
         _isPaneOpenedOrClosedFromCode = true;
@@ -188,16 +190,6 @@ public partial class MainWindow : FluentWindow
     {
         if (_isPaneOpenedOrClosedFromCode)
             return;
-
-        if (_shellViewModel.IsOperatorRole)
-        {
-            _isPaneOpenedOrClosedFromCode = true;
-            NavigationView.SetCurrentValue(NavigationView.IsPaneOpenProperty, false);
-            _shellViewModel.IsSidebarVisible = false;
-            _isPaneOpenedOrClosedFromCode = false;
-            _isUserClosedPane = true;
-            return;
-        }
 
         _isUserClosedPane = false;
     }

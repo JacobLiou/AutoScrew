@@ -260,11 +260,14 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     public bool IsOperatorRole => _currentUser.Role == UserRole.Operator;
 
-    /// <summary>操作员隐藏侧栏汉堡按钮，避免展开导航。</summary>
-    public bool IsPaneToggleVisible => !IsOperatorRole;
+    /// <summary>操作员仅有作业台 + 结果曲线，仍可折叠侧栏。</summary>
+    public bool IsPaneToggleVisible => true;
 
     public bool CanUseOperation =>
         _currentUser.Role is UserRole.Operator or UserRole.Technician or UserRole.Administrator;
+
+    /// <summary>结果曲线：操作员与技术员均可查看。</summary>
+    public bool CanUseTighteningResults => CanUseOperation;
 
     /// <summary>螺钉模板等配置页（技术员及以上）。</summary>
     public bool CanUseTemplateBoard => CanUseConfiguration;
@@ -490,6 +493,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(IsOperatorRole));
             OnPropertyChanged(nameof(IsPaneToggleVisible));
             OnPropertyChanged(nameof(CanUseOperation));
+            OnPropertyChanged(nameof(CanUseTighteningResults));
             OnPropertyChanged(nameof(CanUseTemplateBoard));
             NavigateTemplateCommand.NotifyCanExecuteChanged();
             NavigateOperationCommand.NotifyCanExecuteChanged();
@@ -509,7 +513,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void EnsureRoleAllowedSection()
     {
-        if (IsOperatorRole && SelectedSection != MainAppSection.Operation)
+        if (IsOperatorRole
+            && SelectedSection is not MainAppSection.Operation
+            and not MainAppSection.TighteningResults)
         {
             NavigateToDefaultPage();
             return;
@@ -517,7 +523,11 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
         if (!CanUseTemplateBoard && SelectedSection == MainAppSection.Template)
             NavigateToDefaultPage();
+        else if (!CanUseTighteningResults && SelectedSection == MainAppSection.TighteningResults)
+            NavigateToDefaultPage();
         else if (!CanUseConfiguration && IsDeviceConfigurationSection(SelectedSection))
+            NavigateToDefaultPage();
+        else if (!CanUseConfiguration && SelectedSection == MainAppSection.ProcessLibrary)
             NavigateToDefaultPage();
         else if (!CanUseOperation && SelectedSection == MainAppSection.Operation)
             NavigateToDefaultPage();
@@ -538,8 +548,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
         section is MainAppSection.ControllerParameter
             or MainAppSection.ControllerSequence
             or MainAppSection.ControllerSource
-            or MainAppSection.ProcessLibrary
-            or MainAppSection.TighteningResults
             or MainAppSection.DeviceProductionHistory
             or MainAppSection.DeviceExceptionHistory
             or MainAppSection.DeviceWarningHistory
@@ -549,6 +557,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     {
         var items = new ObservableCollection<object>();
 
+        // 独立顶层：作业台 → 结果曲线 → 螺钉模板 → 工艺库
         if (CanUseOperation)
         {
             items.Add(new NavigationViewItem
@@ -557,6 +566,17 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
                 TargetPageType = typeof(OperationNavPage),
                 TargetPageTag = "operation"
+            });
+        }
+
+        if (CanUseTighteningResults)
+        {
+            items.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.TighteningResults"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.DataHistogram24 },
+                TargetPageType = typeof(TighteningResultsPage),
+                TargetPageTag = "tightening-results"
             });
         }
 
@@ -571,6 +591,17 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
             });
         }
 
+        if (CanUseConfiguration)
+        {
+            items.Add(new NavigationViewItem
+            {
+                Content = Loc.Get("S.Nav.ProcessLibrary"),
+                Icon = new SymbolIcon { Symbol = SymbolRegular.Library24 },
+                TargetPageType = typeof(ProcessLibraryPage),
+                TargetPageTag = "process-library"
+            });
+        }
+
         NavigationViewItem? deviceConfigurationGroup = null;
         if (CanUseConfiguration)
         {
@@ -580,14 +611,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.WrenchScrewdriver24 },
                 IsExpanded = true
             };
-
-            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.ProcessLibrary"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.Library24 },
-                TargetPageType = typeof(ProcessLibraryPage),
-                TargetPageTag = "process-library"
-            });
 
             deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
             {
@@ -611,14 +634,6 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
                 Icon = new SymbolIcon { Symbol = SymbolRegular.RatingMature24 },
                 TargetPageType = typeof(ControllerSourcePage),
                 TargetPageTag = "controller-source"
-            });
-
-            deviceConfigurationGroup.MenuItems.Add(new NavigationViewItem
-            {
-                Content = Loc.Get("S.Nav.TighteningResults"),
-                Icon = new SymbolIcon { Symbol = SymbolRegular.DataHistogram24 },
-                TargetPageType = typeof(TighteningResultsPage),
-                TargetPageTag = "tightening-results"
             });
         }
 
@@ -744,8 +759,9 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
 
     private void ApplyRoleBasedNavigationLayout()
     {
+        // 操作员也可在作业台 / 结果曲线间切换，默认展开侧栏。
         if (IsOperatorRole)
-            IsSidebarVisible = false;
+            IsSidebarVisible = true;
         OnPropertyChanged(nameof(IsPaneToggleVisible));
     }
 

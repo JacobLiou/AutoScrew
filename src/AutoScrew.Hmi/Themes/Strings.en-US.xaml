@@ -125,8 +125,8 @@
     <system:String x:Key="S.Curve.EmptyHint">No curve for this step yet. It appears after a screw cycle; if still empty, check #751 readback.</system:String>
     <system:String x:Key="S.Curve.EmptyTooFewPoints">Not enough curve points to plot.</system:String>
     <system:String x:Key="S.Curve.EmptyWithReason">No curve points: {0}</system:String>
-    <system:String x:Key="S.Nav.TighteningResults">Tightening results</system:String>
-    <system:String x:Key="S.Results.Title">Tightening results</system:String>
+    <system:String x:Key="S.Nav.TighteningResults">Result curves</system:String>
+    <system:String x:Key="S.Results.Title">Result curves</system:String>
     <system:String x:Key="S.Results.Desc">Summary of the latest cycle with side-by-side torque–angle and torque–time curves (same source as the workbench; updates after each cycle; drag the splitter to resize).</system:String>
     <system:String x:Key="S.Results.Summary">Latest result summary</system:String>
     <system:String x:Key="S.Results.NoData">No tightening result yet. Complete a screw on the workbench first.</system:String>
