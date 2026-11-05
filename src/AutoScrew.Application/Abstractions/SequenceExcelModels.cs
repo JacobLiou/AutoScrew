@@ -14,7 +14,8 @@ public sealed record SequenceExcelStepRow(
 
 public sealed record SequenceExcelParseResult(
     IReadOnlyList<SequenceExcelStepRow> Steps,
-    IReadOnlyList<string> Errors)
+    IReadOnlyList<string> Errors,
+    string? SourceProductPn = null)
 {
     public bool IsSuccess => Errors.Count == 0 && Steps.Count > 0;
 }

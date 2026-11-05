@@ -240,6 +240,16 @@ public sealed class ProcessLibraryService : IProcessLibraryService
     {
         EnsureSequenceImportArgs(productPn, sourceFilePath, sequenceId, "顺序 TXT 文件不存在。");
         var parsed = SequenceTxtParser.ParseFile(sourceFilePath);
+        if (!string.IsNullOrWhiteSpace(parsed.SourceProductPn)
+            && !string.Equals(
+                ProcessParameterCode.SanitizeAscii(productPn),
+                ProcessParameterCode.SanitizeAscii(parsed.SourceProductPn),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException(
+                $"顺序 TXT 头产品 PN「{parsed.SourceProductPn}」与当前工艺库产品「{productPn}」不一致。");
+        }
+
         return SaveParsedSequenceAsync(productPn, sourceFilePath, sequenceId, parsed, "TXT", cancellationToken);
     }
 

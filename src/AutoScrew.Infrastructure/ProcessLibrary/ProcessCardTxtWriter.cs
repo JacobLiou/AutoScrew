@@ -23,7 +23,10 @@ public static class ProcessCardTxtWriter
         TighteningParameterTemplate template,
         string screwPn,
         int slotId,
-        bool emitAllAdvancedFields = false)
+        bool emitAllAdvancedFields = false,
+        string? author = null,
+        DateTimeOffset? exportedAt = null,
+        string? changeContent = null)
     {
         ArgumentNullException.ThrowIfNull(template);
         ArgumentNullException.ThrowIfNull(template.Core);
@@ -38,8 +41,16 @@ public static class ProcessCardTxtWriter
         var stageIndices = ResolveStageIndicesToWrite(core);
         var stageCountLabel = ResolveStageCountLabel(core, stageIndices);
         var direction = ResolveDirection(core, stageIndices);
+        var who = string.IsNullOrWhiteSpace(author) ? "未知" : author.Trim();
+        var content = string.IsNullOrWhiteSpace(changeContent)
+            ? TemplateExportHeader.DefaultChangeContent
+            : changeContent.Trim();
 
         var sb = new StringBuilder();
+        Line(sb, "做成", who, "变更责任人/登录账号");
+        Line(sb, "变更内容", content);
+        Line(sb, "变更时间", TemplateExportHeader.FormatChangeTime(exportedAt), "年/月/日/时/分");
+        sb.AppendLine();
         Line(sb, "参数ID", pn, "螺钉PN");
         Line(sb, "参数", ProcessParameterCode.FormatParameterCode(pn, slotId), "设定的该螺钉参数");
         Line(sb, "策略", FormatStrategy(core.Strategy), "标准/加强/预定位/自创");
@@ -109,9 +120,12 @@ public static class ProcessCardTxtWriter
         TighteningParameterTemplate template,
         string screwPn,
         int slotId,
-        bool emitAllAdvancedFields = false)
+        bool emitAllAdvancedFields = false,
+        string? author = null,
+        DateTimeOffset? exportedAt = null,
+        string? changeContent = null)
     {
-        var text = Format(template, screwPn, slotId, emitAllAdvancedFields);
+        var text = Format(template, screwPn, slotId, emitAllAdvancedFields, author, exportedAt, changeContent);
         File.WriteAllText(filePath, text, Encoding.UTF8);
     }
 

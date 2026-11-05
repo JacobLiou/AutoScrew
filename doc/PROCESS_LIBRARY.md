@@ -149,14 +149,14 @@
 | 操作 | 行为 |
 |------|------|
 | 上传 JSON | 校验 → `sequences/{SequenceId:D2}.json` → 更新 `product.json.sequences` |
-| 上传 TXT | 键值块，每步以 `步骤` 开头：`拧紧顺序` / `位置` / `螺钉PN` / `拧紧参数` / `数量` / `批头` / `备注`。`#`、`//` 与行尾 `<说明>` 忽略。顺序 ID 在工艺库页填写，显示名取文件名。全量样板见 [samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt) |
+| 上传 TXT | 业务 **Ver01 表格式**（见 [protocol/拧紧顺序 Ver01.txt](protocol/拧紧顺序%20Ver01.txt)）：头含 `产品PN【】`；表列为 `顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果`。吸头/结果无协议字段，导入时拼进备注标记 `[吸头:…][结果:…]`。旧「步骤」键值块已废弃。顺序 ID 在工艺库页填写。样板见 [samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt) |
 | 上传 Excel | 表头：`拧紧顺序\|位置\|螺钉PN\|拧紧参数\|数量\|批头\|备注`；`拧紧参数`=`螺钉PN-槽位`；步骤设备 ID=槽位+1。全量样板见 [samples/AllTemplateSequence.xlsx](samples/AllTemplateSequence.xlsx) |
 | 删除 | 仅删工艺库文件与清单项，不删设备顺序 |
 | 按 PN 下发 | 逐条覆盖写入设备（`WriteToDevice`）并 `SaveLocalPreset`；遇错停止；**不**先全删设备顺序 |
 
 TXT 与 Excel 解析后走同一落盘：`拧紧参数` → 设备 ParameterId=槽位+1，并写入 `数量`、`批头`（工具号固定 0）。库内顺序文件仍是 JSON。
 
-> TXT / Excel **不**承载导航坐标 / 定位臂 / 工具号；那些字段走顺序 JSON 或设备编辑器。`位置`/`备注` 为人读元数据，上传进包时不落设备步骤。必填 `拧紧顺序`、`拧紧参数`、`数量`、`批头`；`螺钉PN` 省略时用参数码前缀，填写时须与前缀一致。
+> TXT / Excel **不**承载导航坐标 / 定位臂 / 工具号 / 吸头；那些字段走顺序 JSON、设备编辑器或备注元数据。`位置`/`备注`（含吸头结果标记）为人读元数据，上传进包时不落设备步骤。必填顺序号、拧紧参数、数量、批头；`螺钉PN` 须与参数码前缀一致。
 
 ## 4.1 从设备导出模板（调教闭环）
 

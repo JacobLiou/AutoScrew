@@ -21,6 +21,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock Text="{DynamicResource S.ControllerParam.ExportProcessCardTitle}"
                    FontSize="18"
@@ -45,13 +46,26 @@
                        Margin="0,6,0,0"
                        Foreground="{DynamicResource ShellMutedForegroundBrush}" />
         </StackPanel>
+        <StackPanel Grid.Row="4" Margin="0,0,0,12">
+            <TextBlock Text="{DynamicResource S.ControllerParam.ExportTemplateVersion}"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4" />
+            <RadioButton x:Name="rb_Ver1"
+                         GroupName="TemplateVersion"
+                         IsChecked="True"
+                         Margin="0,0,0,4"
+                         Content="{DynamicResource S.ControllerParam.ExportTemplateVer1}" />
+            <RadioButton x:Name="rb_Ver2"
+                         GroupName="TemplateVersion"
+                         Content="{DynamicResource S.ControllerParam.ExportTemplateVer2}" />
+        </StackPanel>
         <TextBlock x:Name="txt_Validation"
-                   Grid.Row="4"
+                   Grid.Row="5"
                    Foreground="{DynamicResource BrushNg}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"
                    Visibility="Collapsed" />
-        <StackPanel Grid.Row="5"
+        <StackPanel Grid.Row="6"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
             <ui:Button Content="{DynamicResource S.Common.Ok}"

@@ -167,4 +167,101 @@ public sealed class ProcessCardTxtWriterTests
         Assert.Contains("4.拧紧", text, StringComparison.Ordinal);
         Assert.DoesNotContain("1.启动", text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void FormatVer02_RoundTrip_PreservesIdentityStagesAndLoosen()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00_v2.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var original = ProcessCardTxtParser.ParseFile(path);
+        var text = ProcessCardTxtWriterVer02.Format(original.Template, original.ScrewPn, original.SlotId);
+        Assert.True(ProcessCardVer02Parser.LooksLikeVer02(text));
+
+        var again = ProcessCardTxtParser.Parse(text);
+
+        Assert.Equal(original.ScrewPn, again.ScrewPn);
+        Assert.Equal(original.SlotId, again.SlotId);
+        Assert.Equal(original.Template.ParameterId, again.Template.ParameterId);
+        Assert.Equal(original.Template.Core.MaxAngleDeg, again.Template.Core.MaxAngleDeg);
+        Assert.Equal(original.Template.Core.MinAngleDeg, again.Template.Core.MinAngleDeg);
+        Assert.Equal(original.Template.Core.Stages[0].TargetAngleDeg, again.Template.Core.Stages[0].TargetAngleDeg);
+        Assert.Equal(original.Template.Core.Stages[0].SpeedRpm, again.Template.Core.Stages[0].SpeedRpm);
+        Assert.Equal(original.Template.Core.Stages[0].ControlMode, again.Template.Core.Stages[0].ControlMode);
+        Assert.Equal(original.Template.Core.Stages[3].ControlMode, again.Template.Core.Stages[3].ControlMode);
+        Assert.Equal(
+            original.Template.Core.Stages[3].TargetTorqueMilliNm,
+            again.Template.Core.Stages[3].TargetTorqueMilliNm);
+        Assert.Equal(original.Template.Core.Loosen.Stage1AngleDeg, again.Template.Core.Loosen.Stage1AngleDeg);
+        Assert.Equal(original.Template.Core.Loosen.Stage1SpeedRpm, again.Template.Core.Loosen.Stage1SpeedRpm);
+    }
+
+    [Fact]
+    public void FormatVer02_WritesSuffixAndPnHeader()
+    {
+        var template = new TighteningParameterTemplate
+        {
+            ParameterId = 1,
+            Core = new TighteningParameterCore
+            {
+                Stages = TighteningParameterCore.CreateDefaultStages(),
+                Loosen = new TighteningLoosenCore(),
+            },
+        };
+        template.Core.Stages[0].ControlMode = TighteningControlMode.Angle;
+        template.Core.Stages[0].TargetAngleDeg = 90;
+        template.Core.Stages[0].SpeedRpm = 80;
+
+        var text = ProcessCardTxtWriterVer02.Format(template, "1835154375", 10);
+        Assert.Contains("PN【1835154375】", text, StringComparison.Ordinal);
+        Assert.Contains("拧紧参数后缀【10】", text, StringComparison.Ordinal);
+        Assert.Contains("拧紧设定｜启动", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FormatVer02_WritesAuthorAndExportTime()
+    {
+        var template = new TighteningParameterTemplate
+        {
+            ParameterId = 1,
+            Core = new TighteningParameterCore
+            {
+                Stages = TighteningParameterCore.CreateDefaultStages(),
+                Loosen = new TighteningLoosenCore(),
+            },
+        };
+        template.Core.Stages[0].ControlMode = TighteningControlMode.Angle;
+        template.Core.Stages[0].TargetAngleDeg = 90;
+        template.Core.Stages[0].SpeedRpm = 80;
+
+        var at = new DateTimeOffset(2026, 11, 5, 9, 56, 0, TimeSpan.FromHours(8));
+        var text = ProcessCardTxtWriterVer02.Format(
+            template, "1835154375", 0, author: "王自召", exportedAt: at);
+        Assert.Contains("做成【王自召】", text, StringComparison.Ordinal);
+        Assert.Contains("变更内容【导出】", text, StringComparison.Ordinal);
+        Assert.Contains("变更时间：2026/11/05/09/56", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FormatVer1_WritesAuthorAndExportTime()
+    {
+        var template = new TighteningParameterTemplate
+        {
+            ParameterId = 1,
+            Core = new TighteningParameterCore
+            {
+                Stages = TighteningParameterCore.CreateDefaultStages(),
+                Loosen = new TighteningLoosenCore(),
+            },
+        };
+        template.Core.Stages[0].ControlMode = TighteningControlMode.Angle;
+        template.Core.Stages[0].TargetAngleDeg = 90;
+        template.Core.Stages[0].SpeedRpm = 80;
+
+        var at = new DateTimeOffset(2026, 11, 5, 9, 56, 0, TimeSpan.FromHours(8));
+        var text = ProcessCardTxtWriter.Format(
+            template, "1835154375", 0, author: "tech01", exportedAt: at);
+        Assert.Contains("做成：tech01", text, StringComparison.Ordinal);
+        Assert.Contains("变更时间：2026/11/05/09/56", text, StringComparison.Ordinal);
+    }
 }

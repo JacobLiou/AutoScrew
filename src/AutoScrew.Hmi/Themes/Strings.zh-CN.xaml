@@ -503,9 +503,12 @@
     <system:String x:Key="S.ControllerParam.StatusImportedProcessLibraryBatch">已从工艺库导入 {0} 个槽位到本机预设（产品 {1}）：{2}</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCard">导出工艺卡 TXT</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardTitle">导出拧紧参数工艺卡</system:String>
-    <system:String x:Key="S.ControllerParam.ExportProcessCardHint">确认螺钉 PN 与槽位后导出 TXT。扭矩等工艺数值取自当前编辑器；上传工艺库时再选择产品 PN。</system:String>
+    <system:String x:Key="S.ControllerParam.ExportProcessCardHint">确认螺钉 PN、槽位与模板版本后导出 TXT。扭矩等工艺数值取自当前编辑器；上传工艺库时再选择产品 PN。版本 1 为旧键值格式，版本 2 为表格式（均可再导入）。</system:String>
     <system:String x:Key="S.ControllerParam.ExportScrewPn">螺钉 PN</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlot">槽位（00 起）</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVersion">模板版本</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVer1">版本 1（键值格式）</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVer2">版本 2（表格式 ver02）</system:String>
     <system:String x:Key="S.ControllerParam.ExportDeviceIdPreview">对应设备参数 ID：{0}</system:String>
     <system:String x:Key="S.ControllerParam.ExportScrewPnRequired">请输入有效螺钉 PN（字母数字）。</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlotInvalid">槽位须为 0–499 的整数。</system:String>

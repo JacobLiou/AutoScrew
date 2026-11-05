@@ -845,13 +845,17 @@ public sealed partial class ControllerSequenceViewModel : ObservableObject
         if (dialog.ShowDialog() != true)
             return;
 
+        var author = TemplateExportHeader.ResolveAuthor(_user.DisplayName, _user.UserId);
+        var exportedAt = DateTimeOffset.Now;
         AuditConfig(
             forTxt ? "Configuration.SeqExportTxt" : "Configuration.SeqExportExcel",
-            $"sequenceId={SequenceId};steps={rows.Count};file={dialog.FileName}");
+            $"sequenceId={SequenceId};steps={rows.Count};author={author};file={dialog.FileName}");
         try
         {
             if (forTxt)
-                await Task.Run(() => SequenceTxtWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
+                await Task.Run(() => SequenceTxtWriter.WriteFile(
+                        dialog.FileName, rows, productPn: null, author: author, exportedAt: exportedAt))
+                    .ConfigureAwait(true);
             else
                 await Task.Run(() => SequenceExcelWriter.WriteFile(dialog.FileName, rows)).ConfigureAwait(true);
             StatusMessage = Loc.Get(forTxt

@@ -956,7 +956,12 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (ParameterId is >= ProcessParameterCode.MinDeviceParameterId and <= ProcessParameterCode.MaxDeviceParameterId)
             initialSlot = ProcessParameterCode.ToSlotIndex(ParameterId);
 
-        if (!ExportProcessCardDialog.TryPrompt(initialPn, initialSlot, out var screwPn, out var slotId))
+        if (!ExportProcessCardDialog.TryPrompt(
+                initialPn,
+                initialSlot,
+                out var screwPn,
+                out var slotId,
+                out var templateVersion))
             return;
 
         var dialog = new SaveFileDialog
@@ -968,12 +973,22 @@ public sealed partial class ControllerParameterViewModel : ObservableObject
         if (dialog.ShowDialog() != true)
             return;
 
+        var author = TemplateExportHeader.ResolveAuthor(_user.DisplayName, _user.UserId);
+        var exportedAt = DateTimeOffset.Now;
         AuditConfig(
             "Configuration.ParamExportProcessCard",
-            $"screwPn={screwPn};slot={slotId};file={dialog.FileName}");
+            $"screwPn={screwPn};slot={slotId};template={templateVersion};author={author};file={dialog.FileName}");
         try
         {
-            await Task.Run(() => ProcessCardTxtWriter.WriteFile(dialog.FileName, template, screwPn, slotId))
+            await Task.Run(() =>
+                {
+                    if (templateVersion == ProcessCardTemplateVersion.Ver2)
+                        ProcessCardTxtWriterVer02.WriteFile(
+                            dialog.FileName, template, screwPn, slotId, author, exportedAt);
+                    else
+                        ProcessCardTxtWriter.WriteFile(
+                            dialog.FileName, template, screwPn, slotId, author: author, exportedAt: exportedAt);
+                })
                 .ConfigureAwait(true);
             StatusMessage = Loc.Get("S.ControllerParam.StatusExportedProcessCard");
             ShowSnackbar(StatusMessage, ControlAppearance.Success);

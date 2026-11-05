@@ -1,18 +1,21 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using AutoScrew.Application.Abstractions;
 
 namespace AutoScrew.Infrastructure.ProcessLibrary;
 
 /// <summary>
-/// 拧紧顺序 TXT：每个「步骤」一块键值，规则与工艺卡相同（<c>#</c> / <c>//</c> 注释，行尾 <c>&lt;说明&gt;</c> 忽略）。
-/// 产出与 <see cref="SequenceExcelParser"/> 相同的 <see cref="SequenceExcelStepRow"/>。
+/// 拧紧顺序 TXT Ver01 表格式（业务模板）→ <see cref="SequenceExcelStepRow"/>。
+/// 旧「步骤」键值块已废弃。
 /// </summary>
 public static class SequenceTxtParser
 {
-    private static readonly string[] RequiredKeys = ["拧紧顺序", "拧紧参数", "数量", "批头"];
+    private static readonly Regex HeaderBracket = new(
+        @"(?<k>产品PN|版本号|做成|变更内容)\s*[【\[](?<v>[^】\]]*)[】\]]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex HeaderKv = new(
-        @"^(?<k>[^：:]+)[：:]\s*(?<v>.*?)\s*$",
+    private static readonly Regex ParamAndQty = new(
+        @"[【\[](?<code>[^】\]]+)[】\]]\s*(?<qty>\d+)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static SequenceExcelParseResult ParseFile(string filePath)
@@ -25,6 +28,16 @@ public static class SequenceTxtParser
     {
         ArgumentNullException.ThrowIfNull(text);
 
+        if (LooksLikeLegacyStepBlocks(text) && !LooksLikeVer01(text))
+        {
+            return new SequenceExcelParseResult(
+                [],
+                [
+                    "顺序 TXT 已改用业务 Ver01 表格式（顺序｜位置｜螺钉PN｜【拧紧参数】数量｜…）。" +
+                    "请勿再使用「步骤」键值块模板。",
+                ]);
+        }
+
         var rawLines = text
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n')
@@ -32,103 +45,154 @@ public static class SequenceTxtParser
 
         var errors = new List<string>();
         var steps = new List<SequenceExcelStepRow>();
-        Dictionary<string, string>? current = null;
-        var stepLine = 0;
+        string? sourceProductPn = null;
+        var seenHeader = false;
 
         for (var i = 0; i < rawLines.Length; i++)
         {
             var lineNo = i + 1;
-            var line = StripComment(rawLines[i].Trim());
+            var line = rawLines[i].Trim().Replace('\u3000', ' ');
             if (line.Length == 0 || line.StartsWith('#') || line.StartsWith("//", StringComparison.Ordinal))
                 continue;
 
-            if (line.Equals("步骤", StringComparison.Ordinal))
+            foreach (Match hm in HeaderBracket.Matches(line))
             {
-                Flush();
-                current = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                stepLine = lineNo;
+                var key = hm.Groups["k"].Value.Trim();
+                var value = ProcessParameterCode.SanitizeAscii(hm.Groups["v"].Value);
+                if (key.Equals("产品PN", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(value))
+                    sourceProductPn = value;
+            }
+
+            if (IsTableHeader(line))
+            {
+                seenHeader = true;
                 continue;
             }
 
-            if (current is null)
+            if (line.StartsWith("拧紧参数后缀", StringComparison.Ordinal) ||
+                line.StartsWith("变更时间", StringComparison.Ordinal))
                 continue;
 
-            var kv = HeaderKv.Match(line);
-            if (!kv.Success)
+            // 头信息行（无竖线）跳过
+            if (!line.Contains('｜') && !line.Contains('|'))
                 continue;
 
-            var key = NormalizeKey(kv.Groups["k"].Value);
-            if (key.Length == 0)
+            if (!seenHeader && !LooksLikeDataRow(line))
                 continue;
-            current[key] = kv.Groups["v"].Value.Trim();
-        }
-
-        Flush();
-
-        if (errors.Count == 0 && steps.Count == 0)
-            errors.Add("未找到有效步骤。");
-
-        if (errors.Count > 0)
-            return new SequenceExcelParseResult([], errors);
-
-        var ordered = steps.OrderBy(s => s.Order).ThenBy(s => s.ExcelRowNumber).ToList();
-        return new SequenceExcelParseResult(ordered, []);
-
-        void Flush()
-        {
-            if (current is null)
-                return;
 
             try
             {
-                steps.Add(BuildStep(current, stepLine));
+                steps.Add(ParseDataRow(line, lineNo));
             }
             catch (Exception ex)
             {
-                errors.Add($"第 {stepLine} 行：{ex.Message}");
+                errors.Add($"第 {lineNo} 行：{ex.Message}");
             }
-
-            current = null;
         }
+
+        if (errors.Count == 0 && steps.Count == 0)
+            errors.Add("未找到有效步骤（期望 Ver01 表头后的数据行）。");
+
+        if (errors.Count > 0)
+            return new SequenceExcelParseResult([], errors, sourceProductPn);
+
+        var ordered = steps.OrderBy(s => s.Order).ThenBy(s => s.ExcelRowNumber).ToList();
+        return new SequenceExcelParseResult(ordered, [], sourceProductPn);
     }
 
-    private static SequenceExcelStepRow BuildStep(IReadOnlyDictionary<string, string> map, int stepLine)
+    public static bool LooksLikeVer01(string text)
     {
-        foreach (var required in RequiredKeys)
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+        if (text.Contains("产品PN【", StringComparison.Ordinal) ||
+            text.Contains("产品PN[", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        foreach (var raw in text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'))
         {
-            if (!map.TryGetValue(required, out var value) || string.IsNullOrWhiteSpace(value))
-                throw new InvalidDataException($"缺少「{required}」。");
+            var line = raw.Trim();
+            if (IsTableHeader(line))
+                return true;
         }
 
-        map.TryGetValue("位置", out var location);
-        map.TryGetValue("螺钉PN", out var screwPn);
-        map.TryGetValue("备注", out var remark);
+        return false;
+    }
+
+    private static bool LooksLikeLegacyStepBlocks(string text)
+    {
+        foreach (var raw in text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'))
+        {
+            var line = StripAngleComment(raw.Trim());
+            if (line.Equals("步骤", StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsTableHeader(string line)
+    {
+        if (!(line.Contains('｜') || line.Contains('|')))
+            return false;
+        return line.Contains("顺序", StringComparison.Ordinal)
+               && line.Contains("位置", StringComparison.Ordinal)
+               && line.Contains("螺钉", StringComparison.Ordinal);
+    }
+
+    private static bool LooksLikeDataRow(string line)
+    {
+        if (!(line.Contains('｜') || line.Contains('|')))
+            return false;
+        var first = SplitPipe(line)[0].Trim();
+        return int.TryParse(first, NumberStyles.Integer, CultureInfo.InvariantCulture, out _);
+    }
+
+    private static SequenceExcelStepRow ParseDataRow(string line, int lineNo)
+    {
+        var parts = SplitPipe(line);
+        if (parts.Length < 5)
+            throw new InvalidDataException("列数不足（至少需要：顺序｜位置｜螺钉PN｜【参数】数量｜批头）。");
+
+        var orderText = parts[0].Trim();
+        var location = parts[1].Trim();
+        var screwPn = parts[2].Trim();
+
+        var paramSeg = parts[3].Trim();
+        var pm = ParamAndQty.Match(paramSeg);
+        if (!pm.Success)
+            throw new InvalidDataException($"无法解析拧紧参数与数量：{paramSeg}");
+
+        var parameterCode = pm.Groups["code"].Value.Trim();
+        var quantityText = pm.Groups["qty"].Value.Trim();
+        var bitText = parts[4].Trim();
+
+        var nozzle = parts.Length > 5 ? parts[5].Trim() : string.Empty;
+        var remarkBody = parts.Length > 6 ? parts[6].Trim() : string.Empty;
+        var result = parts.Length > 7 ? parts[7].Trim() : string.Empty;
+
+        var remark = SequenceRemarkMeta.Merge(remarkBody, nozzle, result);
 
         return SequenceStepRowFactory.Create(
-            stepLine,
-            map["拧紧顺序"],
+            lineNo,
+            orderText,
             location,
             screwPn,
-            map["拧紧参数"],
-            map["数量"],
-            map["批头"],
+            parameterCode,
+            quantityText,
+            bitText,
             remark);
     }
 
-    private static string StripComment(string line)
+    private static string[] SplitPipe(string line)
+    {
+        // 统一全角竖线
+        var normalized = line.Replace('|', '｜');
+        return normalized.Split('｜', StringSplitOptions.None);
+    }
+
+    private static string StripAngleComment(string line)
     {
         var idx = line.IndexOf('<');
         return idx >= 0 ? line[..idx].TrimEnd() : line;
-    }
-
-    private static string NormalizeKey(string key)
-    {
-        key = key.Trim().Replace('\u3000', ' ');
-        var paren = key.IndexOf('（');
-        if (paren < 0)
-            paren = key.IndexOf('(');
-        if (paren > 0)
-            key = key[..paren].Trim();
-        return key;
     }
 }

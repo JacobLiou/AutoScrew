@@ -16,6 +16,7 @@ public partial class ExportProcessCardDialog
         Title = Loc.Get("S.ControllerParam.ExportProcessCardTitle");
         txt_ScrewPn.Text = initialScrewPn ?? string.Empty;
         txt_Slot.Text = initialSlotId.ToString("D2", CultureInfo.InvariantCulture);
+        rb_Ver1.IsChecked = true;
         UpdateDeviceIdPreview();
         txt_Slot.TextChanged += (_, _) => UpdateDeviceIdPreview();
     }
@@ -26,15 +27,19 @@ public partial class ExportProcessCardDialog
 
     public int SlotId { get; private set; }
 
+    public ProcessCardTemplateVersion TemplateVersion { get; private set; } = ProcessCardTemplateVersion.Ver1;
+
     public static bool TryPrompt(
         string initialScrewPn,
         int initialSlotId,
         out string screwPn,
         out int slotId,
+        out ProcessCardTemplateVersion templateVersion,
         Window? owner = null)
     {
         screwPn = "";
         slotId = 0;
+        templateVersion = ProcessCardTemplateVersion.Ver1;
         var dlg = new ExportProcessCardDialog(initialScrewPn, initialSlotId)
         {
             Owner = owner ?? System.Windows.Application.Current?.MainWindow,
@@ -46,6 +51,7 @@ public partial class ExportProcessCardDialog
 
         screwPn = dlg.ScrewPn;
         slotId = dlg.SlotId;
+        templateVersion = dlg.TemplateVersion;
         return true;
     }
 
@@ -102,6 +108,9 @@ public partial class ExportProcessCardDialog
 
         ScrewPn = pn;
         SlotId = slot;
+        TemplateVersion = rb_Ver2.IsChecked == true
+            ? ProcessCardTemplateVersion.Ver2
+            : ProcessCardTemplateVersion.Ver1;
         Confirmed = true;
         Close();
     }

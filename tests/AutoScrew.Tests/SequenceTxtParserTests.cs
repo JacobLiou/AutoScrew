@@ -13,73 +13,54 @@ namespace AutoScrew.Tests;
 public sealed class SequenceTxtParserTests
 {
     [Fact]
-    public void Parse_TwoStepsOutOfOrder_SortsAndMapsSlots()
+    public void Parse_Ver01TwoStepsOutOfOrder_SortsAndMergesRemarkMeta()
     {
         const string text = """
-            # head
-            步骤
-            拧紧顺序：2
-            位置：b
-            螺钉PN：1830331949
-            拧紧参数：1830331949-01
-            数量：4
-            批头：1
+            产品PN【1835154375】
+            版本号【00】
+            拧紧参数后缀：20=紧固；10=预紧；00=正常
 
-            步骤
-            拧紧顺序：1                 <从 1 起>
-            位置：pump1锁附              <人读>
-            螺钉PN：1830331949
-            拧紧参数：1830331949-00
-            数量：4                      <1–999999>
-            批头：1
-            备注：预紧                   <可省略>
-            // tail
+            顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+            2｜pump1锁附｜1830331949｜【1830331949-10】4｜1｜A｜-01紧固｜0.7磅
+            1｜pump1锁附｜1830331949｜【1830331949-00】4｜1｜A｜pump1预紧｜预紧
             """;
 
         var result = SequenceTxtParser.Parse(text);
         Assert.True(result.IsSuccess, string.Join("; ", result.Errors));
+        Assert.Equal("1835154375", result.SourceProductPn);
         Assert.Equal(2, result.Steps.Count);
         Assert.Equal(1, result.Steps[0].Order);
         Assert.Equal(0, result.Steps[0].SlotId);
         Assert.Equal(4, result.Steps[0].Quantity);
-        Assert.Equal("预紧", result.Steps[0].Remark);
         Assert.Equal("pump1锁附", result.Steps[0].Location);
+        Assert.Equal("pump1预紧[吸头:A][结果:预紧]", result.Steps[0].Remark);
         Assert.Equal(2, result.Steps[1].Order);
-        Assert.Equal(1, result.Steps[1].SlotId);
-        Assert.Null(result.Steps[1].Remark);
-        Assert.True(result.Steps[0].ExcelRowNumber > result.Steps[1].ExcelRowNumber);
+        Assert.Equal(10, result.Steps[1].SlotId);
+        Assert.Contains("[结果:0.7磅]", result.Steps[1].Remark, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Parse_HalfwidthColonAndOmittedScrewPn_UsesCodePrefix()
+    public void Parse_LegacyStepBlocks_RejectedWithUpgradeHint()
     {
         const string text = """
             步骤
-            拧紧顺序:1
-            拧紧参数:ALLTPL-00
-            数量:2
-            批头:0
+            拧紧顺序：1
+            拧紧参数：ALLTPL-00
+            数量：2
+            批头：0
             """;
 
         var result = SequenceTxtParser.Parse(text);
-        Assert.True(result.IsSuccess, string.Join("; ", result.Errors));
-        Assert.Equal("ALLTPL", result.Steps[0].ScrewPn);
-        Assert.Equal(0, result.Steps[0].SlotId);
-        Assert.Equal(0, result.Steps[0].BitId);
-        Assert.Equal(string.Empty, result.Steps[0].Location);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Errors, e => e.Contains("Ver01", StringComparison.Ordinal));
     }
 
     [Fact]
     public void Parse_ScrewPnMismatch_ReportsStepLine()
     {
         const string text = """
-            # comment
-            步骤
-            拧紧顺序：1
-            螺钉PN：999
-            拧紧参数：1830331949-00
-            数量：1
-            批头：1
+            顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+            1｜x｜999｜【1830331949-00】1｜1｜｜｜
             """;
 
         var result = SequenceTxtParser.Parse(text);
@@ -89,18 +70,16 @@ public sealed class SequenceTxtParserTests
     }
 
     [Fact]
-    public void Parse_MissingQuantity_ReportsRequiredKey()
+    public void Parse_MissingParamQty_ReportsLine()
     {
         const string text = """
-            步骤
-            拧紧顺序：1
-            拧紧参数：1830331949-00
-            批头：1
+            顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+            1｜x｜1830331949｜坏列｜1｜｜｜
             """;
 
         var result = SequenceTxtParser.Parse(text);
         Assert.False(result.IsSuccess);
-        Assert.Contains(result.Errors, e => e.Contains("缺少「数量」", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, e => e.Contains("无法解析拧紧参数", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -116,13 +95,13 @@ public sealed class SequenceTxtParserTests
         Assert.Equal(1, result.Steps[1].SlotId);
         Assert.Equal("ALLTPL", result.Steps[0].ScrewPn);
         Assert.Equal(4, result.Steps[0].Quantity);
-        Assert.Equal("预紧", result.Steps[0].Remark);
-        Assert.Null(result.Steps[1].Remark);
+        Assert.Equal("预紧[吸头:A][结果:预紧]", result.Steps[0].Remark);
         Assert.Equal("pump1锁附", result.Steps[0].Location);
+        Assert.Equal("ALLTPL", result.SourceProductPn);
     }
 
     [Fact]
-    public void Write_RoundTrip_PreservesStepFields()
+    public void Write_RoundTrip_PreservesNozzleResultAndFields()
     {
         var original = new SequenceExcelStepRow(
             ExcelRowNumber: 2,
@@ -134,10 +113,11 @@ public sealed class SequenceTxtParserTests
             SlotId: 0,
             Quantity: 4,
             BitId: 1,
-            Remark: "预紧");
+            Remark: "正文[吸头:A][结果:预紧]");
 
-        var parsed = SequenceTxtParser.Parse(SequenceTxtWriter.Format([original]));
+        var parsed = SequenceTxtParser.Parse(SequenceTxtWriter.Format([original], "ALLTPL"));
         Assert.True(parsed.IsSuccess, string.Join("; ", parsed.Errors));
+        Assert.Equal("ALLTPL", parsed.SourceProductPn);
         var step = Assert.Single(parsed.Steps);
         Assert.Equal(original.Order, step.Order);
         Assert.Equal(original.Location, step.Location);
@@ -150,36 +130,100 @@ public sealed class SequenceTxtParserTests
     }
 
     [Fact]
+    public void RemarkMeta_TrySplit_RoundTrip()
+    {
+        var merged = SequenceRemarkMeta.Merge("说明", "A", "预紧");
+        Assert.Equal("说明[吸头:A][结果:预紧]", merged);
+        SequenceRemarkMeta.TrySplit(merged, out var body, out var n, out var r);
+        Assert.Equal("说明", body);
+        Assert.Equal("A", n);
+        Assert.Equal("预紧", r);
+    }
+
+    [Fact]
+    public void Write_IncludesAuthorAndExportTimeInHeader()
+    {
+        var step = new SequenceExcelStepRow(
+            ExcelRowNumber: 2,
+            Order: 1,
+            Location: "pump1",
+            ScrewPn: "ALLTPL",
+            ParameterCode: "ALLTPL-00",
+            ScrewPnFromCode: "ALLTPL",
+            SlotId: 0,
+            Quantity: 1,
+            BitId: 1,
+            Remark: null);
+        var at = new DateTimeOffset(2026, 11, 5, 9, 56, 0, TimeSpan.FromHours(8));
+        var text = SequenceTxtWriter.Format([step], "ALLTPL", author: "王自召", exportedAt: at);
+        Assert.Contains("做成【王自召】", text, StringComparison.Ordinal);
+        Assert.Contains("变更内容【导出】", text, StringComparison.Ordinal);
+        Assert.Contains("变更时间：2026/11/05/09/56", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task UploadSequenceTxt_MissingSlot_ThrowsWithLineInfo()
     {
         var dataDir = Path.Combine(Path.GetTempPath(), "autoscrew-seq-txt-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataDir);
         try
         {
-            var productPn = "PN-TEST";
+            var productPn = "PNTEST";
             var productDir = Path.Combine(dataDir, "process", productPn);
             Directory.CreateDirectory(Path.Combine(productDir, "screws"));
             await File.WriteAllTextAsync(
                 Path.Combine(productDir, "product.json"),
-                """{"productPn":"PN-TEST","slots":[{"slotId":0,"screwPn":"1830331949","fileName":"screws/00.txt","displayName":"1830331949"}],"sequences":[]}""");
+                """{"productPn":"PNTEST","slots":[{"slotId":0,"screwPn":"1830331949","fileName":"screws/00.txt","displayName":"1830331949"}],"sequences":[]}""");
 
             var txt = Path.Combine(dataDir, "seq.txt");
             await File.WriteAllTextAsync(
                 txt,
                 """
-                步骤
-                拧紧顺序：1
-                螺钉PN：1830331949
-                拧紧参数：1830331949-99
-                数量：1
-                批头：1
+                产品PN【PNTEST】
+                顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+                1｜x｜1830331949｜【1830331949-99】1｜1｜｜｜
                 """);
 
             var svc = CreateService(dataDir);
             var ex = await Assert.ThrowsAsync<InvalidDataException>(() =>
                 svc.UploadSequenceTxtAsync(productPn, txt, sequenceId: 1));
             Assert.Contains("99", ex.Message, StringComparison.Ordinal);
-            Assert.Contains("第 1 行", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("第 3 行", ex.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(dataDir))
+                Directory.Delete(dataDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task UploadSequenceTxt_ProductPnMismatch_Throws()
+    {
+        var dataDir = Path.Combine(Path.GetTempPath(), "autoscrew-seq-txt-pn-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dataDir);
+        try
+        {
+            var productPn = "PN-OK";
+            var productDir = Path.Combine(dataDir, "process", productPn);
+            Directory.CreateDirectory(Path.Combine(productDir, "screws"));
+            await File.WriteAllTextAsync(
+                Path.Combine(productDir, "product.json"),
+                """{"productPn":"PN-OK","slots":[{"slotId":0,"screwPn":"1830331949","fileName":"screws/00.txt","displayName":"1830331949"}],"sequences":[]}""");
+
+            var txt = Path.Combine(dataDir, "seq.txt");
+            await File.WriteAllTextAsync(
+                txt,
+                """
+                产品PN【OTHER】
+                顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+                1｜x｜1830331949｜【1830331949-00】1｜1｜｜｜
+                """);
+
+            var svc = CreateService(dataDir);
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() =>
+                svc.UploadSequenceTxtAsync(productPn, txt, sequenceId: 1));
+            Assert.Contains("不一致", ex.Message, StringComparison.Ordinal);
         }
         finally
         {
@@ -195,31 +239,21 @@ public sealed class SequenceTxtParserTests
         Directory.CreateDirectory(dataDir);
         try
         {
-            var productPn = "PN-OK";
+            var productPn = "PNOK";
             var productDir = Path.Combine(dataDir, "process", productPn);
             Directory.CreateDirectory(Path.Combine(productDir, "screws"));
             await File.WriteAllTextAsync(
                 Path.Combine(productDir, "product.json"),
-                """{"productPn":"PN-OK","slots":[{"slotId":0,"screwPn":"1830331949","fileName":"screws/00.txt","displayName":"1830331949"},{"slotId":1,"screwPn":"1830331949","fileName":"screws/01.txt","displayName":"1830331949"}],"sequences":[]}""");
+                """{"productPn":"PNOK","slots":[{"slotId":0,"screwPn":"1830331949","fileName":"screws/00.txt","displayName":"1830331949"},{"slotId":1,"screwPn":"1830331949","fileName":"screws/01.txt","displayName":"1830331949"}],"sequences":[]}""");
 
             var txt = Path.Combine(dataDir, "my-seq.txt");
             await File.WriteAllTextAsync(
                 txt,
                 """
-                步骤
-                拧紧顺序：1
-                位置：pump1
-                螺钉PN：1830331949
-                拧紧参数：1830331949-00
-                数量：4
-                批头：1
-                步骤
-                拧紧顺序：2
-                位置：pump1
-                螺钉PN：1830331949
-                拧紧参数：1830331949-01
-                数量：4
-                批头：1
+                产品PN【PNOK】
+                顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果
+                1｜pump1｜1830331949｜【1830331949-00】4｜1｜A｜｜
+                2｜pump1｜1830331949｜【1830331949-01】4｜1｜A｜｜
                 """);
 
             var svc = CreateService(dataDir);

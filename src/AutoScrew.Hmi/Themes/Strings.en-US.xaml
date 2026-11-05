@@ -487,9 +487,12 @@
     <system:String x:Key="S.ControllerParam.StatusImportedProcessLibraryBatch">Imported {0} slot(s) to local presets (product {1}): {2}</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCard">Export process card TXT</system:String>
     <system:String x:Key="S.ControllerParam.ExportProcessCardTitle">Export tightening parameter card</system:String>
-    <system:String x:Key="S.ControllerParam.ExportProcessCardHint">Confirm screw PN and slot, then export TXT. Process values come from the editor; choose product PN when uploading to the process library.</system:String>
+    <system:String x:Key="S.ControllerParam.ExportProcessCardHint">Confirm screw PN, slot, and template version, then export TXT. Process values come from the editor; choose product PN when uploading to the process library. Version 1 is the legacy key-value format; version 2 is the tabular ver02 format (both can be re-imported).</system:String>
     <system:String x:Key="S.ControllerParam.ExportScrewPn">Screw PN</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlot">Slot (from 00)</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVersion">Template version</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVer1">Version 1 (key-value)</system:String>
+    <system:String x:Key="S.ControllerParam.ExportTemplateVer2">Version 2 (tabular ver02)</system:String>
     <system:String x:Key="S.ControllerParam.ExportDeviceIdPreview">Device parameter ID: {0}</system:String>
     <system:String x:Key="S.ControllerParam.ExportScrewPnRequired">Enter a valid screw PN (letters/digits).</system:String>
     <system:String x:Key="S.ControllerParam.ExportSlotInvalid">Slot must be an integer from 0 to 499.</system:String>
