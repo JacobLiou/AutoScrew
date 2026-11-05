@@ -68,9 +68,9 @@ internal sealed class LoggingModbusTransport : IModbusTransport
         try
         {
             var result = await action().ConfigureAwait(false);
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (_logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "COMM {Endpoint} Slave={SlaveId} {Operation} Address=0x{Address:X4} Count={Count} Data={Data} Success ElapsedMs={ElapsedMs:F3}",
                     _endpoint,
                     _slaveId,

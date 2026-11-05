@@ -24,8 +24,9 @@ internal sealed class CommandMailbox : ICommandMailbox
 
         requestWords[0] = commandCode;
         requestWords[6] = 1;
+        var commandName = ResolveCommandName(commandCode);
         var started = Stopwatch.GetTimestamp();
-        _logger.LogInformation("COMM Command #{CommandCode} Started", commandCode);
+        _logger.LogInformation("COMM Command #{CommandCode} {CommandName} Started", commandCode, commandName);
         await _transport.WriteMultipleAsync(ModbusRegisterMap.CommandRequest, requestWords, cancellationToken)
             .ConfigureAwait(false);
 
@@ -37,28 +38,44 @@ internal sealed class CommandMailbox : ICommandMailbox
                 .ConfigureAwait(false);
             if (response[0] == commandCode && response[1] == 1 && response[2] == 0)
             {
-                _logger.LogInformation("COMM Command #{CommandCode} Success ElapsedMs={ElapsedMs:F3}",
-                    commandCode, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+                _logger.LogInformation(
+                    "COMM Command #{CommandCode} {CommandName} Success ElapsedMs={ElapsedMs:F3}",
+                    commandCode,
+                    commandName,
+                    Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 return;
             }
 
             if (response[0] == commandCode && response[1] == 2)
             {
-                _logger.LogWarning("COMM Command #{CommandCode} Rejected DeviceErrorCode={DeviceErrorCode} ElapsedMs={ElapsedMs:F3}",
-                    commandCode, response[2], Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-                throw new IemdSdCommunicationException($"Command #{commandCode} rejected by controller.")
+                var deviceErrorCode = response[2];
+                var describe = ModbusCommandErrorCatalog.Describe(commandCode, deviceErrorCode);
+                _logger.LogWarning(
+                    "COMM Command #{CommandCode} {CommandName} Rejected DeviceErrorCode={DeviceErrorCode} Describe={Describe} ElapsedMs={ElapsedMs:F3}",
+                    commandCode,
+                    commandName,
+                    deviceErrorCode,
+                    describe,
+                    Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+                throw new IemdSdCommunicationException(
+                    $"Command #{commandCode} ({commandName}) rejected by controller: {describe}")
                 {
                     CommandCode = commandCode,
-                    DeviceErrorCode = response[2],
+                    DeviceErrorCode = deviceErrorCode,
                 };
             }
 
             await Task.Delay(50, cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.LogWarning("COMM Command #{CommandCode} TimedOut TimeoutMs={TimeoutMs} ElapsedMs={ElapsedMs:F3}",
-            commandCode, _commandTimeoutMs, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-        throw new IemdSdCommunicationException($"Command #{commandCode} timed out after {_commandTimeoutMs} ms.")
+        _logger.LogWarning(
+            "COMM Command #{CommandCode} {CommandName} TimedOut TimeoutMs={TimeoutMs} ElapsedMs={ElapsedMs:F3}",
+            commandCode,
+            commandName,
+            _commandTimeoutMs,
+            Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        throw new IemdSdCommunicationException(
+            $"Command #{commandCode} ({commandName}) timed out after {_commandTimeoutMs} ms.")
         {
             CommandCode = commandCode,
         };
@@ -82,4 +99,9 @@ internal sealed class CommandMailbox : ICommandMailbox
         request[2] = (int)(reportId % 65536);
         request[3] = (int)(reportId / 65536);
     }
+
+    private static string ResolveCommandName(int commandCode) =>
+        ModbusCommandCatalog.TryGet(commandCode, out var descriptor)
+            ? descriptor.Name
+            : $"Unknown #{commandCode}";
 }

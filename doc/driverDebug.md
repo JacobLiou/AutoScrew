@@ -123,6 +123,7 @@
 | `#150` code **2** | ToolIndex 越界/轴不对 | 设备连接改 Tool 0/1 后应用 |
 | `#160` 空列表 | Tool 不对 / 位图解析与固件不一致 / 控制器无「已创建集」 | 换 Tool；控制器 HMI 确认参数所在轴；直接填已知 ID 试 #150 |
 | `#100` rejected + code 18 等 | 扭矩超工具规格等校验 | 看 `TighteningParameterErrorCodes` 中文表；降扭矩 |
+| `#100` rejected + **code 21** | **旋入阶段：扭矩不能为 0** | 旋入段目标扭矩须 > 0；完整异常表见协议 PDF `SD3_101` A-25/A-26（4.3 为 A-19/A-20） |
 | `#302` code 1 | 非手动切换 | 来源页改为手动；重新 Apply |
 | Demo 曲线很全、作业台空 | Demo 走 FTP；作业台走 #751；NG 遮罩挡图 | 看日志 `#751 failed`；先解锁 NG；对照 ModbusTCP（无 FTP）Demo |
 | 作业中改参数全炸 | 抢会话锁 | 等周期结束；Busy 时按钮应灰 |

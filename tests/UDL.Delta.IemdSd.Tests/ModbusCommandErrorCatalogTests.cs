@@ -11,6 +11,9 @@ public sealed class ModbusCommandErrorCatalogTests
     [InlineData(160, 1, "工具索引")]
     [InlineData(250, 3, "未配置该顺序")]
     [InlineData(303, 1, "手动设定")]
+    [InlineData(100, 21, "旋入")]
+    [InlineData(100, 18, "工具规格")]
+    [InlineData(100, 26, "预紧扭矩大于设定拧紧")]
     public void Describe_MapsProductionChainErrors(int command, int code, string contains)
     {
         var text = ModbusCommandErrorCatalog.Describe(command, code);
