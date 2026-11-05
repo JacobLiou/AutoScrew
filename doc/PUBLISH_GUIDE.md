@@ -161,6 +161,10 @@ dotnet publish src/AutoScrew.Hmi/AutoScrew.Hmi.csproj `
 
 ## 部署和运行
 
+### 新机首次部署
+
+`appsettings.json` 不入库（.gitignore 排除，可能含加密连接串）。新机器首次部署时，复制仓库内 `src/AutoScrew.Hmi/appsettings.template.json` 为输出目录的 `appsettings.json`，并按现场调整：`UseMockMes` / `UseSimulatedHardware` 置 `false`、`StationId`、`Authentication:Mims.ConnectionStringDpapiBase64`（用 `tools/EncryptMimsConnectionString` 生成，见 [CONNECTION_STRING_ENCRYPTION.md](CONNECTION_STRING_ENCRYPTION.md)）、`Serilog` 日志路径。模板默认值为仿真态，误用不会驱动真机。
+
 ### 在目标机器上运行
 
 ```bash
