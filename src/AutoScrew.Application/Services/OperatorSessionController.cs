@@ -1110,10 +1110,6 @@ public sealed class OperatorSessionController
         ApplyUnlockNgCore(auditAction: null, auditDetail: null);
     }
 
-    /// <summary>同步入口（兼容旧调用）；等价于技术员正式解锁且不等待清错完成。</summary>
-    public void UnlockNgContinue() =>
-        UnlockNgContinueAsync().GetAwaiter().GetResult();
-
     private async Task TryClearHardwareErrorsAsync(CancellationToken cancellationToken)
     {
         try
@@ -1170,9 +1166,6 @@ public sealed class OperatorSessionController
     public Task ParkJobAsync(CancellationToken cancellationToken = default) =>
         ResetToIdleAsync(cancellationToken);
 
-    public void ResetToIdle() =>
-        ResetToIdleAsync().GetAwaiter().GetResult();
-
     public async Task ResetToIdleAsync(CancellationToken cancellationToken = default)
     {
         // Release device session held by WaitFinish / #751 before clearing job state.
@@ -1190,9 +1183,6 @@ public sealed class OperatorSessionController
         ClearSession();
         NotifyChanged();
     }
-
-    public void AbortToIdle() =>
-        AbortToIdleAsync().GetAwaiter().GetResult();
 
     public async Task AbortToIdleAsync(CancellationToken cancellationToken = default)
     {

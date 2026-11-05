@@ -263,7 +263,7 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
-            EnsureAwaitingSn();
+            await EnsureAwaitingSnAsync().ConfigureAwait(true);
             StatusMessage = Loc.Get("S.Operation.StatusValidating");
             var accept = await _session.AcceptSerialNumberAsync(inputSn).ConfigureAwait(true);
             if (!accept.Accepted)
@@ -479,12 +479,12 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanOpenScan))]
-    private void OpenScan()
+    private async Task OpenScanAsync()
     {
         AuditHelper.Log(_audit, _appOptions, _user, AuditCategory.Operation, "Operation.OpenScan");
         try
         {
-            EnsureAwaitingSn();
+            await EnsureAwaitingSnAsync().ConfigureAwait(true);
             IsSnInputEnabled = true;
             StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
             NotifyCommandStates();
@@ -541,7 +541,7 @@ public partial class MainViewModel : ObservableObject
         DeviceProcessPnText = Loc.Format("S.Operation.DeviceProcessPn", displayPn);
     }
 
-    private void EnsureAwaitingSn()
+    private async Task EnsureAwaitingSnAsync()
     {
         switch (_session.Phase)
         {
@@ -549,7 +549,7 @@ public partial class MainViewModel : ObservableObject
                 _session.RequestScanDialog();
                 break;
             case JobSessionPhase.Completed:
-                _session.ResetToIdle();
+                await _session.ResetToIdleAsync().ConfigureAwait(true);
                 _session.RequestScanDialog();
                 break;
         }
@@ -971,12 +971,12 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void StartNextSn()
+    private async Task StartNextSnAsync()
     {
         try
         {
             SerialNumberInput = string.Empty;
-            EnsureAwaitingSn();
+            await EnsureAwaitingSnAsync().ConfigureAwait(true);
             StatusMessage = Loc.Get("S.Operation.StatusEnterSn");
         }
         catch (Exception ex)

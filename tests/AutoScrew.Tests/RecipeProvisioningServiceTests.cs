@@ -233,7 +233,8 @@ public sealed class RecipeProvisioningServiceTests
 
         public string? TryResolveLanTemplate(string partNumber) => null;
 
-        public string? TryMaterializeLanTemplateToLocal(string partNumber) => null;
+        public Task<string?> TryMaterializeLanTemplateToLocalAsync(string partNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
     }
 
     private sealed class InMemorySyncRepository : IProductTemplateSyncRepository

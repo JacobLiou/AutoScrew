@@ -93,7 +93,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
 
         if (resolvedPath is null)
         {
-            resolvedPath = _lanShare.TryMaterializeLanTemplateToLocal(partNumber);
+            resolvedPath = await _lanShare.TryMaterializeLanTemplateToLocalAsync(partNumber, cancellationToken)
+                .ConfigureAwait(false);
             if (resolvedPath is not null)
                 infoMessage ??= "Using screw template from process library LAN share.";
         }
@@ -127,7 +128,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
         CancellationToken cancellationToken)
     {
         var path = _localStore.TryResolveLocalTemplate(partNumber)
-                   ?? _lanShare.TryMaterializeLanTemplateToLocal(partNumber);
+                   ?? await _lanShare.TryMaterializeLanTemplateToLocalAsync(partNumber, cancellationToken)
+                       .ConfigureAwait(false);
         if (path is null)
             throw new InvalidOperationException($"Template file not found for PN {partNumber} (local fallback).");
 

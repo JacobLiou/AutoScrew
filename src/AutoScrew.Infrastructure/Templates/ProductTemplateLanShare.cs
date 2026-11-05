@@ -159,7 +159,9 @@ public sealed class ProductTemplateLanShare : IProductTemplateLanShare
         }
     }
 
-    public string? TryMaterializeLanTemplateToLocal(string partNumber)
+    public async Task<string?> TryMaterializeLanTemplateToLocalAsync(
+        string partNumber,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(partNumber))
             return null;
@@ -171,7 +173,9 @@ public sealed class ProductTemplateLanShare : IProductTemplateLanShare
 
         try
         {
-            return PullToLocalAsync(pn, CancellationToken.None).GetAwaiter().GetResult();
+            // UNC 镜像拷贝可能秒级；放线程池执行并透传取消令牌，避免占用调用线程。
+            return await Task.Run(() => PullToLocalAsync(pn, cancellationToken), cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {

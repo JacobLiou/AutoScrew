@@ -14,7 +14,7 @@ public sealed class AppSessionCoordinator(
     IOptions<AutoScrewAppOptions> appOptions,
     ICurrentUser user) : IAppSessionCoordinator
 {
-    public void RequestLogout()
+    public async Task RequestLogoutAsync()
     {
         var mainWindow = services.GetRequiredService<MainWindow>();
         AuditHelper.Log(audit, appOptions, user, AuditCategory.Auth, "Auth.LogoutRequested");
@@ -25,7 +25,7 @@ public sealed class AppSessionCoordinator(
         }
 
         AuditHelper.Log(audit, appOptions, user, AuditCategory.Auth, "Auth.LogoutConfirmed");
-        session.ResetToIdle();
+        await session.ResetToIdleAsync().ConfigureAwait(true);
 
         mainWindow.Hide();
 

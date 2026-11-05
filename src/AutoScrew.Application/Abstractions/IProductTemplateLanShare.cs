@@ -50,7 +50,8 @@ public interface IProductTemplateLanShare
     string? TryResolveLanTemplate(string partNumber);
 
     /// <summary>
-    /// 若本机无模板且局域网有，则镜像复制到 Templates/{PN}/ 并返回本机 JSON 路径。
+    /// 若本机无模板且局域网有，则镜像复制到 Templates/{PN}/ 并返回本机 JSON 路径；
+    /// 拷贝在线程池执行，透传取消令牌。
     /// </summary>
-    string? TryMaterializeLanTemplateToLocal(string partNumber);
+    Task<string?> TryMaterializeLanTemplateToLocalAsync(string partNumber, CancellationToken cancellationToken = default);
 }

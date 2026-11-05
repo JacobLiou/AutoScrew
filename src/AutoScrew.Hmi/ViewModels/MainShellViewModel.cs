@@ -477,7 +477,7 @@ public partial class MainShellViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void Logout() => _sessionCoordinator.RequestLogout();
+    private async Task Logout() => await _sessionCoordinator.RequestLogoutAsync().ConfigureAwait(true);
 
     private void OnCurrentUserPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
