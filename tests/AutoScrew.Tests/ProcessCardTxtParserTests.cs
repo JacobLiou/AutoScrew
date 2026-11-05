@@ -265,4 +265,112 @@ public sealed class ProcessCardTxtParserTests
     [InlineData("自创", TighteningStrategy.SelfDefined)]
     public void ParseStrategy_MapsChineseLabels(string label, TighteningStrategy expected) =>
         Assert.Equal(expected, ProcessCardTxtParser.ParseStrategy(label));
+
+    [Fact]
+    public void LooksLikeVer02_FalseForLegacyKvCard()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00_v2.txt");
+        var text = File.ReadAllText(path);
+        Assert.False(ProcessCardVer02Parser.LooksLikeVer02(text));
+    }
+
+    [Fact]
+    public void Parse_Ver02Fixture_MapsPnSlotStagesAndLoosen()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1835154375_00_ver02.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var result = ProcessCardTxtParser.ParseFile(path);
+
+        Assert.Equal("1835154375", result.ScrewPn);
+        Assert.Equal(0, result.SlotId);
+        Assert.Equal(1, result.Template.ParameterId);
+        Assert.Equal(32767, result.Template.Core.MaxAngleDeg);
+        Assert.Equal(3240, result.Template.Core.MinAngleDeg);
+        Assert.Equal(120, result.Template.Core.TighteningStartDelayCentiSec);
+        Assert.Equal(123, result.Template.Core.LoosenStartDelayCentiSec);
+        Assert.Equal(21, result.Template.Core.FeederResultDelayTenthSec);
+        Assert.False(result.Template.Core.FinalCurrentJudgeEnabled);
+
+        var s0 = result.Template.Core.Stages[0];
+        Assert.Equal(TighteningControlMode.Angle, s0.ControlMode);
+        Assert.Equal(90, s0.TargetAngleDeg);
+        Assert.Equal(80, s0.SpeedRpm);
+        Assert.Equal(55, s0.AccelTimeMs);
+        Assert.Equal(55, s0.DecelTimeMs);
+        Assert.Equal(
+            TorqueUnitConverter.DisplayToMilliNm(2123, DefaultTorqueUnit.LbfIn),
+            s0.MaxTorqueMilliNm);
+
+        var s1 = result.Template.Core.Stages[1];
+        Assert.Equal(TighteningControlMode.Angle, s1.ControlMode);
+        Assert.Equal(1080, s1.TargetAngleDeg);
+        Assert.Equal(110, s1.SpeedRpm);
+        Assert.Equal(9600, s1.MaxAngleDeg);
+        Assert.Equal(3240, s1.MinAngleDeg);
+        Assert.Equal(
+            TorqueUnitConverter.DisplayToMilliNm(450, DefaultTorqueUnit.LbfIn),
+            s1.MaxTorqueMilliNm);
+
+        var s2 = result.Template.Core.Stages[2];
+        Assert.Equal(110, s2.SpeedRpm);
+        Assert.Equal(9600, s2.MaxAngleDeg);
+
+        var s3 = result.Template.Core.Stages[3];
+        Assert.Equal(TighteningControlMode.Torque, s3.ControlMode);
+        Assert.Equal(
+            TorqueUnitConverter.DisplayToMilliNm(2123, DefaultTorqueUnit.LbfIn),
+            s3.TargetTorqueMilliNm);
+        Assert.Equal(
+            TorqueUnitConverter.DisplayToMilliNm(520, DefaultTorqueUnit.LbfIn),
+            s3.Segment1TorqueMilliNm);
+        Assert.Equal(0, s3.TargetAngleDeg); // 第二行角度 0 不覆盖；扭矩模式目标角为 0
+
+        Assert.Equal(7200, result.Template.Core.Loosen.Stage1AngleDeg);
+        Assert.Equal(300, result.Template.Core.Loosen.Stage1SpeedRpm);
+        Assert.Equal(0, result.Template.Core.Loosen.Stage2AngleDeg);
+        Assert.Equal(0, result.Template.Core.Loosen.Stage2SpeedRpm);
+    }
+
+    [Fact]
+    public void Parse_Ver02_EmptySuffixWithoutFilename_Throws()
+    {
+        var text = """
+            PN【1835154375】
+            拧紧参数后缀【     】
+            　｜　　｜最大总角度｜【100】   Max Angle Tightening
+            拧紧设定｜启动｜速度｜【80】   Target Speed
+            拧紧设定｜启动｜角度｜【90】   Target Angle
+            """;
+
+        var ex = Assert.Throws<InvalidDataException>(() => ProcessCardTxtParser.Parse(text));
+        Assert.Contains("拧紧参数后缀", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parse_Ver02_EmptySuffix_UsesFilenameSlot()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "autoscrew-ver02-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var path = Path.Combine(dir, "1835154375_10.txt");
+            File.WriteAllText(path, """
+                PN【1835154375】
+                拧紧参数后缀【     】
+                　｜　　｜最大总角度｜【100】   Max Angle Tightening
+                拧紧设定｜启动｜速度｜【80】   Target Speed
+                拧紧设定｜启动｜角度｜【90】   Target Angle
+                """);
+
+            var result = ProcessCardTxtParser.ParseFile(path);
+            Assert.Equal(10, result.SlotId);
+            Assert.Equal(11, result.Template.ParameterId);
+            Assert.Equal("1835154375", result.ScrewPn);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }

@@ -1,0 +1,66 @@
+PN【1835154375】   
+版本号【00】
+做成【王自召】   
+变更内容【新建】
+变更时间：年/月/日/时/分
+
+拧紧参数后缀【00】：20=紧固程序；10=预紧程序；00=正常锁附程序 
+  ID　             【     】           Param ID  序号由系统自动设定(不用填写）
+　　　　｜　　　　｜进阶设定　｜【21   】   供料结果延时   
+　　　　｜　　　　｜进阶设定　｜【     】   最终电流判定 | F2 | 1=open, 0=close
+　　　　｜　　　　｜最大总角度｜【32767】   Max Angle Tightening
+　　　　｜　　　　｜启动延时　｜【120  】   Delay Start Tightening
+　　　　｜　　　　｜最小总角度｜【3240 】   Min Angle Tightening
+　　　　｜拧松条件｜启动延时　｜【123  】   Delay Start Loosening
+　　　　｜拧松条件｜超时　　　｜【     】   Max Time Tightening
+拧紧设定｜启动　　｜速度　　　｜【80   】   Target Speed
+拧紧设定｜启动　　｜角度　　　｜【90   】   Target Angle
+拧紧设定｜启动　　｜进阶设定　｜【55   】   加速度时间   Acc. time
+拧紧设定｜启动　　｜进阶设定　｜【55   】   减速度时间   Dcc. time
+拧紧设定｜启动　　｜最大扭矩　｜【2123 】   Max. Torque L
+拧紧设定｜启动　　｜最小扭矩　｜【0    】   Min. Torque L
+拧紧设定｜旋入　　｜设定模式　｜【     】   on/off | 12C | 0=角度, 1=扭矩, 2=扭矩率
+拧紧设定｜旋入　　｜速度　　　｜【110  】   Target Speed
+拧紧设定｜旋入　　｜角度　　　｜【1080 】   Target Angle
+拧紧设定｜旋入　　｜进阶设定　｜【52   】   加速度时间   Acc. time
+拧紧设定｜旋入　　｜进阶设定　｜【52   】   减速度时间   Dcc. time
+拧紧设定｜旋入　　｜扭矩　　　｜【350  】   Target Torque | Clamp Torque L
+拧紧设定｜旋入　　｜扭矩率　　｜【0    】   Start torque for tightening angle calculation H
+拧紧设定｜旋入　　｜最大角度　｜【9600 】   Max. Angle
+拧紧设定｜旋入　　｜最小角度　｜【3240 】   Min. Angle
+拧紧设定｜旋入　　｜最大扭矩　｜【450  】   Max. Torque L
+拧紧设定｜旋入　　｜最小扭矩　｜【100  】   Min. Torque L
+拧紧设定｜预紧　　｜设定模式　｜【     】   on/off | 15E | 1=扭矩, 2=扭矩率
+拧紧设定｜预紧　　｜扭矩　　　｜【0    】   -
+拧紧设定｜预紧　　｜速度　　　｜【110  】   Target Speed
+拧紧设定｜预紧　　｜进阶设定　｜【53   】   加速度时间   Acc. time
+拧紧设定｜预紧　　｜进阶设定　｜【53   】   减速度时间   Dcc. time
+拧紧设定｜预紧　　｜扭矩率　　｜【0    】   Start torque for tightening angle calculation H
+拧紧设定｜预紧　　｜最大角度　｜【9600 】   Max. Angle
+拧紧设定｜预紧　　｜最小角度　｜【2450 】   Min. Angle
+拧紧设定｜拧紧　　｜设定模式　｜【     】   on/off   有标记 | 190 | 0=角度, 1=扭矩, 3=夹紧扭矩, 4=夹紧角度
+拧紧设定｜拧紧　　｜夹紧扭矩　｜【     】
+拧紧设定｜拧紧　　｜夹紧角度　｜【     】
+拧紧设定｜拧紧　　｜角度　　　｜【10   】   Target Angle
+拧紧设定｜拧紧　　｜扭矩　　　｜【2123 】   Target Torque | Clamp Torque L
+拧紧设定｜拧紧　　｜进阶设定　｜【520  】   第一阶段扭矩   Torque of 1st Stage L
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   第二阶段速度   Speed of 2nd Stage
+拧紧设定｜拧紧　　｜速度　　　｜【0    】   Target Speed
+拧紧设定｜拧紧　　｜角度　　　｜【0    】   Target Angle
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   加速度时间   Acc. time
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   减速度时间   Dcc. time
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   第二阶段加速度时间   Acc. Time of 2nd Stage
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   第一阶段暂定时间   Pause Time after 1st Stage
+拧紧设定｜拧紧　　｜进阶设定　｜【0    】   第一阶段扭矩   Torque of 1st Stage L
+拧紧设定｜拧紧　　｜最大角度　｜【0    】   Max. Angle
+拧紧设定｜拧紧　　｜最小角度　｜【0    】   Min. Angle
+拧紧设定｜拧紧　　｜最大扭矩　｜【0    】   Max. Torque L
+拧紧设定｜拧紧　　｜最小扭矩　｜【0    】   Min. Torque L
+拧紧设定｜拧紧　　｜进阶设定　｜【     】   两阶段模式   ON/OFF | 0x1AAbit11 | 0关闭, 1开启
+拧紧设定｜拧紧　　｜进阶设定　｜【     】   缓停止   ON/OFF | 0x1AAbit2 | 0关闭, 1开启
+拧松设定｜第一阶段｜速度　　　｜【300  】   Target Speed
+拧松设定｜第一阶段｜角度　　　｜【7200 】   Target Angle
+拧松设定｜第二阶段｜角度　　　｜【0    】   Target Speed
+拧松设定｜第二阶段｜速度　　　｜【0    】   Target Angle
+拧松设定｜生产履历｜生产履历　｜【     】   ON/OFF | 22C | 0关闭, 1开启
+拧松设定｜最小扭矩｜最小扭矩　｜【     】   | 22B | 直接写值

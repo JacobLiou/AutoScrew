@@ -6,7 +6,7 @@ using UDL.Delta.IemdSd.Protocol;
 
 namespace AutoScrew.Infrastructure.ProcessLibrary;
 
-/// <summary>工艺卡 TXT → <see cref="TighteningParameterTemplate"/>（扭矩默认 lbf.in）。</summary>
+/// <summary>工艺卡 TXT → <see cref="TighteningParameterTemplate"/>（扭矩默认 lbf.in）。自动识别旧键值格式与 ver02 表格式。</summary>
 public static class ProcessCardTxtParser
 {
     /// <summary>允许值为空（如最终模板「参数ID：」仅注释）。</summary>
@@ -23,6 +23,20 @@ public static class ProcessCardTxtParser
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
+        if (ProcessCardVer02Parser.LooksLikeVer02(text))
+            return ProcessCardVer02Parser.Parse(text, sourceFilePath);
+
+        return ParseLegacyKv(text, sourceFilePath);
+    }
+
+    public static ProcessCardParseResult ParseFile(string filePath)
+    {
+        var text = File.ReadAllText(filePath);
+        return Parse(text, filePath);
+    }
+
+    private static ProcessCardParseResult ParseLegacyKv(string text, string? sourceFilePath)
+    {
         var lines = text
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n')
@@ -89,7 +103,6 @@ public static class ProcessCardTxtParser
 
             var key = NormalizeKey(kv.Groups["k"].Value);
             var value = kv.Groups["v"].Value.Trim();
-            // 「速度（转/分钟）：80  8」取第一个数
             if (key.Contains("速度", StringComparison.Ordinal) && value.Contains(' ', StringComparison.Ordinal))
                 value = value.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
 
@@ -118,17 +131,17 @@ public static class ProcessCardTxtParser
         }
 
         var (screwPn, slotId) = ProcessParameterCode.ResolveIdentity(
-            GetString(map, "参数"),
+            ProcessCardSemantics.GetString(map, "参数"),
             sourceFilePath,
-            GetString(map, "参数ID") ?? GetString(map, "参数Id"));
+            ProcessCardSemantics.GetString(map, "参数ID") ?? ProcessCardSemantics.GetString(map, "参数Id"));
 
-        TryGetInt(map, "阶段有效", out var stageCount);
+        ProcessCardSemantics.TryGetInt(map, "阶段有效", out var stageCount);
         if (stageCount <= 0)
             stageCount = stageBlocks.Count > 0 ? stageBlocks.Keys.Max() + 1 : 4;
         stageCount = Math.Clamp(stageCount, 1, 6);
 
-        var direction = ParseDirection(GetString(map, "旋转方向"));
-        var strategy = ParseStrategy(GetString(map, "策略"));
+        var direction = ProcessCardSemantics.ParseDirection(ProcessCardSemantics.GetString(map, "旋转方向"));
+        var strategy = ProcessCardSemantics.ParseStrategy(ProcessCardSemantics.GetString(map, "策略"));
 
         var template = new TighteningParameterTemplate
         {
@@ -143,33 +156,35 @@ public static class ProcessCardTxtParser
             },
         };
 
-        template.Core.MaxAngleDeg = GetInt(map, "最大总角度", GetInt(map, "最大角度", 0));
-        template.Core.MinAngleDeg = GetInt(map, "最小总角度", GetInt(map, "最小角度", 0));
-        template.Core.MaxTighteningTimeTenthSec = SecondsToTenth(GetDouble(map, "最大拧紧时间", 0));
-        template.Core.TighteningStartDelayCentiSec = GetInt(map, "拧紧启动延时", 0);
-        template.Core.MaxLoosenTimeTenthSec = SecondsToTenth(GetDouble(map, "最大拧松时间", 0));
-        template.Core.LoosenStartDelayCentiSec = GetInt(map, "拧松启动延时", 0);
-        template.Core.MaxLoosenAngleDeg = GetInt(map, "最大拧松角度", 0);
+        template.Core.MaxAngleDeg = ProcessCardSemantics.GetInt(map, "最大总角度", ProcessCardSemantics.GetInt(map, "最大角度", 0));
+        template.Core.MinAngleDeg = ProcessCardSemantics.GetInt(map, "最小总角度", ProcessCardSemantics.GetInt(map, "最小角度", 0));
+        template.Core.MaxTighteningTimeTenthSec =
+            ProcessCardSemantics.SecondsToTenth(ProcessCardSemantics.GetDouble(map, "最大拧紧时间", 0));
+        template.Core.TighteningStartDelayCentiSec = ProcessCardSemantics.GetInt(map, "拧紧启动延时", 0);
+        template.Core.MaxLoosenTimeTenthSec =
+            ProcessCardSemantics.SecondsToTenth(ProcessCardSemantics.GetDouble(map, "最大拧松时间", 0));
+        template.Core.LoosenStartDelayCentiSec = ProcessCardSemantics.GetInt(map, "拧松启动延时", 0);
+        template.Core.MaxLoosenAngleDeg = ProcessCardSemantics.GetInt(map, "最大拧松角度", 0);
 
-        template.Core.FinalCurrentJudgeEnabled = ParseOnOff(GetString(map, "最终电流判定"));
-        template.Core.LastStageServoOn = ParseOnOff(GetString(map, "末段伺服保持"));
-        template.Core.FeederResultDelayTenthSec = GetInt(map, "供料结果延时", 0);
-        template.Core.LinkedCompensationParamId = GetInt(map, "关联补偿参数ID", 0);
-        template.Core.SeatAngleStartTorqueRate = GetInt(map, "贴合起始扭矩率", 0);
-        template.Core.ToolPrecisionCompTenthPercent = GetInt(map, "工具精度补偿", 0);
-        template.Core.CurveSampleStartTorqueMilliNm = GetInt(map, "曲线取样起始扭矩", 0);
-        template.Core.TorqueRateAngleDelayTenthDeg = GetInt(map, "扭矩率角度间隔", 0);
-        template.Core.SeatPointAngleCorrectionTenthDeg = GetInt(map, "贴合点角度修正", 0);
+        template.Core.FinalCurrentJudgeEnabled =
+            ProcessCardSemantics.ParseOnOff(ProcessCardSemantics.GetString(map, "最终电流判定"));
+        template.Core.LastStageServoOn =
+            ProcessCardSemantics.ParseOnOff(ProcessCardSemantics.GetString(map, "末段伺服保持"));
+        template.Core.FeederResultDelayTenthSec = ProcessCardSemantics.GetInt(map, "供料结果延时", 0);
+        template.Core.LinkedCompensationParamId = ProcessCardSemantics.GetInt(map, "关联补偿参数ID", 0);
+        template.Core.SeatAngleStartTorqueRate = ProcessCardSemantics.GetInt(map, "贴合起始扭矩率", 0);
+        template.Core.ToolPrecisionCompTenthPercent = ProcessCardSemantics.GetInt(map, "工具精度补偿", 0);
+        template.Core.CurveSampleStartTorqueMilliNm = ProcessCardSemantics.GetInt(map, "曲线取样起始扭矩", 0);
+        template.Core.TorqueRateAngleDelayTenthDeg = ProcessCardSemantics.GetInt(map, "扭矩率角度间隔", 0);
+        template.Core.SeatPointAngleCorrectionTenthDeg = ProcessCardSemantics.GetInt(map, "贴合点角度修正", 0);
 
-        // 按段标题序号灌入（加强仅 4.拧紧 → 槽 3；自创可含 5/6）
         foreach (var (idx, block) in stageBlocks)
         {
             if (idx is < 0 or > 5)
                 continue;
-            ApplyStage(template.Core.Stages[idx], idx, block, direction);
+            ProcessCardSemantics.ApplyStage(template.Core.Stages[idx], idx, block, direction);
         }
 
-        // 阶段有效：截断尾部空槽（不删已解析的中间槽，如加强槽 3）
         if (strategy == TighteningStrategy.SelfDefined && stageCount < 6)
         {
             for (var i = stageCount; i < 6; i++)
@@ -179,285 +194,15 @@ public static class ProcessCardTxtParser
             }
         }
 
-        ApplyLoosen(template.Core.Loosen, loosenMap, direction);
+        ProcessCardSemantics.ApplyLoosen(template.Core.Loosen, loosenMap, direction);
         template.ApplyCoreToRaw();
 
         return new ProcessCardParseResult(template, screwPn, slotId);
     }
 
-    public static ProcessCardParseResult ParseFile(string filePath)
-    {
-        var text = File.ReadAllText(filePath);
-        return Parse(text, filePath);
-    }
-
-    /// <summary>
-    /// 身份：<c>参数：螺钉PN-槽位</c>；卡内「参数ID」仅作旧格式螺钉 PN 回退，不作为设备 ID。
-    /// 缺「参数」时用文件名尾缀槽位。
-    /// </summary>
-    [Obsolete("Use ProcessParameterCode.ResolveIdentity")]
-    private static (string ScrewPn, int SlotId) ParseParameterIdentity(IReadOnlyDictionary<string, string> map) =>
-        ProcessParameterCode.ResolveIdentity(
-            GetString(map, "参数"),
-            filePathOrName: null,
-            GetString(map, "参数ID") ?? GetString(map, "参数Id"));
-
-    private static void ApplyStage(
-        TighteningStageCore stage,
-        int index,
-        IReadOnlyDictionary<string, string> block,
-        TighteningDirection direction)
-    {
-        stage.Direction = direction;
-        stage.SpeedRpm = GetInt(block, "速度", 0);
-
-        var tightenAngle = GetInt(block, "拧紧角度", 0);
-        var torqueLbf = GetDouble(block, "扭矩", 0);
-        var torqueRate = GetDouble(block, "扭矩率", 0);
-        var clampTorqueLbf = GetDouble(block, "夹紧扭矩", 0);
-        var clampAngle = GetInt(block, "夹紧角度", 0);
-
-        var maxTorqueLbf = GetDouble(block, "最大扭矩", 0);
-        var minTorqueLbf = GetDouble(block, "最小扭矩", 0);
-        var maxAngle = GetInt(block, "最大角度", 0);
-        var minAngle = GetInt(block, "最小角度", 0);
-
-        var torqueJudge = ResolveJudgeEnabled(block, "扭矩判断", maxTorqueLbf > 0 || minTorqueLbf > 0);
-        var angleJudge = ResolveJudgeEnabled(block, "角度判断", maxAngle > 0 || minAngle > 0);
-
-        var explicitMode = TryParseControlMode(GetString(block, "控制模式"));
-        stage.ControlMode = explicitMode
-            ?? ResolveControlMode(index, tightenAngle, torqueLbf, torqueRate, clampTorqueLbf, clampAngle);
-
-        switch (stage.ControlMode)
-        {
-            case TighteningControlMode.Angle:
-                stage.TargetAngleDeg = tightenAngle;
-                stage.TargetTorqueMilliNm = 0;
-                break;
-            case TighteningControlMode.Torque:
-                stage.TargetTorqueMilliNm = LbfInToMilliNm(torqueLbf);
-                stage.TargetAngleDeg = 0;
-                break;
-            case TighteningControlMode.TorqueRate:
-                stage.TargetTorqueRate = (int)Math.Round(torqueRate * 1000.0);
-                stage.TargetAngleDeg = tightenAngle;
-                stage.TargetTorqueMilliNm = 0;
-                break;
-            case TighteningControlMode.ClampTorque:
-                stage.TargetTorqueMilliNm = LbfInToMilliNm(clampTorqueLbf > 0 ? clampTorqueLbf : torqueLbf);
-                stage.TargetAngleDeg = 0;
-                break;
-            case TighteningControlMode.ClampAngle:
-                stage.TargetAngleDeg = clampAngle > 0 ? clampAngle : tightenAngle;
-                stage.MaxClampAngleDeg = clampAngle;
-                stage.TargetTorqueMilliNm = 0;
-                break;
-        }
-
-        if (clampTorqueLbf > 0 && stage.ControlMode != TighteningControlMode.ClampTorque)
-            stage.MaxClampTorqueMilliNm = LbfInToMilliNm(clampTorqueLbf);
-        if (clampAngle > 0 && stage.ControlMode != TighteningControlMode.ClampAngle)
-            stage.MaxClampAngleDeg = clampAngle;
-
-        if (torqueJudge)
-        {
-            stage.MaxTorqueMilliNm = LbfInToMilliNm(maxTorqueLbf);
-            stage.MinTorqueMilliNm = LbfInToMilliNm(minTorqueLbf);
-        }
-        else
-        {
-            stage.MaxTorqueMilliNm = 0;
-            stage.MinTorqueMilliNm = 0;
-        }
-
-        if (angleJudge)
-        {
-            stage.MaxAngleDeg = maxAngle;
-            stage.MinAngleDeg = minAngle;
-        }
-        else
-        {
-            stage.MaxAngleDeg = 0;
-            stage.MinAngleDeg = 0;
-        }
-
-        ApplyStageAdvanced(stage, block);
-    }
-
-    private static void ApplyStageAdvanced(TighteningStageCore stage, IReadOnlyDictionary<string, string> block)
-    {
-        // 段内键与全局进阶「扭矩率角度间隔」同名时，段块优先（已在段 map 中）
-        if (block.ContainsKey("扭矩率角度间隔"))
-            stage.TorqueRateAngleIntervalTenthDeg = GetInt(block, "扭矩率角度间隔", 0);
-
-        stage.AccelTimeMs = GetInt(block, "加速时间", 0);
-        stage.DecelTimeMs = GetInt(block, "减速时间", 0);
-        stage.MaxRunTimeCentiSec = GetInt(block, "最大运行时间", 0);
-        stage.MinRunTimeCentiSec = GetInt(block, "最小运行时间", 0);
-
-        if (block.ContainsKey("补偿扭矩"))
-            stage.CompTorqueEnabled = ParseOnOff(GetString(block, "补偿扭矩"));
-        stage.CompTorqueAnglePercent = GetInt(block, "补偿扭矩角度百分比", 0);
-        stage.PauseTimeMs = GetInt(block, "暂停时间", GetInt(block, "持续时间", 0));
-
-        var minClampTorqueLbf = GetDouble(block, "最小夹紧扭矩", 0);
-        if (minClampTorqueLbf > 0 || block.ContainsKey("最小夹紧扭矩"))
-            stage.MinClampTorqueMilliNm = LbfInToMilliNm(minClampTorqueLbf);
-        stage.MinClampAngleDeg = GetInt(block, "最小夹紧角度", 0);
-
-        var seg1Lbf = GetDouble(block, "一段扭矩", 0);
-        if (seg1Lbf > 0 || block.ContainsKey("一段扭矩"))
-            stage.Segment1TorqueMilliNm = LbfInToMilliNm(seg1Lbf);
-        stage.Segment1PauseMs = GetInt(block, "一段暂停", 0);
-        stage.Segment2AccelMs = GetInt(block, "二段加速", 0);
-        stage.FinalSpeedRpm = GetInt(block, "最终速度", 0);
-
-        if (block.ContainsKey("两阶段模式"))
-            stage.TwoStageModeEnabled = ParseOnOff(GetString(block, "两阶段模式"));
-        else
-            stage.TwoStageModeEnabled =
-                stage.Segment1TorqueMilliNm > 0
-                || stage.Segment1PauseMs > 0
-                || stage.Segment2AccelMs > 0
-                || stage.FinalSpeedRpm > 0;
-
-        if (block.ContainsKey("缓停止"))
-            stage.ErgoStopEnabled = ParseOnOff(GetString(block, "缓停止"));
-    }
-
-    /// <summary>
-    /// 显式 OFF → false；显式 ON → true；键缺失且有正值上下限 → true。
-    /// </summary>
-    private static bool ResolveJudgeEnabled(
-        IReadOnlyDictionary<string, string> block,
-        string key,
-        bool hasPositiveLimits)
-    {
-        if (!block.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
-            return hasPositiveLimits;
-
-        if (IsExplicitOff(raw))
-            return false;
-
-        return ParseOnOff(raw) || hasPositiveLimits;
-    }
-
-    private static bool IsExplicitOff(string value)
-    {
-        var v = value.Trim();
-        return v.Equals("OFF", StringComparison.OrdinalIgnoreCase)
-               || v.Equals("关", StringComparison.Ordinal)
-               || v.Equals("否", StringComparison.Ordinal)
-               || v.Equals("0", StringComparison.Ordinal);
-    }
-
-    private static TighteningControlMode? TryParseControlMode(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        var v = value.Trim();
-        if (v.Contains("扭矩率", StringComparison.Ordinal))
-            return TighteningControlMode.TorqueRate;
-        if (v.Contains("夹紧扭矩", StringComparison.Ordinal))
-            return TighteningControlMode.ClampTorque;
-        if (v.Contains("夹紧角度", StringComparison.Ordinal))
-            return TighteningControlMode.ClampAngle;
-        if (v.Contains("扭矩", StringComparison.Ordinal))
-            return TighteningControlMode.Torque;
-        if (v.Contains("角度", StringComparison.Ordinal))
-            return TighteningControlMode.Angle;
-        return null;
-    }
-
-    private static TighteningControlMode ResolveControlMode(
-        int index,
-        int tightenAngle,
-        double torqueLbf,
-        double torqueRate,
-        double clampTorqueLbf,
-        int clampAngle)
-    {
-        // 启动：固定角度
-        if (index == 0)
-            return TighteningControlMode.Angle;
-
-        // 旋入：3 选 1
-        if (index == 1)
-        {
-            if (torqueRate > 0)
-                return TighteningControlMode.TorqueRate;
-            if (tightenAngle > 0)
-                return TighteningControlMode.Angle;
-            return TighteningControlMode.Torque;
-        }
-
-        // 预紧：最终模板为扭矩/扭矩率；兼容旧卡夹紧扭矩
-        if (index == 2)
-        {
-            if (torqueRate > 0)
-                return TighteningControlMode.TorqueRate;
-            if (clampTorqueLbf > 0)
-                return TighteningControlMode.ClampTorque;
-            return TighteningControlMode.Torque;
-        }
-
-        // 拧紧及自创段：4 选 1
-        if (clampAngle > 0 && torqueLbf <= 0 && clampTorqueLbf <= 0 && tightenAngle <= 0)
-            return TighteningControlMode.ClampAngle;
-        if (clampTorqueLbf > 0 && torqueLbf <= 0)
-            return TighteningControlMode.ClampTorque;
-        if (torqueRate > 0)
-            return TighteningControlMode.TorqueRate;
-        if (torqueLbf > 0)
-            return TighteningControlMode.Torque;
-        if (tightenAngle > 0)
-            return TighteningControlMode.Angle;
-        return TighteningControlMode.Torque;
-    }
-
-    private static void ApplyLoosen(
-        TighteningLoosenCore loosen,
-        IReadOnlyDictionary<string, string> map,
-        TighteningDirection tightenDirection)
-    {
-        loosen.Direction = tightenDirection == TighteningDirection.Clockwise
-            ? TighteningDirection.CounterClockwise
-            : TighteningDirection.Clockwise;
-
-        loosen.Stage1AngleDeg = GetInt(map, "一段角度", GetInt(map, "角度", 0));
-        loosen.Stage1SpeedRpm = GetInt(map, "一段速度", 0);
-        loosen.Stage2AngleDeg = GetInt(map, "二段角度", 0);
-        loosen.Stage2SpeedRpm = GetInt(map, "二段速度", 0);
-
-        if (loosen.Stage1SpeedRpm == 0)
-            loosen.Stage1SpeedRpm = GetInt(map, "速度", 0);
-
-        // 段内「加速时间」→ 一段加速时间；或顶层「第一段加速」
-        loosen.Stage1AccelMs = GetInt(map, "一段加速时间", GetInt(map, "一段加速", GetInt(map, "第一段加速", 0)));
-        loosen.Stage2AccelMs = GetInt(map, "二段加速时间", GetInt(map, "二段加速", GetInt(map, "第二段加速", 0)));
-
-        loosen.ProductionLogEnabled = ParseOnOff(GetString(map, "生产履历存档"));
-        loosen.DetectTorqueMilliNm = LbfInToMilliNm(GetDouble(map, "最小扭矩", 0));
-    }
-
-    public static TighteningStrategy ParseStrategy(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return TighteningStrategy.Standard;
-        var v = value.Trim();
-        if (v.Contains("加强", StringComparison.Ordinal) ||
-            v.Equals("Enhanced", StringComparison.OrdinalIgnoreCase))
-            return TighteningStrategy.Enhanced;
-        if (v.Contains("预定位", StringComparison.Ordinal) ||
-            v.Contains("PrePosition", StringComparison.OrdinalIgnoreCase) ||
-            v.Contains("Pre-position", StringComparison.OrdinalIgnoreCase))
-            return TighteningStrategy.PrePosition;
-        if (v.Contains("自创", StringComparison.Ordinal) ||
-            v.Contains("Self", StringComparison.OrdinalIgnoreCase))
-            return TighteningStrategy.SelfDefined;
-        return TighteningStrategy.Standard;
-    }
+    /// <summary>兼容旧测试入口。</summary>
+    public static TighteningStrategy ParseStrategy(string? value) =>
+        ProcessCardSemantics.ParseStrategy(value);
 
     private static string StripComment(string line)
     {
@@ -475,60 +220,4 @@ public static class ProcessCardTxtParser
             key = key[..paren];
         return key.Trim();
     }
-
-    private static string? GetString(IReadOnlyDictionary<string, string> map, string key) =>
-        map.TryGetValue(key, out var v) ? v : null;
-
-    private static bool TryGetInt(IReadOnlyDictionary<string, string> map, string key, out int value)
-    {
-        value = 0;
-        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
-            return false;
-        var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
-        return int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
-    }
-
-    private static int GetInt(IReadOnlyDictionary<string, string> map, string key, int fallback)
-    {
-        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
-            return fallback;
-        var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
-        return int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : fallback;
-    }
-
-    private static double GetDouble(IReadOnlyDictionary<string, string> map, string key, double fallback)
-    {
-        if (!map.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
-            return fallback;
-        var token = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
-        return double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : fallback;
-    }
-
-    private static int SecondsToTenth(double seconds) => (int)Math.Round(seconds * 10.0);
-
-    private static int LbfInToMilliNm(double lbfIn) =>
-        TorqueUnitConverter.DisplayToMilliNm(lbfIn, DefaultTorqueUnit.LbfIn);
-
-    private static bool ParseOnOff(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-        var v = value.Trim();
-        return v.Equals("ON", StringComparison.OrdinalIgnoreCase)
-               || v.Equals("开", StringComparison.Ordinal)
-               || v.Equals("是", StringComparison.Ordinal)
-               || v.Equals("1", StringComparison.Ordinal);
-    }
-
-    private static TighteningDirection ParseDirection(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return TighteningDirection.Clockwise;
-        if (value.Contains("逆", StringComparison.Ordinal) ||
-            value.Contains("CCW", StringComparison.OrdinalIgnoreCase))
-            return TighteningDirection.CounterClockwise;
-        return TighteningDirection.Clockwise;
-    }
-
-    private static string SanitizeAscii(string value) => ProcessParameterCode.SanitizeAscii(value);
 }
