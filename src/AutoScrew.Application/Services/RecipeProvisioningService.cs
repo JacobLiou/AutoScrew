@@ -10,6 +10,7 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
     private readonly IMesClient _mesClient;
     private readonly IMesSettingsService _mesSettings;
     private readonly IProductTemplateLocalStore _localStore;
+    private readonly IProductTemplateLanShare _lanShare;
     private readonly IMesTemplatePackageClient _packageClient;
     private readonly IProductTemplateSyncRepository _syncRepository;
     private readonly IOptions<AutoScrewAppOptions> _options;
@@ -19,6 +20,7 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
         IMesClient mesClient,
         IMesSettingsService mesSettings,
         IProductTemplateLocalStore localStore,
+        IProductTemplateLanShare lanShare,
         IMesTemplatePackageClient packageClient,
         IProductTemplateSyncRepository syncRepository,
         IOptions<AutoScrewAppOptions> options,
@@ -27,6 +29,7 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
         _mesClient = mesClient;
         _mesSettings = mesSettings;
         _localStore = localStore;
+        _lanShare = lanShare;
         _packageClient = packageClient;
         _syncRepository = syncRepository;
         _options = options;
@@ -55,7 +58,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
         string? infoMessage = null;
         var source = RecipeTemplateSource.Local;
 
-        if (!snapshot.UseMockMes && !string.IsNullOrWhiteSpace(recipe.TemplatePackageUrl))
+        var mode = MesProviderMode.Normalize(snapshot.MesMode, snapshot.UseMockMes);
+        if (mode == MesProviderMode.LegacyHttp && !string.IsNullOrWhiteSpace(recipe.TemplatePackageUrl))
         {
             try
             {
@@ -88,6 +92,13 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
             resolvedPath = _localStore.TryResolveLocalTemplate(partNumber);
 
         if (resolvedPath is null)
+        {
+            resolvedPath = _lanShare.TryMaterializeLanTemplateToLocal(partNumber);
+            if (resolvedPath is not null)
+                infoMessage ??= "Using screw template from process library LAN share.";
+        }
+
+        if (resolvedPath is null)
             throw new InvalidOperationException($"Template file not found for PN {partNumber}.");
 
         if (source == RecipeTemplateSource.Local)
@@ -115,7 +126,8 @@ public sealed class RecipeProvisioningService : IRecipeProvisioningService
         string infoMessage,
         CancellationToken cancellationToken)
     {
-        var path = _localStore.TryResolveLocalTemplate(partNumber);
+        var path = _localStore.TryResolveLocalTemplate(partNumber)
+                   ?? _lanShare.TryMaterializeLanTemplateToLocal(partNumber);
         if (path is null)
             throw new InvalidOperationException($"Template file not found for PN {partNumber} (local fallback).");
 

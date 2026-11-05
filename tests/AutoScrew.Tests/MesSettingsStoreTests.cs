@@ -18,6 +18,7 @@ public sealed class MesSettingsStoreTests
             var store = CreateStore(root);
             var original = new MesRuntimeSettings
             {
+                MesMode = MesProviderMode.LegacyHttp,
                 UseMockMes = false,
                 BaseUrl = "http://localhost:5080/",
                 ApiKey = "test-key",
@@ -28,6 +29,7 @@ public sealed class MesSettingsStoreTests
             var loaded = await store.LoadAsync(CancellationToken.None);
 
             Assert.False(loaded.UseMockMes);
+            Assert.Equal(MesProviderMode.LegacyHttp, loaded.MesMode);
             Assert.Equal("http://localhost:5080/", loaded.BaseUrl);
             Assert.Equal("test-key", loaded.ApiKey);
             Assert.Equal(30, loaded.TimeoutSeconds);

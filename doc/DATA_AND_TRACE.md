@@ -15,7 +15,8 @@
 - 锁附日志：`lock_log_{timestamp}.json`
 - 可选网络镜像：`AutoScrew:OptionalNetworkArchiveRoot`（复制失败不阻塞产线；无凭证，兼容旧配置）。
 - **局域网 SN 归档（ProductKey / Fusion / 无 MES）**：`mes-settings.json` 的 `LanShareRoot`（Mes 页可配）→ `{LanShareRoot}\{MAC}\{SN}\`，镜像本地 `work\{SN}`（曲线 CSV、`lock_log_*.json`）。`MAC` 为本机网卡地址规范化名（`AA-BB-CC-DD-EE-FF`）；取不到时用 `UNKNOWN-HOST`。服务账号与口令**不在 HMI 展示**：账号固定于代码；口令为 `AutoScrew:LanSharePasswordAes256`（`aes256:` 密文，用 `tools/EncryptMimsConnectionString` 生成）。连接用 `WNetUseConnection`；失败不阻塞产线。有 LAN 根即镜像，与是否 HTTP MES 无关。
-- **产品模板库（V1.2）**：`{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。一期 UNC `{PN}` 模板同步见 [FusionTodo.md](FusionTodo.md) F-05（未强制）。
+- **产品模板库（V1.2）**：本机编辑工作区 `{HMI.exe 同级}/Templates/{PN}/`（`AutoScrew:TemplateDirectory`，默认 `Templates`）；含 v2 JSON 与背景图；脱机 SN 注册表 `Templates/local-recipes.json`（可选）。
+- **ProductKey / 局域网螺钉模板发布（F-05）**：技术员在螺钉模板页「MES 同步」→ 发布到 `{processRoot}/{PN}/template/`（与工艺库 `screws/`、`sequences/` 同级；`processRoot` = `{LanShareRoot}\process` 或 `{DataDirectory}\process`）。扫码加载时本机缺失则从该目录物化到本机 `Templates/{PN}/`。Mock 模式不传送；LegacyHttp 走 `POST api/templates/{pn}/package`。
 
 ## 产线 OK/NG 与 Recipe 职责（2026-08-28）
 

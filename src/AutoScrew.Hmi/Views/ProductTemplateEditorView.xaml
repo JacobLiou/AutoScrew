@@ -135,29 +135,75 @@
                             Padding="0,8,0,0">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" MinHeight="80" />
+                                <RowDefinition Height="*" MinHeight="80" />
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="4,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource S.Template.LocalTemplates}"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center" />
-                                <ui:Button Grid.Column="1"
-                                           Padding="6,2"
-                                           Style="{StaticResource ShellSecondaryButtonStyle}"
-                                           ToolTip="{DynamicResource S.Template.LocalTemplatesRefresh}"
-                                           Command="{Binding RefreshLocalTemplatesCommand}">
-                                    <ui:SymbolIcon Symbol="ArrowClockwise24" />
-                                </ui:Button>
+                            <Grid Grid.Row="0" Margin="0,0,0,4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0" Margin="4,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{DynamicResource S.Template.LocalTemplates}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center" />
+                                    <ui:Button Grid.Column="1"
+                                               Padding="6,2"
+                                               Style="{StaticResource ShellSecondaryButtonStyle}"
+                                               ToolTip="{DynamicResource S.Template.LocalTemplatesRefresh}"
+                                               Command="{Binding RefreshLocalTemplatesCommand}">
+                                        <ui:SymbolIcon Symbol="ArrowClockwise24" />
+                                    </ui:Button>
+                                </Grid>
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding LocalTemplates}"
+                                         SelectedItem="{Binding SelectedLocalTemplate, Mode=TwoWay}"
+                                         DisplayMemberPath="DisplayText" />
                             </Grid>
-                            <ListBox Grid.Row="1"
-                                     ItemsSource="{Binding LocalTemplates}"
-                                     SelectedItem="{Binding SelectedLocalTemplate, Mode=TwoWay}"
-                                     DisplayMemberPath="DisplayText" />
+                            <Border Grid.Row="1"
+                                    BorderBrush="{DynamicResource ShellBorderBrush}"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="0,8,0,0"
+                                    Visibility="{Binding IsMesTemplateListVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" Margin="4,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{DynamicResource S.Template.MesTemplates}"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" />
+                                        <ui:Button Grid.Column="1"
+                                                   Padding="6,2"
+                                                   Style="{StaticResource ShellSecondaryButtonStyle}"
+                                                   ToolTip="{DynamicResource S.Template.MesTemplatesRefresh}"
+                                                   Command="{Binding RefreshMesTemplatesCommand}">
+                                            <ui:SymbolIcon Symbol="ArrowClockwise24" />
+                                        </ui:Button>
+                                    </Grid>
+                                    <ListBox Grid.Row="1"
+                                             ItemsSource="{Binding MesTemplates}"
+                                             SelectedItem="{Binding SelectedMesTemplate, Mode=TwoWay}"
+                                             DisplayMemberPath="DisplayText"
+                                             MouseDoubleClick="MesTemplates_OnMouseDoubleClick" />
+                                    <ui:Button Grid.Row="2"
+                                               Margin="0,6,0,0"
+                                               HorizontalAlignment="Stretch"
+                                               Style="{StaticResource ShellSecondaryButtonStyle}"
+                                               Content="{DynamicResource S.Template.MesPull}"
+                                               Command="{Binding PullMesTemplateCommand}" />
+                                </Grid>
+                            </Border>
                         </Grid>
                     </Border>
                 </Grid>

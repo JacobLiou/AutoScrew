@@ -88,6 +88,58 @@ public sealed class RecipeProvisioningServiceTests
         }
     }
 
+    [Fact]
+    public async Task GetProvisionedRecipeAsync_WhenOnlyLanTemplate_MaterializesLocal()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var dataDir = Path.Combine(root, "data");
+            var templateDir = Path.Combine(root, "templates");
+            Directory.CreateDirectory(templateDir);
+            var lanFolder = Path.Combine(dataDir, "process", "PN-LAN", "template");
+            Directory.CreateDirectory(lanFolder);
+            File.WriteAllText(
+                Path.Combine(lanFolder, "PN-LAN.product-template.json"),
+                """{"schemaVersion":2,"productId":"PN-LAN"}""");
+
+            var app = Options.Create(new AutoScrewAppOptions
+            {
+                TemplateDirectory = templateDir,
+                DataDirectory = dataDir,
+            });
+            var localStore = new ProductTemplateLocalStore(app);
+            var mes = new StubMesSettings(useMockMes: true);
+            var lan = new AutoScrew.Infrastructure.Lan.LanShareAccess(
+                mes, app, NullLogger<AutoScrew.Infrastructure.Lan.LanShareAccess>.Instance);
+            var processStore = new AutoScrew.Infrastructure.ProcessLibrary.ProcessLibraryStore(
+                lan, app, NullLogger<AutoScrew.Infrastructure.ProcessLibrary.ProcessLibraryStore>.Instance);
+            var lanShare = new ProductTemplateLanShare(
+                processStore, localStore, NullLogger<ProductTemplateLanShare>.Instance);
+
+            var service = new RecipeProvisioningService(
+                new StubMesClient(new RecipeBundle("PN-LAN", null, null, [])),
+                mes,
+                localStore,
+                lanShare,
+                new StubPackageClient(null),
+                new InMemorySyncRepository(),
+                app,
+                NullLogger<RecipeProvisioningService>.Instance);
+
+            var result = await service.GetProvisionedRecipeAsync("SN1", "PN-LAN");
+
+            Assert.Equal(RecipeTemplateSource.Local, result.TemplateSource);
+            Assert.True(File.Exists(result.ResolvedTemplatePath));
+            Assert.Contains("PN-LAN", result.ResolvedTemplatePath, StringComparison.OrdinalIgnoreCase);
+            Assert.NotNull(localStore.TryResolveLocalTemplate("PN-LAN"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static RecipeProvisioningService CreateService(
         string templateDir,
         IMesClient mesClient,
@@ -98,10 +150,12 @@ public sealed class RecipeProvisioningServiceTests
         var syncRepo = new InMemorySyncRepository();
         var packageClient = new StubPackageClient(downloadPath);
         var settings = new StubMesSettings(useMockMes);
+        var lanShare = new StubLanShare();
         return new RecipeProvisioningService(
             mesClient,
             settings,
             store,
+            lanShare,
             packageClient,
             syncRepo,
             Options.Create(new AutoScrewAppOptions { TemplateDirectory = templateDir }),
@@ -147,7 +201,12 @@ public sealed class RecipeProvisioningServiceTests
 
     private sealed class StubMesSettings(bool useMockMes) : IMesSettingsService
     {
-        public MesRuntimeSettings GetSnapshot() => new() { UseMockMes = useMockMes, BaseUrl = "http://mes.test/" };
+        public MesRuntimeSettings GetSnapshot() => new()
+        {
+            UseMockMes = useMockMes,
+            MesMode = useMockMes ? MesProviderMode.Mock : MesProviderMode.LegacyHttp,
+            BaseUrl = "http://mes.test/",
+        };
 
         public Task<MesRuntimeSettings> LoadAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult(GetSnapshot());
@@ -157,6 +216,24 @@ public sealed class RecipeProvisioningServiceTests
         public void ApplySnapshot(MesRuntimeSettings settings)
         {
         }
+    }
+
+    private sealed class StubLanShare : IProductTemplateLanShare
+    {
+        public Task<ProductTemplateLanPublishResult> PublishAsync(
+            string partNumber,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public IReadOnlyList<ProductTemplateLanEntry> ListLanTemplates() =>
+            Array.Empty<ProductTemplateLanEntry>();
+
+        public Task<string> PullToLocalAsync(string partNumber, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public string? TryResolveLanTemplate(string partNumber) => null;
+
+        public string? TryMaterializeLanTemplateToLocal(string partNumber) => null;
     }
 
     private sealed class InMemorySyncRepository : IProductTemplateSyncRepository

@@ -31,6 +31,7 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
     private readonly IProductTemplateSyncRepository _syncRepository;
     private readonly IProductTemplateMesSyncService _mesSyncService;
     private readonly IMesSettingsService _mesSettings;
+    private readonly IProductTemplateLanShare _lanShare;
     private bool _suppressLocalTemplateSelection;
 
     public ProductTemplateEditorViewModel(
@@ -42,7 +43,8 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         IProductTemplateLocalStore templateStore,
         IProductTemplateSyncRepository syncRepository,
         IProductTemplateMesSyncService mesSyncService,
-        IMesSettingsService mesSettings)
+        IMesSettingsService mesSettings,
+        IProductTemplateLanShare lanShare)
     {
         CurrentSurfaceEditor = currentSurfaceEditor;
         _localization = localization;
@@ -53,14 +55,18 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         _syncRepository = syncRepository;
         _mesSyncService = mesSyncService;
         _mesSettings = mesSettings;
+        _lanShare = lanShare;
         CurrentSurfaceEditor.ContentChanged += (_, _) => MarkDirty();
         _localization.CultureChanged += (_, _) => RefreshLocalizedUi();
         ProductTreeRoots = new ObservableCollection<ProductTemplateTreeRootViewModel>();
         LocalTemplates = new ObservableCollection<LocalTemplateListItem>();
+        MesTemplates = new ObservableCollection<MesTemplateListItem>();
         StatusMessage = Loc.Get("S.Template.StatusInitial");
     }
 
     public ObservableCollection<LocalTemplateListItem> LocalTemplates { get; }
+
+    public ObservableCollection<MesTemplateListItem> MesTemplates { get; }
 
     public async Task InitializeAsync() => await RefreshLocalTemplatesAsync().ConfigureAwait(true);
 
@@ -98,14 +104,28 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SyncWithMesCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PullMesTemplateCommand))]
     private bool _isMesSyncBusy;
 
     public bool IsMesSyncEnabled => !IsMesSyncBusy;
 
-    partial void OnIsMesSyncBusyChanged(bool value) => OnPropertyChanged(nameof(IsMesSyncEnabled));
+    partial void OnIsMesSyncBusyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsMesSyncEnabled));
+        OnPropertyChanged(nameof(CanPullMesTemplate));
+    }
 
     [ObservableProperty]
     private LocalTemplateListItem? _selectedLocalTemplate;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PullMesTemplateCommand))]
+    private MesTemplateListItem? _selectedMesTemplate;
+
+    [ObservableProperty]
+    private bool _isMesTemplateListVisible;
+
+    public bool CanPullMesTemplate => SelectedMesTemplate is not null && !IsMesSyncBusy;
 
     public bool HasProduct => ProductRoot is not null;
 
@@ -202,8 +222,71 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (LocalTemplates.Count == 0 && !HasProduct)
             StatusMessage = Loc.Get("S.Template.StatusLocalTemplatesEmpty");
 
+        await RefreshMesTemplatesAsync().ConfigureAwait(true);
+    }
+
+    [RelayCommand]
+    private async Task RefreshMesTemplatesAsync()
+    {
+        MesTemplates.Clear();
+        var snapshot = _mesSettings.GetSnapshot();
+        var mode = MesProviderMode.Normalize(snapshot.MesMode, snapshot.UseMockMes);
+        IsMesTemplateListVisible = mode == MesProviderMode.ProductKey;
+        if (!IsMesTemplateListVisible)
+            return;
+
+        try
+        {
+            foreach (var entry in _lanShare.ListLanTemplates())
+            {
+                var displayText = entry.SurfaceCount > 0
+                    ? Loc.Format("S.Template.LocalTemplateItem", entry.PartNumber, entry.SurfaceCount)
+                    : entry.PartNumber;
+                MesTemplates.Add(new MesTemplateListItem(entry.PartNumber, entry.TemplateFilePath, displayText));
+            }
+
+            if (MesTemplates.Count == 0)
+                StatusMessage = Loc.Get("S.Template.StatusMesTemplatesEmpty");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = Loc.Format("S.Template.MesListFailed", ex.Message);
+        }
+
         await Task.CompletedTask;
     }
+
+    [RelayCommand(CanExecute = nameof(CanPullMesTemplate))]
+    private async Task PullMesTemplateAsync()
+    {
+        if (SelectedMesTemplate is null)
+            return;
+
+        var pn = SelectedMesTemplate.PartNumber;
+        if (IsDirty && !ConfirmDiscardChanges())
+            return;
+
+        var localExists = _templateStore.TryResolveLocalTemplate(pn) is not null;
+        if (localExists
+            && !ConfirmTips.ShowDialog(Loc.Format("S.Template.PullConfirmOverwrite", pn)))
+            return;
+
+        AuditTemplate("Configuration.TemplateMesPull", $"pn={pn}");
+        try
+        {
+            var localPath = await _lanShare.PullToLocalAsync(pn).ConfigureAwait(true);
+            await RefreshLocalTemplatesAsync().ConfigureAwait(true);
+            OpenTemplateFromPath(localPath);
+            StatusMessage = Loc.Format("S.Template.PullOk", pn);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = Loc.Format("S.Template.PullFailed", ex.Message);
+        }
+    }
+
+    partial void OnSelectedMesTemplateChanged(MesTemplateListItem? value) =>
+        OnPropertyChanged(nameof(CanPullMesTemplate));
 
     [RelayCommand]
     private void OpenProduct()
@@ -299,32 +382,51 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         if (IsDirty && !ConfirmDiscardChanges())
             return;
 
+        var pn = string.IsNullOrWhiteSpace(ProductId) ? null : ProductId.Trim();
+        var snapshot = _mesSettings.GetSnapshot();
+        var mode = MesProviderMode.Normalize(snapshot.MesMode, snapshot.UseMockMes);
+        if (mode is MesProviderMode.LegacyHttp or MesProviderMode.ProductKey
+            && string.IsNullOrWhiteSpace(pn))
+        {
+            StatusMessage = Loc.Get("S.Template.MesSyncNeedPn");
+            return;
+        }
+
         AuditTemplate("Configuration.TemplateMesSync");
         IsMesSyncBusy = true;
         try
         {
-            var result = await _mesSyncService.SyncWithMesAsync().ConfigureAwait(true);
+            var result = await _mesSyncService.SyncWithMesAsync(pn).ConfigureAwait(true);
             AuditTemplate("Configuration.TemplateMesSync", result.SummaryMessage);
 
-            if (!_mesSettings.GetSnapshot().UseMockMes)
+            if (result.Errors.Count > 0)
             {
-                StatusMessage = Loc.Get("S.Template.MesSyncNotMock");
-                return;
+                StatusMessage = Loc.Format("S.Template.MesSyncFailed", string.Join("; ", result.Errors));
             }
-
-            StatusMessage = Loc.Format(
-                "S.Template.MesSyncResult",
-                result.UploadedCount,
-                result.DownloadedCount,
-                result.SkippedCount,
-                result.Errors.Count);
+            else if (mode == MesProviderMode.Mock)
+            {
+                StatusMessage = Loc.Get("S.Template.MesSyncMockSkip");
+            }
+            else if (mode == MesProviderMode.ProductKey)
+            {
+                StatusMessage = FormatLanSyncStatus(pn ?? "", result.SummaryMessage);
+            }
+            else
+            {
+                StatusMessage = Loc.Format(
+                    "S.Template.MesSyncResult",
+                    result.UploadedCount,
+                    result.DownloadedCount,
+                    result.SkippedCount,
+                    result.Errors.Count);
+            }
 
             await RefreshLocalTemplatesAsync().ConfigureAwait(true);
 
             if (result.DownloadedPartNumbers.Count > 0
                 && !string.IsNullOrWhiteSpace(ProductId)
-                && result.DownloadedPartNumbers.Any(pn =>
-                    string.Equals(pn, ProductId.Trim(), StringComparison.OrdinalIgnoreCase))
+                && result.DownloadedPartNumbers.Any(pnDownloaded =>
+                    string.Equals(pnDownloaded, ProductId.Trim(), StringComparison.OrdinalIgnoreCase))
                 && !IsDirty)
             {
                 StatusMessage = Loc.Format("S.Template.MesSyncReloadHint", ProductId.Trim());
@@ -338,6 +440,17 @@ public partial class ProductTemplateEditorViewModel : ObservableObject
         {
             IsMesSyncBusy = false;
         }
+    }
+
+    private static string FormatLanSyncStatus(string partNumber, string summaryMessage)
+    {
+        if (summaryMessage.Contains("updated", StringComparison.OrdinalIgnoreCase))
+            return Loc.Format("S.Template.MesSyncLanUpdated", partNumber);
+        if (summaryMessage.Contains("unchanged", StringComparison.OrdinalIgnoreCase))
+            return Loc.Format("S.Template.MesSyncLanUnchanged", partNumber);
+        if (summaryMessage.Contains("created", StringComparison.OrdinalIgnoreCase))
+            return Loc.Format("S.Template.MesSyncLanCreated", partNumber);
+        return Loc.Format("S.Template.MesSyncLanOk", partNumber, summaryMessage);
     }
 
     [RelayCommand]

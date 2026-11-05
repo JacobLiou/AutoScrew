@@ -42,7 +42,18 @@
     01.json
     02.json
     …
+  template/                         # 螺钉模板（作业台引导，MES 同步 / ProductKey）
+    {产品PN}.product-template.json
+    images/…
 ```
+
+### PN 建目录规则
+
+| 产物 | 可否新建 `process/{PN}` | 说明 |
+|------|-------------------------|------|
+| 拧紧参数（`screws/`） | **可以** | 上传工艺卡可创建整棵 PN |
+| 螺钉模板（`template/`） | **可以** | ProductKey「MES 同步」可创建 PN 并写入 `template/` |
+| 拧紧顺序（`sequences/`） | **不可以** | 顺序依赖参数；PN 须已存在且已有至少 1 个拧紧参数槽位，才允许创建 `sequences/` |
 
 `product.json`：
 

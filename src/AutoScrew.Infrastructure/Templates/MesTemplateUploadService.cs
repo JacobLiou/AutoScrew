@@ -34,12 +34,13 @@ public sealed class MesTemplateUploadService : IMesTemplateUploadService
         ArgumentException.ThrowIfNullOrWhiteSpace(localProductFolder);
 
         var snapshot = _mesSettings.GetSnapshot();
-        if (!snapshot.UseMockMes)
+        var mode = MesProviderMode.Normalize(snapshot.MesMode, snapshot.UseMockMes);
+        if (mode != MesProviderMode.LegacyHttp)
         {
             _logger.LogInformation(
-                "MES template upload not implemented for production MES; PN={PartNumber}, folder={Folder}",
-                partNumber,
-                localProductFolder);
+                "MES template HTTP upload skipped for mode={Mode}; PN={PartNumber}",
+                mode,
+                partNumber);
             return null;
         }
 

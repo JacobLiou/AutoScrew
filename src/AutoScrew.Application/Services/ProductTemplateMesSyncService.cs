@@ -1,5 +1,4 @@
 using AutoScrew.Application.Abstractions;
-using AutoScrew.Application.Services;
 using Microsoft.Extensions.Logging;
 
 namespace AutoScrew.Application.Services;
@@ -9,8 +8,7 @@ public sealed class ProductTemplateMesSyncService : IProductTemplateMesSyncServi
     private readonly IProductTemplateSyncRepository _syncRepository;
     private readonly IProductTemplateLocalStore _localStore;
     private readonly IMesTemplateUploadService _uploadService;
-    private readonly IMesTemplateCatalogClient _catalogClient;
-    private readonly IMesTemplatePackageClient _packageClient;
+    private readonly IProductTemplateLanShare _lanShare;
     private readonly IMesSettingsService _mesSettings;
     private readonly ILogger<ProductTemplateMesSyncService> _logger;
 
@@ -18,224 +16,144 @@ public sealed class ProductTemplateMesSyncService : IProductTemplateMesSyncServi
         IProductTemplateSyncRepository syncRepository,
         IProductTemplateLocalStore localStore,
         IMesTemplateUploadService uploadService,
-        IMesTemplateCatalogClient catalogClient,
-        IMesTemplatePackageClient packageClient,
+        IProductTemplateLanShare lanShare,
         IMesSettingsService mesSettings,
         ILogger<ProductTemplateMesSyncService> logger)
     {
         _syncRepository = syncRepository;
         _localStore = localStore;
         _uploadService = uploadService;
-        _catalogClient = catalogClient;
-        _packageClient = packageClient;
+        _lanShare = lanShare;
         _mesSettings = mesSettings;
         _logger = logger;
     }
 
-    public async Task<ProductTemplateMesSyncResult> SyncWithMesAsync(CancellationToken cancellationToken = default)
+    public async Task<ProductTemplateMesSyncResult> SyncWithMesAsync(
+        string? partNumber = null,
+        CancellationToken cancellationToken = default)
     {
         var snapshot = _mesSettings.GetSnapshot();
-        if (!snapshot.UseMockMes)
+        var mode = MesProviderMode.Normalize(snapshot.MesMode, snapshot.UseMockMes);
+
+        return mode switch
         {
-            return new ProductTemplateMesSyncResult(
-                0,
-                0,
-                0,
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                "Production MES template sync is not available yet.");
-        }
-
-        var errors = new List<string>();
-        var uploaded = 0;
-        var downloaded = 0;
-        var skipped = 0;
-        var downloadedPartNumbers = new List<string>();
-
-        await UploadPendingAsync(errors, () => uploaded++, cancellationToken).ConfigureAwait(false);
-        await DownloadRemoteAsync(
-            errors,
-            downloadedPartNumbers,
-            () => downloaded++,
-            () => skipped++,
-            cancellationToken).ConfigureAwait(false);
-
-        var summary = BuildSummary(uploaded, downloaded, skipped, errors.Count);
-        return new ProductTemplateMesSyncResult(
-            uploaded,
-            downloaded,
-            skipped,
-            downloadedPartNumbers,
-            errors,
-            summary);
+            MesProviderMode.Mock => SyncMockNoOp(),
+            MesProviderMode.LegacyHttp => await SyncLegacyHttpAsync(partNumber, cancellationToken)
+                .ConfigureAwait(false),
+            MesProviderMode.ProductKey => await SyncProductKeyLanAsync(partNumber, cancellationToken)
+                .ConfigureAwait(false),
+            _ => SyncMockNoOp(),
+        };
     }
 
-    private async Task UploadPendingAsync(
-        List<string> errors,
-        Action onUploaded,
+    private static ProductTemplateMesSyncResult SyncMockNoOp() =>
+        new(
+            0,
+            0,
+            0,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            "Mock MES: template sync skipped (no transfer).");
+
+    private async Task<ProductTemplateMesSyncResult> SyncLegacyHttpAsync(
+        string? partNumber,
         CancellationToken cancellationToken)
     {
-        var allRecords = await _syncRepository.ListAllAsync(cancellationToken).ConfigureAwait(false);
-        var pending = allRecords
-            .Where(r => r.SyncState is ProductTemplateSyncState.PendingUpload or ProductTemplateSyncState.Failed)
-            .Select(r => r.PartNumber)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var partNumber in _localStore.ListLocalPartNumbers())
+        if (string.IsNullOrWhiteSpace(partNumber))
         {
-            if (_localStore.TryResolveLocalTemplate(partNumber) is null)
-                continue;
-
-            var existing = allRecords.FirstOrDefault(r =>
-                string.Equals(r.PartNumber, partNumber, StringComparison.OrdinalIgnoreCase));
-            if (existing is null)
-                pending.Add(partNumber);
+            return Fail("LegacyHttp MES sync requires an open product PN.");
         }
 
-        foreach (var partNumber in pending.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var folder = _localStore.GetProductFolder(partNumber);
-                if (!Directory.Exists(folder) || _localStore.TryResolveLocalTemplate(partNumber) is null)
-                    continue;
+        var pn = partNumber.Trim();
+        var folder = _localStore.GetProductFolder(pn);
+        if (!Directory.Exists(folder) || _localStore.TryResolveLocalTemplate(pn) is null)
+            return Fail($"{pn}: local screw template not found.");
 
-                var uploadResult = await _uploadService
-                    .UploadTemplateAsync(partNumber, folder, cancellationToken)
-                    .ConfigureAwait(false);
-                if (uploadResult is null)
-                {
-                    errors.Add($"{partNumber}: upload not available.");
-                    continue;
-                }
-
-                await ProductTemplateSyncOperations.UpsertFromFileAsync(
-                    _syncRepository,
-                    _localStore,
-                    partNumber,
-                    ProductTemplateSyncState.Synced,
-                    null,
-                    null,
-                    DateTimeOffset.UtcNow,
-                    uploadResult.Revision,
-                    cancellationToken).ConfigureAwait(false);
-
-                onUploaded();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "MES template upload failed for PN={PartNumber}", partNumber);
-                errors.Add($"{partNumber}: {ex.Message}");
-                await MarkFailedAsync(partNumber, ex.Message, cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    private async Task DownloadRemoteAsync(
-        List<string> errors,
-        List<string> downloadedPartNumbers,
-        Action onDownloaded,
-        Action onSkipped,
-        CancellationToken cancellationToken)
-    {
-        IReadOnlyList<MesRemoteTemplateEntry> remoteEntries;
         try
         {
-            remoteEntries = await _catalogClient.ListRemoteTemplatesAsync(cancellationToken).ConfigureAwait(false);
+            var uploadResult = await _uploadService
+                .UploadTemplateAsync(pn, folder, cancellationToken)
+                .ConfigureAwait(false);
+            if (uploadResult is null)
+                return Fail($"{pn}: LegacyHttp template upload not available.");
+
+            await ProductTemplateSyncOperations.UpsertFromFileAsync(
+                _syncRepository,
+                _localStore,
+                pn,
+                ProductTemplateSyncState.Synced,
+                null,
+                null,
+                DateTimeOffset.UtcNow,
+                uploadResult.Revision,
+                cancellationToken).ConfigureAwait(false);
+
+            return new ProductTemplateMesSyncResult(
+                1,
+                0,
+                0,
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                $"LegacyHttp MES sync: uploaded {pn}.");
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "MES template catalog request failed.");
-            errors.Add($"catalog: {ex.Message}");
-            return;
-        }
-
-        var allRecords = await _syncRepository.ListAllAsync(cancellationToken).ConfigureAwait(false);
-
-        foreach (var remote in remoteEntries.OrderBy(x => x.PartNumber, StringComparer.OrdinalIgnoreCase))
-        {
-            try
-            {
-                if (await ShouldSkipDownloadAsync(remote, allRecords, cancellationToken).ConfigureAwait(false))
-                {
-                    onSkipped();
-                    continue;
-                }
-
-                await _packageClient
-                    .DownloadTemplatePackageAsync(remote.PartNumber, remote.PackageUrl, cancellationToken)
-                    .ConfigureAwait(false);
-
-                await ProductTemplateSyncOperations.UpsertFromFileAsync(
-                    _syncRepository,
-                    _localStore,
-                    remote.PartNumber,
-                    ProductTemplateSyncState.DownloadedFromMes,
-                    null,
-                    DateTimeOffset.UtcNow,
-                    null,
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-
-                if (!string.IsNullOrWhiteSpace(remote.ContentHash))
-                {
-                    var record = await _syncRepository.GetAsync(remote.PartNumber, cancellationToken).ConfigureAwait(false);
-                    if (record is not null)
-                    {
-                        await _syncRepository.UpsertAsync(
-                            record with { LocalFileHash = remote.ContentHash },
-                            cancellationToken).ConfigureAwait(false);
-                    }
-                }
-
-                downloadedPartNumbers.Add(remote.PartNumber);
-                onDownloaded();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "MES template download failed for PN={PartNumber}", remote.PartNumber);
-                errors.Add($"{remote.PartNumber}: {ex.Message}");
-            }
+            _logger.LogWarning(ex, "LegacyHttp template upload failed for PN={PartNumber}", pn);
+            await MarkFailedAsync(pn, ex.Message, cancellationToken).ConfigureAwait(false);
+            return Fail($"{pn}: {ex.Message}");
         }
     }
 
-    private Task<bool> ShouldSkipDownloadAsync(
-        MesRemoteTemplateEntry remote,
-        IReadOnlyList<ProductTemplateSyncRecord> allRecords,
+    private async Task<ProductTemplateMesSyncResult> SyncProductKeyLanAsync(
+        string? partNumber,
         CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
-        var folder = _localStore.GetProductFolder(remote.PartNumber);
-        var localExists = _localStore.TryResolveLocalTemplate(remote.PartNumber) is not null;
-        if (!localExists)
-            return Task.FromResult(false);
+        if (string.IsNullOrWhiteSpace(partNumber))
+            return Fail("ProductKey LAN sync requires an open product PN.");
 
-        var syncRecord = allRecords.FirstOrDefault(r =>
-            string.Equals(r.PartNumber, remote.PartNumber, StringComparison.OrdinalIgnoreCase));
-
-        var localHash = ProductTemplateSyncOperations.ComputePackageHash(folder);
-
-        if (syncRecord?.SyncState == ProductTemplateSyncState.PendingUpload
-            && string.Equals(localHash, syncRecord.LocalFileHash, StringComparison.OrdinalIgnoreCase))
+        var pn = partNumber.Trim();
+        try
         {
-            return Task.FromResult(true);
-        }
+            var published = await _lanShare.PublishAsync(pn, cancellationToken).ConfigureAwait(false);
 
-        if (!string.IsNullOrWhiteSpace(remote.ContentHash)
-            && string.Equals(localHash, remote.ContentHash, StringComparison.OrdinalIgnoreCase))
+            var uploaded = published.Outcome == ProductTemplateLanPublishOutcome.Unchanged ? 0 : 1;
+            var skipped = published.Outcome == ProductTemplateLanPublishOutcome.Unchanged ? 1 : 0;
+            var outcomeNote = published.Outcome switch
+            {
+                ProductTemplateLanPublishOutcome.Created => "created",
+                ProductTemplateLanPublishOutcome.Updated => "updated",
+                ProductTemplateLanPublishOutcome.Unchanged => "unchanged",
+                _ => published.Outcome.ToString(),
+            };
+
+            await ProductTemplateSyncOperations.UpsertFromFileAsync(
+                _syncRepository,
+                _localStore,
+                pn,
+                ProductTemplateSyncState.Synced,
+                $"LAN {outcomeNote}: {published.TargetFolder}",
+                null,
+                DateTimeOffset.UtcNow,
+                published.LocalContentHash,
+                cancellationToken).ConfigureAwait(false);
+
+            return new ProductTemplateMesSyncResult(
+                uploaded,
+                0,
+                skipped,
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                $"ProductKey LAN sync: {outcomeNote} {pn} → {published.TargetFolder}");
+        }
+        catch (Exception ex)
         {
-            return Task.FromResult(true);
+            _logger.LogWarning(ex, "ProductKey LAN template publish failed for PN={PartNumber}", pn);
+            return Fail($"{pn}: {ex.Message}");
         }
-
-        if (string.IsNullOrWhiteSpace(remote.ContentHash))
-        {
-            var localModified = ProductTemplatePackageHash.GetPackageModifiedUtc(folder);
-            if (remote.ModifiedUtc <= localModified)
-                return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
     }
+
+    private static ProductTemplateMesSyncResult Fail(string message) =>
+        new(0, 0, 0, Array.Empty<string>(), [message], message);
 
     private async Task MarkFailedAsync(string partNumber, string message, CancellationToken cancellationToken)
     {
@@ -256,13 +174,5 @@ public sealed class ProductTemplateMesSyncService : IProductTemplateMesSyncServi
         {
             _logger.LogDebug(ex, "Failed to mark sync failure for PN={PartNumber}", partNumber);
         }
-    }
-
-    private static string BuildSummary(int uploaded, int downloaded, int skipped, int errorCount)
-    {
-        if (errorCount > 0)
-            return $"MES sync: uploaded {uploaded}, downloaded {downloaded}, skipped {skipped}, errors {errorCount}.";
-
-        return $"MES sync: uploaded {uploaded}, downloaded {downloaded}, skipped {skipped}.";
     }
 }

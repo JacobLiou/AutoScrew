@@ -101,6 +101,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ProductTemplateLocalStore>();
         services.AddSingleton<IProductTemplateLocalStore>(sp => sp.GetRequiredService<ProductTemplateLocalStore>());
         services.AddSingleton<IProductTemplateSyncRepository, EfProductTemplateSyncRepository>();
+        services.AddSingleton<IProductTemplateLanShare, ProductTemplateLanShare>();
         services.AddSingleton<IMesTemplatePackageClient, MesTemplatePackageClient>();
         services.AddSingleton<IMesTemplateUploadService, MesTemplateUploadService>();
         services.AddSingleton<IMesTemplateCatalogClient, MesTemplateCatalogClient>();

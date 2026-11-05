@@ -61,7 +61,7 @@ flowchart LR
 
 | 路径 | 内容 |
 |------|------|
-| `{LanShareRoot}\{PN}\` | 产品模板：`{PN}.product-template.json`、底图等 |
+| `{LanShareRoot}\process\{PN}\template\` | 产品/螺钉模板：`{PN}.product-template.json`、底图等（与 `screws/`、`sequences/` 同级） |
 | `{LanShareRoot}\{SN}\` | 该件作业数据：曲线 CSV、`lock_log_*.json` 等 |
 
 **产线原则**：本地（`TemplateDirectory` / `DataDirectory/work/{SN}`）先写成功；网盘复制失败**不阻塞**拧紧（对齐现有 `OptionalNetworkArchiveRoot` 思路，见 [DATA_AND_TRACE.md](DATA_AND_TRACE.md)）。
@@ -165,7 +165,7 @@ AutoScrew 拟定：
 | F-02 | [x] 2026-07-31 | HTTP GetProductKeyInfo 冒烟路径 | 以 ConsoleApp1 `getProductInfo` 为准（非 USL.TAS DLL） |
 | F-03 | [x] 2026-07-31 | 实现 `ProductKeyMesClient` + Mes 页/配置切换 | `ValidateSnAsync`；`GetRecipeAsync` 不拉 ATMS XML |
 | F-04 | [x] 2026-07-31 | 局域网连接 | 固定服务账号 + `LanSharePasswordAes256` + `WNetUseConnection`；Mes 页仅根路径 |
-| F-05 | [ ] | PN 模板同步 | 技术员保存 → 同步到 `{LanShareRoot}\{PN}\`；启动/扫码可读 UNC |
+| F-05 | [x] 2026-11-05 | PN 模板同步 | 螺钉模板「MES 同步」：ProductKey → `{LanShareRoot}\process\{PN}\template\`（可新建 PN）；扫码本机缺失时从 LAN 物化；LegacyHttp zip 上传当前 PN；Mock 不传送 |
 | F-06 | [x] 2026-07-31 | SN 作业数据异步归档 | `work\{SN}` → `{LanShareRoot}\{SN}`；失败不堵产线 |
 | F-07 | [ ] | FAT | 真 SN 查 PN；Fusion 失败提示/fallback；断网归档策略 |
 | F-08 | [ ] | （可选）IT 确认后 | TAS 结果上传或正式 REST MES；再改 DATA_AND_TRACE |

@@ -62,6 +62,64 @@ public sealed class ProcessLibraryStore
         Directory.CreateDirectory(root);
     }
 
+    /// <summary>工艺库写操作前确保 LAN 已连接（公开给模板发布复用）。</summary>
+    public void EnsureLanConnectedForWrite() => EnsureLanConnected();
+
+    public string GetProductDirectory(string productPn)
+    {
+        var safePn = SanitizeFileName(productPn);
+        if (string.IsNullOrWhiteSpace(safePn))
+            throw new ArgumentException("产品 PN 无效。", nameof(productPn));
+        return Path.Combine(ResolveProcessRoot(), safePn);
+    }
+
+    /// <summary>process/{PN}/template — 螺钉模板发布目录。</summary>
+    public string GetProductTemplateFolder(string productPn) =>
+        Path.Combine(GetProductDirectory(productPn), "template");
+
+    public string GetProductTemplateJsonPath(string productPn)
+    {
+        var safePn = SanitizeFileName(productPn);
+        return Path.Combine(GetProductTemplateFolder(productPn), $"{safePn}.product-template.json");
+    }
+
+    /// <summary>
+    /// 拧紧顺序写入前：PN 目录须已存在，且已有拧紧参数（禁止顺序新建 PN）。
+    /// </summary>
+    public void EnsureProductExistsWithParameters(string productPn)
+    {
+        var safePn = SanitizeFileName(productPn);
+        if (string.IsNullOrWhiteSpace(safePn))
+            throw new ArgumentException("产品 PN 无效。", nameof(productPn));
+
+        var productDir = Path.Combine(ResolveProcessRoot(), safePn);
+        if (!Directory.Exists(productDir))
+        {
+            throw new InvalidOperationException(
+                $"产品 {safePn} 在工艺库中不存在。请先上传拧紧参数以创建该 PN，再导入拧紧顺序。");
+        }
+
+        if (!HasTighteningParameters(safePn, productDir))
+        {
+            throw new InvalidOperationException(
+                $"产品 {safePn} 尚无拧紧参数。拧紧顺序依赖参数，请先建立拧紧参数后再导入顺序。");
+        }
+    }
+
+    private bool HasTighteningParameters(string safePn, string productDir)
+    {
+        var summary = LoadProduct(safePn);
+        if (summary is not null && summary.Slots.Count > 0)
+            return true;
+
+        var screwsDir = Path.Combine(productDir, "screws");
+        if (Directory.Exists(screwsDir)
+            && Directory.EnumerateFiles(screwsDir, "*.txt").Any())
+            return true;
+
+        return false;
+    }
+
     public IReadOnlyList<string> ListProductPns()
     {
         EnsureRoot();
@@ -187,6 +245,7 @@ public sealed class ProcessLibraryStore
             throw new ArgumentException("产品 PN 无效。", nameof(productPn));
 
         EnsureLanConnected();
+        EnsureProductExistsWithParameters(productPn);
 
         ArgumentNullException.ThrowIfNull(package);
         package.ApplyCoreToRaw();

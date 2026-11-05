@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using AutoScrew.Hmi.ViewModels;
 
@@ -62,6 +63,13 @@ public partial class ProductTemplateEditorView
     {
         if (DataContext is ProductTemplateEditorViewModel vm)
             vm.HandleTreeSelection(e.NewValue);
+    }
+
+    private void MesTemplates_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is ProductTemplateEditorViewModel vm
+            && vm.PullMesTemplateCommand.CanExecute(null))
+            vm.PullMesTemplateCommand.Execute(null);
     }
 
     private static bool TrySelectTreeViewItem(ItemsControl parent, object item)

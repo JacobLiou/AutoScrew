@@ -1,14 +1,18 @@
 using System.Net;
 using System.Text;
 using AutoScrew.Application.Abstractions;
+using AutoScrew.Application.Configuration;
 using AutoScrew.Application.Services;
+using AutoScrew.Infrastructure.Lan;
 using AutoScrew.Infrastructure.Mes;
 using AutoScrew.Infrastructure.Persistence;
+using AutoScrew.Infrastructure.ProcessLibrary;
 using AutoScrew.Infrastructure.Templates;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace AutoScrew.Tests;
@@ -16,11 +20,34 @@ namespace AutoScrew.Tests;
 public sealed class ProductTemplateMesSyncServiceTests
 {
     [Fact]
-    public async Task SyncWithMesAsync_UploadsPending_AndDownloadsRemoteUpdate()
+    public async Task SyncWithMesAsync_Mock_DoesNotTransfer()
     {
         var root = CreateTempRoot();
         var handler = new RoutingHttpHandler();
-        var services = BuildServices(root, handler);
+        var services = BuildServices(root, handler, MesProviderMode.Mock);
+        await using var provider = services.BuildServiceProvider();
+
+        SeedLocalTemplate(root, "PN-1", "v1");
+        handler.PostCount = 0;
+
+        var sync = provider.GetRequiredService<IProductTemplateMesSyncService>();
+        var result = await sync.SyncWithMesAsync("PN-1");
+
+        Assert.Equal(0, result.UploadedCount);
+        Assert.Equal(0, result.DownloadedCount);
+        Assert.Empty(result.Errors);
+        Assert.Contains("Mock", result.SummaryMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, handler.PostCount);
+
+        TryDeleteDirectory(root);
+    }
+
+    [Fact]
+    public async Task SyncWithMesAsync_LegacyHttp_UploadsCurrentPn()
+    {
+        var root = CreateTempRoot();
+        var handler = new RoutingHttpHandler();
+        var services = BuildServices(root, handler, MesProviderMode.LegacyHttp);
         await using var provider = services.BuildServiceProvider();
 
         SeedLocalTemplate(root, "PN-1", "v1");
@@ -38,69 +65,105 @@ public sealed class ProductTemplateMesSyncServiceTests
             null,
             CancellationToken.None);
 
-        SeedRemoteTemplate(root, "PN-2", "remote-v1");
-        var remoteHash = ProductTemplateSyncOperations.ComputePackageHash(Path.Combine(root, "remote", "PN-2"));
-        handler.SetCatalog(
-        [
-            new CatalogEntry("PN-2", remoteHash, DateTimeOffset.UtcNow, "api/templates/PN-2/package"),
-        ]);
-        handler.SetPackageProvider("PN-2", () => CreateZipFromFolder(Path.Combine(root, "remote", "PN-2")));
-
         var sync = provider.GetRequiredService<IProductTemplateMesSyncService>();
-        var result = await sync.SyncWithMesAsync();
+        var result = await sync.SyncWithMesAsync("PN-1");
 
         Assert.Equal(1, result.UploadedCount);
-        Assert.Equal(1, result.DownloadedCount);
-        Assert.Contains("PN-2", result.DownloadedPartNumbers);
+        Assert.Equal(0, result.DownloadedCount);
+        Assert.Empty(result.Errors);
+        Assert.Equal(1, handler.PostCount);
 
         var pn1 = await syncRepo.GetAsync("PN-1");
         Assert.Equal(ProductTemplateSyncState.Synced, pn1!.SyncState);
-
-        var pn2Path = localStore.TryResolveLocalTemplate("PN-2");
-        Assert.NotNull(pn2Path);
-        Assert.Contains("remote-v1", await File.ReadAllTextAsync(pn2Path!));
-
-        var pn2 = await syncRepo.GetAsync("PN-2");
-        Assert.Equal(ProductTemplateSyncState.DownloadedFromMes, pn2!.SyncState);
 
         TryDeleteDirectory(root);
     }
 
     [Fact]
-    public async Task SyncWithMesAsync_SkipsDownload_WhenRemoteHashMatchesLocal()
+    public async Task SyncWithMesAsync_ProductKey_PublishesToProcessTemplateFolder()
     {
         var root = CreateTempRoot();
+        var dataDir = Path.Combine(root, "data");
+        var templateRoot = Path.Combine(root, "templates");
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(templateRoot);
+
         var handler = new RoutingHttpHandler();
-        var services = BuildServices(root, handler);
+        var services = BuildServices(templateRoot, handler, MesProviderMode.ProductKey, dataDir);
         await using var provider = services.BuildServiceProvider();
 
-        SeedLocalTemplate(root, "PN-1", "same-content");
-        var localStore = provider.GetRequiredService<IProductTemplateLocalStore>();
-        var syncRepo = provider.GetRequiredService<IProductTemplateSyncRepository>();
-        await ProductTemplateSyncOperations.UpsertFromFileAsync(
-            syncRepo,
-            localStore,
-            "PN-1",
-            ProductTemplateSyncState.Synced,
-            null,
-            null,
-            DateTimeOffset.UtcNow,
-            "rev-1",
-            CancellationToken.None);
-
-        var localHash = ProductTemplateSyncOperations.ComputePackageHash(localStore.GetProductFolder("PN-1"));
-        handler.SetCatalog(
-        [
-            new CatalogEntry("PN-1", localHash, DateTimeOffset.UtcNow.AddHours(1), "api/templates/PN-1/package"),
-        ]);
-        handler.SetPackageProvider("PN-1", () => CreateZipFromFolder(localStore.GetProductFolder("PN-1")));
+        SeedLocalTemplate(templateRoot, "PN-LAN", "lan-v1");
 
         var sync = provider.GetRequiredService<IProductTemplateMesSyncService>();
-        var result = await sync.SyncWithMesAsync();
+        var result = await sync.SyncWithMesAsync("PN-LAN");
 
-        Assert.Equal(0, result.UploadedCount);
-        Assert.Equal(0, result.DownloadedCount);
-        Assert.True(result.SkippedCount >= 1);
+        Assert.Equal(1, result.UploadedCount);
+        Assert.Empty(result.Errors);
+        Assert.Contains("created", result.SummaryMessage, StringComparison.OrdinalIgnoreCase);
+
+        var published = Path.Combine(dataDir, "process", "PN-LAN", "template", "PN-LAN.product-template.json");
+        Assert.True(File.Exists(published));
+        Assert.Contains("lan-v1", await File.ReadAllTextAsync(published));
+
+        TryDeleteDirectory(root);
+    }
+
+    [Fact]
+    public async Task SyncWithMesAsync_ProductKey_UpdatesLan_WhenLocalChanged()
+    {
+        var root = CreateTempRoot();
+        var dataDir = Path.Combine(root, "data");
+        var templateRoot = Path.Combine(root, "templates");
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(templateRoot);
+
+        var handler = new RoutingHttpHandler();
+        var services = BuildServices(templateRoot, handler, MesProviderMode.ProductKey, dataDir);
+        await using var provider = services.BuildServiceProvider();
+
+        SeedLocalTemplate(templateRoot, "PN-UPD", "v1");
+        var sync = provider.GetRequiredService<IProductTemplateMesSyncService>();
+        await sync.SyncWithMesAsync("PN-UPD");
+
+        // LAN leftover orphan that should be removed on update
+        var lanFolder = Path.Combine(dataDir, "process", "PN-UPD", "template");
+        File.WriteAllText(Path.Combine(lanFolder, "orphan.txt"), "stale");
+
+        SeedLocalTemplate(templateRoot, "PN-UPD", "v2-local-newer");
+        var result = await sync.SyncWithMesAsync("PN-UPD");
+
+        Assert.Equal(1, result.UploadedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.Contains("updated", result.SummaryMessage, StringComparison.OrdinalIgnoreCase);
+
+        var published = Path.Combine(lanFolder, "PN-UPD.product-template.json");
+        Assert.Contains("v2-local-newer", await File.ReadAllTextAsync(published));
+        Assert.False(File.Exists(Path.Combine(lanFolder, "orphan.txt")));
+
+        TryDeleteDirectory(root);
+    }
+
+    [Fact]
+    public async Task SyncWithMesAsync_ProductKey_Skips_WhenLanAlreadySame()
+    {
+        var root = CreateTempRoot();
+        var dataDir = Path.Combine(root, "data");
+        var templateRoot = Path.Combine(root, "templates");
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(templateRoot);
+
+        var handler = new RoutingHttpHandler();
+        var services = BuildServices(templateRoot, handler, MesProviderMode.ProductKey, dataDir);
+        await using var provider = services.BuildServiceProvider();
+
+        SeedLocalTemplate(templateRoot, "PN-SAME", "same");
+        var sync = provider.GetRequiredService<IProductTemplateMesSyncService>();
+        await sync.SyncWithMesAsync("PN-SAME");
+
+        var again = await sync.SyncWithMesAsync("PN-SAME");
+        Assert.Equal(0, again.UploadedCount);
+        Assert.Equal(1, again.SkippedCount);
+        Assert.Contains("unchanged", again.SummaryMessage, StringComparison.OrdinalIgnoreCase);
 
         TryDeleteDirectory(root);
     }
@@ -110,7 +173,7 @@ public sealed class ProductTemplateMesSyncServiceTests
     {
         var root = CreateTempRoot();
         var handler = new RoutingHttpHandler();
-        var services = BuildServices(root, handler);
+        var services = BuildServices(root, handler, MesProviderMode.LegacyHttp);
         await using var provider = services.BuildServiceProvider();
 
         SeedLocalTemplate(root, "PN-IMG", "same-json");
@@ -150,14 +213,19 @@ public sealed class ProductTemplateMesSyncServiceTests
         TryDeleteDirectory(root);
     }
 
-    private static ServiceCollection BuildServices(string templateRoot, RoutingHttpHandler handler)
+    private static ServiceCollection BuildServices(
+        string templateRoot,
+        RoutingHttpHandler handler,
+        string mesMode,
+        string? dataDirectory = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(handler));
         services.AddSingleton(new MesRuntimeSettings
         {
-            UseMockMes = true,
+            UseMockMes = mesMode == MesProviderMode.Mock,
+            MesMode = mesMode,
             BaseUrl = "http://localhost:5080/",
         });
         services.AddSingleton<IMesSettingsService>(sp =>
@@ -177,14 +245,18 @@ public sealed class ProductTemplateMesSyncServiceTests
         }
 
         services.AddSingleton<IDbContextFactory<AppDbContext>>(new TestDbContextFactory(options));
-        services.Configure<AutoScrew.Application.Configuration.AutoScrewAppOptions>(o =>
+        services.Configure<AutoScrewAppOptions>(o =>
         {
             o.TemplateDirectory = templateRoot;
+            o.DataDirectory = dataDirectory ?? Path.Combine(templateRoot, "_data");
         });
 
         services.AddSingleton<ProductTemplateLocalStore>();
         services.AddSingleton<IProductTemplateLocalStore>(sp => sp.GetRequiredService<ProductTemplateLocalStore>());
         services.AddSingleton<IProductTemplateSyncRepository, EfProductTemplateSyncRepository>();
+        services.AddSingleton<LanShareAccess>();
+        services.AddSingleton<ProcessLibraryStore>();
+        services.AddSingleton<IProductTemplateLanShare, ProductTemplateLanShare>();
         services.AddSingleton<IMesTemplateUploadService, MesTemplateUploadService>();
         services.AddSingleton<IMesTemplateCatalogClient, MesTemplateCatalogClient>();
         services.AddSingleton<IMesTemplatePackageClient, MesTemplatePackageClient>();
@@ -202,34 +274,6 @@ public sealed class ProductTemplateMesSyncServiceTests
         File.WriteAllBytes(Path.Combine(folder, "images", "top.png"), [1, 2, 3]);
     }
 
-    private static void SeedRemoteTemplate(string root, string pn, string marker)
-    {
-        var folder = Path.Combine(root, "remote", pn);
-        Directory.CreateDirectory(Path.Combine(folder, "images"));
-        File.WriteAllText(
-            Path.Combine(folder, $"{pn}.product-template.json"),
-            $$"""{"schemaVersion":2,"productId":"{{pn}}","marker":"{{marker}}"}""");
-        File.WriteAllBytes(Path.Combine(folder, "images", "top.png"), [4, 5, 6]);
-    }
-
-    private static byte[] CreateZipFromFolder(string folder)
-    {
-        using var ms = new MemoryStream();
-        using (var archive = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
-        {
-            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
-            {
-                var relative = Path.GetRelativePath(folder, file).Replace('\\', '/');
-                var entry = archive.CreateEntry(relative, System.IO.Compression.CompressionLevel.Fastest);
-                using var entryStream = entry.Open();
-                using var fileStream = File.OpenRead(file);
-                fileStream.CopyTo(entryStream);
-            }
-        }
-
-        return ms.ToArray();
-    }
-
     private static string CreateTempRoot() =>
         Path.Combine(Path.GetTempPath(), "AutoScrew.Tests", Guid.NewGuid().ToString("N"));
 
@@ -245,56 +289,26 @@ public sealed class ProductTemplateMesSyncServiceTests
         }
     }
 
-    private sealed record CatalogEntry(string PartNumber, string ContentHash, DateTimeOffset ModifiedUtc, string PackageUrl);
-
     private sealed class RoutingHttpHandler : HttpMessageHandler
     {
-        private IReadOnlyList<CatalogEntry> _catalog = Array.Empty<CatalogEntry>();
-        private readonly Dictionary<string, Func<byte[]>> _packages = new(StringComparer.OrdinalIgnoreCase);
-
-        public void SetCatalog(IReadOnlyList<CatalogEntry> catalog) => _catalog = catalog;
-
-        public void SetPackageProvider(string pn, Func<byte[]> provider) => _packages[pn] = provider;
+        public int PostCount { get; set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri!.AbsolutePath;
 
-            if (request.Method == HttpMethod.Get && path.Equals("/api/templates", StringComparison.OrdinalIgnoreCase))
-            {
-                var json = "[" + string.Join(",", _catalog.Select(x =>
-                    $$"""{"partNumber":"{{x.PartNumber}}","contentHash":"{{x.ContentHash}}","modifiedUtc":"{{x.ModifiedUtc:O}}","packageUrl":"{{x.PackageUrl}}"}""")) + "]";
-                return Task.FromResult(Json(HttpStatusCode.OK, json));
-            }
-
             if (path.StartsWith("/api/templates/", StringComparison.OrdinalIgnoreCase)
-                && path.EndsWith("/package", StringComparison.OrdinalIgnoreCase))
+                && path.EndsWith("/package", StringComparison.OrdinalIgnoreCase)
+                && request.Method == HttpMethod.Post)
             {
-                var pn = path["/api/templates/".Length..^"/package".Length];
-                if (request.Method == HttpMethod.Get)
+                PostCount++;
+                return request.Content!.ReadAsByteArrayAsync(cancellationToken).ContinueWith(t =>
                 {
-                    if (!_packages.TryGetValue(pn, out var provider))
-                        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
-
-                    var bytes = provider();
-                    var response = new HttpResponseMessage(HttpStatusCode.OK)
-                    {
-                        Content = new ByteArrayContent(bytes),
-                    };
-                    response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
-                    return Task.FromResult(response);
-                }
-
-                if (request.Method == HttpMethod.Post)
-                {
-                    return request.Content!.ReadAsByteArrayAsync(cancellationToken).ContinueWith(t =>
-                    {
-                        var body = t.Result;
-                        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(body));
-                        var json = $$"""{"accepted":true,"revision":"test-rev","contentHash":"{{hash}}"}""";
-                        return Json(HttpStatusCode.OK, json);
-                    }, cancellationToken);
-                }
+                    var body = t.Result;
+                    var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(body));
+                    var json = $$"""{"accepted":true,"revision":"test-rev","contentHash":"{{hash}}"}""";
+                    return Json(HttpStatusCode.OK, json);
+                }, cancellationToken);
             }
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
