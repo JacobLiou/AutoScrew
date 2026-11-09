@@ -290,7 +290,7 @@ public sealed class ProcessCardTxtParserTests
         Assert.Equal(120, result.Template.Core.TighteningStartDelayCentiSec);
         Assert.Equal(123, result.Template.Core.LoosenStartDelayCentiSec);
         Assert.Equal(21, result.Template.Core.FeederResultDelayTenthSec);
-        Assert.False(result.Template.Core.FinalCurrentJudgeEnabled);
+        Assert.True(result.Template.Core.FinalCurrentJudgeEnabled);
 
         var s0 = result.Template.Core.Stages[0];
         Assert.Equal(TighteningControlMode.Angle, s0.ControlMode);
@@ -330,6 +330,52 @@ public sealed class ProcessCardTxtParserTests
         Assert.Equal(300, result.Template.Core.Loosen.Stage1SpeedRpm);
         Assert.Equal(0, result.Template.Core.Loosen.Stage2AngleDeg);
         Assert.Equal(0, result.Template.Core.Loosen.Stage2SpeedRpm);
+    }
+
+    [Fact]
+    public void Parse_Ver02_1109BlankTemplate_UsesFilenameSlot()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1835154375_1109_00.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var result = ProcessCardTxtParser.ParseFile(path);
+        Assert.Equal("1835154375", result.ScrewPn);
+        Assert.Equal(0, result.SlotId);
+        Assert.Equal(32767, result.Template.Core.MaxAngleDeg);
+        Assert.Equal(90, result.Template.Core.Stages[0].TargetAngleDeg);
+        Assert.Equal(7200, result.Template.Core.Loosen.Stage1AngleDeg);
+    }
+
+    [Fact]
+    public void Parse_Ver02_StrategyPipeLine_MapsEnhanced()
+    {
+        var text = """
+            PN【1835154375】
+            拧紧参数后缀【00】
+            策略｜【加强】                       标准/加强/预定位/自创/
+            　｜　　｜最大总角度｜【100】   Max Angle Tightening
+            拧紧设定｜拧紧｜扭矩｜【2.5】   Target Torque
+            拧紧设定｜拧紧｜速度｜【200】   Target Speed
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(TighteningStrategy.Enhanced, result.Template.Core.Strategy);
+    }
+
+    [Fact]
+    public void Parse_Ver02_FinalCurrentJudge_FromTailNote()
+    {
+        var text = """
+            PN【1835154375】
+            拧紧参数后缀【00】
+            　｜　　｜进阶设定｜【1】   最终电流判定 | F2 | 1=open, 0=close
+            　｜　　｜最大总角度｜【100】   Max Angle Tightening
+            拧紧设定｜启动｜速度｜【80】   Target Speed
+            拧紧设定｜启动｜角度｜【90】   Target Angle
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.True(result.Template.Core.FinalCurrentJudgeEnabled);
     }
 
     [Fact]

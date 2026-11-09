@@ -46,6 +46,7 @@ public static class ProcessCardTxtWriterVer02
         sb.AppendLine();
         sb.AppendLine(
             $"拧紧参数后缀【{slotId.ToString("D2", CultureInfo.InvariantCulture)}】：20=紧固程序；10=预紧程序；00=正常锁附程序");
+        sb.AppendLine($"策略｜【{FormatStrategy(core.Strategy).PadRight(5)}】                       标准/加强/预定位/自创/");
         sb.AppendLine("  ID　             【     】           Param ID  序号由系统自动设定(不用填写）");
 
         Row(sb, "", "", "进阶设定", core.FeederResultDelayTenthSec.ToString(CultureInfo.InvariantCulture), "供料结果延时");
@@ -220,6 +221,15 @@ public static class ProcessCardTxtWriterVer02
             TighteningControlMode.ClampTorque => "3",
             TighteningControlMode.ClampAngle => "4",
             _ => "1",
+        };
+
+    private static string FormatStrategy(TighteningStrategy strategy) =>
+        strategy switch
+        {
+            TighteningStrategy.Enhanced => "加强",
+            TighteningStrategy.PrePosition => "预定位",
+            TighteningStrategy.SelfDefined => "自创",
+            _ => "标准",
         };
 
     private static string FormatMode01(bool on) => on ? "1" : "0";

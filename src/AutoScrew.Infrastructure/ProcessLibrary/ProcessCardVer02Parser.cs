@@ -20,6 +20,11 @@ public static class ProcessCardVer02Parser
         @"^(?<area>[^｜|]*)[｜|](?<seg>[^｜|]*)[｜|](?<field>[^｜|]*)[｜|][【\[](?<val>[^】\]]*)[】\]](?<tail>.*)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>1109 模板：策略｜【标准/加强/预定位/自创】（非四段 DataRow）。</summary>
+    private static readonly Regex StrategyLine = new(
+        @"^策略\s*[｜|]\s*[【\[](?<v>[^】\]]*)[】\]]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     public static bool LooksLikeVer02(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -63,6 +68,13 @@ public static class ProcessCardVer02Parser
                 var hv = NormalizeValue(hm.Groups["v"].Value);
                 if (!headers.ContainsKey(hk) || !string.IsNullOrEmpty(hv))
                     headers[hk] = hv;
+            }
+
+            var sm = StrategyLine.Match(line);
+            if (sm.Success)
+            {
+                SetIfMeaningful(global, "策略", NormalizeValue(sm.Groups["v"].Value));
+                continue;
             }
 
             var dm = DataRow.Match(line);
@@ -173,6 +185,10 @@ public static class ProcessCardVer02Parser
             !string.Equals(area, "拧紧", StringComparison.Ordinal))
             return -1;
 
+        if (seg.Contains("阶段5", StringComparison.Ordinal) || seg.Contains("阶段 5", StringComparison.Ordinal))
+            return 4;
+        if (seg.Contains("阶段6", StringComparison.Ordinal) || seg.Contains("阶段 6", StringComparison.Ordinal))
+            return 5;
         if (seg.Contains("启动", StringComparison.Ordinal))
             return 0;
         if (seg.Contains("旋入", StringComparison.Ordinal))
@@ -206,7 +222,7 @@ public static class ProcessCardVer02Parser
             return;
         }
 
-        if (field.Contains("最终电流判定", StringComparison.Ordinal))
+        if (field.Contains("最终电流判定", StringComparison.Ordinal) || ContainsIgnore(tail, "最终电流判定"))
         {
             SetIfMeaningful(global, "最终电流判定", value);
             return;

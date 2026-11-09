@@ -101,6 +101,29 @@ public sealed class SequenceTxtParserTests
     }
 
     [Fact]
+    public void Parse_ProductLockTemplate1109_MapsTwoSteps()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1835154375_sequence_1109.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var result = SequenceTxtParser.ParseFile(path);
+        Assert.True(result.IsSuccess, string.Join("; ", result.Errors));
+        Assert.Equal("1835154375", result.SourceProductPn);
+        Assert.Equal(2, result.Steps.Count);
+        Assert.Equal(1, result.Steps[0].Order);
+        Assert.Equal("1830331949", result.Steps[0].ScrewPn);
+        Assert.Equal(0, result.Steps[0].SlotId);
+        Assert.Equal(4, result.Steps[0].Quantity);
+        Assert.Equal(1, result.Steps[0].BitId);
+        Assert.Equal("pump1锁附", result.Steps[0].Location);
+        Assert.Contains("[吸头:A]", result.Steps[0].Remark, StringComparison.Ordinal);
+        Assert.Contains("[结果:预紧]", result.Steps[0].Remark, StringComparison.Ordinal);
+        Assert.Equal(2, result.Steps[1].Order);
+        Assert.Equal(10, result.Steps[1].SlotId);
+        Assert.Contains("[结果:0.7磅]", result.Steps[1].Remark, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Write_RoundTrip_PreservesNozzleResultAndFields()
     {
         var original = new SequenceExcelStepRow(

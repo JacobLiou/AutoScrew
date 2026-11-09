@@ -89,9 +89,10 @@
 
 ## 3. TXT 工艺卡（拧紧参数）
 
-格式：键值对 + 行尾 `<说明>`（解析时忽略说明）。以 `#` / `//` 开头的行为注释。
+支持两种格式（上传时自动识别）：
 
-全量键与自创 6 段示例见 [samples/AllTemplateParams.txt](samples/AllTemplateParams.txt)。
+1. **旧卡**：键值对 + 行尾 `<说明>`（解析时忽略说明）。以 `#` / `//` 开头的行为注释。全量键与自创 6 段示例见 [samples/AllTemplateParams.txt](samples/AllTemplateParams.txt)。
+2. **ver02 表**（业务模板）：`区｜段｜字段｜【值】` + 尾注；头字段 `PN【】` / `拧紧参数后缀【00|10|20】`；**策略行** `策略｜【标准|加强|预定位|自创】`（1109 起）。样板见 [protocol/拧紧参数--模板ver02.txt](protocol/拧紧参数--模板ver02.txt)。尾注「最终电流判定」与字段「进阶设定」配对；自创段名 `阶段5` / `阶段6` → 槽 4/5。扭矩单位仍为 **lbf.in**。
 
 ### 3.1 身份字段（最终评审）
 
@@ -161,7 +162,7 @@
 | 操作 | 行为 |
 |------|------|
 | 上传 JSON | 校验 → `sequences/{SequenceId:D2}.json` → 更新 `product.json.sequences` |
-| 上传 TXT | 业务 **Ver01 表格式**（见 [protocol/拧紧顺序 Ver01.txt](protocol/拧紧顺序%20Ver01.txt)）：头含 `产品PN【】`；表列为 `顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果`。吸头/结果无协议字段，导入时拼进备注标记 `[吸头:…][结果:…]`。旧「步骤」键值块已废弃。顺序 ID 在工艺库页填写。样板见 [samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt) |
+| 上传 TXT | 业务 **Ver01 表格式**（[protocol/拧紧顺序 Ver01.txt](protocol/拧紧顺序%20Ver01.txt) 与 [protocol/产品锁附模板 Ver01 1 1109.txt](protocol/产品锁附模板%20Ver01%201%201109.txt) **同构**）：头含 `产品PN【】`；表列为 `顺序｜位置｜螺钉PN｜【拧紧参数】数量｜批头｜吸头｜备注｜结果`。吸头/结果无协议字段，导入时拼进备注标记 `[吸头:…][结果:…]`。旧「步骤」键值块已废弃。顺序 ID 在工艺库页填写。样板见 [samples/AllTemplateSequence.txt](samples/AllTemplateSequence.txt) |
 | 上传 Excel | 表头：`拧紧顺序\|位置\|螺钉PN\|拧紧参数\|数量\|批头\|备注`；`拧紧参数`=`螺钉PN-槽位`；步骤设备 ID=槽位+1。全量样板见 [samples/AllTemplateSequence.xlsx](samples/AllTemplateSequence.xlsx) |
 | 删除 | 仅删工艺库文件与清单项，不删设备顺序 |
 | 按 PN 下发 | 逐条覆盖写入设备（`WriteToDevice`）并 `SaveLocalPreset`；遇错停止；**不**先全删设备顺序 |

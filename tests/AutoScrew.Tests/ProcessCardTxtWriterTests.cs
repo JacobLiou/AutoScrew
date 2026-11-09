@@ -215,7 +215,40 @@ public sealed class ProcessCardTxtWriterTests
         var text = ProcessCardTxtWriterVer02.Format(template, "1835154375", 10);
         Assert.Contains("PN【1835154375】", text, StringComparison.Ordinal);
         Assert.Contains("拧紧参数后缀【10】", text, StringComparison.Ordinal);
+        Assert.Contains("策略｜【标准", text, StringComparison.Ordinal);
         Assert.Contains("拧紧设定｜启动", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FormatVer02_SelfDefinedStages5And6_RoundTrip()
+    {
+        var core = new TighteningParameterCore
+        {
+            Strategy = TighteningStrategy.SelfDefined,
+            Stages = TighteningParameterCore.CreateDefaultStages(),
+            Loosen = new TighteningLoosenCore(),
+        };
+        for (var i = 0; i < 6; i++)
+        {
+            core.Stages[i].ControlMode = TighteningControlMode.Torque;
+            core.Stages[i].TargetTorqueMilliNm = TorqueUnitConverter.DisplayToMilliNm(1 + i, DefaultTorqueUnit.LbfIn);
+            core.Stages[i].SpeedRpm = 100 + i;
+        }
+
+        var text = ProcessCardTxtWriterVer02.Format(
+            new TighteningParameterTemplate { ParameterId = 1, Core = core },
+            "SELF56",
+            0);
+        Assert.Contains("策略｜【自创", text, StringComparison.Ordinal);
+        Assert.Contains("拧紧设定｜阶段5", text, StringComparison.Ordinal);
+        Assert.Contains("拧紧设定｜阶段6", text, StringComparison.Ordinal);
+
+        var again = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(TighteningStrategy.SelfDefined, again.Template.Core.Strategy);
+        Assert.Equal(core.Stages[4].SpeedRpm, again.Template.Core.Stages[4].SpeedRpm);
+        Assert.Equal(core.Stages[5].SpeedRpm, again.Template.Core.Stages[5].SpeedRpm);
+        Assert.Equal(core.Stages[4].TargetTorqueMilliNm, again.Template.Core.Stages[4].TargetTorqueMilliNm);
+        Assert.Equal(core.Stages[5].TargetTorqueMilliNm, again.Template.Core.Stages[5].TargetTorqueMilliNm);
     }
 
     [Fact]
