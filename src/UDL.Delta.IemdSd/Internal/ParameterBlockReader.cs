@@ -41,7 +41,7 @@ internal sealed class ParameterBlockReader
             RawBlock = words,
         };
         template.SyncCoreFromRaw(_profile);
-        template.Core.Strategy = TighteningStrategyHelper.InferFromStages(template.Core.Stages);
+        template.Core.Strategy = TighteningStrategyHelper.InferFromCore(template.Core);
         return template;
     }
 

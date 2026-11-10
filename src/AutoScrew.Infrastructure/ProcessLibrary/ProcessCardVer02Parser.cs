@@ -154,7 +154,7 @@ public static class ProcessCardVer02Parser
             ProcessCardSemantics.ApplyStage(template.Core.Stages[idx], idx, block, direction);
 
         if (string.IsNullOrWhiteSpace(strategyText))
-            template.Core.Strategy = TighteningStrategyHelper.InferFromStages(template.Core.Stages);
+            template.Core.Strategy = TighteningStrategyHelper.InferFromCore(template.Core);
 
         ProcessCardSemantics.ApplyLoosen(template.Core.Loosen, loosenMap, direction);
         template.ApplyCoreToRaw();

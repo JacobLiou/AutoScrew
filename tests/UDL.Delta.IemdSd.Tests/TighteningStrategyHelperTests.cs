@@ -74,10 +74,20 @@ public class TighteningStrategyHelperTests
     }
 
     [Fact]
-    public void InferFromStages_Enhanced()
+    public void InferFromStages_Enhanced_AbsoluteSlot3Only()
     {
         var stages = TighteningParameterCore.CreateDefaultStages();
         stages[3].SpeedRpm = 100;
+        stages[3].ControlMode = TighteningControlMode.Torque;
+        Assert.Equal(TighteningStrategy.Enhanced, TighteningStrategyHelper.InferFromStages(stages));
+    }
+
+    [Fact]
+    public void InferFromStages_Enhanced_SdSoftRemappedFirstSlotOnly()
+    {
+        var stages = TighteningParameterCore.CreateDefaultStages();
+        stages[0].SpeedRpm = 100;
+        stages[0].ControlMode = TighteningControlMode.Angle;
         Assert.Equal(TighteningStrategy.Enhanced, TighteningStrategyHelper.InferFromStages(stages));
     }
 
@@ -85,19 +95,25 @@ public class TighteningStrategyHelperTests
     public void InferFromStages_PrePosition()
     {
         var stages = TighteningParameterCore.CreateDefaultStages();
-        stages[0].TargetAngleDeg = 10;
+        stages[0].SpeedRpm = 80;
+        stages[0].ControlMode = TighteningControlMode.Angle;
         stages[1].SpeedRpm = 200;
+        stages[1].ControlMode = TighteningControlMode.Torque;
         Assert.Equal(TighteningStrategy.PrePosition, TighteningStrategyHelper.InferFromStages(stages));
     }
 
     [Fact]
-    public void InferFromStages_Standard()
+    public void InferFromStages_Standard_ControlModePattern()
     {
         var stages = TighteningParameterCore.CreateDefaultStages();
-        stages[0].TargetAngleDeg = 10;
+        stages[0].SpeedRpm = 100;
+        stages[0].ControlMode = TighteningControlMode.Angle;
         stages[1].SpeedRpm = 200;
-        stages[2].TargetTorqueMilliNm = 500;
-        stages[3].TargetTorqueMilliNm = 1000;
+        stages[1].ControlMode = TighteningControlMode.Torque;
+        stages[2].SpeedRpm = 150;
+        stages[2].ControlMode = TighteningControlMode.Torque;
+        stages[3].SpeedRpm = 80;
+        stages[3].ControlMode = TighteningControlMode.Torque;
         Assert.Equal(TighteningStrategy.Standard, TighteningStrategyHelper.InferFromStages(stages));
     }
 
@@ -108,5 +124,81 @@ public class TighteningStrategyHelperTests
         stages[0].SpeedRpm = 100;
         stages[5].SpeedRpm = 50;
         Assert.Equal(TighteningStrategy.SelfDefined, TighteningStrategyHelper.InferFromStages(stages));
+    }
+
+    [Fact]
+    public void InferFromStages_SelfDefined_WhenDirectionChanges()
+    {
+        var stages = TighteningParameterCore.CreateDefaultStages();
+        stages[0].SpeedRpm = 100;
+        stages[0].ControlMode = TighteningControlMode.Angle;
+        stages[0].Direction = TighteningDirection.Clockwise;
+        stages[1].SpeedRpm = 200;
+        stages[1].ControlMode = TighteningControlMode.Torque;
+        stages[1].Direction = TighteningDirection.CounterClockwise;
+        stages[2].SpeedRpm = 150;
+        stages[2].ControlMode = TighteningControlMode.Torque;
+        stages[3].SpeedRpm = 80;
+        stages[3].ControlMode = TighteningControlMode.Torque;
+        Assert.Equal(TighteningStrategy.SelfDefined, TighteningStrategyHelper.InferFromStages(stages));
+    }
+
+    [Fact]
+    public void InferFromStages_SelfDefined_WhenCompTorqueEnabled()
+    {
+        var stages = TighteningParameterCore.CreateDefaultStages();
+        stages[0].SpeedRpm = 100;
+        stages[0].ControlMode = TighteningControlMode.Angle;
+        stages[1].SpeedRpm = 200;
+        stages[1].ControlMode = TighteningControlMode.Torque;
+        stages[2].SpeedRpm = 150;
+        stages[2].ControlMode = TighteningControlMode.Torque;
+        stages[3].SpeedRpm = 80;
+        stages[3].ControlMode = TighteningControlMode.Torque;
+        stages[1].CompTorqueEnabled = true;
+        Assert.Equal(TighteningStrategy.SelfDefined, TighteningStrategyHelper.InferFromStages(stages));
+    }
+
+    [Fact]
+    public void InferFromCore_SelfDefined_WhenLinkedCompensationParamIdSet()
+    {
+        var core = new TighteningParameterCore
+        {
+            LinkedCompensationParamId = 2,
+            Stages = TighteningParameterCore.CreateDefaultStages(),
+        };
+        core.Stages[0].SpeedRpm = 100;
+        core.Stages[0].ControlMode = TighteningControlMode.Angle;
+        core.Stages[1].SpeedRpm = 200;
+        core.Stages[1].ControlMode = TighteningControlMode.Torque;
+        core.Stages[2].SpeedRpm = 150;
+        core.Stages[2].ControlMode = TighteningControlMode.Torque;
+        core.Stages[3].SpeedRpm = 80;
+        core.Stages[3].ControlMode = TighteningControlMode.Torque;
+
+        Assert.Equal(TighteningStrategy.SelfDefined, TighteningStrategyHelper.InferFromCore(core));
+    }
+
+    [Fact]
+    public void InferFromStages_SelfDefined_WhenPatternDoesNotMatchTemplates()
+    {
+        // 四段都有转速，但控制模式不像标准模板 → 自创（不再误判标准）
+        var stages = TighteningParameterCore.CreateDefaultStages();
+        stages[0].SpeedRpm = 100;
+        stages[0].ControlMode = TighteningControlMode.Torque;
+        stages[1].SpeedRpm = 200;
+        stages[1].ControlMode = TighteningControlMode.Torque;
+        stages[2].SpeedRpm = 150;
+        stages[2].ControlMode = TighteningControlMode.Angle;
+        stages[3].SpeedRpm = 80;
+        stages[3].ControlMode = TighteningControlMode.Angle;
+        Assert.Equal(TighteningStrategy.SelfDefined, TighteningStrategyHelper.InferFromStages(stages));
+    }
+
+    [Fact]
+    public void InferFromStages_Empty_DefaultsToStandard()
+    {
+        var stages = TighteningParameterCore.CreateDefaultStages();
+        Assert.Equal(TighteningStrategy.Standard, TighteningStrategyHelper.InferFromStages(stages));
     }
 }

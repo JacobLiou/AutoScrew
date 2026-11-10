@@ -77,38 +77,81 @@ public static class TighteningStrategyHelper
         }
     }
 
-    /// <summary>从阶段内容推断策略（#150 回读无 Strategy 字段时）。</summary>
-    public static TighteningStrategy InferFromStages(IList<TighteningStageCore> stages)
+    /// <summary>
+    /// 从阶段内容推断策略（#150 回读无 Strategy 字段时）。
+    /// 对齐 SDSoft <c>StrategyDetectType</c>：以转速&gt;0 判定活动段、看控制模式组合 / 方向不一致 / Prevail；
+    /// 另保留绝对槽位「仅槽 3 有转速 → 加强」（设备 #150 布局，非 SDSoft UI 重映射）。
+    /// </summary>
+    /// <param name="linkedCompensationParamId">
+    /// 对应 SDSoft <c>ThePrevailTorqueToBeLinked</c>；&gt;0 视为自创。
+    /// </param>
+    public static TighteningStrategy InferFromStages(
+        IList<TighteningStageCore> stages,
+        int linkedCompensationParamId = 0)
     {
         ArgumentNullException.ThrowIfNull(stages);
-        var configured = new bool[6];
-        for (var i = 0; i < 6 && i < stages.Count; i++)
-            configured[i] = IsStageConfigured(stages[i]);
 
-        if (configured[4] || configured[5])
+        // WAType[i]：有转速则为控制模式数值，否则 99（与 SDSoft 一致）。
+        var waType = new int[6];
+        var hasSpeed = new bool[6];
+        var prevail = linkedCompensationParamId > 0;
+        TighteningDirection? firstActiveDirection = null;
+
+        for (var i = 0; i < 6; i++)
+        {
+            var stage = i < stages.Count ? stages[i] : null;
+            var speed = stage?.SpeedRpm ?? 0;
+            hasSpeed[i] = speed > 0;
+            waType[i] = hasSpeed[i] ? (int)(stage!.ControlMode) : 99;
+
+            if (stage is { CompTorqueEnabled: true })
+                prevail = true;
+
+            if (i > 3 && hasSpeed[i])
+                return TighteningStrategy.SelfDefined;
+
+            if (hasSpeed[i])
+            {
+                if (firstActiveDirection is null)
+                    firstActiveDirection = stage!.Direction;
+                else if (stage!.Direction != firstActiveDirection.Value)
+                    return TighteningStrategy.SelfDefined;
+            }
+        }
+
+        if (prevail)
             return TighteningStrategy.SelfDefined;
 
-        var c0 = configured[0];
-        var c1 = configured[1];
-        var c2 = configured[2];
-        var c3 = configured[3];
-
-        if (!c0 && !c1 && !c2 && !c3)
+        // 标准：启动角 + 旋入角/扭/率 + 预紧扭/率 + 拧紧角或扭/夹紧，且无第 5 段转速
+        if (waType[0] == 0
+            && waType[1] is 0 or 1 or 2
+            && waType[2] is 1 or 2
+            && (waType[3] == 0 || ((waType[3] is 1 or 3 or 4) && waType[4] == 99)))
             return TighteningStrategy.Standard;
 
-        // 仅拧紧槽 → 加强
-        if (!c0 && !c1 && !c2 && c3)
+        // 加强（SDSoft UI 重映射：仅首段有转速）
+        if (waType[0] is 0 or 1 && waType[1] == 99)
             return TighteningStrategy.Enhanced;
 
-        // 仅启动+旋入 → 预定位
-        if (c0 && c1 && !c2 && !c3)
+        // 加强（设备绝对槽：仅拧紧槽 3 有转速）
+        if (!hasSpeed[0] && !hasSpeed[1] && !hasSpeed[2] && hasSpeed[3] && !hasSpeed[4] && !hasSpeed[5])
+            return TighteningStrategy.Enhanced;
+
+        // 预定位：启动角 + 旋入角/扭/率，第 3 段起无转速
+        if (waType[0] == 0 && waType[1] is 0 or 1 or 2 && waType[2] == 99)
             return TighteningStrategy.PrePosition;
 
-        // 槽 0–3 有内容且无 4/5 → 标准（含部分标准槽）
-        if (c0 || c1 || c2 || c3)
+        if (!hasSpeed[0] && !hasSpeed[1] && !hasSpeed[2] && !hasSpeed[3] && !hasSpeed[4] && !hasSpeed[5])
             return TighteningStrategy.Standard;
 
+        // 不再把「槽 0–3 有任意内容」一律当成标准；未匹配模板则自创（对齐 SDSoft 默认 return 3）。
         return TighteningStrategy.SelfDefined;
+    }
+
+    public static TighteningStrategy InferFromCore(TighteningParameterCore core)
+    {
+        ArgumentNullException.ThrowIfNull(core);
+        return InferFromStages(core.Stages, core.LinkedCompensationParamId);
     }
 
     public static bool IsStageConfigured(TighteningStageCore? stage)
