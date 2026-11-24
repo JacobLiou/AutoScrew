@@ -35,7 +35,7 @@ public sealed class IemdSdClient : IIemdSdClient
         _typed = new IemdSdTypedCommands(_executor, _transport, options.ToolIndex);
         _reportReader = new ReportReader(_executor);
         _curveReader = new CurveReader(_executor);
-        _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options, _session);
+        _cycleRunner = new TighteningCycleRunner(_transport, _mailbox, options, _session, _logger);
         _parameterReader = new ParameterBlockReader(_executor, options.ToolIndex, options.ControllerProfile);
         _parameterWriter = new ParameterBlockWriter(_executor, options.ToolIndex, options.ControllerProfile, _logger);
     }

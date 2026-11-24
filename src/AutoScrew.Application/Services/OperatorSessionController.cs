@@ -687,6 +687,13 @@ public sealed class OperatorSessionController
             _logger.LogInformation("Screw cycle cancelled (session reset / park).");
             NotifyChanged();
         }
+        catch (Exception)
+        {
+            // Timeout / IO / device faults must not leave the hole stuck InProgress.
+            RestoreInProgressScrewToPending();
+            NotifyChanged();
+            throw;
+        }
         finally
         {
             Interlocked.Exchange(ref _cycleInProgress, 0);
@@ -719,7 +726,13 @@ public sealed class OperatorSessionController
         }
 
         if (Volatile.Read(ref _cycleInProgress) != 0)
-            _logger.LogWarning("Screw cycle still marked in-progress after cancel wait.");
+        {
+            Interlocked.Exchange(ref _cycleInProgress, 0);
+            RestoreInProgressScrewToPending();
+            NotifyChanged();
+            _logger.LogWarning(
+                "Screw cycle still marked in-progress after cancel wait; force-cleared gate and restored Pending.");
+        }
     }
 
     private void CancelLoadOperations()

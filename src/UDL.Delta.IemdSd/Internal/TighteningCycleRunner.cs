@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using UDL.Delta.IemdSd.Exceptions;
 using UDL.Delta.IemdSd.Modbus;
 using UDL.Delta.IemdSd.Protocol;
@@ -11,17 +13,20 @@ internal sealed class TighteningCycleRunner
     private readonly CommandMailbox _mailbox;
     private readonly IemdSdClientOptions _options;
     private readonly DeviceSession _session;
+    private readonly ILogger _logger;
 
     public TighteningCycleRunner(
         IModbusTransport transport,
         CommandMailbox mailbox,
         IemdSdClientOptions options,
-        DeviceSession session)
+        DeviceSession session,
+        ILogger? logger = null)
     {
         _transport = transport;
         _mailbox = mailbox;
         _options = options;
         _session = session;
+        _logger = logger ?? NullLogger.Instance;
     }
 
     public Task<TighteningResult> RunAsync(TighteningTrigger trigger, CancellationToken cancellationToken) =>
@@ -120,32 +125,100 @@ internal sealed class TighteningCycleRunner
 
     private async Task<DeviceTighteningStatus> WaitFinishAsync(CancellationToken cancellationToken)
     {
-        var addr = _options.UseLegacyFinishRegister
+        var primaryAddr = _options.UseLegacyFinishRegister
             ? ModbusRegisterMap.TighteningResultLegacy
             : ModbusRegisterMap.TighteningFinish;
+        var secondaryAddr = _options.UseLegacyFinishRegister
+            ? ModbusRegisterMap.TighteningFinish
+            : ModbusRegisterMap.TighteningResultLegacy;
 
         var timeoutMs = Math.Max(1_000, _options.TighteningCycleTimeoutMs);
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        var started = DateTime.UtcNow;
+        var lastPrimary = 0;
+        var lastSecondary = 0;
+        var nextDebugUtc = started;
 
         while (DateTime.UtcNow < deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var v = await _transport.ReadSingleAsync(addr, cancellationToken).ConfigureAwait(false);
-            if (v is 1 or 2 or 5)
-                return (DeviceTighteningStatus)v;
+
+            lastPrimary = await _transport.ReadSingleAsync(primaryAddr, cancellationToken).ConfigureAwait(false);
+            lastSecondary = await _transport.ReadSingleAsync(secondaryAddr, cancellationToken).ConfigureAwait(false);
+
+            var primaryHit = IsFinishValue(lastPrimary);
+            var secondaryHit = IsFinishValue(lastSecondary);
+
+            if (primaryHit || secondaryHit)
+            {
+                int hitAddr;
+                int hitValue;
+                if (primaryHit && secondaryHit && lastPrimary != lastSecondary)
+                {
+                    hitAddr = primaryAddr;
+                    hitValue = lastPrimary;
+                    _logger.LogWarning(
+                        "Finish registers conflict: 0x{PrimaryAddr:X}={PrimaryValue} 0x{SecondaryAddr:X}={SecondaryValue}; using preferred 0x{ChosenAddr:X}={ChosenValue} (UseLegacyFinishRegister={UseLegacy})",
+                        primaryAddr,
+                        lastPrimary,
+                        secondaryAddr,
+                        lastSecondary,
+                        hitAddr,
+                        hitValue,
+                        _options.UseLegacyFinishRegister);
+                }
+                else if (primaryHit)
+                {
+                    hitAddr = primaryAddr;
+                    hitValue = lastPrimary;
+                }
+                else
+                {
+                    hitAddr = secondaryAddr;
+                    hitValue = lastSecondary;
+                }
+
+                var elapsedMs = (int)(DateTime.UtcNow - started).TotalMilliseconds;
+                _logger.LogInformation(
+                    "Tightening finish detected: register 0x{Addr:X}={Value} after {ElapsedMs} ms (peer 0x{PeerAddr:X}={PeerValue})",
+                    hitAddr,
+                    hitValue,
+                    elapsedMs,
+                    hitAddr == primaryAddr ? secondaryAddr : primaryAddr,
+                    hitAddr == primaryAddr ? lastSecondary : lastPrimary);
+
+                return (DeviceTighteningStatus)hitValue;
+            }
+
+            if (_logger.IsEnabled(LogLevel.Debug) && DateTime.UtcNow >= nextDebugUtc)
+            {
+                _logger.LogDebug(
+                    "Waiting for tightening finish: 0x{PrimaryAddr:X}={PrimaryValue} 0x{SecondaryAddr:X}={SecondaryValue} elapsedMs={ElapsedMs}",
+                    primaryAddr,
+                    lastPrimary,
+                    secondaryAddr,
+                    lastSecondary,
+                    (int)(DateTime.UtcNow - started).TotalMilliseconds);
+                nextDebugUtc = DateTime.UtcNow.AddSeconds(2);
+            }
+
             await Task.Delay(_options.TighteningPollIntervalMs, cancellationToken).ConfigureAwait(false);
         }
 
         throw new IemdSdCommunicationException(
-            $"Tightening finish wait timed out after {timeoutMs} ms (register 0x{addr:X}).");
+            $"Tightening finish wait timed out after {timeoutMs} ms " +
+            $"(0x{primaryAddr:X}={lastPrimary}, 0x{secondaryAddr:X}={lastSecondary}).");
     }
+
+    private static bool IsFinishValue(int value) => value is 1 or 2 or 5;
 
     private async Task ClearFinishAsync(CancellationToken cancellationToken)
     {
-        var addr = _options.UseLegacyFinishRegister
-            ? ModbusRegisterMap.TighteningResultLegacy
-            : ModbusRegisterMap.TighteningFinish;
-        await _transport.WriteSingleAsync(addr, 0, cancellationToken).ConfigureAwait(false);
+        // Align with supplier Demo: clear both new and legacy finish flags.
+        await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningFinish, 0, cancellationToken)
+            .ConfigureAwait(false);
+        await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningResultLegacy, 0, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public Task<uint> ReadReportIdAsync(CancellationToken cancellationToken) =>

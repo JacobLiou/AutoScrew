@@ -925,6 +925,10 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
+            MessageTips.ShowDialog(
+                ex.Message,
+                System.Windows.Application.Current?.MainWindow,
+                Loc.Get("S.Dialog.Exception"));
         }
         finally
         {
