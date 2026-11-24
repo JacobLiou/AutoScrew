@@ -6,14 +6,25 @@
 
 拧紧参数后缀【     】：20=紧固程序；10=预紧程序；00=正常锁附程序 
 策略｜【     】                       标准/加强/预定位/自创/
+阶段有效｜【4】                         标准=4；加强=1；预定位=2；自创=1–6
+旋转方向｜【顺时针】                     顺时针/逆时针
   ID　             【     】           Param ID  序号由系统自动设定(不用填写）
-　　　　｜　　　　｜进阶设定　｜【21   】   供料结果延时   
+　　　　｜　　　　｜末段伺服保持｜【0    】   Last Stage Servo On | 0=off, 1=on
+　　　　｜　　　　｜关联补偿参数ID｜【0    】   Linked Compensation Param ID
+　　　　｜　　　　｜进阶设定　｜【21   】   供料结果延时
 　　　　｜　　　　｜进阶设定　｜【     】   最终电流判定 | F2 | 1=open, 0=close
+　　　　｜　　　　｜进阶设定　｜【0    】   贴合起始扭矩率
+　　　　｜　　　　｜进阶设定　｜【0    】   工具精度补偿（×0.1%）
+　　　　｜　　　　｜进阶设定　｜【0    】   曲线取样起始扭矩（mNm）
+　　　　｜　　　　｜进阶设定　｜【0    】   扭矩率角度间隔（×0.1°）
+　　　　｜　　　　｜进阶设定　｜【0    】   贴合点角度修正(×0.1°)
 　　　　｜　　　　｜最大总角度｜【32767】   Max Angle Tightening
 　　　　｜　　　　｜启动延时　｜【120  】   Delay Start Tightening
 　　　　｜　　　　｜最小总角度｜【3240 】   Min Angle Tightening
+　　　　｜　　　　｜超时　　　｜【     】   Max Time Tightening
 　　　　｜拧松条件｜启动延时　｜【123  】   Delay Start Loosening
-　　　　｜拧松条件｜超时　　　｜【     】   Max Time Tightening
+　　　　｜拧松条件｜超时　　　｜【     】   Max Time Loosening
+　　　　｜拧松条件｜最大拧松角度｜【     】   Max Angle Loosening
 拧紧设定｜启动　　｜速度　　　｜【80   】   Target Speed
 拧紧设定｜启动　　｜角度　　　｜【90   】   Target Angle
 拧紧设定｜启动　　｜进阶设定　｜【55   】   加速度时间   Acc. time

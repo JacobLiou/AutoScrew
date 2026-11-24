@@ -25,6 +25,13 @@ public static class ProcessCardVer02Parser
         @"^策略\s*[｜|]\s*[【\[](?<v>[^】\]]*)[】\]]",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    private static readonly Regex StageCountLine = new(
+        @"^阶段有效\s*[｜|]\s*[【\[](?<v>[^】\]]*)[】\]]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex DirectionLine = new(
+        @"^旋转方向\s*[｜|]\s*[【\[](?<v>[^】\]]*)[】\]]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     public static bool LooksLikeVer02(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -74,6 +81,20 @@ public static class ProcessCardVer02Parser
             if (sm.Success)
             {
                 SetIfMeaningful(global, "策略", NormalizeValue(sm.Groups["v"].Value));
+                continue;
+            }
+
+            var sc = StageCountLine.Match(line);
+            if (sc.Success)
+            {
+                SetIfMeaningful(global, "阶段有效", NormalizeValue(sc.Groups["v"].Value));
+                continue;
+            }
+
+            var dmDir = DirectionLine.Match(line);
+            if (dmDir.Success)
+            {
+                SetIfMeaningful(global, "旋转方向", NormalizeValue(dmDir.Groups["v"].Value));
                 continue;
             }
 
@@ -145,11 +166,24 @@ public static class ProcessCardVer02Parser
         template.Core.LoosenStartDelayCentiSec =
             ProcessCardSemantics.GetInt(global, "拧松启动延时", 0);
         template.Core.MaxLoosenAngleDeg = ProcessCardSemantics.GetInt(global, "最大拧松角度", 0);
+        template.Core.LastStageServoOn =
+            ProcessCardSemantics.ParseOnOff(ProcessCardSemantics.GetString(global, "末段伺服保持"));
+        template.Core.LinkedCompensationParamId =
+            ProcessCardSemantics.GetInt(global, "关联补偿参数ID", 0);
         template.Core.FinalCurrentJudgeEnabled =
             ProcessCardSemantics.ParseOnOff(ProcessCardSemantics.GetString(global, "最终电流判定"));
         template.Core.FeederResultDelayTenthSec =
             ProcessCardSemantics.GetInt(global, "供料结果延时", 0);
-
+        template.Core.SeatAngleStartTorqueRate =
+            ProcessCardSemantics.GetInt(global, "贴合起始扭矩率", 0);
+        template.Core.ToolPrecisionCompTenthPercent =
+            ProcessCardSemantics.GetInt(global, "工具精度补偿", 0);
+        template.Core.CurveSampleStartTorqueMilliNm =
+            ProcessCardSemantics.GetInt(global, "曲线取样起始扭矩", 0);
+        template.Core.TorqueRateAngleDelayTenthDeg =
+            ProcessCardSemantics.GetInt(global, "扭矩率角度间隔", 0);
+        template.Core.SeatPointAngleCorrectionTenthDeg =
+            ProcessCardSemantics.GetInt(global, "贴合点角度修正", 0);
         foreach (var (idx, block) in stageBlocks)
             ProcessCardSemantics.ApplyStage(template.Core.Stages[idx], idx, block, direction);
 
@@ -208,11 +242,35 @@ public static class ProcessCardVer02Parser
         string value,
         string tail)
     {
-        // 模板瑕疵：拧松条件｜超时｜英文 Max Time Tightening → 最大拧紧时间
-        if (field.Contains("超时", StringComparison.Ordinal) &&
-            (ContainsIgnore(tail, "Max Time Tightening") || seg.Contains("超时", StringComparison.Ordinal)))
+        // 超时：新模板拆分 Tightening / Loosening；旧卡「拧松条件｜超时｜Max Time Tightening」仍进拧紧超时。
+        if (field.Contains("超时", StringComparison.Ordinal))
         {
-            SetIfMeaningful(global, "最大拧紧时间", value);
+            if (ContainsIgnore(tail, "Loosen"))
+                SetIfMeaningful(global, "最大拧松时间", value);
+            else if (ContainsIgnore(tail, "Tighten"))
+                SetIfMeaningful(global, "最大拧紧时间", value);
+            else if (area.Contains("拧松", StringComparison.Ordinal) || seg.Contains("拧松", StringComparison.Ordinal))
+                SetIfMeaningful(global, "最大拧松时间", value);
+            else
+                SetIfMeaningful(global, "最大拧紧时间", value);
+            return;
+        }
+
+        if (field.Contains("进阶设定", StringComparison.Ordinal))
+        {
+            ApplyGlobalAdvancedAlias(global, value, tail);
+            return;
+        }
+
+        if (field.Contains("末段伺服", StringComparison.Ordinal) || ContainsIgnore(tail, "Last Stage Servo"))
+        {
+            SetIfMeaningful(global, "末段伺服保持", value);
+            return;
+        }
+
+        if (field.Contains("关联补偿", StringComparison.Ordinal) || ContainsIgnore(tail, "Linked Compensation"))
+        {
+            SetIfMeaningful(global, "关联补偿参数ID", value);
             return;
         }
 
@@ -254,12 +312,32 @@ public static class ProcessCardVer02Parser
             SetIfMeaningful(global, "最大拧紧时间", value);
         else if (field.Contains("最大拧松时间", StringComparison.Ordinal))
             SetIfMeaningful(global, "最大拧松时间", value);
-        else if (field.Contains("最大拧松角度", StringComparison.Ordinal))
+        else if (field.Contains("最大拧松角度", StringComparison.Ordinal) || ContainsIgnore(tail, "Max Angle Loosening"))
             SetIfMeaningful(global, "最大拧松角度", value);
         else if (field.Contains("旋转方向", StringComparison.Ordinal))
             SetIfMeaningful(global, "旋转方向", value);
+        else if (field.Contains("阶段有效", StringComparison.Ordinal))
+            SetIfMeaningful(global, "阶段有效", value);
         else if (field.Contains("策略", StringComparison.Ordinal))
             SetIfMeaningful(global, "策略", value);
+    }
+
+    private static void ApplyGlobalAdvancedAlias(Dictionary<string, string> global, string value, string tail)
+    {
+        if (ContainsIgnore(tail, "供料结果延时"))
+            SetIfMeaningful(global, "供料结果延时", value);
+        else if (ContainsIgnore(tail, "最终电流判定"))
+            SetIfMeaningful(global, "最终电流判定", value);
+        else if (ContainsIgnore(tail, "贴合起始扭矩率"))
+            SetIfMeaningful(global, "贴合起始扭矩率", value);
+        else if (ContainsIgnore(tail, "工具精度补偿"))
+            SetIfMeaningful(global, "工具精度补偿", value);
+        else if (ContainsIgnore(tail, "曲线取样起始扭矩"))
+            SetIfMeaningful(global, "曲线取样起始扭矩", value);
+        else if (ContainsIgnore(tail, "扭矩率角度间隔"))
+            SetIfMeaningful(global, "扭矩率角度间隔", value);
+        else if (ContainsIgnore(tail, "贴合点角度修正"))
+            SetIfMeaningful(global, "贴合点角度修正", value);
     }
 
     private static void ApplyStageRow(

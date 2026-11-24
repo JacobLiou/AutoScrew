@@ -419,4 +419,132 @@ public sealed class ProcessCardTxtParserTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    [Fact]
+    public void Parse_Ver02_OffMode_SkipsStage_NotTorqueAtZero()
+    {
+        var text = """
+            PN【1835150951】
+            拧紧参数后缀【10】
+            策略｜【自创】
+            　｜　　｜最大总角度｜【100】   Max Angle Tightening
+            　｜拧松条件｜超时｜【1】   Max Time Tightening
+            拧紧设定｜启动｜速度｜【300】   Target Speed
+            拧紧设定｜启动｜角度｜【1080】   Target Angle
+            拧紧设定｜预紧｜设定模式｜【off】   on/off
+            拧紧设定｜预紧｜扭矩｜【0】
+            拧紧设定｜拧紧｜设定模式｜【关】   on/off
+            拧紧设定｜拧紧｜扭矩｜【0】
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        var s2 = result.Template.Core.Stages[2];
+        var s3 = result.Template.Core.Stages[3];
+        Assert.False(TighteningStrategyHelper.IsStageConfigured(s2));
+        Assert.False(TighteningStrategyHelper.IsStageConfigured(s3));
+        Assert.NotEqual(TighteningControlMode.Torque, s2.ControlMode);
+        Assert.NotEqual(TighteningControlMode.Torque, s3.ControlMode);
+        Assert.Equal(0, s2.TargetTorqueMilliNm);
+        Assert.Equal(0, s3.TargetTorqueMilliNm);
+        // 旧错标签：拧松条件｜超时｜Max Time Tightening → 仍进拧紧超时
+        Assert.Equal(10, result.Template.Core.MaxTighteningTimeTenthSec);
+        Assert.Equal(0, result.Template.Core.MaxLoosenTimeTenthSec);
+    }
+
+    [Fact]
+    public void Parse_Ver02_SeparateTightenAndLoosenTimeouts_AndBasicParity()
+    {
+        var text = """
+            PN【1830330479】
+            拧紧参数后缀【08】
+            策略｜【标准】
+            阶段有效｜【4】
+            旋转方向｜【逆时针】
+            　｜　　｜末段伺服保持｜【0】   Last Stage Servo On
+            　｜　　｜关联补偿参数ID｜【0】
+            　｜　　｜进阶设定｜【0】   供料结果延时
+            　｜　　｜进阶设定｜【0】   最终电流判定
+            　｜　　｜进阶设定｜【0】   贴合起始扭矩率
+            　｜　　｜进阶设定｜【1】   工具精度补偿（×0.1%）
+            　｜　　｜进阶设定｜【2】   曲线取样起始扭矩（mNm）
+            　｜　　｜最大总角度｜【4160】   Max Angle Tightening
+            　｜　　｜最小总角度｜【3800】   Min Angle Tightening
+            　｜　　｜超时｜【10】   Max Time Tightening
+            　｜拧松条件｜超时｜【10】   Max Time Loosening
+            　｜拧松条件｜最大拧松角度｜【5000】   Max Angle Loosening
+            拧紧设定｜启动｜设定模式｜【0】
+            拧紧设定｜启动｜速度｜【80】
+            拧紧设定｜启动｜角度｜【360】
+            拧紧设定｜旋入｜设定模式｜【0】
+            拧紧设定｜旋入｜速度｜【600】
+            拧紧设定｜旋入｜角度｜【3600】
+            拧紧设定｜预紧｜设定模式｜【1】
+            拧紧设定｜预紧｜速度｜【120】
+            拧紧设定｜预紧｜扭矩｜【2.6】
+            拧紧设定｜拧紧｜设定模式｜【1】
+            拧紧设定｜拧紧｜速度｜【120】
+            拧紧设定｜拧紧｜扭矩｜【3】
+            """;
+
+        var result = ProcessCardTxtParser.Parse(text);
+        Assert.Equal(100, result.Template.Core.MaxTighteningTimeTenthSec);
+        Assert.Equal(100, result.Template.Core.MaxLoosenTimeTenthSec);
+        Assert.Equal(5000, result.Template.Core.MaxLoosenAngleDeg);
+        Assert.False(result.Template.Core.LastStageServoOn);
+        Assert.Equal(0, result.Template.Core.LinkedCompensationParamId);
+        Assert.Equal(1, result.Template.Core.ToolPrecisionCompTenthPercent);
+        Assert.Equal(2, result.Template.Core.CurveSampleStartTorqueMilliNm);
+        Assert.Equal(TighteningDirection.CounterClockwise, result.Template.Core.Stages[0].Direction);
+    }
+
+    [Fact]
+    public void Parse_Ver01_ThenFormatVer02_PreservesBasicSettings()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1830330479_00_v2.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var v1 = ProcessCardTxtParser.ParseFile(path);
+        var ver02 = ProcessCardTxtWriterVer02.Format(v1.Template, v1.ScrewPn, v1.SlotId);
+        var again = ProcessCardTxtParser.Parse(ver02);
+
+        Assert.Equal(v1.Template.Core.MaxTighteningTimeTenthSec, again.Template.Core.MaxTighteningTimeTenthSec);
+        Assert.Equal(v1.Template.Core.MaxLoosenTimeTenthSec, again.Template.Core.MaxLoosenTimeTenthSec);
+        Assert.Equal(v1.Template.Core.MaxLoosenAngleDeg, again.Template.Core.MaxLoosenAngleDeg);
+        Assert.Equal(v1.Template.Core.CurveSampleStartTorqueMilliNm, again.Template.Core.CurveSampleStartTorqueMilliNm);
+        Assert.Equal(v1.Template.Core.ToolPrecisionCompTenthPercent, again.Template.Core.ToolPrecisionCompTenthPercent);
+        Assert.Equal(v1.Template.Core.LastStageServoOn, again.Template.Core.LastStageServoOn);
+        Assert.Equal(v1.Template.Core.Stages[0].Direction, again.Template.Core.Stages[0].Direction);
+    }
+
+    [Fact]
+    public void Parse_Ver02_1835150951_WritableAfterMask_NoTorqueZeroActive()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "1835150951_10.txt");
+        Assert.True(File.Exists(path), $"Missing fixture: {path}");
+
+        var result = ProcessCardTxtParser.ParseFile(path);
+        Assert.Equal("1835150951", result.ScrewPn);
+        Assert.Equal(10, result.SlotId);
+        Assert.Equal(11, result.Template.ParameterId);
+        Assert.Equal(TighteningStrategy.SelfDefined, result.Template.Core.Strategy);
+        Assert.Equal(10, result.Template.Core.MaxTighteningTimeTenthSec);
+        Assert.Equal(0, result.Template.Core.MaxLoosenTimeTenthSec);
+
+        Assert.True(TighteningStrategyHelper.IsStageConfigured(result.Template.Core.Stages[0]));
+        Assert.False(TighteningStrategyHelper.IsStageConfigured(result.Template.Core.Stages[2]));
+        Assert.False(TighteningStrategyHelper.IsStageConfigured(result.Template.Core.Stages[3]));
+
+        AutoScrew.Infrastructure.Hardware.ControllerParameterPresetService.EnsureWritableStages(result.Template);
+
+        var writeStages = result.Template.Core.Stages.ToList();
+        TighteningStrategyHelper.ApplyStrategyMask(writeStages, result.Template.Core.Strategy);
+        foreach (var stage in writeStages)
+        {
+            if (!TighteningStrategyHelper.IsStageConfigured(stage))
+                continue;
+            var needsTorque = stage.ControlMode is TighteningControlMode.Torque
+                or TighteningControlMode.ClampTorque;
+            Assert.False(needsTorque && stage.TargetTorqueMilliNm <= 0);
+        }
+    }
 }

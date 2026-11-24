@@ -58,8 +58,8 @@ public static class TighteningStrategyHelper
     }
 
     /// <summary>
-    /// 写设备前对非活动槽清零（就地修改）。自创仅清未配置的尾部槽以外的空槽策略：
-    /// 自创保留全部已有内容，不强制清零（0xCC=1 固定自创）。
+    /// 写设备前对非活动槽清零（就地修改）。
+    /// 自创：清空未配置槽（避免 off/空段以 Torque@0 下发）；已配置槽保留。
     /// </summary>
     public static void ApplyStrategyMask(IList<TighteningStageCore> stages, TighteningStrategy strategy)
     {
@@ -67,7 +67,15 @@ public static class TighteningStrategyHelper
         EnsureSixSlots(stages);
 
         if (strategy == TighteningStrategy.SelfDefined)
+        {
+            for (var i = 0; i < 6; i++)
+            {
+                if (!IsStageConfigured(stages[i]))
+                    stages[i] = new TighteningStageCore();
+            }
+
             return;
+        }
 
         var active = new HashSet<int>(GetActiveStageIndices(strategy));
         for (var i = 0; i < 6; i++)
@@ -79,8 +87,10 @@ public static class TighteningStrategyHelper
 
     /// <summary>
     /// 从阶段内容推断策略（#150 回读无 Strategy 字段时）。
-    /// 对齐 SDSoft <c>StrategyDetectType</c>：以转速&gt;0 判定活动段、看控制模式组合 / 方向不一致 / Prevail；
-    /// 另保留绝对槽位「仅槽 3 有转速 → 加强」（设备 #150 布局，非 SDSoft UI 重映射）。
+    /// 以转速&gt;0 判定活动段；控制模式组合对齐 SDSoft <c>StrategyDetectType</c> 的标准/预定位模板。
+    /// <b>加强仅认绝对槽「仅槽 3 有转速」</b>——#150 为设备布局，不得套用 SDSoft UI
+    /// 「加强拧紧段重映射到 Item1」规则，否则「自创仅启动」会被误判为加强。
+    /// 未命中模板 → 自创。
     /// </summary>
     /// <param name="linkedCompensationParamId">
     /// 对应 SDSoft <c>ThePrevailTorqueToBeLinked</c>；&gt;0 视为自创。
@@ -129,22 +139,20 @@ public static class TighteningStrategyHelper
             && (waType[3] == 0 || ((waType[3] is 1 or 3 or 4) && waType[4] == 99)))
             return TighteningStrategy.Standard;
 
-        // 加强（SDSoft UI 重映射：仅首段有转速）
-        if (waType[0] is 0 or 1 && waType[1] == 99)
-            return TighteningStrategy.Enhanced;
-
-        // 加强（设备绝对槽：仅拧紧槽 3 有转速）
+        // 加强：#150 绝对布局下仅拧紧槽 3 有转速（写加强时 ApplyStrategyMask 亦只保留槽 3）
         if (!hasSpeed[0] && !hasSpeed[1] && !hasSpeed[2] && hasSpeed[3] && !hasSpeed[4] && !hasSpeed[5])
             return TighteningStrategy.Enhanced;
 
-        // 预定位：启动角 + 旋入角/扭/率，第 3 段起无转速
-        if (waType[0] == 0 && waType[1] is 0 or 1 or 2 && waType[2] == 99)
+        // 预定位：启动角 + 旋入角/扭/率，且槽 2–5 无转速（与写前掩码一致）
+        if (waType[0] == 0
+            && waType[1] is 0 or 1 or 2
+            && !hasSpeed[2] && !hasSpeed[3] && !hasSpeed[4] && !hasSpeed[5])
             return TighteningStrategy.PrePosition;
 
         if (!hasSpeed[0] && !hasSpeed[1] && !hasSpeed[2] && !hasSpeed[3] && !hasSpeed[4] && !hasSpeed[5])
             return TighteningStrategy.Standard;
 
-        // 不再把「槽 0–3 有任意内容」一律当成标准；未匹配模板则自创（对齐 SDSoft 默认 return 3）。
+        // 未匹配标准/加强/预定位模板 → 自创（含「仅启动」等自创子集）
         return TighteningStrategy.SelfDefined;
     }
 

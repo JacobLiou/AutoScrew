@@ -32,6 +32,8 @@ public static class ProcessCardTxtWriterVer02
 
         var core = template.Core;
         var stageIndices = ResolveStageIndicesToWrite(core);
+        var stageCountLabel = ResolveStageCountLabel(core, stageIndices);
+        var direction = ResolveDirection(core, stageIndices);
         var sb = new StringBuilder();
         var who = string.IsNullOrWhiteSpace(author) ? "未知" : author.Trim();
         var content = string.IsNullOrWhiteSpace(changeContent)
@@ -47,15 +49,26 @@ public static class ProcessCardTxtWriterVer02
         sb.AppendLine(
             $"拧紧参数后缀【{slotId.ToString("D2", CultureInfo.InvariantCulture)}】：20=紧固程序；10=预紧程序；00=正常锁附程序");
         sb.AppendLine($"策略｜【{FormatStrategy(core.Strategy).PadRight(5)}】                       标准/加强/预定位/自创/");
+        sb.AppendLine($"阶段有效｜【{stageCountLabel.ToString(CultureInfo.InvariantCulture)}】                         标准=4；加强=1；预定位=2；自创=1–6");
+        sb.AppendLine($"旋转方向｜【{FormatDirection(direction)}】                     顺时针/逆时针");
         sb.AppendLine("  ID　             【     】           Param ID  序号由系统自动设定(不用填写）");
 
+        Row(sb, "", "", "末段伺服保持", FormatMode01(core.LastStageServoOn), "Last Stage Servo On | 0=off, 1=on");
+        Row(sb, "", "", "关联补偿参数ID", core.LinkedCompensationParamId.ToString(CultureInfo.InvariantCulture), "Linked Compensation Param ID");
         Row(sb, "", "", "进阶设定", core.FeederResultDelayTenthSec.ToString(CultureInfo.InvariantCulture), "供料结果延时");
         Row(sb, "", "", "进阶设定", FormatMode01(core.FinalCurrentJudgeEnabled), "最终电流判定 | F2 | 1=open, 0=close");
+        Row(sb, "", "", "进阶设定", core.SeatAngleStartTorqueRate.ToString(CultureInfo.InvariantCulture), "贴合起始扭矩率");
+        Row(sb, "", "", "进阶设定", core.ToolPrecisionCompTenthPercent.ToString(CultureInfo.InvariantCulture), "工具精度补偿（×0.1%）");
+        Row(sb, "", "", "进阶设定", core.CurveSampleStartTorqueMilliNm.ToString(CultureInfo.InvariantCulture), "曲线取样起始扭矩（mNm）");
+        Row(sb, "", "", "进阶设定", core.TorqueRateAngleDelayTenthDeg.ToString(CultureInfo.InvariantCulture), "扭矩率角度间隔（×0.1°）");
+        Row(sb, "", "", "进阶设定", core.SeatPointAngleCorrectionTenthDeg.ToString(CultureInfo.InvariantCulture), "贴合点角度修正(×0.1°)");
         Row(sb, "", "", "最大总角度", core.MaxAngleDeg.ToString(CultureInfo.InvariantCulture), "Max Angle Tightening");
         Row(sb, "", "", "启动延时", core.TighteningStartDelayCentiSec.ToString(CultureInfo.InvariantCulture), "Delay Start Tightening");
         Row(sb, "", "", "最小总角度", core.MinAngleDeg.ToString(CultureInfo.InvariantCulture), "Min Angle Tightening");
+        Row(sb, "", "", "超时", FormatTenthAsSeconds(core.MaxTighteningTimeTenthSec), "Max Time Tightening");
         Row(sb, "", "拧松条件", "启动延时", core.LoosenStartDelayCentiSec.ToString(CultureInfo.InvariantCulture), "Delay Start Loosening");
-        Row(sb, "", "拧松条件", "超时", FormatTenthAsSeconds(core.MaxTighteningTimeTenthSec), "Max Time Tightening");
+        Row(sb, "", "拧松条件", "超时", FormatTenthAsSeconds(core.MaxLoosenTimeTenthSec), "Max Time Loosening");
+        Row(sb, "", "拧松条件", "最大拧松角度", core.MaxLoosenAngleDeg.ToString(CultureInfo.InvariantCulture), "Max Angle Loosening");
 
         foreach (var i in stageIndices)
         {
@@ -198,6 +211,25 @@ public static class ProcessCardTxtWriterVer02
         return Enumerable.Range(0, last + 1).ToList();
     }
 
+    private static int ResolveStageCountLabel(TighteningParameterCore core, IReadOnlyList<int> indices) =>
+        core.Strategy switch
+        {
+            TighteningStrategy.Enhanced => 1,
+            TighteningStrategy.PrePosition => 2,
+            _ => indices.Count,
+        };
+
+    private static TighteningDirection ResolveDirection(TighteningParameterCore core, IReadOnlyList<int> indices)
+    {
+        foreach (var i in indices)
+        {
+            if (i < core.Stages.Count)
+                return core.Stages[i].Direction;
+        }
+
+        return TighteningDirection.Clockwise;
+    }
+
     private static bool StageHasContent(TighteningStageCore stage) =>
         stage.SpeedRpm > 0
         || stage.TargetAngleDeg > 0
@@ -231,6 +263,9 @@ public static class ProcessCardTxtWriterVer02
             TighteningStrategy.SelfDefined => "自创",
             _ => "标准",
         };
+
+    private static string FormatDirection(TighteningDirection direction) =>
+        direction == TighteningDirection.CounterClockwise ? "逆时针" : "顺时针";
 
     private static string FormatMode01(bool on) => on ? "1" : "0";
 

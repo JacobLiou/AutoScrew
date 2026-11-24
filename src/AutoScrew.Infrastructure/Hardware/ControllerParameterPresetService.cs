@@ -220,7 +220,8 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         _logger.LogInformation("Deleted parameter {ParamId} from IEMD-SD (#110)", parameterId);
     }
 
-    private static void EnsureWritableStages(TighteningParameterTemplate template)
+    /// <summary>下发前本地预检（单测可见）。</summary>
+    internal static void EnsureWritableStages(TighteningParameterTemplate template)
     {
         var stages = template.Core.Stages;
         var hasConfiguredStage = stages.Any(s =>
@@ -229,6 +230,41 @@ public sealed class ControllerParameterPresetService : IControllerParameterPrese
         {
             throw new InvalidOperationException(
                 "下发前请至少配置一段有效拧紧参数（目标扭矩、目标角度或转速不能全为 0）。");
+        }
+
+        for (var i = 0; i < stages.Count; i++)
+        {
+            var s = stages[i];
+            if (!TighteningStrategyHelper.IsStageConfigured(s))
+                continue;
+
+            var needsTorque = s.ControlMode is TighteningControlMode.Torque
+                or TighteningControlMode.ClampTorque;
+            if (needsTorque && s.TargetTorqueMilliNm <= 0)
+            {
+                var stageName = i switch
+                {
+                    0 => "启动",
+                    1 => "旋入",
+                    2 => "预紧",
+                    3 => "拧紧",
+                    _ => $"阶段{i + 1}",
+                };
+                throw new InvalidOperationException(
+                    $"{stageName}段为扭矩/夹紧扭矩模式但目标扭矩为 0。请填写扭矩，或将设定模式改为 off 关段（数字 0 表示角度，不是关闭）。");
+            }
+        }
+
+        if (template.Core.MaxTighteningTimeTenthSec > 32767)
+        {
+            throw new InvalidOperationException(
+                $"最大拧紧超时（×0.1s）={template.Core.MaxTighteningTimeTenthSec} 超过 32767，请减小后再下发。");
+        }
+
+        if (template.Core.MaxLoosenTimeTenthSec > 32767)
+        {
+            throw new InvalidOperationException(
+                $"最大拧松超时（×0.1s）={template.Core.MaxLoosenTimeTenthSec} 超过 32767，请减小后再下发。");
         }
     }
 

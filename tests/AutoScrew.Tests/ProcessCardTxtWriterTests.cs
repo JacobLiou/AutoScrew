@@ -177,6 +177,10 @@ public sealed class ProcessCardTxtWriterTests
         var original = ProcessCardTxtParser.ParseFile(path);
         var text = ProcessCardTxtWriterVer02.Format(original.Template, original.ScrewPn, original.SlotId);
         Assert.True(ProcessCardVer02Parser.LooksLikeVer02(text));
+        Assert.Contains("Max Time Tightening", text, StringComparison.Ordinal);
+        Assert.Contains("Max Time Loosening", text, StringComparison.Ordinal);
+        Assert.Contains("阶段有效｜【", text, StringComparison.Ordinal);
+        Assert.Contains("旋转方向｜【", text, StringComparison.Ordinal);
 
         var again = ProcessCardTxtParser.Parse(text);
 
@@ -185,9 +189,17 @@ public sealed class ProcessCardTxtWriterTests
         Assert.Equal(original.Template.ParameterId, again.Template.ParameterId);
         Assert.Equal(original.Template.Core.MaxAngleDeg, again.Template.Core.MaxAngleDeg);
         Assert.Equal(original.Template.Core.MinAngleDeg, again.Template.Core.MinAngleDeg);
+        Assert.Equal(original.Template.Core.MaxTighteningTimeTenthSec, again.Template.Core.MaxTighteningTimeTenthSec);
+        Assert.Equal(original.Template.Core.MaxLoosenTimeTenthSec, again.Template.Core.MaxLoosenTimeTenthSec);
+        Assert.Equal(original.Template.Core.MaxLoosenAngleDeg, again.Template.Core.MaxLoosenAngleDeg);
+        Assert.Equal(original.Template.Core.LastStageServoOn, again.Template.Core.LastStageServoOn);
+        Assert.Equal(original.Template.Core.LinkedCompensationParamId, again.Template.Core.LinkedCompensationParamId);
+        Assert.Equal(original.Template.Core.CurveSampleStartTorqueMilliNm, again.Template.Core.CurveSampleStartTorqueMilliNm);
+        Assert.Equal(original.Template.Core.ToolPrecisionCompTenthPercent, again.Template.Core.ToolPrecisionCompTenthPercent);
         Assert.Equal(original.Template.Core.Stages[0].TargetAngleDeg, again.Template.Core.Stages[0].TargetAngleDeg);
         Assert.Equal(original.Template.Core.Stages[0].SpeedRpm, again.Template.Core.Stages[0].SpeedRpm);
         Assert.Equal(original.Template.Core.Stages[0].ControlMode, again.Template.Core.Stages[0].ControlMode);
+        Assert.Equal(original.Template.Core.Stages[0].Direction, again.Template.Core.Stages[0].Direction);
         Assert.Equal(original.Template.Core.Stages[3].ControlMode, again.Template.Core.Stages[3].ControlMode);
         Assert.Equal(
             original.Template.Core.Stages[3].TargetTorqueMilliNm,

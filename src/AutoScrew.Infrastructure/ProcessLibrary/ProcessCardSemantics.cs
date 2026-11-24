@@ -13,6 +13,13 @@ internal static class ProcessCardSemantics
         IReadOnlyDictionary<string, string> block,
         TighteningDirection direction)
     {
+        // ver02「设定模式｜【off】」：关段，不推断为扭矩@0（数字 0 仍表示角度）。
+        if (IsExplicitStageOff(GetString(block, "控制模式")))
+        {
+            ResetStage(stage);
+            return;
+        }
+
         stage.Direction = direction;
         stage.SpeedRpm = GetInt(block, "速度", 0);
 
@@ -246,10 +253,22 @@ internal static class ProcessCardSemantics
                || v.Equals("0", StringComparison.Ordinal);
     }
 
+    /// <summary>ver02 设定模式显式关段（off/关）；与数字 0（角度）区分。</summary>
+    public static bool IsExplicitStageOff(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+        var v = value.Trim();
+        return v.Equals("off", StringComparison.OrdinalIgnoreCase)
+               || v.Equals("关", StringComparison.Ordinal)
+               || v.Equals("关闭", StringComparison.Ordinal)
+               || v.Equals("否", StringComparison.Ordinal);
+    }
+
     /// <summary>支持中文名与 ver02 数字枚举（0 角度 / 1 扭矩 / 2 扭矩率 / 3 夹紧扭矩 / 4 夹紧角度）。</summary>
     public static TighteningControlMode? TryParseControlMode(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value) || IsExplicitStageOff(value))
             return null;
         var v = value.Trim();
         if (int.TryParse(v.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var code))
@@ -318,6 +337,38 @@ internal static class ProcessCardSemantics
         if (tightenAngle > 0)
             return TighteningControlMode.Angle;
         return TighteningControlMode.Torque;
+    }
+
+    private static void ResetStage(TighteningStageCore stage)
+    {
+        stage.ControlMode = TighteningControlMode.Angle;
+        stage.Direction = TighteningDirection.Clockwise;
+        stage.SpeedRpm = 0;
+        stage.TargetTorqueMilliNm = 0;
+        stage.TargetAngleDeg = 0;
+        stage.TargetTorqueRate = 0;
+        stage.TorqueRateAngleIntervalTenthDeg = 0;
+        stage.AccelTimeMs = 0;
+        stage.MaxAngleDeg = 0;
+        stage.MinAngleDeg = 0;
+        stage.MaxTorqueMilliNm = 0;
+        stage.MinTorqueMilliNm = 0;
+        stage.MaxRunTimeCentiSec = 0;
+        stage.MinRunTimeCentiSec = 0;
+        stage.CompTorqueEnabled = false;
+        stage.CompTorqueAnglePercent = 0;
+        stage.PauseTimeMs = 0;
+        stage.MaxClampTorqueMilliNm = 0;
+        stage.MinClampTorqueMilliNm = 0;
+        stage.MaxClampAngleDeg = 0;
+        stage.MinClampAngleDeg = 0;
+        stage.Segment1TorqueMilliNm = 0;
+        stage.Segment1PauseMs = 0;
+        stage.Segment2AccelMs = 0;
+        stage.FinalSpeedRpm = 0;
+        stage.DecelTimeMs = 0;
+        stage.TwoStageModeEnabled = false;
+        stage.ErgoStopEnabled = false;
     }
 
     private static int LbfInToMilliNm(double lbfIn) =>
