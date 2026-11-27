@@ -29,48 +29,52 @@ public sealed class TighteningCycleTimeoutTests
     }
 
     [Fact]
-    public async Task WaitFinish_SucceedsWhenOnlyLegacyRegisterFinishes()
+    public async Task StaleLegacyFinish_DoesNotInstantOk_WhenPrimaryPreferred()
     {
-        var options = CreateOptions(useLegacy: false);
+        var options = CreateOptions(timeoutMs: 250, useLegacy: false);
         await using var session = new DeviceSession();
         var transport = new FinishProbeTransport { LegacyFinish = 1 };
         var mailbox = new CommandMailbox(transport, options, NullLogger.Instance);
         var runner = new TighteningCycleRunner(transport, mailbox, options, session, NullLogger.Instance);
 
-        var result = await runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None);
+        var ex = await Assert.ThrowsAsync<IemdSdCommunicationException>(
+            () => runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None));
 
-        Assert.Equal(DeviceTighteningStatus.Ok, result.Status);
-        Assert.Equal(0, transport.Finish);
-        Assert.Equal(0, transport.LegacyFinish);
+        Assert.Contains("timed out", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(ModbusRegisterMap.TighteningFinish, transport.ClearedAddresses);
         Assert.Contains(ModbusRegisterMap.TighteningResultLegacy, transport.ClearedAddresses);
+        Assert.Equal(0, transport.LegacyFinish);
+        Assert.False(session.IsBusy);
     }
 
     [Fact]
-    public async Task WaitFinish_SucceedsWhenOnlyNewRegisterFinishes()
+    public async Task WaitFinish_OnlyPeerRegister_TimesOut_WhenLegacyPreferred()
     {
-        var options = CreateOptions(useLegacy: true);
+        var options = CreateOptions(timeoutMs: 250, useLegacy: true);
         await using var session = new DeviceSession();
-        var transport = new FinishProbeTransport { Finish = 1 };
+        // Peer (new) would look finished, but primary is legacy — must not succeed from peer alone.
+        var transport = new FinishProbeTransport
+        {
+            FinishAfterPreClear = 1,
+        };
         var mailbox = new CommandMailbox(transport, options, NullLogger.Instance);
         var runner = new TighteningCycleRunner(transport, mailbox, options, session, NullLogger.Instance);
 
-        var result = await runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None);
+        var ex = await Assert.ThrowsAsync<IemdSdCommunicationException>(
+            () => runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None));
 
-        Assert.Equal(DeviceTighteningStatus.Ok, result.Status);
-        Assert.Contains(ModbusRegisterMap.TighteningFinish, transport.ClearedAddresses);
-        Assert.Contains(ModbusRegisterMap.TighteningResultLegacy, transport.ClearedAddresses);
+        Assert.Contains("timed out", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task WaitFinish_ConflictUsesPreferredRegister()
+    public async Task WaitFinish_SucceedsOnPrimary_AfterPreClear()
     {
         var options = CreateOptions(useLegacy: false);
         await using var session = new DeviceSession();
         var transport = new FinishProbeTransport
         {
-            Finish = 1,
-            LegacyFinish = 2,
+            LegacyFinish = 2, // stale peer must be ignored after clear / primary-only
+            FinishAfterPreClear = 1,
         };
         var mailbox = new CommandMailbox(transport, options, NullLogger.Instance);
         var runner = new TighteningCycleRunner(transport, mailbox, options, session, NullLogger.Instance);
@@ -78,17 +82,21 @@ public sealed class TighteningCycleTimeoutTests
         var result = await runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None);
 
         Assert.Equal(DeviceTighteningStatus.Ok, result.Status);
+        Assert.Contains(ModbusRegisterMap.TighteningFinish, transport.ClearedAddresses);
+        Assert.Contains(ModbusRegisterMap.TighteningResultLegacy, transport.ClearedAddresses);
+        Assert.Equal(0, transport.Finish);
+        Assert.Equal(0, transport.LegacyFinish);
     }
 
     [Fact]
-    public async Task WaitFinish_ConflictUsesLegacyWhenPreferred()
+    public async Task WaitFinish_SucceedsOnLegacyPrimary_AfterPreClear()
     {
         var options = CreateOptions(useLegacy: true);
         await using var session = new DeviceSession();
         var transport = new FinishProbeTransport
         {
-            Finish = 1,
-            LegacyFinish = 2,
+            Finish = 1, // peer stale before clear
+            LegacyAfterPreClear = 2,
         };
         var mailbox = new CommandMailbox(transport, options, NullLogger.Instance);
         var runner = new TighteningCycleRunner(transport, mailbox, options, session, NullLogger.Instance);
@@ -96,6 +104,8 @@ public sealed class TighteningCycleTimeoutTests
         var result = await runner.RunAsync(TighteningTrigger.Manual, CancellationToken.None);
 
         Assert.Equal(DeviceTighteningStatus.Ng, result.Status);
+        Assert.Contains(ModbusRegisterMap.TighteningFinish, transport.ClearedAddresses);
+        Assert.Contains(ModbusRegisterMap.TighteningResultLegacy, transport.ClearedAddresses);
     }
 
     [Fact]
@@ -133,10 +143,18 @@ public sealed class TighteningCycleTimeoutTests
             UseLegacyFinishRegister = useLegacy,
         };
 
+    /// <summary>
+    /// Simulates device Finish registers. Pre-wait ClearFinish zeroes both;
+    /// optional AfterPreClear values inject the real cycle result after the first clear pair.
+    /// </summary>
     private sealed class FinishProbeTransport : IModbusTransport
     {
+        private bool _preClearDone;
+
         public int Finish { get; set; }
         public int LegacyFinish { get; set; }
+        public int? FinishAfterPreClear { get; set; }
+        public int? LegacyAfterPreClear { get; set; }
         public List<int> ClearedAddresses { get; } = new();
 
         public bool IsConnected => true;
@@ -161,7 +179,6 @@ public sealed class TighteningCycleTimeoutTests
             var values = new int[count];
             if (address == ModbusRegisterMap.FinalTorqueLow && count >= 2)
             {
-                // 0.250 N·m encoded as dword / 1000
                 values[0] = 250;
                 values[1] = 0;
             }
@@ -182,6 +199,18 @@ public sealed class TighteningCycleTimeoutTests
                 LegacyFinish = value;
                 if (value == 0)
                     ClearedAddresses.Add(address);
+            }
+
+            // After the first dual-clear (pre-wait), inject the cycle finish like a real trigger.
+            if (!_preClearDone
+                && ClearedAddresses.Count(a => a == ModbusRegisterMap.TighteningFinish) >= 1
+                && ClearedAddresses.Count(a => a == ModbusRegisterMap.TighteningResultLegacy) >= 1)
+            {
+                _preClearDone = true;
+                if (FinishAfterPreClear is int f)
+                    Finish = f;
+                if (LegacyAfterPreClear is int l)
+                    LegacyFinish = l;
             }
 
             return Task.CompletedTask;

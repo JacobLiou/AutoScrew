@@ -44,6 +44,9 @@ internal sealed class TighteningCycleRunner
             await WaitDiAckAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Drop stale Finish from prior cycles before waiting (both registers).
+        await ClearFinishAsync(cancellationToken).ConfigureAwait(false);
+
         var status = await WaitFinishAsync(cancellationToken).ConfigureAwait(false);
 
         var totalAngle = await _transport.ReadSingleAsync(ModbusRegisterMap.TotalAngle, cancellationToken)
@@ -146,48 +149,30 @@ internal sealed class TighteningCycleRunner
             lastPrimary = await _transport.ReadSingleAsync(primaryAddr, cancellationToken).ConfigureAwait(false);
             lastSecondary = await _transport.ReadSingleAsync(secondaryAddr, cancellationToken).ConfigureAwait(false);
 
-            var primaryHit = IsFinishValue(lastPrimary);
-            var secondaryHit = IsFinishValue(lastSecondary);
-
-            if (primaryHit || secondaryHit)
+            // Only the preferred register may complete the cycle (stale peer must not false-OK).
+            if (IsFinishValue(lastPrimary))
             {
-                int hitAddr;
-                int hitValue;
-                if (primaryHit && secondaryHit && lastPrimary != lastSecondary)
+                var elapsedMs = (int)(DateTime.UtcNow - started).TotalMilliseconds;
+                if (IsFinishValue(lastSecondary) && lastSecondary != lastPrimary)
                 {
-                    hitAddr = primaryAddr;
-                    hitValue = lastPrimary;
                     _logger.LogWarning(
-                        "Finish registers conflict: 0x{PrimaryAddr:X}={PrimaryValue} 0x{SecondaryAddr:X}={SecondaryValue}; using preferred 0x{ChosenAddr:X}={ChosenValue} (UseLegacyFinishRegister={UseLegacy})",
+                        "Finish peer register differs while primary hit: 0x{PrimaryAddr:X}={PrimaryValue} 0x{SecondaryAddr:X}={SecondaryValue}; using primary (UseLegacyFinishRegister={UseLegacy})",
                         primaryAddr,
                         lastPrimary,
                         secondaryAddr,
                         lastSecondary,
-                        hitAddr,
-                        hitValue,
                         _options.UseLegacyFinishRegister);
                 }
-                else if (primaryHit)
-                {
-                    hitAddr = primaryAddr;
-                    hitValue = lastPrimary;
-                }
-                else
-                {
-                    hitAddr = secondaryAddr;
-                    hitValue = lastSecondary;
-                }
 
-                var elapsedMs = (int)(DateTime.UtcNow - started).TotalMilliseconds;
                 _logger.LogInformation(
                     "Tightening finish detected: register 0x{Addr:X}={Value} after {ElapsedMs} ms (peer 0x{PeerAddr:X}={PeerValue})",
-                    hitAddr,
-                    hitValue,
+                    primaryAddr,
+                    lastPrimary,
                     elapsedMs,
-                    hitAddr == primaryAddr ? secondaryAddr : primaryAddr,
-                    hitAddr == primaryAddr ? lastSecondary : lastPrimary);
+                    secondaryAddr,
+                    lastSecondary);
 
-                return (DeviceTighteningStatus)hitValue;
+                return (DeviceTighteningStatus)lastPrimary;
             }
 
             if (_logger.IsEnabled(LogLevel.Debug) && DateTime.UtcNow >= nextDebugUtc)

@@ -65,8 +65,10 @@ public sealed class IemdSdClient : IIemdSdClient
         if (initOptions.ClearDi)
             await _transport.WriteSingleAsync(ModbusRegisterMap.DiCommand, 0, cancellationToken).ConfigureAwait(false);
 
-        if (!Options.UseLegacyFinishRegister)
-            await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningFinish, 0, cancellationToken).ConfigureAwait(false);
+        // Clear both Finish flags so a sticky legacy/new register cannot false-complete the next cycle.
+        await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningFinish, 0, cancellationToken).ConfigureAwait(false);
+        await _transport.WriteSingleAsync(ModbusRegisterMap.TighteningResultLegacy, 0, cancellationToken)
+            .ConfigureAwait(false);
 
         // #533 仅 10.1 寸协议档支持；4.3 寸总表无此功能码。
         if (Options.ControllerProfile == IemdSdControllerProfile.Sd3_101)

@@ -223,3 +223,5 @@ TXT 与 Excel 解析后走同一落盘：`拧紧参数` → 设备 ParameterId=�
 | 设备全删顺序 | 仅覆盖写入 |
 | 拧紧来源 | 本期不管 |
 | 工艺库页批量导出 | 先用参数/顺序页单条导出 |
+
+**工艺卡交换格式演进**（完整卡准入 → 库内 JSON / zip；TXT 降级）：见 [PROCESS_CARD_JSON_MIGRATION.md](PROCESS_CARD_JSON_MIGRATION.md)。
